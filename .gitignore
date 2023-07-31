@@ -1,0 +1,9 @@
+.vscode/
+/.idea/
+.idea/
+.idea
+.env
+go.sum
+web-api
+*.exe
+*.exe~
