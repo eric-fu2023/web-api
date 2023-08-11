@@ -1,6 +1,21 @@
 package consts
 
 var (
+	Platform = map[int64]string{
+		1: "pc",
+		2: "h5",
+		3: "android",
+		4: "ios",
+	}
+	PlatformIdToFbPlatformId = map[int64]string{
+		1: "pc",
+		2: "h5",
+		3: "mobile",
+		4: "mobile",
+	}
+	GameProvider = map[string]int64{
+		"fb": 1,
+	}
 	WebSocketMessageType = map[string]int64{
 		"text":       1,
 		"pic_url":    2,

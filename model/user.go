@@ -22,6 +22,7 @@ type User struct {
 	Avatar         string
 	Bio            string
 	FollowingCount int64
+	CurrencyId     int64
 	DeletedAt      gorm.DeletedAt
 }
 

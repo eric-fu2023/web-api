@@ -444,3 +444,6 @@ login_failed: "Login failed."
 empty_username_password: "Username or password cannot be empty."
 existing_username: "Username has been used. Please use another one."
 Token无效: "Operation is not allowed."
+empty_currency_id: "Please choose a currency."
+
+fb_create_user_failed: "Creating user at the game service provider failed."

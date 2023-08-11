@@ -42,7 +42,7 @@ func NewRouter() *gin.Engine {
 				user.DELETE("/logout", api.UserLogout)
 				user.POST("/password", api.UserSetPassword)
 
-				fb := user.Group("/user")
+				fb := user.Group("/fb")
 				{
 					fb.GET("/token", fb_api.GetToken)
 				}
