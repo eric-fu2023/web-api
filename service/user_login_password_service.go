@@ -35,19 +35,19 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 		q = q.Where(`country_code`, service.CountryCode).Where(`mobile`, service.Mobile)
 		errStr = i18n.T("Mobile_invalid")
 	} else {
-		return serializer.ParamErr(i18n.T("Both_cannot_be_empty"), nil)
+		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
 	}
 	if err := q.First(&user).Error; err != nil {
-		return serializer.ParamErr(errStr, nil)
+		return serializer.DBErr(c, service, errStr, nil)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(service.Password)); err != nil {
-		return serializer.ParamErr(i18n.T("login_failed"), nil)
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("login_failed"), nil)
 	}
 
 	tokenString, err := user.GenToken()
 	if err != nil {
-		return serializer.ParamErr(i18n.T("Error_token_generation"), err)
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
 	}
 	cache.RedisSessionClient.Set(context.TODO(), strconv.Itoa(int(user.ID)), tokenString, 20*time.Minute)
 

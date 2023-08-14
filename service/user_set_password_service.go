@@ -26,16 +26,16 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 		otp = cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.CountryCode+user.Mobile)
 	}
 	if otp.Val() != service.Otp {
-		return serializer.ParamErr(i18n.T("验证码错误"), nil)
+		return serializer.ParamErr(c, service, i18n.T("验证码错误"), nil)
 	}
 
 	bytes, err := bcrypt.GenerateFromPassword([]byte(service.Password), model.PassWordCost)
 	if err != nil {
-		return serializer.ParamErr(i18n.T("密码加密失败"), err)
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("密码加密失败"), err)
 	}
 
 	if err = model.DB.Model(&user).Update(`password`, string(bytes)).Error; err != nil {
-		return serializer.ParamErr(i18n.T("密码修改失败"), err)
+		return serializer.DBErr(c, service, i18n.T("密码修改失败"), err)
 	}
 
 	return serializer.Response{

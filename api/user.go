@@ -39,7 +39,7 @@ func SmsOtp(c *gin.Context) {
 		res := service.GetSMS(c)
 		c.JSON(200, res)
 	} else {
-		c.JSON(400, ErrorResponse(err))
+		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
 
@@ -49,7 +49,7 @@ func EmailOtp(c *gin.Context) {
 		res := service.GetEmail(c)
 		c.JSON(200, res)
 	} else {
-		c.JSON(400, ErrorResponse(err))
+		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
 
@@ -59,7 +59,7 @@ func UserLoginOtp(c *gin.Context) {
 		res := service.Login(c)
 		c.JSON(200, res)
 	} else {
-		c.JSON(400, ErrorResponse(err))
+		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
 
@@ -69,7 +69,7 @@ func UserLoginPassword(c *gin.Context) {
 		res := service.Login(c)
 		c.JSON(200, res)
 	} else {
-		c.JSON(400, ErrorResponse(err))
+		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
 
@@ -79,7 +79,7 @@ func UserSetPassword(c *gin.Context) {
 		res := service.SetPassword(c)
 		c.JSON(200, res)
 	} else {
-		c.JSON(400, ErrorResponse(err))
+		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
 
@@ -89,6 +89,6 @@ func UserDelete(c *gin.Context) {
 		res := service.Delete(c)
 		c.JSON(200, res)
 	} else {
-		c.JSON(400, ErrorResponse(err))
+		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }

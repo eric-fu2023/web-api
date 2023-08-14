@@ -3,7 +3,6 @@ package service
 import (
 	"blgit.rfdev.tech/zhibo/utilities"
 	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"
 	"os"
@@ -28,7 +27,7 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 
 	otpSent := cache.RedisSessionClient.Get(context.TODO(), "otp:"+service.CountryCode+service.Mobile)
 	if otpSent.Val() != "" {
-		return serializer.ParamErr(i18n.T("Sms_wait"), nil)
+		return serializer.ParamErr(c, service, i18n.T("Sms_wait"), nil)
 	}
 
 	var otp string
@@ -53,8 +52,7 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 			AwsSnsTemplate:  i18n.T("Your_request_otp"),
 		}
 		if err := smsProvider.Send(service.CountryCode, service.Mobile, otp); err != nil {
-			fmt.Println("Send SMS error: " + err.Error())
-			return serializer.ParamErr(i18n.T("Sms_fail"), err)
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Sms_fail"), err)
 		}
 	}
 	cache.RedisSessionClient.Set(context.TODO(), "otp:"+service.CountryCode+service.Mobile, otp, 2*time.Minute)

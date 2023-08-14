@@ -23,7 +23,7 @@ func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err e
 	}
 	r, err := client.GetToken(user.Username, consts.PlatformIdToFbPlatformId[service.Platform], "")
 	if err != nil {
-		res = serializer.Err(serializer.CodeGeneralError, "", err)
+		res = serializer.Err(c, service, serializer.CodeGeneralError, "", err)
 		return
 	}
 	res = serializer.Response{

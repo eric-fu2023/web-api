@@ -15,6 +15,6 @@ func GetToken(c *gin.Context) {
 			c.JSON(500, res)
 		}
 	} else {
-		c.JSON(400, api.ErrorResponse(err))
+		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }

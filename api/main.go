@@ -40,20 +40,21 @@ func Me(c *gin.Context) {
 	})
 }
 
-func ErrorResponse(err error) serializer.Response {
+func ErrorResponse(c *gin.Context, service any, err error) serializer.Response {
 	if ve, ok := err.(validator.ValidationErrors); ok {
 		for _, e := range ve {
 			field := conf.T(fmt.Sprintf("Field.%s", e.Field))
 			tag := conf.T(fmt.Sprintf("Tag.Valid.%s", e.Tag))
 			return serializer.ParamErr(
+				c, service,
 				fmt.Sprintf("%s%s", field, tag),
 				err,
 			)
 		}
 	}
 	if _, ok := err.(*json.UnmarshalTypeError); ok {
-		return serializer.ParamErr("JSON类型不匹配", err)
+		return serializer.ParamErr(c, service, "JSON类型不匹配", err)
 	}
 
-	return serializer.ParamErr("参数错误", err)
+	return serializer.ParamErr(c, service, "参数错误", err)
 }

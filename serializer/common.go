@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"web-api/util"
 )
 
 // Response 基础序列化器
@@ -43,7 +44,7 @@ const (
 )
 
 // Err 通用错误处理
-func Err(errCode int, msg string, err error) Response {
+func Err(c *gin.Context, service any, errCode int, msg string, err error) Response {
 	res := Response{
 		Code: errCode,
 		Msg:  msg,
@@ -52,23 +53,28 @@ func Err(errCode int, msg string, err error) Response {
 	if err != nil && gin.Mode() != gin.ReleaseMode {
 		res.Error = err.Error()
 	}
+	fn := util.Log().Error
+	if errCode == CodeParamErr {
+		fn = util.Log().Info
+	}
+	fn(msg, c.Request.Header, util.MarshalService(service))
 	return res
 }
 
 // DBErr 数据库操作失败
-func DBErr(msg string, err error) Response {
+func DBErr(c *gin.Context, service any, msg string, err error) Response {
 	if msg == "" {
 		msg = "数据库操作失败"
 	}
-	return Err(CodeDBError, msg, err)
+	return Err(c, service, CodeDBError, msg, err)
 }
 
 // ParamErr 各种参数错误
-func ParamErr(msg string, err error) Response {
+func ParamErr(c *gin.Context, service any, msg string, err error) Response {
 	if msg == "" {
 		msg = "参数错误"
 	}
-	return Err(CodeParamErr, msg, err)
+	return Err(c, service, CodeParamErr, msg, err)
 }
 
 func Url(original string) (new string) {

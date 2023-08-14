@@ -40,27 +40,27 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		key += service.CountryCode + service.Mobile
 		errStr = i18n.T("Mobile_invalid")
 	} else {
-		return serializer.ParamErr(i18n.T("Both_cannot_be_empty"), nil)
+		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
 	}
 	otp := cache.RedisSessionClient.Get(context.TODO(), key)
 	if otp.Val() != service.Otp {
-		return serializer.ParamErr(errStr, nil)
+		return serializer.ParamErr(c, service, errStr, nil)
 	}
 
 	if rows := model.DB.Where(`email`, service.Email).Or(`country_code = ? AND mobile = ?`, service.CountryCode, service.Mobile).Find(&user).RowsAffected; rows == 0 { // new user
 		if service.Username == "" || service.Password == "" {
-			return serializer.ParamErr(i18n.T("empty_username_password"), nil)
+			return serializer.ParamErr(c, service, i18n.T("empty_username_password"), nil)
 		}
 		if service.CurrencyId == 0 {
-			return serializer.ParamErr(i18n.T("empty_currency_id"), nil)
+			return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
 		}
 		var existing model.User
 		if r := model.DB.Where(`username`, service.Username).Limit(1).Find(&existing).RowsAffected; r != 0 {
-			return serializer.Err(serializer.CodeExistingUsername, i18n.T("existing_username"), nil)
+			return serializer.Err(c, service, serializer.CodeExistingUsername, i18n.T("existing_username"), nil)
 		}
 		bytes, err := bcrypt.GenerateFromPassword([]byte(service.Password), model.PassWordCost)
 		if err != nil {
-			return serializer.ParamErr(i18n.T("密码加密失败"), err)
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("密码加密失败"), err)
 		}
 		tx := model.DB.Begin()
 		user = model.User{
@@ -77,14 +77,14 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		err = tx.Create(&user).Error
 		if err != nil {
 			tx.Rollback()
-			return serializer.ParamErr(i18n.T("User_add_fail"), err)
+			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 		}
 
 		var currency model.CurrencyGameProvider
 		err = model.DB.Where(`game_provider_id`, consts.GameProvider["fb"]).Where(`currency_id`, service.CurrencyId).First(&currency).Error
 		if err != nil {
 			tx.Rollback()
-			return serializer.ParamErr(i18n.T("empty_currency_id"), nil)
+			return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
 		}
 		client := fb.FB{
 			MerchantId: "1552945083054354433",
@@ -94,7 +94,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		res, err := client.CreateUserAndWallet(user.Username, []int64{currency.Value}, 0)
 		if err != nil {
 			tx.Rollback()
-			return serializer.Err(500, i18n.T("fb_create_user_failed"), err)
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
 		}
 		if externalUserId, ok := res.(float64); ok {
 			gpu := model.GameProviderUser{
@@ -106,7 +106,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 			err = tx.Save(&gpu).Error
 			if err != nil {
 				tx.Rollback()
-				return serializer.Err(500, i18n.T("fb_create_user_failed"), err)
+				return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
 			}
 		}
 		tx.Commit()
@@ -114,7 +114,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 
 	tokenString, err := user.GenToken()
 	if err != nil {
-		return serializer.ParamErr(i18n.T("Error_token_generation"), err)
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
 	}
 	cache.RedisSessionClient.Set(context.TODO(), strconv.Itoa(int(user.ID)), tokenString, 20*time.Minute)
 
