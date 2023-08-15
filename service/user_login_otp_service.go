@@ -1,7 +1,6 @@
 package service
 
 import (
-	"blgit.rfdev.tech/taya/game-service/fb"
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"github.com/gin-gonic/gin"
@@ -13,6 +12,7 @@ import (
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -89,28 +89,22 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 			tx.Rollback()
 			return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
 		}
-		client := fb.FB{
-			MerchantId: "1552945083054354433",
-			MerchantApiSecret: "Lc63hMKwQz0R8Y4MbB7F6mhCbzLuZoU9",
-			IsSandbox: true,
-		}
-		res, err := client.CreateUserAndWallet(user.Username, []int64{currency.Value}, 0)
+		client := util.FBFactory.NewClient()
+		res, err := client.CreateUser(user.Username, []int64{currency.Value}, 0)
 		if err != nil {
 			tx.Rollback()
 			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
 		}
-		if externalUserId, ok := res.(float64); ok {
-			gpu := model.GameProviderUser{
-				GameProviderId: consts.GameProvider["fb"],
-				UserId: user.ID,
-				ExternalUserId: strconv.Itoa(int(externalUserId)),
-				CurrencyGameProviderId: currency.ID,
-			}
-			err = tx.Save(&gpu).Error
-			if err != nil {
-				tx.Rollback()
-				return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
-			}
+		gpu := model.GameProviderUser{
+			GameProviderId: consts.GameProvider["fb"],
+			UserId: user.ID,
+			ExternalUserId: strconv.Itoa(int(res)),
+			CurrencyGameProviderId: currency.ID,
+		}
+		err = tx.Save(&gpu).Error
+		if err != nil {
+			tx.Rollback()
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
 		}
 		tx.Commit()
 	}

@@ -1,11 +1,11 @@
 package fb
 
 import (
-	"blgit.rfdev.tech/taya/game-service/fb"
 	"github.com/gin-gonic/gin"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/util"
 )
 
 type TokenService struct {
@@ -16,11 +16,7 @@ func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err e
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	client := fb.FB{
-		MerchantId:        "1552945083054354433",
-		MerchantApiSecret: "Lc63hMKwQz0R8Y4MbB7F6mhCbzLuZoU9",
-		IsSandbox:         true,
-	}
+	client := util.FBFactory.NewClient()
 	r, err := client.GetToken(user.Username, consts.PlatformIdToFbPlatformId[service.Platform], "")
 	if err != nil {
 		res = serializer.Err(c, service, serializer.CodeGeneralError, "", err)
