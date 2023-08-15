@@ -1,8 +1,8 @@
 package model
 
 import (
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/golang-jwt/jwt/v4"
-	"gorm.io/gorm"
 	"os"
 	"strconv"
 	"time"
@@ -10,20 +10,7 @@ import (
 
 // User 用户模型
 type User struct {
-	Base
-	BrandAgent
-	CountryCode    string
-	Mobile         string
-	Email          string
-	Username       string
-	Password       string
-	Status         int64
-	Role           int64
-	Avatar         string
-	Bio            string
-	FollowingCount int64
-	CurrencyId     int64
-	DeletedAt      gorm.DeletedAt
+	models.UserC
 }
 
 const (

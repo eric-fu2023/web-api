@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20230811073133-ff15ff6ff407
+	blgit.rfdev.tech/taya/ploutos-object v0.0.4-0.20230815034342-6d9cfc93e553
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20230612034643-d8459acf0a2c
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/chenyahui/gin-cache v1.7.1
@@ -20,14 +21,14 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.711
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.711
 	go.mongodb.org/mongo-driver v1.11.2
-	golang.org/x/crypto v0.8.0
+	golang.org/x/crypto v0.12.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
-	golang.org/x/sys v0.7.0
-	golang.org/x/text v0.9.0
+	golang.org/x/sys v0.11.0
+	golang.org/x/text v0.12.0
 	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.2
-	gorm.io/gorm v1.25.0
+	gorm.io/gorm v1.25.3
 	gorm.io/plugin/dbresolver v1.3.0
 )
 
@@ -67,7 +68,7 @@ require (
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
-	golang.org/x/net v0.9.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect

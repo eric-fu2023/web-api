@@ -2,6 +2,7 @@ package service
 
 import (
 	"blgit.rfdev.tech/taya/game-service/fb"
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -64,13 +65,15 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		}
 		tx := model.DB.Begin()
 		user = model.User{
-			Email:       service.Email,
-			CountryCode: service.CountryCode,
-			Mobile:      service.Mobile,
-			Username:    service.Username,
-			Password:    string(bytes),
-			Status:      1,
-			Role:        1, // default role user
+			models.UserC{
+				Email:       service.Email,
+				CountryCode: service.CountryCode,
+				Mobile:      service.Mobile,
+				Username:    service.Username,
+				Password:    string(bytes),
+				Status:      1,
+				Role:        1, // default role user
+			},
 		}
 		user.BrandId = int64(c.MustGet("_brand").(int))
 		user.AgentId = int64(c.MustGet("_agent").(int))

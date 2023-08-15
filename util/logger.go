@@ -36,7 +36,7 @@ func (ll *Logger) Panic(format string, v ...interface{}) {
 	if LevelError > ll.level {
 		return
 	}
-	msg := fmt.Sprintf("[Panic] "+format, v...)
+	msg := fmt.Sprintf("[Panic] "+format+"\n", v...)
 	ll.Println(msg)
 	os.Exit(0)
 }
@@ -46,7 +46,7 @@ func (ll *Logger) Error(format string, v ...interface{}) {
 	if LevelError > ll.level {
 		return
 	}
-	msg := fmt.Sprintf("[E] "+format, v...)
+	msg := fmt.Sprintf("[E] "+format+"\n", v...)
 	ll.Println(msg)
 }
 
@@ -55,7 +55,7 @@ func (ll *Logger) Warning(format string, v ...interface{}) {
 	if LevelWarning > ll.level {
 		return
 	}
-	msg := fmt.Sprintf("[W] "+format, v...)
+	msg := fmt.Sprintf("[W] "+format+"\n", v...)
 	ll.Println(msg)
 }
 
@@ -64,7 +64,7 @@ func (ll *Logger) Info(format string, v ...interface{}) {
 	if LevelInformational > ll.level {
 		return
 	}
-	msg := fmt.Sprintf("[I] "+format, v...)
+	msg := fmt.Sprintf("[I] "+format+"\n", v...)
 	ll.Println(msg)
 }
 
@@ -73,7 +73,7 @@ func (ll *Logger) Debug(format string, v ...interface{}) {
 	if LevelDebug > ll.level {
 		return
 	}
-	msg := fmt.Sprintf("[D] "+format, v...)
+	msg := fmt.Sprintf("[D] "+format+"\n", v...)
 	ll.Println(msg)
 }
 
