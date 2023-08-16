@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	"os"
 	"web-api/api"
 	fb_api "web-api/api/fb"
 	"web-api/middleware"
@@ -11,6 +12,13 @@ import (
 func NewRouter() *gin.Engine {
 	r := gin.New()
 	r.GET("/ts", api.Ts)
+
+	if os.Getenv("GAME_FB_EXPOSE_CALLBACKS") == "true" {
+		fbCallback := r.Group("/fb/callback")
+		{
+			fbCallback.POST("/health", fb_api.CallbackHealth)
+		}
+	}
 
 	// 中间件, 顺序不能改
 	r.Use(middleware.Cors())
