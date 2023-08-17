@@ -109,7 +109,12 @@ func Log() *Logger {
 
 func MarshalService(service any) string {
 	value := reflect.ValueOf(service)
-	field := value.Elem().FieldByName("Password")
+	var field reflect.Value
+	if value.Kind() == reflect.Ptr {
+		field = value.Elem().FieldByName("Password")
+	} else {
+		field = value.FieldByName("Password")
+	}
 	if field.IsValid() && !field.IsZero() {
 		field.SetString("***")
 	}

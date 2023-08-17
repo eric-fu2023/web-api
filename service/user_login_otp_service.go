@@ -83,6 +83,17 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 		}
 
+		userSum := model.UserSum{
+			models.UserSumC{
+				UserId: user.ID,
+			},
+		}
+		err = tx.Create(&userSum).Error
+		if err != nil {
+			tx.Rollback()
+			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
+		}
+
 		var currency model.CurrencyGameProvider
 		err = model.DB.Where(`game_provider_id`, consts.GameProvider["fb"]).Where(`currency_id`, service.CurrencyId).First(&currency).Error
 		if err != nil {
@@ -90,16 +101,19 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 			return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
 		}
 		client := util.FBFactory.NewClient()
-		res, err := client.CreateUser(user.Username, []int64{currency.Value}, 0)
+		res, err := client.CreateUser(user.Username, []int64{}, 0)
 		if err != nil {
 			tx.Rollback()
 			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
 		}
 		gpu := model.GameProviderUser{
-			GameProviderId: consts.GameProvider["fb"],
-			UserId: user.ID,
-			ExternalUserId: strconv.Itoa(int(res)),
-			CurrencyGameProviderId: currency.ID,
+			models.GameProviderUserC{
+				GameProviderId:     consts.GameProvider["fb"],
+				UserId:             user.ID,
+				ExternalUserId:     user.Username,
+				ExternalCurrencyId: currency.Value,
+				ExternalId:         res,
+			},
 		}
 		err = tx.Save(&gpu).Error
 		if err != nil {
