@@ -39,3 +39,10 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 	}
 	return
 }
+
+func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
+	res = callback.BaseResponse{
+		Code: 0,
+	}
+	return
+}

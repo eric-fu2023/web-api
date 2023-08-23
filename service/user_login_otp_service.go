@@ -3,6 +3,7 @@ package service
 import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"strconv"
@@ -112,7 +113,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 				UserId:             user.ID,
 				ExternalUserId:     user.Username,
 				ExternalCurrencyId: currency.Value,
-				ExternalId:         res,
+				ExternalId:         fmt.Sprintf("%d", res),
 			},
 		}
 		err = tx.Save(&gpu).Error

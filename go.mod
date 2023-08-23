@@ -3,8 +3,8 @@ module web-api
 go 1.20
 
 require (
-	blgit.rfdev.tech/taya/game-service v0.0.0-20230817060328-28b865712a69
-	blgit.rfdev.tech/taya/ploutos-object v0.0.5-0.20230817055733-2cfa7e45fdd3
+	blgit.rfdev.tech/taya/game-service v0.0.0-20230823073426-ccf70cdbe3bd
+	blgit.rfdev.tech/taya/ploutos-object v0.0.6-0.20230823073949-b1ddf04945b3
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20230612034643-d8459acf0a2c
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/chenyahui/gin-cache v1.7.1
@@ -28,7 +28,7 @@ require (
 	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.2
-	gorm.io/gorm v1.25.3
+	gorm.io/gorm v1.25.4
 	gorm.io/plugin/dbresolver v1.3.0
 )
 
