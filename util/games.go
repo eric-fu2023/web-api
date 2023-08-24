@@ -1,13 +1,16 @@
 package util
 
-import "blgit.rfdev.tech/taya/game-service/fb"
+import (
+	"blgit.rfdev.tech/taya/game-service/fb"
+	"os"
+)
 
 var FBFactory fb.FB
 
 func InitFbFactory() {
 	FBFactory = fb.FB{
-		MerchantId:        "1552945083054354433",
-		MerchantApiSecret: "Lc63hMKwQz0R8Y4MbB7F6mhCbzLuZoU9",
+		MerchantId:        os.Getenv("GAME_FB_MERCHANT_ID"),
+		MerchantApiSecret: os.Getenv("GAME_FB_MERCHANT_API_SECRET"),
 		IsSandbox:         true,
 	}
 }

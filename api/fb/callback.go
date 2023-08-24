@@ -4,12 +4,11 @@ import (
 	"blgit.rfdev.tech/taya/game-service/fb/callback"
 	"github.com/gin-gonic/gin"
 	"web-api/api"
-	"web-api/serializer"
 	"web-api/service/fb"
 )
 
 func CallbackHealth(c *gin.Context) {
-	c.JSON(200, serializer.Response{
+	c.JSON(200, callback.BaseResponse{
 		Code: 0,
 	})
 }
@@ -31,6 +30,32 @@ func CallbackOrderPay(c *gin.Context) {
 	var req callback.OrderPayRequest
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := fb.OrderPayCallback(c, req); err == nil {
+			c.JSON(200, res)
+		} else {
+			c.JSON(500, res)
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
+}
+
+func CallbackCheckOrderPay(c *gin.Context) {
+	var req callback.OrderPayRequest
+	if err := c.ShouldBind(&req); err == nil {
+		if res, err := fb.CheckOrderPayCallback(c, req); err == nil {
+			c.JSON(200, res)
+		} else {
+			c.JSON(500, res)
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
+}
+
+func CallbackSyncTransaction(c *gin.Context) {
+	var req callback.OrderPayRequest
+	if err := c.ShouldBind(&req); err == nil {
+		if res, err := fb.SyncTransactionCallback(c, req); err == nil {
 			c.JSON(200, res)
 		} else {
 			c.JSON(500, res)

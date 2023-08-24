@@ -42,4 +42,7 @@ var (
 		},
 	}
 	ChatSystemId int64 = -999999
+	TransferTypeNegativeWagerRequirement = []string{
+		"BET",
+	}
 )

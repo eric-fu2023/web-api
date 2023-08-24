@@ -19,6 +19,8 @@ func NewRouter() *gin.Engine {
 			fbCallback.POST("/health", fb_api.CallbackHealth)
 			fbCallback.POST("/balance", fb_api.CallbackBalance)
 			fbCallback.POST("/order_pay", fb_api.CallbackOrderPay)
+			fbCallback.POST("/check_order_pay", fb_api.CallbackCheckOrderPay)
+			fbCallback.POST("/sync_transaction", fb_api.CallbackSyncTransaction)
 		}
 	}
 
