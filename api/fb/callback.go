@@ -53,7 +53,7 @@ func CallbackCheckOrderPay(c *gin.Context) {
 }
 
 func CallbackSyncTransaction(c *gin.Context) {
-	var req callback.OrderPayRequest
+	var req []callback.OrderPayRequest
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := fb.SyncTransactionCallback(c, req); err == nil {
 			c.JSON(200, res)
