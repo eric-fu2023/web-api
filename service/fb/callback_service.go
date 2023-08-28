@@ -21,7 +21,7 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 		return
 	}
 
-	balance, _, res := getBalanceAndWager(gpu)
+	balance, _, _, res := getSums(gpu)
 	if res.Code != 0 {
 		return
 	}
@@ -38,24 +38,27 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 }
 
 func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
+	fmt.Println(req)
 	gpu, res := getGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
 	if res.Code != 0 {
 		return
 	}
 
-	balance, remainingWager, res := getBalanceAndWager(gpu)
+	balance, remainingWager, maxWithdrawable, res := getSums(gpu)
 	if res.Code != 0 {
 		return
 	}
-	if balance < int64(req.Amount * 100) {
-		res = callback.BaseResponse{
-			Code: 9,
-			Message: "insufficient balance",
+	if req.Amount < 0 {
+		if balance < int64(req.Amount*100) {
+			res = callback.BaseResponse{
+				Code:    9,
+				Message: "insufficient balance",
+			}
+			return
 		}
-		return
 	}
 
-	err = processTransaction(c, req, gpu.UserId, balance, remainingWager)
+	err = processTransaction(c, req, gpu.UserId, balance, remainingWager, maxWithdrawable)
 	if err != nil {
 		res = callback.BaseResponse{
 			Code: 1,
@@ -71,6 +74,7 @@ func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callbac
 }
 
 func CheckOrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
+	fmt.Println(req)
 	var fbTx model.FbTransaction
 	rows := model.DB.Where(`transaction_id`, req.TransactionId).First(&fbTx).RowsAffected
 	if rows == 1 {
@@ -83,6 +87,7 @@ func CheckOrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res ca
 }
 
 func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (res callback.BaseResponse, err error) {
+	fmt.Println(req)
 	go func(c *gin.Context, req []callback.OrderPayRequest) {
 		for _, r := range req {
 			coll := model.MongoDB.Collection(MONGODB_FB_CALLBACK_SYNC_TRANSACTION)
@@ -99,12 +104,12 @@ func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (re
 				continue
 			}
 
-			balance, remainingWager, a := getBalanceAndWager(gpu)
+			balance, remainingWager, maxWithdrawable, a := getSums(gpu)
 			if a.Code != 0 {
 				return
 			}
 
-			processTransaction(c , r, gpu.UserId, balance, remainingWager)
+			processTransaction(c , r, gpu.UserId, balance, remainingWager, maxWithdrawable)
 		}
 	}(c, req)
 	res = callback.BaseResponse{
@@ -113,7 +118,7 @@ func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (re
 	return
 }
 
-func processTransaction(c *gin.Context, req callback.OrderPayRequest, userId int64, balance int64, remainingWager int64) (err error) {
+func processTransaction(c *gin.Context, req callback.OrderPayRequest, userId int64, balance int64, remainingWager int64, maxWithdrawable int64) (err error) {
 	fbTx := model.FbTransaction{
 		models.FbTransactionC{
 			UserId: userId,
@@ -136,18 +141,27 @@ func processTransaction(c *gin.Context, req callback.OrderPayRequest, userId int
 		err = tx.Error
 		return
 	}
-	var wager int64
-	w, e := getWager(fbTx) // wager value is always negative here
-	if e == nil {
-		wager = w
+	var wagerChange int64
+	if w, e := calWagerChange(fbTx); e == nil { // wagerChange value should be negative
+		wagerChange = w
+	}
+	newBalance := balance + fbTx.Amount
+	newRemainingWager := remainingWager + wagerChange
+	if newRemainingWager < 0 {
+		newRemainingWager = 0
+	}
+	newWithdrawable := maxWithdrawable
+	if w, e := calMaxWithdrawable(newBalance, newRemainingWager, maxWithdrawable); e == nil {
+		newWithdrawable = w
 	}
 	userSum := model.UserSum{
 		models.UserSumC{
-			Balance: balance + fbTx.Amount,
-			RemainingWager: remainingWager + wager,
+			Balance: newBalance,
+			RemainingWager: newRemainingWager,
+			MaxWithdrawable: newWithdrawable,
 		},
 	}
-	rows := tx.Select(`balance`, `remaining_wager`).Where(`user_id`, userId).Where(`balance`, balance).Updates(userSum).RowsAffected
+	rows := tx.Select(`balance`, `remaining_wager`, `max_withdrawable`).Where(`user_id`, userId).Where(`balance`, balance).Updates(userSum).RowsAffected
 	if rows == 0 {
 		err = errors.New("duplicated or invalid transaction")
 		tx.Rollback()
@@ -165,7 +179,7 @@ func processTransaction(c *gin.Context, req callback.OrderPayRequest, userId int
 			BalanceBefore:   balance,
 			BalanceAfter:    userSum.Balance,
 			FbTransactionId: fbTx.ID,
-			Wager:           wager,
+			Wager:           wagerChange,
 			WagerBefore:     remainingWager,
 			WagerAfter:      userSum.RemainingWager,
 		},
@@ -179,7 +193,7 @@ func processTransaction(c *gin.Context, req callback.OrderPayRequest, userId int
 	return
 }
 
-func getWager(fbTx model.FbTransaction) (wager int64, err error) {
+func calWagerChange(fbTx model.FbTransaction) (wager int64, err error) {
 	if !slices.Contains(consts.FbTransferTypeWithWagerCalculation, fbTx.TransferType) {
 		return
 	}
@@ -197,6 +211,16 @@ func getWager(fbTx model.FbTransaction) (wager int64, err error) {
 	return
 }
 
+func calMaxWithdrawable(balance int64, remainingWager int64, originalWithdrawable int64) (newWithdrawable int64, err error) {
+	newWithdrawable = originalWithdrawable
+	if remainingWager == 0 {
+		if balance > originalWithdrawable {
+			newWithdrawable = balance
+		}
+	}
+	return
+}
+
 func getGameProviderUser(provider int64, userId string) (gpu model.GameProviderUser, res callback.BaseResponse) {
 	err := gpu.GetByProviderAndExternalUser(provider, userId)
 	if err != nil {
@@ -209,7 +233,7 @@ func getGameProviderUser(provider int64, userId string) (gpu model.GameProviderU
 	return
 }
 
-func getBalanceAndWager(gpu model.GameProviderUser) (balance int64, remainingWager int64, res callback.BaseResponse) {
+func getSums(gpu model.GameProviderUser) (balance int64, remainingWager int64, maxWithdrawable int64, res callback.BaseResponse) {
 	var userSum model.UserSum
 	err := model.DB.Where(`user_id`, gpu.UserId).First(&userSum).Error
 	if err != nil {
@@ -221,6 +245,7 @@ func getBalanceAndWager(gpu model.GameProviderUser) (balance int64, remainingWag
 	}
 	balance = userSum.Balance
 	remainingWager = userSum.RemainingWager
+	maxWithdrawable = userSum.MaxWithdrawable
 	return
 }
 
