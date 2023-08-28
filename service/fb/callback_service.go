@@ -4,6 +4,7 @@ import (
 	"blgit.rfdev.tech/taya/game-service/fb/callback"
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -38,7 +39,8 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 }
 
 func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
-	fmt.Println(req)
+	j, _ := json.Marshal(req)
+	fmt.Println("order_pay: ", string(j))
 	gpu, res := getGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
 	if res.Code != 0 {
 		return
@@ -74,7 +76,8 @@ func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callbac
 }
 
 func CheckOrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
-	fmt.Println(req)
+	j, _ := json.Marshal(req)
+	fmt.Println("order_pay: ", string(j))
 	var fbTx model.FbTransaction
 	rows := model.DB.Where(`transaction_id`, req.TransactionId).First(&fbTx).RowsAffected
 	if rows == 1 {
@@ -87,7 +90,8 @@ func CheckOrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res ca
 }
 
 func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (res callback.BaseResponse, err error) {
-	fmt.Println(req)
+	j, _ := json.Marshal(req)
+	fmt.Println("order_pay: ", string(j))
 	go func(c *gin.Context, req []callback.OrderPayRequest) {
 		for _, r := range req {
 			coll := model.MongoDB.Collection(MONGODB_FB_CALLBACK_SYNC_TRANSACTION)
