@@ -15,6 +15,7 @@ var RedisClient *redis.Client
 var RedisLogClient *redis.Client
 var RedisSessionClient *redis.Client
 var RedisShareClient *redis.Client
+var RedisSyncTransactionClient *redis.Client
 var RedisStore *persist.RedisStore
 
 // Redis 在中间件中初始化redis链接
@@ -80,6 +81,22 @@ func RedisShare() {
 	}
 
 	RedisShareClient = client
+}
+
+func RedisSyncTransaction() {
+	db, _ := strconv.ParseUint(os.Getenv("REDIS_SYNC_TRANSACTION"), 10, 64)
+	client := redis.NewClient(&redis.Options{
+		Addr:       os.Getenv("REDIS_ADDR"),
+		Password:   os.Getenv("REDIS_PW"),
+		DB:         int(db),
+		MaxRetries: 1,
+	})
+
+	if _, err := client.Ping(context.TODO()).Result(); err != nil {
+		util.Log().Panic("Failed to connect redis sync transaction", err)
+	}
+
+	RedisSyncTransactionClient = client
 }
 
 func SetupRedisStore() {

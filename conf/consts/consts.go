@@ -42,8 +42,8 @@ var (
 		},
 	}
 	ChatSystemId int64 = -999999
-	FbTransferTypeWithWagerCalculation = []string{
-		"WIN",
-		"CASHOUT",
+	FbTransferTypeCalculateWager = map[string]bool{
+		"WIN": true,
+		"CASHOUT": true,
 	}
 )

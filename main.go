@@ -9,6 +9,7 @@ import (
 	"web-api/conf"
 	"web-api/model"
 	"web-api/server"
+	"web-api/task"
 	"web-api/task/websocket"
 )
 
@@ -32,6 +33,7 @@ func main() {
 	conf.Init()
 
 	if runTask {
+		go task.ProcessFbSyncTransaction()
 		go func() {
 			for {
 				websocket.SetupWebsocket()

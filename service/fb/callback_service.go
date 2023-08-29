@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slices"
+	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/util"
@@ -17,13 +17,15 @@ import (
 const MONGODB_FB_CALLBACK_SYNC_TRANSACTION = "fb_callback_sync_transaction"
 
 func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.BaseResponse, err error) {
-	gpu, res := getGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
-	if res.Code != 0 {
+	gpu, err := GetGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
+	if err != nil {
+		res = callbackErrorResponse(c, req, err)
 		return
 	}
 
-	balance, _, _, res := getSums(gpu)
-	if res.Code != 0 {
+	balance, _, _, err := GetSums(gpu)
+	if err != nil {
+		res = callbackErrorResponse(c, req, err)
 		return
 	}
 
@@ -41,31 +43,21 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
 	j, _ := json.Marshal(req)
 	fmt.Println("order_pay: ", string(j))
-	gpu, res := getGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
-	if res.Code != 0 {
-		return
-	}
-
-	balance, remainingWager, maxWithdrawable, res := getSums(gpu)
-	if res.Code != 0 {
-		return
-	}
-	if req.Amount < 0 {
-		if balance < int64(req.Amount*100) {
-			res = callback.BaseResponse{
-				Code:    9,
-				Message: "insufficient balance",
-			}
-			return
-		}
-	}
-
-	err = processTransaction(c, req, gpu.UserId, balance, remainingWager, maxWithdrawable)
+	gpu, err := GetGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
 	if err != nil {
-		res = callback.BaseResponse{
-			Code: 1,
-			Message: err.Error(),
-		}
+		res = callbackErrorResponse(c, req, err)
+		return
+	}
+
+	balance, remainingWager, maxWithdrawable, err := GetSums(gpu)
+	if err != nil {
+		res = callbackErrorResponse(c, req, err)
+		return
+	}
+
+	err = ProcessTransaction(req, gpu.UserId, balance, remainingWager, maxWithdrawable)
+	if err != nil {
+		res = callbackErrorResponse(c, req, err)
 		return
 	}
 
@@ -77,7 +69,7 @@ func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callbac
 
 func CheckOrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
 	j, _ := json.Marshal(req)
-	fmt.Println("order_pay: ", string(j))
+	fmt.Println("check_order_pay: ", string(j))
 	var fbTx model.FbTransaction
 	rows := model.DB.Where(`transaction_id`, req.TransactionId).First(&fbTx).RowsAffected
 	if rows == 1 {
@@ -91,7 +83,7 @@ func CheckOrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res ca
 
 func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (res callback.BaseResponse, err error) {
 	j, _ := json.Marshal(req)
-	fmt.Println("order_pay: ", string(j))
+	fmt.Println("sync_transaction: ", string(j))
 	go func(c *gin.Context, req []callback.OrderPayRequest) {
 		for _, r := range req {
 			coll := model.MongoDB.Collection(MONGODB_FB_CALLBACK_SYNC_TRANSACTION)
@@ -103,17 +95,11 @@ func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (re
 	}(c, req)
 	go func(c *gin.Context, req []callback.OrderPayRequest) {
 		for _, r := range req {
-			gpu, a := getGameProviderUser(consts.GameProvider["fb"], r.MerchantUserId)
-			if a.Code != 0 {
-				continue
+			jj, _ := json.Marshal(r)
+			_, e := cache.RedisSyncTransactionClient.Set(context.TODO(), fmt.Sprintf(`%s:%s`, r.MerchantUserId, r.TransactionId), jj, 0).Result()
+			if e != nil {
+				util.Log().Error("redis error", e)
 			}
-
-			balance, remainingWager, maxWithdrawable, a := getSums(gpu)
-			if a.Code != 0 {
-				return
-			}
-
-			processTransaction(c , r, gpu.UserId, balance, remainingWager, maxWithdrawable)
 		}
 	}(c, req)
 	res = callback.BaseResponse{
@@ -122,7 +108,7 @@ func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (re
 	return
 }
 
-func processTransaction(c *gin.Context, req callback.OrderPayRequest, userId int64, balance int64, remainingWager int64, maxWithdrawable int64) (err error) {
+func ProcessTransaction(req callback.OrderPayRequest, userId int64, balance int64, remainingWager int64, maxWithdrawable int64) (err error) {
 	fbTx := model.FbTransaction{
 		models.FbTransactionC{
 			UserId: userId,
@@ -139,23 +125,22 @@ func processTransaction(c *gin.Context, req callback.OrderPayRequest, userId int
 			RelatedId: req.RelatedId,
 		},
 	}
+	if fbTx.Status == 0 { // skip transactions with status 0
+		return
+	}
 
 	tx := model.DB.Begin()
 	if tx.Error != nil {
 		err = tx.Error
 		return
 	}
-	var wagerChange int64
-	if w, e := calWagerChange(fbTx); e == nil { // wagerChange value should be negative
-		wagerChange = w
-	}
 	newBalance := balance + fbTx.Amount
-	newRemainingWager := remainingWager + wagerChange
-	if newRemainingWager < 0 {
-		newRemainingWager = 0
+	newRemainingWager := remainingWager
+	if w, e := calWager(fbTx, remainingWager); e == nil {
+		newRemainingWager = w
 	}
 	newWithdrawable := maxWithdrawable
-	if w, e := calMaxWithdrawable(newBalance, newRemainingWager, maxWithdrawable); e == nil {
+	if w, e := calMaxWithdrawable(fbTx, newBalance, newRemainingWager, maxWithdrawable); e == nil {
 		newWithdrawable = w
 	}
 	userSum := model.UserSum{
@@ -165,9 +150,9 @@ func processTransaction(c *gin.Context, req callback.OrderPayRequest, userId int
 			MaxWithdrawable: newWithdrawable,
 		},
 	}
-	rows := tx.Select(`balance`, `remaining_wager`, `max_withdrawable`).Where(`user_id`, userId).Where(`balance`, balance).Updates(userSum).RowsAffected
+	rows := tx.Select(`balance`, `remaining_wager`, `max_withdrawable`).Where(`user_id`, userId).Updates(userSum).RowsAffected
 	if rows == 0 {
-		err = errors.New("duplicated or invalid transaction")
+		err = errors.New("insufficient balance or invalid transaction")
 		tx.Rollback()
 		return
 	}
@@ -183,7 +168,7 @@ func processTransaction(c *gin.Context, req callback.OrderPayRequest, userId int
 			BalanceBefore:   balance,
 			BalanceAfter:    userSum.Balance,
 			FbTransactionId: fbTx.ID,
-			Wager:           wagerChange,
+			Wager:           userSum.RemainingWager - remainingWager,
 			WagerBefore:     remainingWager,
 			WagerAfter:      userSum.RemainingWager,
 		},
@@ -197,8 +182,9 @@ func processTransaction(c *gin.Context, req callback.OrderPayRequest, userId int
 	return
 }
 
-func calWagerChange(fbTx model.FbTransaction) (wager int64, err error) {
-	if !slices.Contains(consts.FbTransferTypeWithWagerCalculation, fbTx.TransferType) {
+func calWager(fbTx model.FbTransaction, originalWager int64) (newWager int64, err error) {
+	newWager = originalWager
+	if !consts.FbTransferTypeCalculateWager[fbTx.TransferType] {
 		return
 	}
 	var betTx model.FbTransaction
@@ -207,16 +193,22 @@ func calWagerChange(fbTx model.FbTransaction) (wager int64, err error) {
 		return
 	}
 	absBetAmount := abs(betTx.Amount)
-	wager = abs(absBetAmount - abs(fbTx.Amount))
+	wager := abs(absBetAmount - abs(fbTx.Amount))
 	if wager > absBetAmount {
 		wager = absBetAmount
 	}
-	wager = -1 * wager
+	newWager = originalWager - wager
+	if newWager < 0 {
+		newWager = 0
+	}
 	return
 }
 
-func calMaxWithdrawable(balance int64, remainingWager int64, originalWithdrawable int64) (newWithdrawable int64, err error) {
+func calMaxWithdrawable(fbTx model.FbTransaction, balance int64, remainingWager int64, originalWithdrawable int64) (newWithdrawable int64, err error) {
 	newWithdrawable = originalWithdrawable
+	if !consts.FbTransferTypeCalculateWager[fbTx.TransferType] {
+		return
+	}
 	if remainingWager == 0 {
 		if balance > originalWithdrawable {
 			newWithdrawable = balance
@@ -225,31 +217,29 @@ func calMaxWithdrawable(balance int64, remainingWager int64, originalWithdrawabl
 	return
 }
 
-func getGameProviderUser(provider int64, userId string) (gpu model.GameProviderUser, res callback.BaseResponse) {
-	err := gpu.GetByProviderAndExternalUser(provider, userId)
-	if err != nil {
-		res = callback.BaseResponse{
-			Code: 1,
-			Message: err.Error(),
-		}
-		return
-	}
+func GetGameProviderUser(provider int64, userId string) (gpu model.GameProviderUser, err error) {
+	err = gpu.GetByProviderAndExternalUser(provider, userId)
 	return
 }
 
-func getSums(gpu model.GameProviderUser) (balance int64, remainingWager int64, maxWithdrawable int64, res callback.BaseResponse) {
+func GetSums(gpu model.GameProviderUser) (balance int64, remainingWager int64, maxWithdrawable int64, err error) {
 	var userSum model.UserSum
-	err := model.DB.Where(`user_id`, gpu.UserId).First(&userSum).Error
+	err = model.DB.Where(`user_id`, gpu.UserId).First(&userSum).Error
 	if err != nil {
-		res = callback.BaseResponse{
-			Code: 1,
-			Message: err.Error(),
-		}
 		return
 	}
 	balance = userSum.Balance
 	remainingWager = userSum.RemainingWager
 	maxWithdrawable = userSum.MaxWithdrawable
+	return
+}
+
+func callbackErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {
+	res = callback.BaseResponse{
+		Code: 1,
+		Message: err.Error(),
+	}
+	util.Log().Error(res.Message, c.Request.URL, c.Request.Header, util.MarshalService(req))
 	return
 }
 
