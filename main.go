@@ -5,10 +5,12 @@ import (
 	"github.com/robfig/cron/v3"
 	"log"
 	"os"
+	"time"
 	"web-api/conf"
 	"web-api/model"
 	"web-api/server"
 	"web-api/task"
+	"web-api/task/websocket"
 )
 
 var runTask bool
@@ -32,13 +34,13 @@ func main() {
 
 	if runTask {
 		go task.ProcessFbSyncTransaction()
-		//go func() {
-		//	for {
-		//		websocket.SetupWebsocket()
-		//		<-websocket.Websocket.Ended
-		//		time.Sleep(1 * time.Second)
-		//	}
-		//}()
+		go func() {
+			for {
+				websocket.SetupWebsocket()
+				<-websocket.Websocket.Ended
+				time.Sleep(1 * time.Second)
+			}
+		}()
 
 		c := cron.New(cron.WithSeconds())
 		c.Start()
