@@ -123,3 +123,16 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 		Msg: i18n.T("success"),
 	}
 }
+
+type UserCheckUsernameService struct {
+	Username    string `form:"username" json:"username" binding:"required"`
+}
+
+func (service *UserCheckUsernameService) Check(c *gin.Context) serializer.Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	var existing model.User
+	if r := model.DB.Where(`username`, service.Username).Limit(1).Find(&existing).RowsAffected; r != 0 {
+		return serializer.Err(c, service, serializer.CodeExistingUsername, i18n.T("existing_username"), nil)
+	}
+	return serializer.Response{}
+}

@@ -83,6 +83,16 @@ func UserFinishSetup(c *gin.Context) {
 	}
 }
 
+func UserCheckUsername(c *gin.Context) {
+	var service service.UserCheckUsernameService
+	if err := c.ShouldBind(&service); err == nil {
+		res := service.Check(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
 func UserSetPassword(c *gin.Context) {
 	var service service.UserSetPasswordService
 	if err := c.ShouldBind(&service); err == nil {

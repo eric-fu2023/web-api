@@ -84,6 +84,10 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 		c.Set("user", user)
+
+		go func() {
+			cache.RedisSessionClient.Expire(context.TODO(), strconv.Itoa(a.UserId), 20 * time.Minute)
+		}()
 		c.Next()
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
+	"web-api/util/i18n"
 )
 
 type TokenService struct {
@@ -13,8 +14,14 @@ type TokenService struct {
 }
 
 func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
+
+	if user.Username == "" {
+		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("finish_setup"), nil)
+		return
+	}
 
 	client := util.FBFactory.NewClient()
 	r, err := client.GetToken(user.Username, consts.PlatformIdToFbPlatformId[service.Platform], "")
