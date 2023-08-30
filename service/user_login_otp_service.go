@@ -3,17 +3,13 @@ package service
 import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 	"strconv"
 	"strings"
 	"time"
 	"web-api/cache"
-	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
-	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -22,9 +18,6 @@ type UserLoginOtpService struct {
 	Mobile      string `form:"mobile" json:"mobile"`
 	Email       string `form:"email" json:"email"`
 	Otp         string `form:"otp" json:"otp" binding:"required"`
-	Username    string `form:"username" json:"username"`
-	Password    string `form:"password" json:"password"`
-	CurrencyId  int64 `form:"currency_id" json:"currency_id" binding:"numeric"`
 }
 
 func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
@@ -49,79 +42,33 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		return serializer.ParamErr(c, service, errStr, nil)
 	}
 
-	if rows := model.DB.Where(`email`, service.Email).Or(`country_code = ? AND mobile = ?`, service.CountryCode, service.Mobile).Find(&user).RowsAffected; rows == 0 { // new user
-		if service.Username == "" || service.Password == "" {
-			return serializer.ParamErr(c, service, i18n.T("empty_username_password"), nil)
-		}
-		if service.CurrencyId == 0 {
-			return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
-		}
-		var existing model.User
-		if r := model.DB.Where(`username`, service.Username).Limit(1).Find(&existing).RowsAffected; r != 0 {
-			return serializer.Err(c, service, serializer.CodeExistingUsername, i18n.T("existing_username"), nil)
-		}
-		bytes, err := bcrypt.GenerateFromPassword([]byte(service.Password), model.PassWordCost)
-		if err != nil {
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("密码加密失败"), err)
-		}
-		tx := model.DB.Begin()
+	q :=  model.DB
+	if service.CountryCode != "" && service.Mobile != "" {
+		q = q.Where(`country_code = ? AND mobile = ?`, service.CountryCode, service.Mobile)
+	} else {
+		q = q.Where(`email`, service.Email)
+	}
+	setupRequired := false
+	if rows := q.Find(&user).RowsAffected; rows == 0 { // new user
 		user = model.User{
 			models.UserC{
 				Email:       service.Email,
 				CountryCode: service.CountryCode,
 				Mobile:      service.Mobile,
-				Username:    service.Username,
-				Password:    string(bytes),
 				Status:      1,
 				Role:        1, // default role user
 			},
 		}
 		user.BrandId = int64(c.MustGet("_brand").(int))
 		user.AgentId = int64(c.MustGet("_agent").(int))
-		err = tx.Create(&user).Error
+		err := model.DB.Create(&user).Error
 		if err != nil {
-			tx.Rollback()
 			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 		}
+	}
 
-		userSum := model.UserSum{
-			models.UserSumC{
-				UserId: user.ID,
-			},
-		}
-		err = tx.Create(&userSum).Error
-		if err != nil {
-			tx.Rollback()
-			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
-		}
-
-		var currency model.CurrencyGameProvider
-		err = model.DB.Where(`game_provider_id`, consts.GameProvider["fb"]).Where(`currency_id`, service.CurrencyId).First(&currency).Error
-		if err != nil {
-			tx.Rollback()
-			return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
-		}
-		client := util.FBFactory.NewClient()
-		res, err := client.CreateUser(user.Username, []int64{}, 0)
-		if err != nil {
-			tx.Rollback()
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
-		}
-		gpu := model.GameProviderUser{
-			models.GameProviderUserC{
-				GameProviderId:     consts.GameProvider["fb"],
-				UserId:             user.ID,
-				ExternalUserId:     user.Username,
-				ExternalCurrencyId: currency.Value,
-				ExternalId:         fmt.Sprintf("%d", res),
-			},
-		}
-		err = tx.Save(&gpu).Error
-		if err != nil {
-			tx.Rollback()
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
-		}
-		tx.Commit()
+	if user.Username == "" {
+		setupRequired = true
 	}
 
 	tokenString, err := user.GenToken()
@@ -133,6 +80,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	return serializer.Response{
 		Data: map[string]interface{}{
 			"token": tokenString,
+			"setup_required": setupRequired,
 		},
 	}
 }
