@@ -57,7 +57,7 @@ func Err(c *gin.Context, service any, errCode int, msg string, err error) Respon
 	if errCode == CodeParamErr {
 		fn = util.Log().Info
 	}
-	fn(msg, c.Request.URL, c.Request.Header, util.MarshalService(service))
+	fn(msg, err, c.Request.URL, c.Request.Header, util.MarshalService(service))
 	return res
 }
 
