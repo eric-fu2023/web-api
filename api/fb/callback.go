@@ -2,9 +2,7 @@ package fb_api
 
 import (
 	"blgit.rfdev.tech/taya/game-service/fb/callback"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"io"
 	"web-api/api"
 	"web-api/service/fb"
 )
@@ -56,9 +54,21 @@ func CallbackSyncTransaction(c *gin.Context) {
 }
 
 func CallbackSyncOrders(c *gin.Context) {
-	body, _ := io.ReadAll(c.Request.Body)
-	fmt.Println(string(body))
-	c.JSON(200, callback.BaseResponse{
-		Code: 0,
-	})
+	var req callback.SyncOrdersRequest
+	if err := c.ShouldBind(&req); err == nil {
+		res, _ := fb.SyncOrdersCallback(c, req)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
+}
+
+func CallbackSyncCashout(c *gin.Context) {
+	var req callback.SyncCashoutRequest
+	if err := c.ShouldBind(&req); err == nil {
+		res, _ := fb.SyncCashoutCallback(c, req)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
 }

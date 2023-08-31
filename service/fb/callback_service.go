@@ -13,7 +13,11 @@ import (
 	"web-api/util"
 )
 
-const MONGODB_FB_CALLBACK_SYNC_TRANSACTION = "fb_callback_sync_transaction"
+const (
+	MONGODB_FB_CALLBACK_SYNC_TRANSACTION = "fb_callback_sync_transaction"
+	MONGODB_FB_CALLBACK_SYNC_ORDERS = "fb_callback_sync_orders"
+	MONGODB_FB_CALLBACK_SYNC_CASHOUT = "fb_callback_sync_cashout"
+)
 
 func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.BaseResponse, err error) {
 	gpu, err := GetGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
@@ -99,6 +103,38 @@ func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (re
 			if e != nil {
 				util.Log().Error("redis error", e)
 			}
+		}
+	}(c, req)
+	res = callback.BaseResponse{
+		Code: 0,
+	}
+	return
+}
+
+func SyncOrdersCallback(c *gin.Context, req callback.SyncOrdersRequest) (res callback.BaseResponse, err error) {
+	j, _ := json.Marshal(req)
+	fmt.Println("sync_orders: ", string(j))
+	go func(c *gin.Context, req callback.SyncOrdersRequest) {
+		coll := model.MongoDB.Collection(MONGODB_FB_CALLBACK_SYNC_ORDERS)
+		_, e := coll.InsertOne(context.TODO(), req)
+		if e != nil {
+			util.Log().Error("mongodb error", e)
+		}
+	}(c, req)
+	res = callback.BaseResponse{
+		Code: 0,
+	}
+	return
+}
+
+func SyncCashoutCallback(c *gin.Context, req callback.SyncCashoutRequest) (res callback.BaseResponse, err error) {
+	j, _ := json.Marshal(req)
+	fmt.Println("sync_cashout: ", string(j))
+	go func(c *gin.Context, req callback.SyncCashoutRequest) {
+		coll := model.MongoDB.Collection(MONGODB_FB_CALLBACK_SYNC_CASHOUT)
+		_, e := coll.InsertOne(context.TODO(), req)
+		if e != nil {
+			util.Log().Error("mongodb error", e)
 		}
 	}(c, req)
 	res = callback.BaseResponse{
