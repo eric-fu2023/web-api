@@ -1,7 +1,6 @@
 package service
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -81,9 +80,7 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 	}
 
 	userSum := model.UserSum{
-		models.UserSumC{
-			UserId: user.ID,
-		},
+		UserId: user.ID,
 	}
 	err = tx.Create(&userSum).Error
 	if err != nil {
@@ -104,13 +101,11 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
 	}
 	gpu := model.GameProviderUser{
-		models.GameProviderUserC{
-			GameProviderId:     consts.GameProvider["fb"],
-			UserId:             user.ID,
-			ExternalUserId:     user.Username,
-			ExternalCurrencyId: currency.Value,
-			ExternalId:         fmt.Sprintf("%d", res),
-		},
+		GameProviderId:     consts.GameProvider["fb"],
+		UserId:             user.ID,
+		ExternalUserId:     user.Username,
+		ExternalCurrencyId: currency.Value,
+		ExternalId:         fmt.Sprintf("%d", res),
 	}
 	err = tx.Save(&gpu).Error
 	if err != nil {

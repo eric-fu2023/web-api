@@ -2,7 +2,6 @@ package fb
 
 import (
 	"blgit.rfdev.tech/taya/game-service/fb/callback"
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
 	"errors"
@@ -110,20 +109,18 @@ func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (re
 
 func ProcessTransaction(req callback.OrderPayRequest, userId int64, balance int64, remainingWager int64, maxWithdrawable int64) (err error) {
 	fbTx := model.FbTransaction{
-		models.FbTransactionC{
-			UserId: userId,
-			TransactionId: req.TransactionId,
-			ExternalUserId: req.UserId,
-			MerchantId: req.MerchantId,
-			MerchantUserId: req.MerchantUserId,
-			BusinessId: req.BusinessId,
-			TransactionType: req.TransactionType,
-			TransferType: req.TransferType,
-			ExternalCurrencyId: req.CurrencyId,
-			Amount: int64(req.Amount * 100),
-			Status: req.Status,
-			RelatedId: req.RelatedId,
-		},
+		UserId: userId,
+		TransactionId: req.TransactionId,
+		ExternalUserId: req.UserId,
+		MerchantId: req.MerchantId,
+		MerchantUserId: req.MerchantUserId,
+		BusinessId: req.BusinessId,
+		TransactionType: req.TransactionType,
+		TransferType: req.TransferType,
+		ExternalCurrencyId: req.CurrencyId,
+		Amount: int64(req.Amount * 100),
+		Status: req.Status,
+		RelatedId: req.RelatedId,
 	}
 	if fbTx.Status == 0 { // skip transactions with status 0
 		return
@@ -144,11 +141,9 @@ func ProcessTransaction(req callback.OrderPayRequest, userId int64, balance int6
 		newWithdrawable = w
 	}
 	userSum := model.UserSum{
-		models.UserSumC{
-			Balance: newBalance,
-			RemainingWager: newRemainingWager,
-			MaxWithdrawable: newWithdrawable,
-		},
+		Balance: newBalance,
+		RemainingWager: newRemainingWager,
+		MaxWithdrawable: newWithdrawable,
 	}
 	rows := tx.Select(`balance`, `remaining_wager`, `max_withdrawable`).Where(`user_id`, userId).Updates(userSum).RowsAffected
 	if rows == 0 {
@@ -162,16 +157,14 @@ func ProcessTransaction(req callback.OrderPayRequest, userId int64, balance int6
 		return
 	}
 	transaction := model.Transaction{
-		models.TransactionC{
-			UserId:          userId,
-			Amount:          fbTx.Amount,
-			BalanceBefore:   balance,
-			BalanceAfter:    userSum.Balance,
-			FbTransactionId: fbTx.ID,
-			Wager:           userSum.RemainingWager - remainingWager,
-			WagerBefore:     remainingWager,
-			WagerAfter:      userSum.RemainingWager,
-		},
+		UserId:          userId,
+		Amount:          fbTx.Amount,
+		BalanceBefore:   balance,
+		BalanceAfter:    userSum.Balance,
+		FbTransactionId: fbTx.ID,
+		Wager:           userSum.RemainingWager - remainingWager,
+		WagerBefore:     remainingWager,
+		WagerAfter:      userSum.RemainingWager,
 	}
 	err = tx.Save(&transaction).Error
 	if err != nil {
@@ -184,7 +177,8 @@ func ProcessTransaction(req callback.OrderPayRequest, userId int64, balance int6
 
 func calWager(fbTx model.FbTransaction, originalWager int64) (newWager int64, err error) {
 	newWager = originalWager
-	if !consts.FbTransferTypeCalculateWager[fbTx.TransferType] {
+	coeff, exists := consts.FbTransferTypeCalculateWager[fbTx.TransferType]
+	if !exists {
 		return
 	}
 	var betTx model.FbTransaction
@@ -197,7 +191,7 @@ func calWager(fbTx model.FbTransaction, originalWager int64) (newWager int64, er
 	if wager > absBetAmount {
 		wager = absBetAmount
 	}
-	newWager = originalWager - wager
+	newWager = originalWager + (coeff * wager)
 	if newWager < 0 {
 		newWager = 0
 	}
@@ -206,7 +200,8 @@ func calWager(fbTx model.FbTransaction, originalWager int64) (newWager int64, er
 
 func calMaxWithdrawable(fbTx model.FbTransaction, balance int64, remainingWager int64, originalWithdrawable int64) (newWithdrawable int64, err error) {
 	newWithdrawable = originalWithdrawable
-	if !consts.FbTransferTypeCalculateWager[fbTx.TransferType] {
+	_, exists := consts.FbTransferTypeCalculateWager[fbTx.TransferType]
+	if !exists {
 		return
 	}
 	if remainingWager == 0 {
