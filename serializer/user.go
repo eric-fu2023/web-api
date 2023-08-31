@@ -41,6 +41,7 @@ type UserInfo struct {
 	Avatar         string     `json:"avatar"`
 	Bio            string     `json:"bio"`
 	FollowingCount int64      `json:"following_count"`
+	SetupRequired  bool       `json:"setup_required"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
@@ -55,6 +56,9 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 	}
 	if user.Avatar != "" {
 		u.Avatar = Url(user.Avatar)
+	}
+	if user.Username == "" {
+		u.SetupRequired = true
 	}
 
 	return u
