@@ -16,6 +16,7 @@ import (
 type UserLoginPasswordService struct {
 	CountryCode string `form:"country_code" json:"country_code"`
 	Mobile      string `form:"mobile" json:"mobile"`
+	Username    string `form:"username" json:"username"`
 	Email       string `form:"email" json:"email"`
 	Password    string `form:"password" json:"password" binding:"required"`
 }
@@ -28,7 +29,10 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 	var user model.User
 	q := model.DB
 	errStr := ""
-	if service.Email != "" {
+	if service.Username != "" {
+		q = q.Where(`username`, service.Username)
+		errStr = i18n.T("Username_invalid")
+	} else if service.Email != "" {
 		q = q.Where(`email`, service.Email)
 		errStr = i18n.T("Email_invalid")
 	} else if service.CountryCode != "" && service.Mobile != "" {
