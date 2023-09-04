@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"os"
+	"time"
 	"web-api/api"
 	fb_api "web-api/api/fb"
 	"web-api/middleware"
@@ -45,6 +46,8 @@ func NewRouter() *gin.Engine {
 		v1.POST("/email_otp", api.EmailOtp)
 		v1.POST("/login_otp", api.UserLoginOtp)
 		v1.POST("/login_password", api.UserLoginPassword)
+
+		v1.GET("/config", middleware.Cache(10*time.Minute), api.Config)
 
 		auth := v1.Group("")
 		auth.Use(middleware.AuthRequired(true))
