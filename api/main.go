@@ -40,6 +40,12 @@ func Me(c *gin.Context) {
 	})
 }
 
+func Heartbeat(c *gin.Context) {
+	c.JSON(200, serializer.Response{
+		Code: 0,
+	})
+}
+
 func ErrorResponse(c *gin.Context, service any, err error) serializer.Response {
 	if ve, ok := err.(validator.ValidationErrors); ok {
 		for _, e := range ve {

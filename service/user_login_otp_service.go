@@ -4,7 +4,6 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"github.com/gin-gonic/gin"
-	"strconv"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -75,7 +74,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	if err != nil {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
 	}
-	cache.RedisSessionClient.Set(context.TODO(), strconv.Itoa(int(user.ID)), tokenString, 20*time.Minute)
+	cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, 20*time.Minute)
 
 	return serializer.Response{
 		Data: map[string]interface{}{

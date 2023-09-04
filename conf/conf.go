@@ -36,7 +36,6 @@ func Init() {
 	}
 	model.Database(os.Getenv("POSTGRES_DSN"), replicaConn)
 	cache.Redis()
-	cache.RedisLog()
 	cache.RedisSession()
 	cache.RedisShare()
 	cache.RedisSyncTransaction()

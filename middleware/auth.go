@@ -3,10 +3,10 @@ package middleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -33,8 +33,12 @@ func (a AuthClaims) Valid() (err error) {
 	return
 }
 
+func (a AuthClaims) GetRedisSessionKey() string {
+	return fmt.Sprintf(`session:%d`, a.UserId)
+}
+
 // AuthRequired 需要登录
-func AuthRequired() gin.HandlerFunc {
+func AuthRequired(getUser bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		i18n := c.MustGet("i18n").(i18n.I18n)
 		const BEARER_SCHEMA = "Bearer"
@@ -63,7 +67,7 @@ func AuthRequired() gin.HandlerFunc {
 		}
 		a := token.Claims.(*AuthClaims)
 
-		otp := cache.RedisSessionClient.Get(context.TODO(), strconv.Itoa(a.UserId))
+		otp := cache.RedisSessionClient.Get(context.TODO(), a.GetRedisSessionKey())
 		if otp.Val() != tokenString {
 			c.JSON(401, serializer.Response{
 				Code: serializer.CodeCheckLogin,
@@ -73,20 +77,22 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
-		var user model.User
-		if err := model.DB.Where(`id`, a.UserId).First(&user).Error; err != nil {
-			c.JSON(401, serializer.Response{
-				Code:  serializer.CodeCheckLogin,
-				Msg:   i18n.T("账号错误"),
-				Error: err.Error(),
-			})
-			c.Abort()
-			return
+		if getUser {
+			var user model.User
+			if err := model.DB.Where(`id`, a.UserId).First(&user).Error; err != nil {
+				c.JSON(401, serializer.Response{
+					Code:  serializer.CodeCheckLogin,
+					Msg:   i18n.T("账号错误"),
+					Error: err.Error(),
+				})
+				c.Abort()
+				return
+			}
+			c.Set("user", user)
 		}
-		c.Set("user", user)
 
 		go func() {
-			cache.RedisSessionClient.Expire(context.TODO(), strconv.Itoa(a.UserId), 20 * time.Minute)
+			cache.RedisSessionClient.Expire(context.TODO(), a.GetRedisSessionKey(), 20 * time.Minute)
 		}()
 		c.Next()
 	}

@@ -47,7 +47,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("/login_password", api.UserLoginPassword)
 
 		auth := v1.Group("")
-		auth.Use(middleware.AuthRequired())
+		auth.Use(middleware.AuthRequired(true))
 		{
 			user := auth.Group("/user")
 			{
@@ -64,6 +64,7 @@ func NewRouter() *gin.Engine {
 				}
 			}
 		}
+		v1.GET("/user/heartbeat", middleware.AuthRequired(false), api.Heartbeat)
 	}
 
 	return r
