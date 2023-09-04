@@ -50,7 +50,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	setupRequired := false
 	if rows := q.Find(&user).RowsAffected; rows == 0 { // new user
 		user = model.User{
-			models.UserC{
+			UserC: models.UserC{
 				Email:       service.Email,
 				CountryCode: service.CountryCode,
 				Mobile:      service.Mobile,

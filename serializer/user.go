@@ -33,15 +33,17 @@ func BuildUser(user model.User) User {
 }
 
 type UserInfo struct {
-	ID             int64      `json:"id"`
-	CountryCode    string     `json:"country_code,omitempty"`
-	Mobile         string     `json:"mobile,omitempty"`
-	Username       string     `json:"username,omitempty"`
-	Email          string     `json:"email,omitempty"`
-	Avatar         string     `json:"avatar"`
-	Bio            string     `json:"bio"`
-	FollowingCount int64      `json:"following_count"`
-	SetupRequired  bool       `json:"setup_required"`
+	ID             int64    `json:"id"`
+	CountryCode    string   `json:"country_code,omitempty"`
+	Mobile         string   `json:"mobile,omitempty"`
+	Username       string   `json:"username,omitempty"`
+	Email          string   `json:"email,omitempty"`
+	Avatar         string   `json:"avatar"`
+	Bio            string   `json:"bio"`
+	CurrencyId     int64    `json:"currency_id"`
+	FollowingCount int64    `json:"following_count"`
+	SetupRequired  bool     `json:"setup_required"`
+	UserSum        *UserSum `json:"sum,omitempty"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
@@ -52,6 +54,7 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		Username:       user.Username,
 		Email:          user.Email,
 		Bio:            user.Bio,
+		CurrencyId:     user.CurrencyId,
 		FollowingCount: user.FollowingCount,
 	}
 	if user.Avatar != "" {
@@ -59,6 +62,10 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 	}
 	if user.Username == "" {
 		u.SetupRequired = true
+	}
+	if user.UserSum != nil {
+		t := BuildUserSum(*user.UserSum)
+		u.UserSum = &t
 	}
 
 	return u

@@ -34,6 +34,10 @@ func Ts(c *gin.Context) {
 func Me(c *gin.Context) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
+	var userSum model.UserSum
+	if e := model.DB.Where(`user_id`, user.ID).First(&userSum).Error; e == nil {
+		user.UserSum = &userSum
+	}
 	c.JSON(200, serializer.Response{
 		Code: 0,
 		Data: serializer.BuildUserInfo(c, user),

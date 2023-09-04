@@ -12,6 +12,7 @@ import (
 // User 用户模型
 type User struct {
 	models.UserC
+	UserSum *UserSum `gorm:"foreignKey:UserId;references:ID"`
 }
 
 const (
