@@ -44,6 +44,7 @@ func NewRouter() *gin.Engine {
 		// no cache routes
 		v1.POST("/sms_otp", api.SmsOtp)
 		v1.POST("/email_otp", api.EmailOtp)
+		v1.POST("/register", api.UserRegister)
 		v1.POST("/login_otp", api.UserLoginOtp)
 		v1.POST("/login_password", api.UserLoginPassword)
 

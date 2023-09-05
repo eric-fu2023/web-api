@@ -1,14 +1,18 @@
 package api
 
 import (
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"strconv"
+	"time"
 	"web-api/cache"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -17,14 +21,28 @@ func UserLogout(c *gin.Context) {
 
 	u, _ := c.Get("user")
 	user := u.(model.User)
-	cmd := cache.RedisSessionClient.Del(context.TODO(), strconv.Itoa(int(user.ID)))
+	cmd := cache.RedisSessionClient.Del(context.TODO(), user.GetRedisSessionKey())
 	if cmd.Err() == redis.Nil {
 		c.JSON(401, serializer.Response{
-			Code:  serializer.CodeCheckLogin,
-			Msg:   i18n.T("账号错误"),
+			Code: serializer.CodeCheckLogin,
+			Msg:  i18n.T("账号错误"),
 		})
 		c.Abort()
 		return
+	}
+
+	// Add logout log
+	event := model.AuthEvent{
+		AuthEventC: models.AuthEventC{
+			UserId:   user.ID,
+			Type:     consts.AuthEventType["logout"],
+			Status:   consts.AuthEventStatus["successful"],
+			DateTime: time.Now().Format(time.DateTime),
+		},
+	}
+	if err := model.LogAuthEvent(event); err != nil {
+		// Just log error if failed
+		util.Log().Error("log logout auth event err", err)
 	}
 
 	c.JSON(200, serializer.Response{
@@ -107,6 +125,16 @@ func UserDelete(c *gin.Context) {
 	var service service.UserDeleteService
 	if err := c.ShouldBind(&service); err == nil {
 		res := service.Delete(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
+func UserRegister(c *gin.Context) {
+	var service service.UserRegisterService
+	if err := c.ShouldBind(&service); err == nil {
+		res := service.Register(c)
 		c.JSON(200, res)
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))

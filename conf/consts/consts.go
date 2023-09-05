@@ -41,15 +41,30 @@ var (
 			"Successfully connected.",
 		},
 	}
-	ChatSystemId int64 = -999999
-	FbTransferTypeCalculateWager = map[string]int64{
-		"WIN": -1,
-		"CASHOUT": -1,
-		"SETTLEMENT_ROLLBACK_RETURN": 1,
-		"SETTLEMENT_ROLLBACK_DEDUCT": 1,
-		"CASHOUT_CANCEL_DEDUCT": 1,
-		"CASHOUT_CANCEL_RETURN": 1,
+	ChatSystemId                 int64 = -999999
+	FbTransferTypeCalculateWager       = map[string]int64{
+		"WIN":                            -1,
+		"CASHOUT":                        -1,
+		"SETTLEMENT_ROLLBACK_RETURN":     1,
+		"SETTLEMENT_ROLLBACK_DEDUCT":     1,
+		"CASHOUT_CANCEL_DEDUCT":          1,
+		"CASHOUT_CANCEL_RETURN":          1,
 		"CASHOUT_CANCEL_ROLLBACK_DEDUCT": -1,
 		"CASHOUT_CANCEL_ROLLBACK_RETURN": -1,
+	}
+
+	AuthEventType = map[string]int{
+		"login":  1,
+		"logout": 2,
+	}
+
+	AuthEventStatus = map[string]int{
+		"successful": 1,
+		"failed":     2,
+	}
+
+	AuthEventLoginMethod = map[string]int{
+		"otp":      1,
+		"password": 2,
 	}
 )

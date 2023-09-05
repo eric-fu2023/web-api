@@ -2,15 +2,13 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"golang.org/x/crypto/bcrypt"
 	"web-api/cache"
-	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
-	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -72,47 +70,15 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 	user.Username = service.Username
 	user.Password = string(bytes)
 	user.CurrencyId = service.CurrencyId
-	tx := model.DB.Begin()
-	err = tx.Save(&user).Error
-	if err != nil {
-		tx.Rollback()
-		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
-	}
 
-	userSum := model.UserSum{
-		UserId: user.ID,
-	}
-	err = tx.Create(&userSum).Error
-	if err != nil {
-		tx.Rollback()
-		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
-	}
-
-	var currency model.CurrencyGameProvider
-	err = model.DB.Where(`game_provider_id`, consts.GameProvider["fb"]).Where(`currency_id`, service.CurrencyId).First(&currency).Error
-	if err != nil {
-		tx.Rollback()
+	err = CreateUser(user)
+	if err != nil && errors.Is(err, ErrEmptyCurrencyId) {
 		return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
-	}
-	client := util.FBFactory.NewClient()
-	res, err := client.CreateUser(user.Username, []int64{}, 0)
-	if err != nil {
-		tx.Rollback()
+	} else if err != nil && errors.Is(err, ErrFbCreateUserFailed) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
+	} else if err != nil {
+		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 	}
-	gpu := model.GameProviderUser{
-		GameProviderId:     consts.GameProvider["fb"],
-		UserId:             user.ID,
-		ExternalUserId:     user.Username,
-		ExternalCurrencyId: currency.Value,
-		ExternalId:         fmt.Sprintf("%d", res),
-	}
-	err = tx.Save(&gpu).Error
-	if err != nil {
-		tx.Rollback()
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
-	}
-	tx.Commit()
 
 	return serializer.Response{
 		Msg: i18n.T("success"),
