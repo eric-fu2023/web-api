@@ -5,7 +5,6 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
-	"strconv"
 	"time"
 	"web-api/cache"
 	"web-api/conf/consts"
@@ -125,16 +124,6 @@ func UserDelete(c *gin.Context) {
 	var service service.UserDeleteService
 	if err := c.ShouldBind(&service); err == nil {
 		res := service.Delete(c)
-		c.JSON(200, res)
-	} else {
-		c.JSON(400, ErrorResponse(c, service, err))
-	}
-}
-
-func UserRegister(c *gin.Context) {
-	var service service.UserRegisterService
-	if err := c.ShouldBind(&service); err == nil {
-		res := service.Register(c)
 		c.JSON(200, res)
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
