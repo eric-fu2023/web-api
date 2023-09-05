@@ -3,14 +3,16 @@ package service
 import (
 	"errors"
 	"fmt"
+	"os"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/util"
 )
 
 var (
-	ErrEmptyCurrencyId    = errors.New("empty currency id")
-	ErrFbCreateUserFailed = errors.New("fb create user failed")
+	ErrEmptyCurrencyId      = errors.New("empty currency id")
+	ErrFbCreateUserFailed   = errors.New("fb create user failed")
+	ErrSabaCreateUserFailed = errors.New("saba create user failed")
 )
 
 func CreateUser(user model.User) error {
@@ -29,32 +31,55 @@ func CreateUser(user model.User) error {
 		tx.Rollback()
 		return err
 	}
+	tx.Commit()
 
-	var currency model.CurrencyGameProvider
-	err = model.DB.Where(`game_provider_id`, consts.GameProvider["fb"]).Where(`currency_id`, user.CurrencyId).First(&currency).Error
+	var currencies []model.CurrencyGameProvider
+	err = model.DB.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
 	if err != nil {
-		tx.Rollback()
 		return ErrEmptyCurrencyId
 	}
-	client := util.FBFactory.NewClient()
-	res, err := client.CreateUser(user.Username, []int64{}, 0)
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("%w: %w", ErrFbCreateUserFailed, err)
+	currMap := make(map[int64]int64)
+	for _, cur := range currencies {
+		currMap[cur.GameProviderId] = cur.Value
 	}
-	gpu := model.GameProviderUser{
-		GameProviderId:     consts.GameProvider["fb"],
-		UserId:             user.ID,
-		ExternalUserId:     user.Username,
-		ExternalCurrencyId: currency.Value,
-		ExternalId:         fmt.Sprintf("%d", res),
+
+	fbCurrency, fbCurrExists := currMap[consts.GameProvider["fb"]]
+	if !fbCurrExists {
+		return ErrEmptyCurrencyId
 	}
-	err = tx.Save(&gpu).Error
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("%w: %w", ErrFbCreateUserFailed, err)
+	fbClient := util.FBFactory.NewClient()
+	if res, e := fbClient.CreateUser(user.Username, []int64{}, 0); e == nil {
+		fbGpu := model.GameProviderUser{
+			GameProviderId:     consts.GameProvider["fb"],
+			UserId:             user.ID,
+			ExternalUserId:     user.Username,
+			ExternalCurrencyId: fbCurrency,
+			ExternalId:         fmt.Sprintf("%d", res),
+		}
+		err = model.DB.Save(&fbGpu).Error
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrFbCreateUserFailed, err)
+		}
 	}
-	tx = tx.Commit()
+
+	sabaCurrency, sabaCurrExists := currMap[consts.GameProvider["saba"]]
+	if !sabaCurrExists {
+		return ErrEmptyCurrencyId
+	}
+	sabaClient := util.SabaFactory.NewClient()
+	if res, e := sabaClient.CreateMember(user.Username, sabaCurrency, os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
+		sabaGpu := model.GameProviderUser{
+			GameProviderId:     consts.GameProvider["saba"],
+			UserId:             user.ID,
+			ExternalUserId:     user.Username,
+			ExternalCurrencyId: sabaCurrency,
+			ExternalId:         res,
+		}
+		err = model.DB.Save(&sabaGpu).Error
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrSabaCreateUserFailed, err)
+		}
+	}
 
 	return nil
 }

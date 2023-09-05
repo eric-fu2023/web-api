@@ -451,4 +451,5 @@ empty_currency_id: "Please choose a currency."
 setup_finished: "You had completed the initial setup."
 finish_setup: "Please finish the account setup first."
 
-fb_create_user_failed: "Creating user at the game service provider failed."
+fb_create_user_failed: "Creating FB user can't be completed."
+saba_create_user_failed: "Creating Saba user can't be completed."

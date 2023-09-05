@@ -6,6 +6,7 @@ import (
 	"time"
 	"web-api/api"
 	fb_api "web-api/api/fb"
+	saba_api "web-api/api/saba"
 	"web-api/middleware"
 )
 
@@ -24,6 +25,13 @@ func NewRouter() *gin.Engine {
 			fbCallback.POST("/sync_transaction", fb_api.CallbackSyncTransaction)
 			fbCallback.POST("/sync_orders", fb_api.CallbackSyncOrders)
 			fbCallback.POST("/sync_cashout", fb_api.CallbackSyncCashout)
+		}
+	}
+
+	if os.Getenv("GAME_SABA_EXPOSE_CALLBACKS") == "true" {
+		sabaCallback := r.Group("/saba")
+		{
+			sabaCallback.POST("/getbalance", saba_api.CallbackGetBalance)
 		}
 	}
 

@@ -3,8 +3,8 @@ module web-api
 go 1.20
 
 require (
-	blgit.rfdev.tech/taya/game-service v0.0.0-20230831083443-a944b753fe72
-	blgit.rfdev.tech/taya/ploutos-object v0.0.8-0.20230905082230-cd53ed1edd11
+	blgit.rfdev.tech/taya/game-service v0.0.0-20230905103007-a01bb527a9c9
+	blgit.rfdev.tech/taya/ploutos-object v0.0.8-0.20230905092128-09c89f6d6d0c
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20230612034643-d8459acf0a2c
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/chenyahui/gin-cache v1.7.1
@@ -21,10 +21,10 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.711
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.711
 	go.mongodb.org/mongo-driver v1.11.2
-	golang.org/x/crypto v0.12.0
+	golang.org/x/crypto v0.13.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
-	golang.org/x/sys v0.11.0
-	golang.org/x/text v0.12.0
+	golang.org/x/sys v0.12.0
+	golang.org/x/text v0.13.0
 	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.2

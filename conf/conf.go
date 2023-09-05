@@ -43,4 +43,5 @@ func Init() {
 	model.SetupMongo(os.Getenv("MONGO_URI"))
 
 	util.InitFbFactory()
+	util.InitSabaFactory()
 }

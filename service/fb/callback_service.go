@@ -15,8 +15,8 @@ import (
 
 const (
 	MONGODB_FB_CALLBACK_SYNC_TRANSACTION = "fb_callback_sync_transaction"
-	MONGODB_FB_CALLBACK_SYNC_ORDERS = "fb_callback_sync_orders"
-	MONGODB_FB_CALLBACK_SYNC_CASHOUT = "fb_callback_sync_cashout"
+	MONGODB_FB_CALLBACK_SYNC_ORDERS      = "fb_callback_sync_orders"
+	MONGODB_FB_CALLBACK_SYNC_CASHOUT     = "fb_callback_sync_cashout"
 )
 
 func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.BaseResponse, err error) {
@@ -33,7 +33,7 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 	}
 
 	data := callback.BalanceResponse{
-		Balance: fmt.Sprintf("%.2f", float64(balance) / 100),
+		Balance:    fmt.Sprintf("%.2f", float64(balance)/100),
 		CurrencyId: gpu.ExternalCurrencyId,
 	}
 	res = callback.BaseResponse{
@@ -145,18 +145,18 @@ func SyncCashoutCallback(c *gin.Context, req callback.SyncCashoutRequest) (res c
 
 func ProcessTransaction(req callback.OrderPayRequest, userId int64, balance int64, remainingWager int64, maxWithdrawable int64) (err error) {
 	fbTx := model.FbTransaction{
-		UserId: userId,
-		TransactionId: req.TransactionId,
-		ExternalUserId: req.UserId,
-		MerchantId: req.MerchantId,
-		MerchantUserId: req.MerchantUserId,
-		BusinessId: req.BusinessId,
-		TransactionType: req.TransactionType,
-		TransferType: req.TransferType,
+		UserId:             userId,
+		TransactionId:      req.TransactionId,
+		ExternalUserId:     req.UserId,
+		MerchantId:         req.MerchantId,
+		MerchantUserId:     req.MerchantUserId,
+		BusinessId:         req.BusinessId,
+		TransactionType:    req.TransactionType,
+		TransferType:       req.TransferType,
 		ExternalCurrencyId: req.CurrencyId,
-		Amount: int64(req.Amount * 100),
-		Status: req.Status,
-		RelatedId: req.RelatedId,
+		Amount:             int64(req.Amount * 100),
+		Status:             req.Status,
+		RelatedId:          req.RelatedId,
 	}
 	if fbTx.Status == 0 { // skip transactions with status 0
 		return
@@ -177,8 +177,8 @@ func ProcessTransaction(req callback.OrderPayRequest, userId int64, balance int6
 		newWithdrawable = w
 	}
 	userSum := model.UserSum{
-		Balance: newBalance,
-		RemainingWager: newRemainingWager,
+		Balance:         newBalance,
+		RemainingWager:  newRemainingWager,
 		MaxWithdrawable: newWithdrawable,
 	}
 	rows := tx.Select(`balance`, `remaining_wager`, `max_withdrawable`).Where(`user_id`, userId).Updates(userSum).RowsAffected
@@ -267,7 +267,7 @@ func GetSums(gpu model.GameProviderUser) (balance int64, remainingWager int64, m
 
 func callbackErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {
 	res = callback.BaseResponse{
-		Code: 1,
+		Code:    1,
 		Message: err.Error(),
 	}
 	util.Log().Error(res.Message, c.Request.URL, c.Request.Header, util.MarshalService(req))

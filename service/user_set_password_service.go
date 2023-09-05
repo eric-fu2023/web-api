@@ -45,9 +45,9 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 }
 
 type UserFinishSetupService struct {
-	Username    string `form:"username" json:"username" binding:"required"`
-	Password    string `form:"password" json:"password" binding:"required"`
-	CurrencyId  int64 `form:"currency_id" json:"currency_id" binding:"required,numeric"`
+	Username   string `form:"username" json:"username" binding:"required,excludesall=' '"`
+	Password   string `form:"password" json:"password" binding:"required"`
+	CurrencyId int64  `form:"currency_id" json:"currency_id" binding:"required,numeric"`
 }
 
 func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
@@ -76,6 +76,8 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 		return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
 	} else if err != nil && errors.Is(err, ErrFbCreateUserFailed) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
+	} else if err != nil && errors.Is(err, ErrSabaCreateUserFailed) {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("saba_create_user_failed"), err)
 	} else if err != nil {
 		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 	}
@@ -86,7 +88,7 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 }
 
 type UserCheckUsernameService struct {
-	Username    string `form:"username" json:"username" binding:"required"`
+	Username string `form:"username" json:"username" binding:"required,excludesall=' '"`
 }
 
 func (service *UserCheckUsernameService) Check(c *gin.Context) serializer.Response {

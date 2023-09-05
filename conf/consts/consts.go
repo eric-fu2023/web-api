@@ -14,7 +14,8 @@ var (
 		4: "mobile",
 	}
 	GameProvider = map[string]int64{
-		"fb": 1,
+		"fb":   1,
+		"saba": 2,
 	}
 	WebSocketMessageType = map[string]int64{
 		"text":       1,
