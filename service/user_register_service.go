@@ -1,44 +1,57 @@
 package service
 
 import (
+	models "blgit.rfdev.tech/taya/ploutos-object"
+	"errors"
+	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/util/i18n"
 )
 
 // UserRegisterService 管理用户注册服务
 type UserRegisterService struct {
-	Nickname        string `form:"nickname" json:"nickname" binding:"required,min=2,max=30"`
-	UserName        string `form:"user_name" json:"user_name" binding:"required,min=5,max=30"`
-	Password        string `form:"password" json:"password" binding:"required,min=8,max=40"`
-	PasswordConfirm string `form:"password_confirm" json:"password_confirm" binding:"required,min=8,max=40"`
+	Username   string `form:"username" json:"username" binding:"required"`
+	Password   string `form:"password" json:"password" binding:"required"`
+	CurrencyId int64  `form:"currency_id" json:"currency_id" binding:"required,numeric"`
 }
 
-// valid 验证表单
-func (service *UserRegisterService) valid() *serializer.Response {
-	if service.PasswordConfirm != service.Password {
-		return &serializer.Response{
-			Code: 40001,
-			Msg:  "两次输入的密码不相同",
-		}
+func (service *UserRegisterService) Register(c *gin.Context) serializer.Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+
+	var existing model.User
+	if r := model.DB.Where(`username`, service.Username).Limit(1).Find(&existing).RowsAffected; r != 0 {
+		return serializer.Err(c, service, serializer.CodeExistingUsername, i18n.T("existing_username"), nil)
 	}
 
-	count := int64(0)
-	model.DB.Model(&model.User{}).Where("nickname = ?", service.Nickname).Count(&count)
-	if count > 0 {
-		return &serializer.Response{
-			Code: 40001,
-			Msg:  "昵称被占用",
-		}
+	bytes, err := bcrypt.GenerateFromPassword([]byte(service.Password), model.PassWordCost)
+	if err != nil {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("密码加密失败"), err)
 	}
 
-	count = 0
-	model.DB.Model(&model.User{}).Where("user_name = ?", service.UserName).Count(&count)
-	if count > 0 {
-		return &serializer.Response{
-			Code: 40001,
-			Msg:  "用户名已经注册",
-		}
+	user := model.User{
+		UserC: models.UserC{
+			Username:   service.Username,
+			Password:   string(bytes),
+			Status:     1,
+			Role:       1, // default role user
+			CurrencyId: service.CurrencyId,
+			BrandId:    int64(c.MustGet("_brand").(int)),
+			AgentId:    int64(c.MustGet("_agent").(int)),
+		},
 	}
 
-	return nil
+	err = CreateUser(user)
+	if err != nil && errors.Is(err, ErrEmptyCurrencyId) {
+		return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
+	} else if err != nil && errors.Is(err, ErrFbCreateUserFailed) {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
+	} else if err != nil {
+		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
+	}
+
+	return serializer.Response{
+		Msg: i18n.T("success"),
+	}
 }

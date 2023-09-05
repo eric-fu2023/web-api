@@ -7,8 +7,10 @@ import (
 	"strings"
 	"time"
 	"web-api/cache"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -41,7 +43,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		return serializer.ParamErr(c, service, errStr, nil)
 	}
 
-	q :=  model.DB
+	q := model.DB
 	if service.CountryCode != "" && service.Mobile != "" {
 		q = q.Where(`country_code = ? AND mobile = ?`, service.CountryCode, service.Mobile)
 	} else {
@@ -76,10 +78,31 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	}
 	cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, 20*time.Minute)
 
+	if err = service.logSuccessfulLogin(user); err != nil {
+		util.Log().Error("log successful login err", err)
+	}
+
 	return serializer.Response{
 		Data: map[string]interface{}{
-			"token": tokenString,
+			"token":          tokenString,
 			"setup_required": setupRequired,
 		},
 	}
+}
+
+func (service *UserLoginOtpService) logSuccessfulLogin(user model.User) error {
+	event := model.AuthEvent{
+		AuthEventC: models.AuthEventC{
+			UserId:      user.ID,
+			Type:        consts.AuthEventType["login"],
+			Status:      consts.AuthEventStatus["successful"],
+			DateTime:    time.Now().Format(time.DateTime),
+			LoginMethod: consts.AuthEventLoginMethod["otp"],
+			Email:       service.Email,
+			CountryCode: service.CountryCode,
+			Mobile:      service.Mobile,
+		},
+	}
+
+	return model.LogAuthEvent(event)
 }
