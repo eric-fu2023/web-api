@@ -8,6 +8,8 @@ import (
 )
 
 func CallbackGetBalance(c *gin.Context) {
+	decompressedBody, _ := callback.DecompressRequest(c.Request.Body)
+	c.Request.Body = decompressedBody
 	var req callback.GetBalanceRequest
 	if err := c.ShouldBind(&req); err == nil {
 		res, _ := saba.GetBalanceCallback(c, req)

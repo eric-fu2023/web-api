@@ -3,7 +3,7 @@ module web-api
 go 1.20
 
 require (
-	blgit.rfdev.tech/taya/game-service v0.0.0-20230905103007-a01bb527a9c9
+	blgit.rfdev.tech/taya/game-service v0.0.0-20230906063531-810f123d64b2
 	blgit.rfdev.tech/taya/ploutos-object v0.0.8-0.20230905092128-09c89f6d6d0c
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20230612034643-d8459acf0a2c
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
