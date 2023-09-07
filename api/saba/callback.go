@@ -46,6 +46,13 @@ func CallbackPlaceBet(c *gin.Context) {
 	}
 }
 
+func CallbackConfirmBet(c *gin.Context) {
+	c.JSON(200, map[string]interface{}{
+		"status":  "0",
+		"balance": "1001.20",
+	})
+}
+
 func ErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {
 	res = callback.BaseResponse{
 		Status: "203",
