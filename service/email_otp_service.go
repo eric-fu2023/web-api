@@ -1,6 +1,7 @@
 package service
 
 import (
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"blgit.rfdev.tech/zhibo/utilities"
 	"context"
 	"fmt"
@@ -11,7 +12,9 @@ import (
 	"strings"
 	"time"
 	"web-api/cache"
+	"web-api/model"
 	"web-api/serializer"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -35,12 +38,7 @@ func (service *EmailOtpService) GetEmail(c *gin.Context) serializer.Response {
 	}
 
 	if os.Getenv("ENV") == "production" || os.Getenv("SEND_EMAIL_IN_TEST") == "true" {
-		emailProvider := utilities.EmailProvider{
-			MailGunDomain:     os.Getenv("MAILGUN_DOMAIN"),
-			MailGunPrivateKey: os.Getenv("MAILGUN_PRIVATE_KEY"),
-			MailGunSender:     os.Getenv("MAILGUN_SENDER"),
-		}
-		if err := emailProvider.Send(service.Email, i18n.T("Otp_email_subject"), fmt.Sprintf(i18n.T("Otp_html_email"), otp)); err != nil {
+		if err := service.sendEmail(c, otp); err != nil {
 			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Email_fail"), err)
 		}
 	}
@@ -49,4 +47,32 @@ func (service *EmailOtpService) GetEmail(c *gin.Context) serializer.Response {
 	return serializer.Response{
 		Msg: i18n.T("success"),
 	}
+}
+
+func (service *EmailOtpService) sendEmail(c *gin.Context, otp string) error {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+
+	emailProvider := utilities.EmailProvider{
+		MailGunDomain:     os.Getenv("MAILGUN_DOMAIN"),
+		MailGunPrivateKey: os.Getenv("MAILGUN_PRIVATE_KEY"),
+		MailGunSender:     os.Getenv("MAILGUN_SENDER"),
+	}
+	if err := emailProvider.Send(service.Email, i18n.T("Otp_email_subject"), fmt.Sprintf(i18n.T("Otp_html_email"), otp)); err != nil {
+		return err
+	}
+
+	event := model.OtpEvent{
+		OtpEventC: models.OtpEventC{
+			Email:    service.Email,
+			Otp:      otp,
+			Provider: utilities.MailGunName,
+			DateTime: time.Now().Format(time.DateTime),
+		},
+	}
+	if err := model.LogOtpEvent(event); err != nil {
+		// Just log error
+		util.Log().Error("log otp event err", err)
+	}
+
+	return nil
 }

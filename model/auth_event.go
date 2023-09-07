@@ -15,7 +15,7 @@ type AuthEvent struct {
 }
 
 func LogAuthEvent(event AuthEvent) error {
-	coll := MongoDB.Collection(event.TableName())
+	coll := MongoDB.Collection(event.CollectionName())
 	if _, err := coll.InsertOne(context.TODO(), event.AuthEventC); err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func GetLatestAuthEvents(userId int64, limit int) ([]AuthEvent, error) {
 		limitStage,
 	}
 
-	coll := MongoDB.Collection(AuthEvent{}.TableName())
+	coll := MongoDB.Collection(AuthEvent{}.CollectionName())
 	allowDiskUseTrue := true
 	opts := &options.AggregateOptions{AllowDiskUse: &allowDiskUseTrue}
 
