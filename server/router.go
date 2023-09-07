@@ -33,7 +33,7 @@ func NewRouter() *gin.Engine {
 		{
 			sabaCallback.POST("/getbalance", saba_api.CallbackGetBalance)
 			sabaCallback.POST("/placebet", saba_api.CallbackPlaceBet)
-			sabaCallback.POST("/confirmbet", saba_api.CallbackConfirmBet)
+			//sabaCallback.POST("/confirmbet", saba_api.CallbackConfirmBet)
 		}
 	}
 
