@@ -5,7 +5,7 @@ go 1.20
 require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20230907044635-d1a916f046f4
 	blgit.rfdev.tech/taya/ploutos-object v0.0.9-0.20230907070823-aa515a935ab3
-	blgit.rfdev.tech/zhibo/utilities v0.0.0-20230612034643-d8459acf0a2c
+	blgit.rfdev.tech/zhibo/utilities v0.0.0-20230907042417-f364543fe609
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/chenyahui/gin-cache v1.7.1
 	github.com/gin-contrib/cors v1.3.1
@@ -15,6 +15,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/gorilla/websocket v1.5.0
+	github.com/jinzhu/copier v0.4.0
 	github.com/joho/godotenv v1.3.0
 	github.com/mailgun/mailgun-go/v4 v4.10.0
 	github.com/robfig/cron/v3 v3.0.1
@@ -57,7 +58,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgx/v5 v5.3.1 // indirect
 	github.com/jellydator/ttlcache/v2 v2.11.1 // indirect
-	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
