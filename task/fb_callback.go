@@ -11,6 +11,7 @@ import (
 	"time"
 	"web-api/cache"
 	"web-api/conf/consts"
+	"web-api/service"
 	"web-api/service/fb"
 	"web-api/util"
 )
@@ -45,13 +46,13 @@ func ProcessFbSyncTransaction() {
 						continue
 					}
 
-					gpu, err := fb.GetGameProviderUser(consts.GameProvider["fb"], orderPayRequest.MerchantUserId)
+					gpu, err := service.GetGameProviderUser(consts.GameProvider["fb"], orderPayRequest.MerchantUserId)
 					if err != nil {
 						util.Log().Error("Task:ProcessFbSyncTransaction error", err, orderPayRequest)
 						return
 					}
 
-					balance, remainingWager, maxWithdrawable, err := fb.GetSums(gpu)
+					balance, remainingWager, maxWithdrawable, err := service.GetSums(gpu)
 					if err != nil {
 						util.Log().Error("Task:ProcessFbSyncTransaction error", err, orderPayRequest)
 						return

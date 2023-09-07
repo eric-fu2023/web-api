@@ -47,10 +47,22 @@ func CallbackPlaceBet(c *gin.Context) {
 }
 
 func CallbackConfirmBet(c *gin.Context) {
-	c.JSON(200, map[string]interface{}{
-		"status":  "0",
-		"balance": "1001.20",
-	})
+	decompressedBody, e := callback.DecompressRequest(c.Request.Body)
+	if e != nil {
+		c.JSON(200, ErrorResponse(c, nil, e))
+		return
+	}
+	c.Request.Body = decompressedBody
+	var req callback.ConfirmBetRequest
+	if err := c.ShouldBind(&req); err == nil {
+		if res, err := saba.ConfirmBetCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
 }
 
 func ErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {

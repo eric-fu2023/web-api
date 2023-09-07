@@ -10,6 +10,7 @@ import (
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/service"
 	"web-api/util"
 )
 
@@ -20,13 +21,13 @@ const (
 )
 
 func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.BaseResponse, err error) {
-	gpu, err := GetGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
+	gpu, err := service.GetGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
 	if err != nil {
 		res = callbackErrorResponse(c, req, err)
 		return
 	}
 
-	balance, _, _, err := GetSums(gpu)
+	balance, _, _, err := service.GetSums(gpu)
 	if err != nil {
 		res = callbackErrorResponse(c, req, err)
 		return
@@ -46,13 +47,13 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
 	j, _ := json.Marshal(req)
 	fmt.Println("order_pay: ", string(j))
-	gpu, err := GetGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
+	gpu, err := service.GetGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
 	if err != nil {
 		res = callbackErrorResponse(c, req, err)
 		return
 	}
 
-	balance, remainingWager, maxWithdrawable, err := GetSums(gpu)
+	balance, remainingWager, maxWithdrawable, err := service.GetSums(gpu)
 	if err != nil {
 		res = callbackErrorResponse(c, req, err)
 		return
@@ -211,6 +212,15 @@ func ProcessTransaction(req callback.OrderPayRequest, userId int64, balance int6
 	return
 }
 
+func callbackErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {
+	res = callback.BaseResponse{
+		Code:    1,
+		Message: err.Error(),
+	}
+	util.Log().Error(res.Message, c.Request.URL, c.Request.Header, util.MarshalService(req))
+	return
+}
+
 func calWager(fbTx model.FbTransaction, originalWager int64) (newWager int64, err error) {
 	newWager = originalWager
 	coeff, exists := consts.FbTransferTypeCalculateWager[fbTx.TransferType]
@@ -245,32 +255,6 @@ func calMaxWithdrawable(fbTx model.FbTransaction, balance int64, remainingWager 
 			newWithdrawable = balance
 		}
 	}
-	return
-}
-
-func GetGameProviderUser(provider int64, userId string) (gpu model.GameProviderUser, err error) {
-	err = gpu.GetByProviderAndExternalUser(provider, userId)
-	return
-}
-
-func GetSums(gpu model.GameProviderUser) (balance int64, remainingWager int64, maxWithdrawable int64, err error) {
-	var userSum model.UserSum
-	err = model.DB.Where(`user_id`, gpu.UserId).First(&userSum).Error
-	if err != nil {
-		return
-	}
-	balance = userSum.Balance
-	remainingWager = userSum.RemainingWager
-	maxWithdrawable = userSum.MaxWithdrawable
-	return
-}
-
-func callbackErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {
-	res = callback.BaseResponse{
-		Code:    1,
-		Message: err.Error(),
-	}
-	util.Log().Error(res.Message, c.Request.URL, c.Request.Header, util.MarshalService(req))
 	return
 }
 
