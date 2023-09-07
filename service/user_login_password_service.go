@@ -70,7 +70,20 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 	}
 	cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, 20*time.Minute)
 
-	if err = service.logSuccessfulLogin(user); err != nil {
+	loginTime := time.Now()
+	update := model.User{
+		UserC: models.UserC{
+			LastLoginIp:   c.ClientIP(),
+			LastLoginTime: loginTime,
+		},
+	}
+	if err = model.DB.Model(&user).
+		Select("last_login_ip", "last_login_time").
+		Updates(update).Error; err != nil {
+		util.Log().Error("update last login ip and time err", err)
+	}
+
+	if err = service.logSuccessfulLogin(c, user, loginTime); err != nil {
 		util.Log().Error("log successful login err", err)
 	}
 
@@ -104,7 +117,7 @@ func (service *UserLoginPasswordService) handlePasswordMismatch(c *gin.Context, 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	res := serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("login_failed"), nil)
 
-	err := service.logFailedLogin(user)
+	err := service.logFailedLogin(c, user)
 	if err != nil {
 		util.Log().Error("log failed login err", err)
 		return res
@@ -153,7 +166,13 @@ func (service *UserLoginPasswordService) handlePasswordMismatch(c *gin.Context, 
 	return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Password_lock_wait"), nil)
 }
 
-func (service *UserLoginPasswordService) logSuccessfulLogin(user model.User) error {
+func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time) error {
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil {
+		// Just log error if failed
+		util.Log().Error("get device info err", err)
+	}
+
 	event := model.AuthEvent{
 		AuthEventC: models.AuthEventC{
 			UserId:      user.ID,
@@ -164,14 +183,22 @@ func (service *UserLoginPasswordService) logSuccessfulLogin(user model.User) err
 			Email:       service.Email,
 			CountryCode: service.CountryCode,
 			Mobile:      service.Mobile,
-			Username:    service.Username,
+			Username:    user.Username,
+			Ip:          c.ClientIP(),
+			Platform:    deviceInfo.Platform,
 		},
 	}
 
 	return model.LogAuthEvent(event)
 }
 
-func (service *UserLoginPasswordService) logFailedLogin(user model.User) error {
+func (service *UserLoginPasswordService) logFailedLogin(c *gin.Context, user model.User) error {
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil {
+		// Just log error if failed
+		util.Log().Error("get device info err", err)
+	}
+
 	event := model.AuthEvent{
 		AuthEventC: models.AuthEventC{
 			UserId:      user.ID,
@@ -182,7 +209,9 @@ func (service *UserLoginPasswordService) logFailedLogin(user model.User) error {
 			Email:       service.Email,
 			CountryCode: service.CountryCode,
 			Mobile:      service.Mobile,
-			Username:    service.Username,
+			Username:    user.Username,
+			Ip:          c.ClientIP(),
+			Platform:    deviceInfo.Platform,
 		},
 	}
 

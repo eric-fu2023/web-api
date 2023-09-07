@@ -78,7 +78,20 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	}
 	cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, 20*time.Minute)
 
-	if err = service.logSuccessfulLogin(user); err != nil {
+	loginTime := time.Now()
+	update := model.User{
+		UserC: models.UserC{
+			LastLoginIp:   c.ClientIP(),
+			LastLoginTime: loginTime,
+		},
+	}
+	if err = model.DB.Model(&user).
+		Select("last_login_ip", "last_login_time").
+		Updates(update).Error; err != nil {
+		util.Log().Error("update last login ip and time err", err)
+	}
+
+	if err = service.logSuccessfulLogin(c, user, loginTime); err != nil {
 		util.Log().Error("log successful login err", err)
 	}
 
@@ -90,17 +103,26 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	}
 }
 
-func (service *UserLoginOtpService) logSuccessfulLogin(user model.User) error {
+func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time) error {
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil {
+		// Just log error if failed
+		util.Log().Error("get device info err", err)
+	}
+
 	event := model.AuthEvent{
 		AuthEventC: models.AuthEventC{
 			UserId:      user.ID,
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["successful"],
-			DateTime:    time.Now().Format(time.DateTime),
+			DateTime:    loginTime.Format(time.DateTime),
 			LoginMethod: consts.AuthEventLoginMethod["otp"],
+			Username:    user.Username,
 			Email:       service.Email,
 			CountryCode: service.CountryCode,
 			Mobile:      service.Mobile,
+			Ip:          c.ClientIP(),
+			Platform:    deviceInfo.Platform,
 		},
 	}
 

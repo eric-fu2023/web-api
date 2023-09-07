@@ -30,13 +30,22 @@ func UserLogout(c *gin.Context) {
 		return
 	}
 
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil {
+		// Just log error if failed
+		util.Log().Error("get device info err", err)
+	}
+
 	// Add logout log
 	event := model.AuthEvent{
 		AuthEventC: models.AuthEventC{
 			UserId:   user.ID,
+			Username: user.Username,
 			Type:     consts.AuthEventType["logout"],
 			Status:   consts.AuthEventStatus["successful"],
 			DateTime: time.Now().Format(time.DateTime),
+			Ip:       c.ClientIP(),
+			Platform: deviceInfo.Platform,
 		},
 	}
 	if err := model.LogAuthEvent(event); err != nil {
