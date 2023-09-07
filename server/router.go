@@ -32,6 +32,7 @@ func NewRouter() *gin.Engine {
 		sabaCallback := r.Group("/saba")
 		{
 			sabaCallback.POST("/getbalance", saba_api.CallbackGetBalance)
+			sabaCallback.POST("/placebet", saba_api.CallbackPlaceBet)
 		}
 	}
 

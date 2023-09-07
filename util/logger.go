@@ -108,6 +108,9 @@ func Log() *Logger {
 }
 
 func MarshalService(service any) string {
+	if service == nil {
+		return ""
+	}
 	value := reflect.ValueOf(service)
 	var field reflect.Value
 	if value.Kind() == reflect.Ptr {
