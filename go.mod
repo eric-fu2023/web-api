@@ -3,8 +3,8 @@ module web-api
 go 1.20
 
 require (
-	blgit.rfdev.tech/taya/game-service v0.0.0-20230907101711-6dfc6359e1ce
-	blgit.rfdev.tech/taya/ploutos-object v0.0.9-0.20230907101609-d5ae6be2b586
+	blgit.rfdev.tech/taya/game-service v0.0.0-20230908025010-b66f4cb04cfc
+	blgit.rfdev.tech/taya/ploutos-object v0.0.9-0.20230908024935-1c9e555ead67
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20230907042417-f364543fe609
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/chenyahui/gin-cache v1.7.1

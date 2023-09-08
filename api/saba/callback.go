@@ -65,6 +65,25 @@ func CallbackConfirmBet(c *gin.Context) {
 	}
 }
 
+func CallbackCancelBet(c *gin.Context) {
+	decompressedBody, e := callback.DecompressRequest(c.Request.Body)
+	if e != nil {
+		c.JSON(200, ErrorResponse(c, nil, e))
+		return
+	}
+	c.Request.Body = decompressedBody
+	var req callback.CancelBetRequest
+	if err := c.ShouldBind(&req); err == nil {
+		if res, err := saba.CancelBetCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
+}
+
 func ErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {
 	res = callback.BaseResponse{
 		Status: "203",

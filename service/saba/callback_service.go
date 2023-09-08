@@ -191,7 +191,84 @@ func ConfirmBetCallback(c *gin.Context, req callback.ConfirmBetRequest) (res any
 	}
 	tx.Commit()
 
-	res = callback.ConfirmBetResponse{
+	res = callback.ConfirmCancelBetResponse{
+		BaseResponse: callback.BaseResponse{
+			Status: "0",
+		},
+		Balance: float64(newBalance) / 100,
+	}
+	return
+}
+
+func CancelBetCallback(c *gin.Context, req callback.CancelBetRequest) (res any, err error) {
+	j, _ := json.Marshal(req)
+	fmt.Println("cancelbet: ", string(j))
+	gpu, err := service.GetGameProviderUser(consts.GameProvider["saba"], req.Message.UserId)
+	if err != nil {
+		return
+	}
+
+	balance, wager, _, err := service.GetSums(gpu)
+	if err != nil {
+		return
+	}
+
+	newBalance := balance
+	for _, txn := range req.Message.Txns {
+		var sabaTx model.SabaTransaction
+		var changedAmount int64
+
+		if rows := model.DB.Where(`ref_id`, txn.RefId).First(&sabaTx).RowsAffected; rows == 0 {
+			continue
+		}
+		if sabaTx.CancOperationId != "" { // if succeeded before, skip that cancelbet txn
+			continue
+		}
+		sabaTx.CancOperationId = req.Message.OperationId
+		if v, e := time.Parse(time.RFC3339, req.Message.UpdateTime); e == nil {
+			t := v.UTC()
+			sabaTx.CancUpdateTime = &t
+		}
+		changedAmount = int64(txn.CreditAmount * 100)
+		sabaTx.ActualAmount = sabaTx.ActualAmount - changedAmount
+		sabaTx.DebitAmount = sabaTx.DebitAmount - changedAmount
+
+		tx := model.DB.Begin()
+		if tx.Error != nil {
+			err = tx.Error
+			return
+		}
+		newBalance += changedAmount
+		if rows := tx.Model(model.UserSum{}).Where(`user_id`, gpu.UserId).Update("balance", gorm.Expr("balance + ?", changedAmount)).RowsAffected; rows == 0 {
+			err = errors.New("invalid transaction")
+			tx.Rollback()
+			return
+		}
+		transaction := model.Transaction{
+			UserId:            gpu.UserId,
+			Amount:            changedAmount,
+			BalanceBefore:     balance,
+			BalanceAfter:      newBalance,
+			SabaTransactionId: sabaTx.ID,
+			Wager:             0,
+			WagerBefore:       wager,
+			WagerAfter:        wager,
+			IsAdjustment:      true,
+		}
+		err = tx.Save(&transaction).Error
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		err = tx.Save(&sabaTx).Error
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		tx.Commit()
+	}
+
+	res = callback.ConfirmCancelBetResponse{
 		BaseResponse: callback.BaseResponse{
 			Status: "0",
 		},
