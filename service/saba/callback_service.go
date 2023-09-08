@@ -159,30 +159,32 @@ func ConfirmBetCallback(c *gin.Context, req callback.ConfirmBetRequest) (res any
 		err = tx.Error
 		return
 	}
-	rows := tx.Model(model.UserSum{}).Where(`user_id`, gpu.UserId).Update("balance", gorm.Expr("balance + ?", changedAmount)).RowsAffected
-	if rows == 0 {
-		err = errors.New("invalid transaction")
-		tx.Rollback()
-		return
+	newBalance := balance + changedAmount
+	if changedAmount != 0 {
+		rows := tx.Model(model.UserSum{}).Where(`user_id`, gpu.UserId).Update("balance", gorm.Expr("balance + ?", changedAmount)).RowsAffected
+		if rows == 0 {
+			err = errors.New("invalid transaction")
+			tx.Rollback()
+			return
+		}
+		transaction := model.Transaction{
+			UserId:            gpu.UserId,
+			Amount:            changedAmount,
+			BalanceBefore:     balance,
+			BalanceAfter:      newBalance,
+			SabaTransactionId: sabaTx.ID,
+			Wager:             0,
+			WagerBefore:       wager,
+			WagerAfter:        wager,
+			IsAdjustment:      true,
+		}
+		err = tx.Save(&transaction).Error
+		if err != nil {
+			tx.Rollback()
+			return
+		}
 	}
 	err = tx.Save(&sabaTx).Error
-	if err != nil {
-		tx.Rollback()
-		return
-	}
-	newBalance := balance + changedAmount
-	transaction := model.Transaction{
-		UserId:            gpu.UserId,
-		Amount:            changedAmount,
-		BalanceBefore:     balance,
-		BalanceAfter:      newBalance,
-		SabaTransactionId: sabaTx.ID,
-		Wager:             0,
-		WagerBefore:       wager,
-		WagerAfter:        wager,
-		IsAdjustment:      true,
-	}
-	err = tx.Save(&transaction).Error
 	if err != nil {
 		tx.Rollback()
 		return
