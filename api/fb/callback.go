@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"web-api/api"
 	"web-api/service/fb"
+	"web-api/util"
 )
 
 func CallbackHealth(c *gin.Context) {
@@ -16,8 +17,11 @@ func CallbackHealth(c *gin.Context) {
 func CallbackBalance(c *gin.Context) {
 	var req callback.BalanceRequest
 	if err := c.ShouldBind(&req); err == nil {
-		res, _ := fb.BalanceCallback(c, req)
-		c.JSON(200, res)
+		if res, err := fb.BalanceCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
 	} else {
 		c.JSON(400, api.ErrorResponse(c, req, err))
 	}
@@ -26,8 +30,11 @@ func CallbackBalance(c *gin.Context) {
 func CallbackOrderPay(c *gin.Context) {
 	var req callback.OrderPayRequest
 	if err := c.ShouldBind(&req); err == nil {
-		res, _ := fb.OrderPayCallback(c, req)
-		c.JSON(200, res)
+		if res, err := fb.OrderPayCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
 	} else {
 		c.JSON(400, api.ErrorResponse(c, req, err))
 	}
@@ -36,8 +43,11 @@ func CallbackOrderPay(c *gin.Context) {
 func CallbackCheckOrderPay(c *gin.Context) {
 	var req callback.OrderPayRequest
 	if err := c.ShouldBind(&req); err == nil {
-		res, _ := fb.CheckOrderPayCallback(c, req)
-		c.JSON(200, res)
+		if res, err := fb.CheckOrderPayCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
 	} else {
 		c.JSON(400, api.ErrorResponse(c, req, err))
 	}
@@ -46,8 +56,11 @@ func CallbackCheckOrderPay(c *gin.Context) {
 func CallbackSyncTransaction(c *gin.Context) {
 	var req []callback.OrderPayRequest
 	if err := c.ShouldBind(&req); err == nil {
-		res, _ := fb.SyncTransactionCallback(c, req)
-		c.JSON(200, res)
+		if res, err := fb.SyncTransactionCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
 	} else {
 		c.JSON(400, api.ErrorResponse(c, req, err))
 	}
@@ -56,8 +69,11 @@ func CallbackSyncTransaction(c *gin.Context) {
 func CallbackSyncOrders(c *gin.Context) {
 	var req callback.SyncOrdersRequest
 	if err := c.ShouldBind(&req); err == nil {
-		res, _ := fb.SyncOrdersCallback(c, req)
-		c.JSON(200, res)
+		if res, err := fb.SyncOrdersCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
 	} else {
 		c.JSON(400, api.ErrorResponse(c, req, err))
 	}
@@ -66,9 +82,21 @@ func CallbackSyncOrders(c *gin.Context) {
 func CallbackSyncCashout(c *gin.Context) {
 	var req callback.SyncCashoutRequest
 	if err := c.ShouldBind(&req); err == nil {
-		res, _ := fb.SyncCashoutCallback(c, req)
-		c.JSON(200, res)
+		if res, err := fb.SyncCashoutCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
 	} else {
 		c.JSON(400, api.ErrorResponse(c, req, err))
 	}
+}
+
+func ErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {
+	res = callback.BaseResponse{
+		Code:    1,
+		Message: err.Error(),
+	}
+	util.Log().Error(res.Message, c.Request.URL, c.Request.Header, util.MarshalService(req))
+	return
 }

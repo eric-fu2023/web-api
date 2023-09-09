@@ -2,11 +2,13 @@ package fb
 
 import (
 	"blgit.rfdev.tech/taya/game-service/fb/callback"
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
+	"gorm.io/gorm"
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -14,25 +16,74 @@ import (
 	"web-api/util"
 )
 
+var FbTransferTypeCalculateWager = map[string]int64{
+	"WIN":                            -1,
+	"CASHOUT":                        -1,
+	"SETTLEMENT_ROLLBACK_RETURN":     1,
+	"SETTLEMENT_ROLLBACK_DEDUCT":     1,
+	"CASHOUT_CANCEL_DEDUCT":          1,
+	"CASHOUT_CANCEL_RETURN":          1,
+	"CASHOUT_CANCEL_ROLLBACK_DEDUCT": -1,
+	"CASHOUT_CANCEL_ROLLBACK_RETURN": -1,
+}
+
+type Callback struct {
+	Request     callback.OrderPayRequest
+	Transaction models.FbTransactionC
+}
+
+func (c *Callback) NewCallback(userId int64) {
+	copier.Copy(&c.Transaction, &c.Request)
+	c.Transaction.UserId = userId
+	c.Transaction.Amount = int64(c.Request.Amount * 100)
+}
+
+func (c *Callback) GetGameProviderId() int64 {
+	return consts.GameProvider["fb"]
+}
+
+func (c *Callback) GetGameTransactionId() int64 {
+	return c.Transaction.ID
+}
+
+func (c *Callback) GetExternalUserId() string {
+	return c.Request.MerchantUserId
+}
+
+func (c *Callback) SaveGameTransaction(tx *gorm.DB) error {
+	return tx.Save(&c.Transaction).Error
+}
+
+func (c *Callback) ShouldProceed() bool {
+	return c.Transaction.Status != 0 // skip transactions with status 0
+}
+
+func (c *Callback) GetAmount() int64 {
+	return c.Transaction.Amount
+}
+
+func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
+	value, exists = FbTransferTypeCalculateWager[c.Transaction.TransferType]
+	return
+}
+
+func (c *Callback) GetBetAmount() (amount int64, err error) {
+	err = model.DB.Model(models.FbTransactionC{}).Select(`amount`).
+		Where(`business_id`, c.Transaction.BusinessId).
+		Where(`transfer_type`, `BET`).Order(`id`).First(&amount).Error
+	return
+}
+
 const (
-	MONGODB_FB_CALLBACK_SYNC_TRANSACTION = "fb_callback_sync_transaction"
-	MONGODB_FB_CALLBACK_SYNC_ORDERS      = "fb_callback_sync_orders"
-	MONGODB_FB_CALLBACK_SYNC_CASHOUT     = "fb_callback_sync_cashout"
+	MONGODB_FB_CALLBACK_SYNC_ORDERS  = "fb_callback_sync_orders"
+	MONGODB_FB_CALLBACK_SYNC_CASHOUT = "fb_callback_sync_cashout"
 )
 
 func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.BaseResponse, err error) {
-	gpu, err := service.GetGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
+	gpu, balance, _, _, err := service.GetUserAndSum(consts.GameProvider["fb"], req.MerchantUserId)
 	if err != nil {
-		res = callbackErrorResponse(c, req, err)
 		return
 	}
-
-	balance, _, _, err := service.GetSums(gpu)
-	if err != nil {
-		res = callbackErrorResponse(c, req, err)
-		return
-	}
-
 	data := callback.BalanceResponse{
 		Balance:    fmt.Sprintf("%.2f", float64(balance)/100),
 		CurrencyId: gpu.ExternalCurrencyId,
@@ -47,24 +98,10 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
 	j, _ := json.Marshal(req)
 	fmt.Println("order_pay: ", string(j))
-	gpu, err := service.GetGameProviderUser(consts.GameProvider["fb"], req.MerchantUserId)
+	err = service.ProcessTransaction(&Callback{Request: req})
 	if err != nil {
-		res = callbackErrorResponse(c, req, err)
 		return
 	}
-
-	balance, remainingWager, maxWithdrawable, err := service.GetSums(gpu)
-	if err != nil {
-		res = callbackErrorResponse(c, req, err)
-		return
-	}
-
-	err = ProcessTransaction(req, gpu.UserId, balance, remainingWager, maxWithdrawable)
-	if err != nil {
-		res = callbackErrorResponse(c, req, err)
-		return
-	}
-
 	res = callback.BaseResponse{
 		Code: 0,
 	}
@@ -90,17 +127,8 @@ func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (re
 	fmt.Println("sync_transaction: ", string(j))
 	go func(c *gin.Context, req []callback.OrderPayRequest) {
 		for _, r := range req {
-			coll := model.MongoDB.Collection(MONGODB_FB_CALLBACK_SYNC_TRANSACTION)
-			_, e := coll.InsertOne(context.TODO(), r)
-			if e != nil {
-				util.Log().Error("mongodb error", e)
-			}
-		}
-	}(c, req)
-	go func(c *gin.Context, req []callback.OrderPayRequest) {
-		for _, r := range req {
 			jj, _ := json.Marshal(r)
-			_, e := cache.RedisSyncTransactionClient.Set(context.TODO(), fmt.Sprintf(`%s:%s`, r.MerchantUserId, r.TransactionId), jj, 0).Result()
+			_, e := cache.RedisSyncTransactionClient.Set(context.TODO(), fmt.Sprintf(`fb:%s:%s`, r.MerchantUserId, r.TransactionId), jj, 0).Result()
 			if e != nil {
 				util.Log().Error("redis error", e)
 			}
@@ -142,125 +170,4 @@ func SyncCashoutCallback(c *gin.Context, req callback.SyncCashoutRequest) (res c
 		Code: 0,
 	}
 	return
-}
-
-func ProcessTransaction(req callback.OrderPayRequest, userId int64, balance int64, remainingWager int64, maxWithdrawable int64) (err error) {
-	fbTx := model.FbTransaction{
-		UserId:             userId,
-		TransactionId:      req.TransactionId,
-		ExternalUserId:     req.UserId,
-		MerchantId:         req.MerchantId,
-		MerchantUserId:     req.MerchantUserId,
-		BusinessId:         req.BusinessId,
-		TransactionType:    req.TransactionType,
-		TransferType:       req.TransferType,
-		ExternalCurrencyId: req.CurrencyId,
-		Amount:             int64(req.Amount * 100),
-		Status:             req.Status,
-		RelatedId:          req.RelatedId,
-	}
-	if fbTx.Status == 0 { // skip transactions with status 0
-		return
-	}
-
-	tx := model.DB.Begin()
-	if tx.Error != nil {
-		err = tx.Error
-		return
-	}
-	newBalance := balance + fbTx.Amount
-	newRemainingWager := remainingWager
-	if w, e := calWager(fbTx, remainingWager); e == nil {
-		newRemainingWager = w
-	}
-	newWithdrawable := maxWithdrawable
-	if w, e := calMaxWithdrawable(fbTx, newBalance, newRemainingWager, maxWithdrawable); e == nil {
-		newWithdrawable = w
-	}
-	userSum := model.UserSum{
-		Balance:         newBalance,
-		RemainingWager:  newRemainingWager,
-		MaxWithdrawable: newWithdrawable,
-	}
-	rows := tx.Select(`balance`, `remaining_wager`, `max_withdrawable`).Where(`user_id`, userId).Updates(userSum).RowsAffected
-	if rows == 0 {
-		err = errors.New("insufficient balance or invalid transaction")
-		tx.Rollback()
-		return
-	}
-	err = tx.Save(&fbTx).Error
-	if err != nil {
-		tx.Rollback()
-		return
-	}
-	transaction := model.Transaction{
-		UserId:          userId,
-		Amount:          fbTx.Amount,
-		BalanceBefore:   balance,
-		BalanceAfter:    userSum.Balance,
-		FbTransactionId: fbTx.ID,
-		Wager:           userSum.RemainingWager - remainingWager,
-		WagerBefore:     remainingWager,
-		WagerAfter:      userSum.RemainingWager,
-	}
-	err = tx.Save(&transaction).Error
-	if err != nil {
-		tx.Rollback()
-		return
-	}
-	tx.Commit()
-	return
-}
-
-func callbackErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {
-	res = callback.BaseResponse{
-		Code:    1,
-		Message: err.Error(),
-	}
-	util.Log().Error(res.Message, c.Request.URL, c.Request.Header, util.MarshalService(req))
-	return
-}
-
-func calWager(fbTx model.FbTransaction, originalWager int64) (newWager int64, err error) {
-	newWager = originalWager
-	coeff, exists := consts.FbTransferTypeCalculateWager[fbTx.TransferType]
-	if !exists {
-		return
-	}
-	var betTx model.FbTransaction
-	err = model.DB.Where(`business_id`, fbTx.BusinessId).Where(`transfer_type`, `BET`).First(&betTx).Error
-	if err != nil {
-		return
-	}
-	absBetAmount := abs(betTx.Amount)
-	wager := abs(absBetAmount - abs(fbTx.Amount))
-	if wager > absBetAmount {
-		wager = absBetAmount
-	}
-	newWager = originalWager + (coeff * wager)
-	if newWager < 0 {
-		newWager = 0
-	}
-	return
-}
-
-func calMaxWithdrawable(fbTx model.FbTransaction, balance int64, remainingWager int64, originalWithdrawable int64) (newWithdrawable int64, err error) {
-	newWithdrawable = originalWithdrawable
-	_, exists := consts.FbTransferTypeCalculateWager[fbTx.TransferType]
-	if !exists {
-		return
-	}
-	if remainingWager == 0 {
-		if balance > originalWithdrawable {
-			newWithdrawable = balance
-		}
-	}
-	return
-}
-
-func abs(x int64) int64 {
-	if x < 0 {
-		return -x
-	}
-	return x
 }

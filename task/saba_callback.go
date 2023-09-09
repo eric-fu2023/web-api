@@ -1,7 +1,6 @@
 package task
 
 import (
-	"blgit.rfdev.tech/taya/game-service/fb/callback"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,14 +10,14 @@ import (
 	"time"
 	"web-api/cache"
 	"web-api/service"
-	"web-api/service/fb"
+	"web-api/service/saba"
 	"web-api/util"
 )
 
-func ProcessFbSyncTransaction() {
+func ProcessSabaSettle() {
 	for {
 		ctx := context.TODO()
-		iter := cache.RedisSyncTransactionClient.Scan(ctx, 0, "fb:*", 0).Iterator()
+		iter := cache.RedisSyncTransactionClient.Scan(ctx, 0, "saba:*", 0).Iterator()
 		keys := make(map[string][]string)
 		for iter.Next(ctx) {
 			str := strings.Split(iter.Val(), ":")
@@ -36,24 +35,24 @@ func ProcessFbSyncTransaction() {
 			go func(key string, arr []string) {
 				defer wg.Done()
 				for _, a := range arr {
-					redisKey := fmt.Sprintf(`fb:%s:%s`, key, a)
+					redisKey := fmt.Sprintf(`saba:%s:%s`, key, a)
 					v := cache.RedisSyncTransactionClient.Get(context.TODO(), redisKey)
-					var orderPayRequest callback.OrderPayRequest
-					err := json.Unmarshal([]byte(v.Val()), &orderPayRequest)
+					var req saba.SettleRedis
+					err := json.Unmarshal([]byte(v.Val()), &req)
 					if err != nil {
-						util.Log().Error("Task:ProcessFbSyncTransaction error", err, orderPayRequest)
+						util.Log().Error("Task:ProcessFbSyncTransaction error", err, req)
 						continue
 					}
-
-					err = service.ProcessTransaction(&fb.Callback{Request: orderPayRequest})
+					clb := saba.Settle{Request: req.Txn, OperationId: req.OpId}
+					err = service.ProcessTransaction(&clb)
 					if err != nil {
-						util.Log().Error("Task:ProcessFbSyncTransaction error", err, orderPayRequest)
+						util.Log().Error("Task:ProcessFbSyncTransaction error", err, req)
 						return
 					}
 
 					//_, err = cache.RedisSyncTransactionClient.Del(context.TODO(), redisKey).Result()
 					if err != nil {
-						util.Log().Error("Task:ProcessFbSyncTransaction redis delete key error", err, orderPayRequest)
+						util.Log().Error("Task:ProcessFbSyncTransaction redis delete key error", err, req)
 						return
 					}
 				}

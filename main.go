@@ -34,6 +34,7 @@ func main() {
 
 	if runTask {
 		go task.ProcessFbSyncTransaction()
+		go task.ProcessSabaSettle()
 		go func() {
 			for {
 				websocket.SetupWebsocket()
