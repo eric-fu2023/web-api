@@ -63,6 +63,11 @@ func NewRouter() *gin.Engine {
 
 		v1.GET("/config", middleware.Cache(10*time.Minute), api.Config)
 
+		saba := v1.Group("/saba")
+		{
+			saba.GET("/get_url", middleware.CheckAuth(), saba_api.GetUrl)
+		}
+
 		auth := v1.Group("")
 		auth.Use(middleware.AuthRequired(true))
 		{

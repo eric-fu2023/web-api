@@ -13,6 +13,12 @@ var (
 		3: "mobile",
 		4: "mobile",
 	}
+	PlatformIdToSabaPlatformId = map[int64]string{
+		1: "1",
+		2: "2",
+		3: "3",
+		4: "3",
+	}
 	GameProvider = map[string]int64{
 		"fb":   1,
 		"saba": 2,
