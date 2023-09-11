@@ -6,7 +6,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/driver/postgres"
 	"gorm.io/plugin/dbresolver"
-	"log"
 	"os"
 	"time"
 	"web-api/util"
@@ -24,15 +23,18 @@ var IPDB *awdb.Reader
 // Database 在中间件中初始化postgres链接
 func Database(primaryConn string, replicaConn string) {
 	// 初始化GORM日志配置
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-		logger.Config{
-			SlowThreshold:             2 * time.Second, // Slow SQL threshold
-			LogLevel:                  logger.Warn,     // Log level(这里记得根据需求改一下)
-			IgnoreRecordNotFoundError: true,            // Ignore ErrRecordNotFound error for logger
-			Colorful:                  false,           // Disable color
-		},
-	)
+	getLogLevel := func () logger.LogLevel {
+		if os.Getenv("ENV") == "local" {
+			return logger.Info
+		}
+		return logger.Warn
+	}
+	newLogger := NewCustomLogger(os.Stdout,logger.Config{
+		SlowThreshold:             2*time.Second, // Slow SQL threshold
+		LogLevel:                  getLogLevel(), // Log level(这里记得根据需求改一下)
+		IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+		Colorful:                  false,       // Disable color
+	})
 
 	db, err := gorm.Open(postgres.Open(primaryConn), &gorm.Config{
 		Logger: newLogger,
