@@ -13,14 +13,23 @@ import (
 )
 
 type UserSetPasswordService struct {
-	Password string `form:"password" json:"password" binding:"required"`
-	Otp      string `form:"otp" json:"otp" binding:"required"`
+	CountryCode string `form:"country_code" json:"country_code" validate:"omitempty,startswith=+"`
+	Mobile      string `form:"mobile" json:"mobile" validate:"omitempty,number"`
+	Password    string `form:"password" json:"password" binding:"required"`
+	Otp         string `form:"otp" json:"otp" binding:"required"`
 }
 
 func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	u, _ := c.Get("user")
-	user := u.(model.User)
+	var user model.User
+	u, isUser := c.Get("user")
+	if isUser {
+		user = u.(model.User)
+	} else {
+		if err := model.DB.Where(`country_code`, service.CountryCode).Where(`mobile`, service.Mobile).First(&user).Error; err != nil {
+			return serializer.ParamErr(c, service, i18n.T("Mobile_invalid"), err)
+		}
+	}
 
 	otp := cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.Email)
 	if otp.Err() == redis.Nil {

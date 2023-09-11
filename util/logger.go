@@ -1,10 +1,8 @@
 package util
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"reflect"
 	"time"
 )
 
@@ -107,20 +105,20 @@ func Log() *Logger {
 	return logger
 }
 
-func MarshalService(service any) string {
-	if service == nil {
-		return ""
-	}
-	value := reflect.ValueOf(service)
-	var field reflect.Value
-	if value.Kind() == reflect.Ptr {
-		field = value.Elem().FieldByName("Password")
-	} else {
-		field = value.FieldByName("Password")
-	}
-	if field.IsValid() && !field.IsZero() {
-		field.SetString("***")
-	}
-	str, _ := json.Marshal(service)
-	return string(str)
-}
+//func MarshalService(service any) string {
+//	if service == nil {
+//		return ""
+//	}
+//	value := reflect.ValueOf(service)
+//	var field reflect.Value
+//	if value.Kind() == reflect.Ptr {
+//		field = value.Elem().FieldByName("Password")
+//	} else {
+//		field = value.FieldByName("Password")
+//	}
+//	if field.IsValid() && !field.IsZero() {
+//		field.SetString("***")
+//	}
+//	str, _ := json.Marshal(service)
+//	return string(str)
+//}

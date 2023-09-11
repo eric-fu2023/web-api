@@ -31,7 +31,7 @@ const (
 	CodeCheckLogin = 401
 	// CodeNoRightErr 未授权访问
 	CodeNoRightErr = 403
-	CodeNotFound = 404
+	CodeNotFound   = 404
 	// General errors
 	CodeGeneralError = 50000
 	// CodeDBError 数据库操作失败
@@ -39,7 +39,7 @@ const (
 	// CodeEncryptError 加密失败
 	CodeEncryptError = 50002
 	//CodeParamErr 各种奇奇怪怪的参数错误
-	CodeParamErr = 40001
+	CodeParamErr         = 40001
 	CodeExistingUsername = 40002
 )
 
@@ -57,7 +57,8 @@ func Err(c *gin.Context, service any, errCode int, msg string, err error) Respon
 	if errCode == CodeParamErr {
 		fn = util.Log().Info
 	}
-	fn(msg, err, c.Request.URL, c.Request.Header, util.MarshalService(service))
+	//fn(msg, err, c.Request.URL, c.Request.Header, util.MarshalService(service))
+	fn(msg, err, c.Request.URL, c.Request.Header, service)
 	return res
 }
 
@@ -102,7 +103,7 @@ func FormatMarketValueCurrency(c *gin.Context, currency string) (new string) {
 }
 
 func AvgValuePerMatch(value int64, matches int64) (avg float64) {
-	avg = math.Round(float64(value) / float64(matches) * 10) / 10
+	avg = math.Round(float64(value)/float64(matches)*10) / 10
 	return
 }
 

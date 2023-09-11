@@ -60,6 +60,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("/email_otp", api.EmailOtp)
 		v1.POST("/login_otp", api.UserLoginOtp)
 		v1.POST("/login_password", api.UserLoginPassword)
+		v1.POST("/password", middleware.CheckAuth(), api.UserSetPassword)
 
 		v1.GET("/config", middleware.Cache(10*time.Minute), api.Config)
 
@@ -78,7 +79,6 @@ func NewRouter() *gin.Engine {
 				user.DELETE("/logout", api.UserLogout)
 				user.POST("/finish_setup", api.UserFinishSetup)
 				user.GET("/check_username", api.UserCheckUsername)
-				user.POST("/password", api.UserSetPassword)
 
 				fb := user.Group("/fb")
 				{
