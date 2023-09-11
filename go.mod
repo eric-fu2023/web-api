@@ -14,11 +14,13 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/google/uuid v1.3.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/joho/godotenv v1.3.0
 	github.com/mailgun/mailgun-go/v4 v4.10.0
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/sirupsen/logrus v1.9.3
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.711
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.711
 	go.mongodb.org/mongo-driver v1.11.2

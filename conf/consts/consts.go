@@ -65,3 +65,10 @@ var (
 		"password": 2,
 	}
 )
+
+
+const (
+	CorrelationHeader = "X-Correlation-ID"
+	LogKey            = "logger"
+	CorrelationKey    = "correlation_id"
+)

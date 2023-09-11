@@ -1,9 +1,13 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
+	"web-api/conf/consts"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -122,3 +126,17 @@ func Log() *Logger {
 //	str, _ := json.Marshal(service)
 //	return string(str)
 //}
+
+// Logger creates a new Ginrus logger with a UUID included
+func GetLoggerEntry(c context.Context) *logrus.Entry {
+	logger := c.Value(consts.LogKey)
+	if logger == nil {
+		logrus.SetLevel(logrus.DebugLevel)
+		return logrus.WithField(consts.CorrelationKey, c.Value(consts.CorrelationKey))
+	}
+	return logger.(*logrus.Entry)
+}
+
+func GetCorrelationID(c context.Context) string {
+	return c.Value(consts.CorrelationKey).(string)
+}
