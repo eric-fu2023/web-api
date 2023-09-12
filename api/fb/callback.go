@@ -97,7 +97,6 @@ func ErrorResponse(c *gin.Context, req any, err error) (res callback.BaseRespons
 		Code:    1,
 		Message: err.Error(),
 	}
-	//util.Log().Error(res.Message, c.Request.URL, c.Request.Header, util.MarshalService(req))
-	util.Log().Error(res.Message, c.Request.URL, c.Request.Header, req)
+	util.Log().Error(res.Message, c.Request.URL, c.Request.Header, util.MarshalService(req))
 	return
 }

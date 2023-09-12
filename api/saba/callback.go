@@ -146,7 +146,6 @@ func ErrorResponse(c *gin.Context, req any, err error) (res callback.BaseRespons
 		Status: "203",
 		Msg:    err.Error(),
 	}
-	//util.Log().Error(res.Msg, c.Request.URL, c.Request.Header, util.MarshalService(req))
-	util.Log().Error(res.Msg, c.Request.URL, c.Request.Header, req)
+	util.Log().Error(res.Msg, c.Request.URL, c.Request.Header, util.MarshalService(req))
 	return
 }

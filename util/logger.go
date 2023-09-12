@@ -2,8 +2,10 @@ package util
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"time"
 	"web-api/conf/consts"
 
@@ -109,23 +111,23 @@ func Log() *Logger {
 	return logger
 }
 
-//func MarshalService(service any) string {
-//	if service == nil {
-//		return ""
-//	}
-//	value := reflect.ValueOf(service)
-//	var field reflect.Value
-//	if value.Kind() == reflect.Ptr {
-//		field = value.Elem().FieldByName("Password")
-//	} else {
-//		field = value.FieldByName("Password")
-//	}
-//	if field.IsValid() && !field.IsZero() {
-//		field.SetString("***")
-//	}
-//	str, _ := json.Marshal(service)
-//	return string(str)
-//}
+func MarshalService(service any) string {
+	if service == nil {
+		return ""
+	}
+	value := reflect.ValueOf(service)
+	var field reflect.Value
+	if value.Kind() == reflect.Ptr {
+		field = value.Elem().FieldByName("Password")
+	} else {
+		field = value.FieldByName("Password")
+	}
+	if field.IsValid() && !field.IsZero() {
+		field.SetString("***")
+	}
+	str, _ := json.Marshal(service)
+	return string(str)
+}
 
 // Logger creates a new Ginrus logger with a UUID included
 func GetLoggerEntry(c context.Context) *logrus.Entry {
