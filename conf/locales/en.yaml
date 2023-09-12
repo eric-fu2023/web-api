@@ -456,3 +456,11 @@ finish_setup: "Please finish the account setup first."
 fb_create_user_failed: "Creating FB user can't be completed."
 saba_create_user_failed: "Creating Saba user can't be completed."
 saba_user_error: "Something went wrong while logging into Saba Sports."
+
+kyc_invalid_birthday: "Invalid birthday given %s."
+kyc_cannot_update_completed_kyc: "Completed KYC cannot be updated."
+kyc_submit_failed: "An error occurred during KYC submission."
+kyc_get_failed: "An error occurred when retrieving KYC information."
+
+file_type_not_allowed: "File type %s is not allowed."
+file_size_exceeded: "File size should not exceed %s."

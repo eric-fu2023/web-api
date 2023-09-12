@@ -29,12 +29,14 @@ const AliyunOssAvatar = "AVATAR"
 const AliyunOssCoverImage = "COVER_IMAGE"
 const AliyunOssRoomImage = "ROOM_IMAGE"
 const AliyunOssGallery = "GALLERY"
+const AliyunOssKyc = "KYC"
 
 var AliyunOssFolder = map[string]string{
 	AliyunOssAvatar:     "avatar",
 	AliyunOssCoverImage: "cover_image",
 	AliyunOssRoomImage:  "room_image",
 	AliyunOssGallery:    "gallery",
+	AliyunOssKyc:        "kyc",
 }
 
 func (a *AliyunOssStruct) getFileName(aliyunOssFolder string, userId int64, extension string) (fileName string, err error) {
@@ -124,4 +126,9 @@ func InitAliyunOSS() (aliyunOss AliyunOssStruct, err error) {
 	}
 	aliyunOss.Bucket = bucket
 	return
+}
+
+func BuildAliyunOSSUrl(path string) string {
+	bucketUrl := os.Getenv("ALIYUN_OSS_BUCKET_URL")
+	return bucketUrl + "/" + path
 }
