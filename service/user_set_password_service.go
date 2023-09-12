@@ -31,6 +31,12 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 		}
 	}
 
+	if user.Password != "" {
+		if e := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(service.Password)); e == nil {
+			return serializer.ParamErr(c, service, i18n.T("same_password"), nil)
+		}
+	}
+
 	otp := cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.Email)
 	if otp.Err() == redis.Nil {
 		otp = cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.CountryCode+user.Mobile)
@@ -105,6 +111,22 @@ func (service *UserCheckUsernameService) Check(c *gin.Context) serializer.Respon
 	var existing model.User
 	if r := model.DB.Where(`username`, service.Username).Limit(1).Find(&existing).RowsAffected; r != 0 {
 		return serializer.Err(c, service, serializer.CodeExistingUsername, i18n.T("existing_username"), nil)
+	}
+	return serializer.Response{}
+}
+
+type UserCheckPasswordService struct {
+	Password string `form:"password" json:"password" binding:"required"`
+}
+
+func (service *UserCheckPasswordService) Check(c *gin.Context) serializer.Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	u, _ := c.Get("user")
+	user := u.(model.User)
+	if user.Password != "" {
+		if e := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(service.Password)); e == nil {
+			return serializer.ParamErr(c, service, i18n.T("same_password"), nil)
+		}
 	}
 	return serializer.Response{}
 }
