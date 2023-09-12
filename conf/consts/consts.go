@@ -1,5 +1,10 @@
 package consts
 
+const (
+	KycStatusPending   = 1
+	KycStatusCompleted = 2
+)
+
 var (
 	Platform = map[int64]string{
 		1: "pc",

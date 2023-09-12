@@ -87,7 +87,14 @@ func NewRouter() *gin.Engine {
 				{
 					fb.GET("/token", fb_api.GetToken)
 				}
+
+				kyc := user.Group("/kyc")
+				{
+					kyc.GET("", api.GetKyc)
+					kyc.POST("", api.SubmitKyc)
+				}
 			}
+
 		}
 		v1.GET("/user/heartbeat", middleware.AuthRequired(false), api.Heartbeat)
 	}
