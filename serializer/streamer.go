@@ -6,14 +6,16 @@ import (
 )
 
 type Streamer struct {
-	ID           int64  `json:"id"`
-	Nickname     string `json:"nickname"`
-	Followers    int64  `json:"follower_count"`
-	Avatar       string `json:"avatar"`
-	CoverImage   string `json:"cover_image"`
-	Streams      int64  `json:"stream_count"`
-	IsLive       bool   `json:"is_live"`
-	LastLiveAtTs int64  `json:"last_live_at_ts,omitempty"`
+	ID                int64             `json:"id"`
+	Nickname          string            `json:"nickname"`
+	Followers         int64             `json:"follower_count"`
+	Avatar            string            `json:"avatar"`
+	CoverImage        string            `json:"cover_image"`
+	Streams           int64             `json:"stream_count"`
+	IsLive            bool              `json:"is_live"`
+	LastLiveAtTs      int64             `json:"last_live_at_ts,omitempty"`
+	LiveStream        *Stream           `json:"live,omitempty"`
+	StreamerGalleries []StreamerGallery `json:"gallery,omitempty"`
 }
 
 func BuildStreamer(c *gin.Context, a model.Streamer) (b Streamer) {
@@ -32,6 +34,17 @@ func BuildStreamer(c *gin.Context, a model.Streamer) (b Streamer) {
 	}
 	if !a.LastLiveAt.IsZero() {
 		b.LastLiveAtTs = a.LastLiveAt.Unix()
+	}
+	if a.LiveStream != nil {
+		t := BuildStream(c, *a.LiveStream)
+		b.LiveStream = &t
+	}
+	if len(a.StreamerGalleries) > 0 {
+		var galleries []StreamerGallery
+		for _, g := range a.StreamerGalleries {
+			galleries = append(galleries, BuildStreamerGallery(g))
+		}
+		b.StreamerGalleries = galleries
 	}
 	return
 }

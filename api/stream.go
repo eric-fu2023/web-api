@@ -8,11 +8,8 @@ import (
 func StreamList(c *gin.Context) {
 	var service service.StreamService
 	if err := c.ShouldBind(&service); err == nil {
-		if res, err := service.List(c); err == nil {
-			c.JSON(200, res)
-		} else {
-			c.JSON(500, res)
-		}
+		res, _ := service.List(c)
+		c.JSON(200, res)
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}

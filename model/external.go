@@ -13,6 +13,12 @@ type FbTransaction models.FbTransactionC
 type SabaTransaction models.SabaTransactionC
 type UserSum models.UserSumC
 type AppConfig models.AppConfigC
+type Category models.CategoryC
+type CategoryType struct {
+	models.CategoryTypeC
+	Categories []Category `gorm:"references:ID;foreignKey:CategoryTypeId"`
+}
+type StreamerGallery models.StreamerGalleryC
 
 func (a *GameProviderUser) GetByProviderAndExternalUser(provider int64, userId string) error {
 	return DB.Where(`game_provider_id`, provider).Where(`external_user_id`, userId).First(&a).Error
@@ -26,4 +32,10 @@ func ByBrandAgentDeviceAndKey(brand int64, agent int64, device int64, key string
 		}
 		return q
 	}
+}
+
+func CategoryTypeWithCategories(db *gorm.DB) *gorm.DB {
+	return db.Preload(`Categories`, func(db *gorm.DB) *gorm.DB {
+		return db.Order(`sort DESC`)
+	})
 }
