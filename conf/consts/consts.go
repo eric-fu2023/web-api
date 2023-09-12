@@ -48,9 +48,8 @@ var (
 			"Successfully connected.",
 		},
 	}
-	ChatSystemId int64 = -999999
-
-	AuthEventType = map[string]int{
+	ChatSystemId  int64 = -999999
+	AuthEventType       = map[string]int{
 		"login":  1,
 		"logout": 2,
 	}
@@ -63,6 +62,18 @@ var (
 	AuthEventLoginMethod = map[string]int{
 		"otp":      1,
 		"password": 2,
+	}
+	SportsType = map[string]int64{
+		"football":   1,
+		"basketball": 2,
+		"tennis":     3,
+		"replay":     4,
+		"worldcup":   7,
+		"nba":        8,
+		"volleyball": 10,
+		"lol":        101,
+		"csgo":       102,
+		"dota2":      103,
 	}
 )
 

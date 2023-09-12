@@ -441,6 +441,7 @@ B4组排名_short: "Group B4 Ranking"
 3组_short: "Group 3"
 4组_short: "Group 4"
 
+general_error: "Something went wrong. Please try again."
 login_failed: "Login failed."
 密码加密失败: "Password encryption failed."
 密码修改失败: "Updating password failed."
@@ -453,4 +454,4 @@ finish_setup: "Please finish the account setup first."
 
 fb_create_user_failed: "Creating FB user can't be completed."
 saba_create_user_failed: "Creating Saba user can't be completed."
-saba_user_error: "Something is wrong while logging into Saba Sports."
+saba_user_error: "Something went wrong while logging into Saba Sports."

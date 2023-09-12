@@ -63,6 +63,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("/password", middleware.CheckAuth(), api.UserSetPassword)
 
 		v1.GET("/config", middleware.Cache(10*time.Minute), api.Config)
+		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)
 
 		saba := v1.Group("/saba")
 		{
