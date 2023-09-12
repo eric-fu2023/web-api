@@ -15,7 +15,7 @@ type Streamer struct {
 
 func StreamerWithLiveStream(db *gorm.DB) *gorm.DB {
 	return db.Where(`streamers.enable`, 1).Preload(`LiveStream`, func(db *gorm.DB) *gorm.DB {
-		return db.Where(`live_streams.status`, 3)
+		return db.Scopes(StreamsOnline)
 	}).Preload(`LiveStream.Match`)
 }
 

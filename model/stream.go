@@ -18,7 +18,7 @@ func StreamsOnlineSorted(categoryOrder string, categoryTypeOrder string) func(db
 		if len(categoryOrder) > 0 {
 			order = `(stream_category_id in ` + categoryOrder + `) DESC, (stream_category_type_id in ` + categoryTypeOrder + `) DESC, ` + order
 		}
-		return db.Preload(`Match`).Joins(`INNER JOIN streamers ON streamers.id = live_streams.streamer_id AND streamers.enable = 1`).Where(`live_streams.status`, 3).Order(order)
+		return db.Scopes(StreamsOnline).Preload(`Match`).Joins(`INNER JOIN streamers ON streamers.id = live_streams.streamer_id AND streamers.enable = 1`).Order(order)
 	}
 }
 
@@ -29,6 +29,10 @@ func ExcludeStreamers(streamerIds []int64) func(db *gorm.DB) *gorm.DB {
 		}
 		return db
 	}
+}
+
+func StreamsOnline(db *gorm.DB) *gorm.DB {
+	return db.Where(`live_streams.status`, 2)
 }
 
 func FollowingStreams(followingIds []int64) func(db *gorm.DB) *gorm.DB {
