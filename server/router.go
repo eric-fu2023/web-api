@@ -50,6 +50,8 @@ func NewRouter() *gin.Engine {
 	r.Use(middleware.Location())
 	r.Use(middleware.Locale())
 	r.Use(middleware.EncryptPayload())
+	r.Use(middleware.CorrelationID())
+	r.Use(middleware.ErrorLogStatus())
 
 	r.GET("/ping", api.Ping)
 
@@ -66,6 +68,8 @@ func NewRouter() *gin.Engine {
 		v1.GET("/categories", middleware.Cache(1*time.Minute), api.CategoryList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)
 		v1.GET("/streamer", middleware.Cache(1*time.Minute), api.Streamer)
+		v1.GET("/cash-methods", middleware.Cache(1*time.Minute), api.CashMethodList)
+
 
 		saba := v1.Group("/saba")
 		{
