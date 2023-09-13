@@ -44,13 +44,13 @@ func NewRouter() *gin.Engine {
 
 	// 中间件, 顺序不能改
 	r.Use(middleware.Cors())
+	r.Use(middleware.EncryptPayload())
 	r.Use(middleware.CheckSignature())
 	r.Use(middleware.Ip())
 	r.Use(middleware.BrandAgent())
 	r.Use(middleware.Timezone())
 	r.Use(middleware.Location())
 	r.Use(middleware.Locale())
-	r.Use(middleware.EncryptPayload())
 	r.Use(middleware.CorrelationID())
 	r.Use(middleware.ErrorLogStatus())
 
