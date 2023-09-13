@@ -87,7 +87,7 @@ func NewRouter() *gin.Engine {
 				user.DELETE("/logout", api.UserLogout)
 				user.POST("/finish_setup", api.UserFinishSetup)
 				user.GET("/check_username", api.UserCheckUsername)
-				user.GET("/check_password", api.UserCheckPassword)
+				user.POST("/check_password", api.UserCheckPassword)
 
 				user.GET("/following_ids", api.UserFollowingIdList)
 				user.GET("/followings", api.UserFollowingList)

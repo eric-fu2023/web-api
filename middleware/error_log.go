@@ -26,6 +26,10 @@ func ErrorLogStatus() gin.HandlerFunc {
 		ginErr, exists := c.Get(consts.GinErrorKey)
 		if statusCode >= 400 || exists {
 			form := c.Request.Form
+			// mask password field in the form for data protection
+			if form.Has("password") {
+				form.Set("password", "---")
+			}
 			// Request method
 			reqMethod := c.Request.Method
 
