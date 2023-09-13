@@ -69,8 +69,8 @@ func NewRouter() *gin.Engine {
 		v1.GET("/categories", middleware.Cache(1*time.Minute), api.CategoryList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)
 		v1.GET("/streamer", middleware.Cache(1*time.Minute), api.Streamer)
-		v1.GET("/topup-methods", api.TopupMethodList)
-		v1.GET("/withdraw-methods", api.WithdrawMethodList)
+		v1.GET("/topup-methods", middleware.Cache(1*time.Minute), api.TopupMethodList)
+		v1.GET("/withdraw-methods", middleware.Cache(1*time.Minute), api.WithdrawMethodList)
 
 		saba := v1.Group("/saba")
 		{
