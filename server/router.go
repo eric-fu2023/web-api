@@ -1,13 +1,14 @@
 package server
 
 import (
-	"github.com/gin-gonic/gin"
 	"os"
 	"time"
 	"web-api/api"
 	fb_api "web-api/api/fb"
 	saba_api "web-api/api/saba"
 	"web-api/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 // NewRouter 路由配置
@@ -68,7 +69,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/categories", middleware.Cache(1*time.Minute), api.CategoryList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)
 		v1.GET("/streamer", middleware.Cache(1*time.Minute), api.Streamer)
-		v1.GET("/cash-methods", middleware.Cache(1*time.Minute), api.CashMethodList)
+		v1.GET("/cash-methods", api.CashMethodList)
 
 
 		saba := v1.Group("/saba")

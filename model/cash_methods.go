@@ -13,14 +13,14 @@ type CashMethod struct {
 
 func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform int64) (list []CashMethod, err error) {
 	var t []CashMethod
-	q := DB.Where("is_active")
+	q := DB.Debug().Where("is_active")
 	if withdrawOnly {
 		q = q.Where("method_type < 0")
 	}
 	if topupOnly {
 		q = q.Where("method_type > 0")
 	}
-	err = q.Order("sort desc").Find(&list).Error
+	err = q.Order("sort desc").Find(&t).Error
 	for i := range t {
 		if t[i].IsSupportedPlatform(platform) {
 			list = append(list, t[i])
