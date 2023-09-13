@@ -3,6 +3,7 @@ package consts
 const (
 	KycStatusPending   = 1
 	KycStatusCompleted = 2
+	GinErrorKey = "gin_error"
 )
 
 var (

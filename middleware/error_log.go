@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"io"
+	"web-api/conf/consts"
 	"web-api/util"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,8 @@ func ErrorLogStatus() gin.HandlerFunc {
 
 		c.Next()
 		statusCode := c.Writer.Status()
-		if statusCode >= 400 {
+		ginErr, exists := c.Get(consts.GinErrorKey)
+		if statusCode >= 400 || exists {
 			form := c.Request.Form
 			// Request method
 			reqMethod := c.Request.Method
@@ -40,6 +42,7 @@ func ErrorLogStatus() gin.HandlerFunc {
 				"form":          form.Encode(),
 				"response_body": blw.body.String(),
 				"request_body":  requestBody,
+				"error":         ginErr,
 			}).Errorf("Error in response")
 		}
 	}

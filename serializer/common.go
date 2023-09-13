@@ -1,11 +1,12 @@
 package serializer
 
 import (
-	"github.com/gin-gonic/gin"
 	"math"
 	"os"
 	"strings"
-	"web-api/util"
+	"web-api/conf/consts"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Response 基础序列化器
@@ -53,11 +54,7 @@ func Err(c *gin.Context, service any, errCode int, msg string, err error) Respon
 	if err != nil && gin.Mode() != gin.ReleaseMode {
 		res.Error = err.Error()
 	}
-	fn := util.Log().Error
-	if errCode == CodeParamErr {
-		fn = util.Log().Info
-	}
-	fn(msg, err, c.Request.URL, c.Request.Header, util.MarshalService(service))
+	c.Set(consts.GinErrorKey,res)
 	return res
 }
 
