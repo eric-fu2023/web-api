@@ -39,3 +39,17 @@ func CategoryTypeWithCategories(db *gorm.DB) *gorm.DB {
 		return db.Order(`sort DESC`)
 	})
 }
+
+func UserFollowingsByUserId(userId int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		q := db.Where(`user_id`, userId)
+		return q
+	}
+}
+
+func UserFollowingsByUserIdAndStreamerId(userId, streamerId int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		q := db.Scopes(UserFollowingsByUserId(userId)).Where(`streamer_id`, streamerId)
+		return q
+	}
+}

@@ -6,7 +6,7 @@ import (
 )
 
 type Streamer struct {
-	models.StreamerC
+	models.Streamer
 	IsLive             bool
 	LiveStream         *Stream                    `gorm:"foreignKey:StreamerId;references:ID"`
 	StreamerCategories []models.CategoryStreamerC `gorm:"foreignKey:StreamerId;references:ID"`
@@ -14,9 +14,9 @@ type Streamer struct {
 }
 
 func StreamerWithLiveStream(db *gorm.DB) *gorm.DB {
-	return db.Where(`streamers.enable`, 1).Preload(`LiveStream`, func(db *gorm.DB) *gorm.DB {
+	return db.Where(`streamers.enable`, 1).Preload(`LiveStreams`, func(db *gorm.DB) *gorm.DB {
 		return db.Scopes(StreamsOnline)
-	}).Preload(`LiveStream.Match`)
+	}).Preload(`LiveStreams.Match`)
 }
 
 func StreamerIsLive(db *gorm.DB) *gorm.DB {

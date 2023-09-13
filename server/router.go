@@ -89,6 +89,11 @@ func NewRouter() *gin.Engine {
 				user.GET("/check_username", api.UserCheckUsername)
 				user.GET("/check_password", api.UserCheckPassword)
 
+				user.GET("/following_ids", api.UserFollowingIdList)
+				user.GET("/followings", api.UserFollowingList)
+				user.POST("/follow", api.UserFollowingAdd)
+				user.DELETE("/follow", api.UserFollowingRemove)
+
 				fb := user.Group("/fb")
 				{
 					fb.GET("/token", fb_api.GetToken)
