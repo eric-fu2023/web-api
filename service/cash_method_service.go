@@ -3,6 +3,7 @@ package service
 import (
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/util"
 	"web-api/util/i18n"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +23,6 @@ func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
-	r.Data = list
+	r.Data = util.MapSlice(list, serializer.BuildCashMethod)
 	return
 }

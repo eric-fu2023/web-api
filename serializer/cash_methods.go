@@ -9,6 +9,7 @@ type CashMethod struct {
 	MethodType  int64  `json:"method_type"`
 	BaseURL     string `json:"base_url"`
 	CallbackURL string `json:"callback_url"`
+	Type        int64  `json:"type"`
 }
 
 func BuildCashMethod(a model.CashMethod) CashMethod {
@@ -19,5 +20,6 @@ func BuildCashMethod(a model.CashMethod) CashMethod {
 		MethodType:  a.MethodType,
 		BaseURL:     a.BaseURL,
 		CallbackURL: a.CallbackURL,
+		Type:        a.MethodType,
 	}
 }
