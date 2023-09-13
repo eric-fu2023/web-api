@@ -1,8 +1,8 @@
 package serializer
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
-	"web-api/model"
 )
 
 type Match struct {
@@ -22,7 +22,7 @@ type Match struct {
 	NamiId       int64  `json:"nami_id,omitempty"`
 }
 
-func BuildMatch(c *gin.Context, a model.Match) (b Match) {
+func BuildMatch(c *gin.Context, a ploutos.Match) (b Match) {
 	b = Match{
 		ID:           a.ID,
 		SportId:      a.SportId,

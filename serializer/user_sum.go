@@ -1,7 +1,7 @@
 package serializer
 
 import (
-	"web-api/model"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type UserSum struct {
@@ -10,7 +10,7 @@ type UserSum struct {
 	Withdrawable   float64 `json:"withdrawable"`
 }
 
-func BuildUserSum(a model.UserSum) UserSum {
+func BuildUserSum(a ploutos.UserSum) UserSum {
 	u := UserSum{
 		Balance:        float64(a.Balance) / 100,
 		RemainingWager: float64(a.RemainingWager) / 100,

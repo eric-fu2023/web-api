@@ -1,6 +1,7 @@
 package service
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"gorm.io/gorm"
 	"web-api/model"
@@ -27,7 +28,7 @@ type CallbackInterface interface {
 	GetBetAmount() (int64, error)
 }
 
-func GetUserAndSum(gameProvider int64, externalUserId string) (gameProviderUser model.GameProviderUser, balance int64, remainingWager int64, maxWithdrawable int64, err error) {
+func GetUserAndSum(gameProvider int64, externalUserId string) (gameProviderUser ploutos.GameProviderUser, balance int64, remainingWager int64, maxWithdrawable int64, err error) {
 	gameProviderUser, err = GetGameProviderUser(gameProvider, externalUserId)
 	if err != nil {
 		return
@@ -39,13 +40,13 @@ func GetUserAndSum(gameProvider int64, externalUserId string) (gameProviderUser 
 	return
 }
 
-func GetGameProviderUser(provider int64, userId string) (gpu model.GameProviderUser, err error) {
-	err = gpu.GetByProviderAndExternalUser(provider, userId)
+func GetGameProviderUser(provider int64, userId string) (gpu ploutos.GameProviderUser, err error) {
+	err = model.DB.Scopes(model.GameProviderUserByProviderAndExternalUser(provider, userId)).First(&gpu).Error
 	return
 }
 
-func GetSums(gpu model.GameProviderUser) (balance int64, remainingWager int64, maxWithdrawable int64, err error) {
-	var userSum model.UserSum
+func GetSums(gpu ploutos.GameProviderUser) (balance int64, remainingWager int64, maxWithdrawable int64, err error) {
+	var userSum ploutos.UserSum
 	err = model.DB.Where(`user_id`, gpu.UserId).First(&userSum).Error
 	if err != nil {
 		return
@@ -74,10 +75,12 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	if w, e := calMaxWithdrawable(obj, newBalance, newRemainingWager, maxWithdrawable); e == nil {
 		newWithdrawable = w
 	}
-	userSum := model.UserSum{
-		Balance:         newBalance,
-		RemainingWager:  newRemainingWager,
-		MaxWithdrawable: newWithdrawable,
+	userSum := ploutos.UserSum{
+		ploutos.UserSumC{
+			Balance:         newBalance,
+			RemainingWager:  newRemainingWager,
+			MaxWithdrawable: newWithdrawable,
+		},
 	}
 	tx := model.DB.Begin()
 	if tx.Error != nil {
@@ -95,15 +98,17 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 		tx.Rollback()
 		return
 	}
-	transaction := model.Transaction{
-		UserId:            gpu.UserId,
-		Amount:            obj.GetAmount(),
-		BalanceBefore:     balance,
-		BalanceAfter:      newBalance,
-		GameTransactionId: obj.GetGameTransactionId(),
-		Wager:             userSum.RemainingWager - remainingWager,
-		WagerBefore:       remainingWager,
-		WagerAfter:        userSum.RemainingWager,
+	transaction := ploutos.Transaction{
+		ploutos.TransactionC{
+			UserId:            gpu.UserId,
+			Amount:            obj.GetAmount(),
+			BalanceBefore:     balance,
+			BalanceAfter:      newBalance,
+			GameTransactionId: obj.GetGameTransactionId(),
+			Wager:             userSum.RemainingWager - remainingWager,
+			WagerBefore:       remainingWager,
+			WagerAfter:        userSum.RemainingWager,
+		},
 	}
 	err = tx.Save(&transaction).Error
 	if err != nil {

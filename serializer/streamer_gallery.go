@@ -1,7 +1,7 @@
 package serializer
 
 import (
-	"web-api/model"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type StreamerGallery struct {
@@ -11,7 +11,7 @@ type StreamerGallery struct {
 	Src        string `json:"src"`
 }
 
-func BuildStreamerGallery(a model.StreamerGallery) (b StreamerGallery) {
+func BuildStreamerGallery(a ploutos.StreamerGallery) (b StreamerGallery) {
 	b = StreamerGallery{
 		ID:         a.ID,
 		StreamerId: a.StreamerId,

@@ -1,7 +1,7 @@
 package serializer
 
 import (
-	"web-api/model"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type Category struct {
@@ -10,7 +10,7 @@ type Category struct {
 	Icon string `json:"icon"`
 }
 
-func BuildCategory(a model.Category) (b Category) {
+func BuildCategory(a ploutos.Category) (b Category) {
 	b = Category{
 		ID:   a.ID,
 		Name: a.Name,

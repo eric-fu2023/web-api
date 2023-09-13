@@ -1,7 +1,7 @@
 package serializer
 
 import (
-	"web-api/model"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type CategoryType struct {
@@ -11,7 +11,7 @@ type CategoryType struct {
 	Categories []Category `json:"categories,omitempty"`
 }
 
-func BuildCategoryType(a model.CategoryType) (b CategoryType) {
+func BuildCategoryType(a ploutos.CategoryType) (b CategoryType) {
 	b = CategoryType{
 		ID:   a.ID,
 		Name: a.Name,

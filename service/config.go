@@ -1,6 +1,7 @@
 package service
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"web-api/model"
 	"web-api/serializer"
@@ -12,7 +13,7 @@ type AppConfigService struct {
 }
 
 func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err error) {
-	var configs []model.AppConfig
+	var configs []ploutos.AppConfig
 	brand := c.MustGet(`_brand`).(int)
 	agent := c.MustGet(`_agent`).(int)
 	if err = model.DB.Scopes(model.ByBrandAgentDeviceAndKey(int64(brand), int64(agent), service.Platform.Platform, service.Key)).Find(&configs).Error; err == nil {

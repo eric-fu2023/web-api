@@ -2,7 +2,7 @@ package fb
 
 import (
 	"blgit.rfdev.tech/taya/game-service/fb/callback"
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -29,7 +29,7 @@ var FbTransferTypeCalculateWager = map[string]int64{
 
 type Callback struct {
 	Request     callback.OrderPayRequest
-	Transaction models.FbTransactionC
+	Transaction ploutos.FbTransactionC
 }
 
 func (c *Callback) NewCallback(userId int64) {
@@ -68,7 +68,7 @@ func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
 }
 
 func (c *Callback) GetBetAmount() (amount int64, err error) {
-	err = model.DB.Model(models.FbTransactionC{}).Select(`amount`).
+	err = model.DB.Model(ploutos.FbTransactionC{}).Select(`amount`).
 		Where(`business_id`, c.Transaction.BusinessId).
 		Where(`transfer_type`, `BET`).Order(`id`).First(&amount).Error
 	return
@@ -111,7 +111,7 @@ func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callbac
 func CheckOrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
 	j, _ := json.Marshal(req)
 	fmt.Println("check_order_pay: ", string(j))
-	var fbTx model.FbTransaction
+	var fbTx ploutos.FbTransaction
 	rows := model.DB.Where(`transaction_id`, req.TransactionId).First(&fbTx).RowsAffected
 	if rows == 1 {
 		res = callback.BaseResponse{

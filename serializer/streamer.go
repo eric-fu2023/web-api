@@ -35,9 +35,11 @@ func BuildStreamer(c *gin.Context, a model.Streamer) (b Streamer) {
 	if !a.LastLiveAt.IsZero() {
 		b.LastLiveAtTs = a.LastLiveAt.Unix()
 	}
-	if a.LiveStream != nil {
-		t := BuildStream(c, *a.LiveStream)
-		b.LiveStream = &t
+	if len(a.LiveStreams) > 0 {
+		for _, s := range a.LiveStreams {
+			t := BuildStream(c, s)
+			b.LiveStream = &t
+		}
 	}
 	if len(a.StreamerGalleries) > 0 {
 		var galleries []StreamerGallery

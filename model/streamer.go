@@ -7,10 +7,7 @@ import (
 
 type Streamer struct {
 	models.Streamer
-	IsLive             bool
-	LiveStream         *Stream                    `gorm:"foreignKey:StreamerId;references:ID"`
-	StreamerCategories []models.CategoryStreamerC `gorm:"foreignKey:StreamerId;references:ID"`
-	StreamerGalleries  []StreamerGallery          `gorm:"foreignKey:StreamerId;references:ID"`
+	IsLive bool
 }
 
 func StreamerWithLiveStream(db *gorm.DB) *gorm.DB {

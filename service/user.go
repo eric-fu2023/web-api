@@ -1,6 +1,7 @@
 package service
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"fmt"
 	"os"
@@ -23,8 +24,10 @@ func CreateUser(user model.User) error {
 		return err
 	}
 
-	userSum := model.UserSum{
-		UserId: user.ID,
+	userSum := ploutos.UserSum{
+		ploutos.UserSumC{
+			UserId: user.ID,
+		},
 	}
 	err = tx.Create(&userSum).Error
 	if err != nil {
@@ -33,7 +36,7 @@ func CreateUser(user model.User) error {
 	}
 	tx.Commit()
 
-	var currencies []model.CurrencyGameProvider
+	var currencies []ploutos.CurrencyGameProvider
 	err = model.DB.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
 	if err != nil {
 		return ErrEmptyCurrencyId
@@ -49,12 +52,14 @@ func CreateUser(user model.User) error {
 	}
 	fbClient := util.FBFactory.NewClient()
 	if res, e := fbClient.CreateUser(user.Username, []int64{}, 0); e == nil {
-		fbGpu := model.GameProviderUser{
-			GameProviderId:     consts.GameProvider["fb"],
-			UserId:             user.ID,
-			ExternalUserId:     user.Username,
-			ExternalCurrencyId: fbCurrency,
-			ExternalId:         fmt.Sprintf("%d", res),
+		fbGpu := ploutos.GameProviderUser{
+			ploutos.GameProviderUserC{
+				GameProviderId:     consts.GameProvider["fb"],
+				UserId:             user.ID,
+				ExternalUserId:     user.Username,
+				ExternalCurrencyId: fbCurrency,
+				ExternalId:         fmt.Sprintf("%d", res),
+			},
 		}
 		err = model.DB.Save(&fbGpu).Error
 		if err != nil {
@@ -68,12 +73,14 @@ func CreateUser(user model.User) error {
 	}
 	sabaClient := util.SabaFactory.NewClient()
 	if res, e := sabaClient.CreateMember(user.Username, sabaCurrency, os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
-		sabaGpu := model.GameProviderUser{
-			GameProviderId:     consts.GameProvider["saba"],
-			UserId:             user.ID,
-			ExternalUserId:     user.Username,
-			ExternalCurrencyId: sabaCurrency,
-			ExternalId:         res,
+		sabaGpu := ploutos.GameProviderUser{
+			ploutos.GameProviderUserC{
+				GameProviderId:     consts.GameProvider["saba"],
+				UserId:             user.ID,
+				ExternalUserId:     user.Username,
+				ExternalCurrencyId: sabaCurrency,
+				ExternalId:         res,
+			},
 		}
 		err = model.DB.Save(&sabaGpu).Error
 		if err != nil {

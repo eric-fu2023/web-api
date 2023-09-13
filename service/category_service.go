@@ -1,6 +1,7 @@
 package service
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"web-api/model"
 	"web-api/serializer"
@@ -12,8 +13,8 @@ type CategoryListService struct {
 
 func (service *CategoryListService) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	var categories []model.CategoryType
-	if err = model.DB.Model(model.CategoryType{}).Scopes(model.CategoryTypeWithCategories).Find(&categories).Error; err != nil {
+	var categories []ploutos.CategoryType
+	if err = model.DB.Model(ploutos.CategoryType{}).Scopes(model.CategoryTypeWithCategories).Find(&categories).Error; err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}

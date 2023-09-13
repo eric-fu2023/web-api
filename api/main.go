@@ -1,6 +1,7 @@
 package api
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -34,7 +35,7 @@ func Ts(c *gin.Context) {
 func Me(c *gin.Context) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
-	var userSum model.UserSum
+	var userSum ploutos.UserSum
 	if e := model.DB.Where(`user_id`, user.ID).First(&userSum).Error; e == nil {
 		user.UserSum = &userSum
 	}

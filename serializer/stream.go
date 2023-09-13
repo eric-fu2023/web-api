@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"web-api/model"
@@ -25,7 +26,7 @@ type Stream struct {
 	Streamer             *Streamer `json:"streamer,omitempty"`
 }
 
-func BuildStream(c *gin.Context, a model.Stream) (b Stream) {
+func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 	b = Stream{
 		ID:                   a.ID,
 		StreamerId:           a.StreamerId,
@@ -49,7 +50,10 @@ func BuildStream(c *gin.Context, a model.Stream) (b Stream) {
 		b.Match = &m
 	}
 	if a.Streamer != nil {
-		m := BuildStreamer(c, *a.Streamer)
+		m := BuildStreamer(c, model.Streamer{
+			Streamer: *a.Streamer,
+			IsLive:   true,
+		})
 		b.Streamer = &m
 	}
 	return

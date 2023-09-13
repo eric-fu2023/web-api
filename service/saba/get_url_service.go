@@ -1,6 +1,7 @@
 package saba
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"os"
 	"web-api/conf/consts"
@@ -26,19 +27,21 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 	url, err := client.GetSabaUrl(user.Username, consts.PlatformIdToSabaPlatformId[service.Platform.Platform])
 	if err != nil {
 		if err.Error() == "member not found" {
-			var currency model.CurrencyGameProvider
+			var currency ploutos.CurrencyGameProvider
 			err = model.DB.Where(`game_provider_id`, consts.GameProvider["saba"]).Where(`currency_id`, user.CurrencyId).First(&currency).Error
 			if err != nil {
 				res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("empty_currency_id"), err)
 				return
 			}
 			if r, e := client.CreateMember(user.Username, currency.Value, os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
-				sabaGpu := model.GameProviderUser{
-					GameProviderId:     consts.GameProvider["saba"],
-					UserId:             user.ID,
-					ExternalUserId:     user.Username,
-					ExternalCurrencyId: currency.Value,
-					ExternalId:         r,
+				sabaGpu := ploutos.GameProviderUser{
+					ploutos.GameProviderUserC{
+						GameProviderId:     consts.GameProvider["saba"],
+						UserId:             user.ID,
+						ExternalUserId:     user.Username,
+						ExternalCurrencyId: currency.Value,
+						ExternalId:         r,
+					},
 				}
 				err = model.DB.Save(&sabaGpu).Error
 				if err != nil {

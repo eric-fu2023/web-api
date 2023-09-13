@@ -1,7 +1,7 @@
 package model
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"os"
@@ -11,8 +11,8 @@ import (
 
 // User 用户模型
 type User struct {
-	models.UserC
-	UserSum *UserSum `gorm:"foreignKey:UserId;references:ID"`
+	ploutos.UserC
+	UserSum *ploutos.UserSum `gorm:"foreignKey:UserId;references:ID"`
 }
 
 const (

@@ -1,6 +1,7 @@
 package service
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
@@ -58,7 +59,7 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 		categoryTypeOrder = categoryTypeOrder[:len(categoryTypeOrder)-1] + `)`
 	}
 
-	var streams []model.Stream
+	var streams []ploutos.LiveStream
 	q := model.DB.Scopes(model.StreamsOnlineSorted(categoryOrder, categoryTypeOrder), model.ExcludeStreamers(service.ExcludedStreamerIds), model.Paginate(service.Page.Page, service.Limit)).Preload(`Streamer`)
 	if len(categories) > 0 {
 		q = q.Where(`stream_category_id`, categories)
@@ -67,7 +68,6 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 		return
 	}
 	for _, stream := range streams {
-		stream.Streamer.IsLive = true
 		r = append(r, serializer.BuildStream(c, stream))
 	}
 	return

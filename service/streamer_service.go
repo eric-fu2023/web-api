@@ -1,6 +1,7 @@
 package service
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"web-api/model"
 	"web-api/serializer"
@@ -20,19 +21,23 @@ type StreamerWithRecommends struct {
 
 func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	var streamer model.Streamer
+	var streamer ploutos.Streamer
 	streamer.ID = service.Id
 	if err = model.DB.Scopes(model.StreamerWithLiveStream, model.StreamerWithGallery).Preload(`StreamerCategories`).First(&streamer).Error; err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("streamer_not_found"), err)
 		return
 	}
-	if streamer.LiveStream != nil {
-		streamer.IsLive = true
+	var isLive bool
+	if len(streamer.LiveStreams) > 0 {
+		isLive = true
 	}
 	data := StreamerWithRecommends{
-		Streamer: serializer.BuildStreamer(c, streamer),
+		Streamer: serializer.BuildStreamer(c, model.Streamer{
+			Streamer: streamer,
+			IsLive:   isLive,
+		}),
 	}
-	if streamer.LiveStream == nil && service.RecommendCount > 0 {
+	if len(streamer.LiveStreams) == 0 && service.RecommendCount > 0 {
 		if e := model.DB.Model(model.Stream{}).Select(`recommend_streamer_id`).
 			Where(`streamer_id`, streamer.ID).Where(`status`, 4).
 			Order(`schedule_time DESC`).Limit(1).Find(&data.RecommendedStreamerId).Error; e == nil {
