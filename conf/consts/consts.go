@@ -11,7 +11,6 @@ var (
 		2: "h5",
 		3: "android",
 		4: "ios",
-		5: "web",
 	}
 	PlatformIdToFbPlatformId = map[int64]string{
 		1: "pc",

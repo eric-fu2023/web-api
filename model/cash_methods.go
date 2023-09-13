@@ -1,8 +1,6 @@
 package model
 
 import (
-	"web-api/conf/consts"
-
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
@@ -11,7 +9,7 @@ type CashMethod struct {
 	models.CashMethodC
 }
 
-func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform int64) (list []CashMethod, err error) {
+func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform string) (list []CashMethod, err error) {
 	var t []CashMethod
 	q := DB.Debug().Where("is_active")
 	if withdrawOnly {
@@ -29,15 +27,15 @@ func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform in
 	return
 }
 
-func (a *CashMethod) IsSupportedPlatform(platform int64) bool {
-	switch consts.Platform[platform] {
+func (a *CashMethod) IsSupportedPlatform(platform string) bool {
+	switch platform {
 	case "ios":
 		return a.SupportIOS
 	case "android":
 		return a.SupportAndroid
-	case "web":
-		return a.SupportWeb
-	default:
+	case "":
 		return false
+	default:
+		return a.SupportWeb
 	}
 }
