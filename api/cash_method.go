@@ -6,12 +6,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CashMethodList(c *gin.Context) {
-	var service service.CasheMethodListService
-	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.List(c)
-		c.JSON(200, res)
-	} else {
-		c.JSON(400, ErrorResponse(c, service, err))
+func TopupMethodList(c *gin.Context) {
+	var service = service.CasheMethodListService{
+		TopupOnly: true,
 	}
+	res, _ := service.List(c)
+	c.JSON(200, res)
+}
+
+func WithdrawMethodList(c *gin.Context) {
+	var service = service.CasheMethodListService{
+		WithdrawOnly: true,
+	}
+	res, _ := service.List(c)
+	c.JSON(200, res)
 }
