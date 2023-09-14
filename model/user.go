@@ -1,12 +1,13 @@
 package model
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"fmt"
-	"github.com/golang-jwt/jwt/v4"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	"gorm.io/gorm"
 )
 
 // User 用户模型
@@ -44,4 +45,9 @@ func (user *User) GenToken() (tokenString string, err error) {
 
 func (user *User) GetRedisSessionKey() string {
 	return fmt.Sprintf(`session:%d`, user.ID)
+}
+
+func (UserSum) GetByIDWithLockWithDB(id int64, tx *gorm.DB) (sum UserSum, err error) {
+	err = DB.First(&sum,id).Error
+	return
 }
