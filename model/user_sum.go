@@ -28,15 +28,15 @@ func (UserSum) UpdateUserSumWithDB(txDB *gorm.DB, userID, amount, wager, transac
 		}
 		transaction := Transaction{
 			models.TransactionC{
-				UserId:            userID,
-				Amount:            amount,
-				BalanceBefore:     sum.Balance,
-				BalanceAfter:      sum.Balance + amount,
-				GameTransactionId: transactionID,
-				Gametype:          transactionType,
-				Wager:             wager,
-				WagerBefore:       sum.RemainingWager,
-				WagerAfter:        sum.RemainingWager + wager,
+				UserId:               userID,
+				Amount:               amount,
+				BalanceBefore:        sum.Balance,
+				BalanceAfter:         sum.Balance + amount,
+				ForeignTransactionId: transactionID,
+				TransactionType:      transactionType,
+				Wager:                wager,
+				WagerBefore:          sum.RemainingWager,
+				WagerAfter:           sum.RemainingWager + wager,
 			},
 		}
 		err = tx.Create(&transaction).Error

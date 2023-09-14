@@ -104,7 +104,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 			Amount:            obj.GetAmount(),
 			BalanceBefore:     balance,
 			BalanceAfter:      newBalance,
-			GameTransactionId: obj.GetGameTransactionId(),
+			ForeignTransactionId: obj.GetGameTransactionId(),
 			Wager:             userSum.RemainingWager - remainingWager,
 			WagerBefore:       remainingWager,
 			WagerAfter:        userSum.RemainingWager,

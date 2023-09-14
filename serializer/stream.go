@@ -12,7 +12,7 @@ type Stream struct {
 	Title                string    `json:"title"`
 	StreamerId           int64     `json:"streamer_id"`
 	MatchId              int64     `json:"match_id"`
-	Status               int64     `json:"status""`
+	Status               int64     `json:"status"`
 	PullUrl              string    `json:"src"`
 	ImgUrl               string    `json:"img_url"`
 	ScheduleTimeTS       int64     `json:"schedule_time_ts"`
