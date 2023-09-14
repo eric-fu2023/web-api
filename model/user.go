@@ -8,12 +8,14 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
+	models "blgit.rfdev.tech/taya/ploutos-object"
+
 )
 
 // User 用户模型
 type User struct {
-	ploutos.UserC
-	UserSum *ploutos.UserSum `gorm:"foreignKey:UserId;references:ID"`
+	models.UserC
+	UserSum *models.UserSum `gorm:"foreignKey:UserId;references:ID"`
 }
 
 const (
