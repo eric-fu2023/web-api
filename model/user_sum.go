@@ -7,9 +7,18 @@ import (
 )
 
 type (
-	UserSum     models.UserSumC
-	Transaction models.TransactionC
+	UserSum struct {
+		models.UserSumC
+	}
+	Transaction struct {
+		models.TransactionC
+	}
 )
+
+func (UserSum) GetByIDWithLockWithDB(id int64, tx *gorm.DB) (sum UserSum, err error) {
+	err = DB.First(&sum, id).Error
+	return
+}
 
 func (UserSum) UpdateUserSumWithDB(txDB *gorm.DB, userID, amount, wager, transactionType, transactionID int64) (sum UserSum, err error) {
 	err = txDB.Transaction(func(tx *gorm.DB) (err error) {
@@ -18,15 +27,17 @@ func (UserSum) UpdateUserSumWithDB(txDB *gorm.DB, userID, amount, wager, transac
 			return
 		}
 		transaction := Transaction{
-			UserId:            userID,
-			Amount:            amount,
-			BalanceBefore:     sum.Balance,
-			BalanceAfter:      sum.Balance + amount,
-			GameTransactionId: transactionID,
-			Gametype:          transactionType,
-			Wager:             wager,
-			WagerBefore:       sum.RemainingWager,
-			WagerAfter:        sum.RemainingWager + wager,
+			models.TransactionC{
+				UserId:            userID,
+				Amount:            amount,
+				BalanceBefore:     sum.Balance,
+				BalanceAfter:      sum.Balance + amount,
+				GameTransactionId: transactionID,
+				Gametype:          transactionType,
+				Wager:             wager,
+				WagerBefore:       sum.RemainingWager,
+				WagerAfter:        sum.RemainingWager + wager,
+			},
 		}
 		err = tx.Create(&transaction).Error
 		if err != nil {
