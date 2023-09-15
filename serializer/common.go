@@ -54,7 +54,7 @@ func Err(c *gin.Context, service any, errCode int, msg string, err error) Respon
 	if err != nil && gin.Mode() != gin.ReleaseMode {
 		res.Error = err.Error()
 	}
-	c.Set(consts.GinErrorKey,res)
+	c.Set(consts.GinErrorKey, err)
 	return res
 }
 
@@ -108,4 +108,11 @@ func RoundValue(numerator int64, denominator int64, dCoeff int64, dividedBy int6
 		avg = math.Round(float64(numerator)/float64(denominator)*float64(dCoeff)) / float64(dividedBy)
 	}
 	return
+}
+
+func EnsureErr(c *gin.Context, err error, res Response) Response {
+	if res.Code != 0 {
+		return res
+	}
+	return Err(c, "", CodeGeneralError, "", err)
 }
