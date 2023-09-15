@@ -9,6 +9,12 @@ type CashMethod struct {
 	models.CashMethodC
 }
 
+
+func (CashMethod) GetByID(c *gin.Context, id int64) (item CashMethod, err error) {
+	err = DB.First(&item, id).Error
+	return
+}
+
 func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform string) (list []CashMethod, err error) {
 	var t []CashMethod
 	q := DB.Debug().Where("is_active")

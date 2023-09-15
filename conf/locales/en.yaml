@@ -466,3 +466,5 @@ kyc_get_failed: "An error occurred when retrieving KYC information."
 
 file_type_not_allowed: "File type %s is not allowed."
 file_size_exceeded: "File size should not exceed %s."
+
+err_insufficient_withdrawable: "Insufficient withdrawable amount"

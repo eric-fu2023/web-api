@@ -15,12 +15,12 @@ type (
 	}
 )
 
-func (UserSum) GetByIDWithLockWithDB(id int64, tx *gorm.DB) (sum UserSum, err error) {
-	err = DB.First(&sum, id).Error
+func (UserSum) GetByUserIDWithLockWithDB(userID int64, tx *gorm.DB) (sum UserSum, err error) {
+	err = DB.Where("user_id", userID).First(&sum).Error
 	return
 }
 
-func (UserSum) UpdateUserSumWithDB(txDB *gorm.DB, userID, amount, wager, transactionType, transactionID int64) (sum UserSum, err error) {
+func (UserSum) UpdateUserSumWithDB(txDB *gorm.DB, userID, amount, wager, transactionType int64, cashOrderID string) (sum UserSum, err error) {
 	err = txDB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id", userID).First(&sum).Error
 		if err != nil {
@@ -28,15 +28,15 @@ func (UserSum) UpdateUserSumWithDB(txDB *gorm.DB, userID, amount, wager, transac
 		}
 		transaction := Transaction{
 			models.TransactionC{
-				UserId:               userID,
-				Amount:               amount,
-				BalanceBefore:        sum.Balance,
-				BalanceAfter:         sum.Balance + amount,
-				ForeignTransactionId: transactionID,
-				TransactionType:      transactionType,
-				Wager:                wager,
-				WagerBefore:          sum.RemainingWager,
-				WagerAfter:           sum.RemainingWager + wager,
+				UserId:          userID,
+				Amount:          amount,
+				BalanceBefore:   sum.Balance,
+				BalanceAfter:    sum.Balance + amount,
+				TransactionType: transactionType,
+				Wager:           wager,
+				WagerBefore:     sum.RemainingWager,
+				WagerAfter:      sum.RemainingWager + wager,
+				CashOrderID:     cashOrderID,
 			},
 		}
 		err = tx.Create(&transaction).Error
