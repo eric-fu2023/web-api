@@ -40,6 +40,7 @@ func Init() {
 	cache.RedisShare()
 	cache.RedisSyncTransaction()
 	cache.SetupRedisStore()
+	cache.RedisLock()
 	model.SetupMongo(os.Getenv("MONGO_URI"))
 
 	util.InitFbFactory()
