@@ -8,6 +8,9 @@ import (
 	"web-api/util"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
+
 )
 
 // RedisClient Redis缓存客户端单例
@@ -16,6 +19,7 @@ var RedisSessionClient *redis.Client
 var RedisShareClient *redis.Client
 var RedisSyncTransactionClient *redis.Client
 var RedisStore *persist.RedisStore
+var RedisLockClient *redsync.Redsync
 
 // Redis 在中间件中初始化redis链接
 func Redis() {
@@ -84,4 +88,21 @@ func RedisSyncTransaction() {
 
 func SetupRedisStore() {
 	RedisStore = persist.NewRedisStore(RedisClient)
+}
+
+
+func RedisLock() {
+	db, _ := strconv.ParseUint(os.Getenv("REDIS_LOCK_DB"), 10, 64)
+	client := redis.NewClient(&redis.Options{
+		Addr:       os.Getenv("REDIS_ADDR"),
+		Password:   os.Getenv("REDIS_PW"),
+		DB:         int(db),
+		MaxRetries: 1,
+	})
+
+	pool := goredis.NewPool(client)
+
+	rs := redsync.New(pool)
+
+	RedisLockClient = rs
 }
