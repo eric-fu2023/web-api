@@ -3,6 +3,7 @@ package cashout
 import (
 	"errors"
 	"fmt"
+	"time"
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
@@ -10,6 +11,7 @@ import (
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redsync/redsync/v4"
 	"gorm.io/gorm"
 )
 
@@ -31,8 +33,8 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	fmt.Print(user)
 	fmt.Print(cl)
 
-
-	mutex := cache.RedisLockClient.NewMutex()
+	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, user.ID), redsync.WithExpiry(5*time.Second))
+	mutex.Lock()
 	// check withdrawable
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var userSum model.UserSum
@@ -55,12 +57,13 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		fmt.Println(cashMethod, "place holder")
 
 		// Get vip level from somewhere else
-		var vipLevel int64 = 0
-		var rule model.CashOutRule
-		rule, err = model.CashOutRule{}.Get(vipLevel)
+		// var vipLevel int64 = 0
+		// var rule model.CashOutRule
+		// rule, err = model.CashOutRule{}.Get(vipLevel)
 
 		return
 	})
+	mutex.Unlock()
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
