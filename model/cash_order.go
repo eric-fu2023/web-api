@@ -26,6 +26,27 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 	}
 }
 
+func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account, remark string, reviewRequired bool) CashOrder {
+	var orderStatus int64 = 1
+	if reviewRequired {
+		orderStatus = 4
+	}
+
+	return CashOrder{
+		models.CashOrderC{
+			ID:                   models.GenerateCashOutOrderNo(),
+			CashMethodId:         CashMethodId,
+			OrderType:            -1,
+			Status:               orderStatus,
+			AppliedCashOutAmount: amount,
+			BalanceBefore:        balanceBefore,
+			Account:              account,
+			Remark:               remark,
+			//Notes:, update later
+		},
+	}
+}
+
 func (CashOrder) GetPendingWithLockWithDB(orderID string, tx *gorm.DB) (c CashOrder, err error) {
 	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("id", orderID).

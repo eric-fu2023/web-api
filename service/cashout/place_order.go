@@ -20,7 +20,7 @@ const userWithdrawLockKey = "user_withdraw_lock.%d"
 type WithdrawOrderService struct {
 	WithdrawMethodID  int64
 	WithdrawAccountNo string
-	WithdrawAmount    int64
+	WithdrawAmount    int64 ` binding:"required, min=0"`
 }
 
 func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
@@ -29,10 +29,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	var cl finpay.FinpayClient
-	fmt.Print(user)
-	fmt.Print(cl)
-
+	var reviewRequired bool = false
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, user.ID), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()
 	// check withdrawable
@@ -42,7 +39,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		if err != nil {
 			return
 		}
-		if userSum.MaxWithdrawable < s.WithdrawAmount {
+		if userSum.MaxWithdrawable < s.WithdrawAmount || userSum.Balance < s.WithdrawAmount {
 			err = errors.New("withdraw exceeded")
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("err_insufficient_withdrawable"), err)
 			return
@@ -57,24 +54,60 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		fmt.Println(cashMethod, "place holder")
 
 		// Get vip level from somewhere else
-		// var vipLevel int64 = 0
-		// var rule model.CashOutRule
-		// rule, err = model.CashOutRule{}.Get(vipLevel)
+		// check vip
+		// check cash out rules
+		var vipLevel int64 = 0
+		var rule model.CashOutRule
+		var txns []model.Transaction
+		rule, err = model.CashOutRule{}.Get(vipLevel)
+		if err != nil {
+			return
+		}
 
+		timeFrom := time.Now().Truncate(24 * time.Hour)
+		txns, err = model.Transaction{}.ListTxRecord(c, user.ID, &timeFrom, nil)
+		if err != nil {
+			return
+		}
+		totalOut, payoutCount := CalTxDetails(txns)
+		var msg string
+		reviewRequired, msg = rule.OK(s.WithdrawAmount, payoutCount+1, totalOut+s.WithdrawAmount, nil)
+
+		cashOrder := model.NewCashOutOrder(user.ID, s.WithdrawMethodID, s.WithdrawAmount, userSum.Balance, s.WithdrawAccountNo, msg, reviewRequired)
+		err = tx.Create(&cashOrder).Error
+		if err != nil {
+			return
+		}
+		// make balance changes
+		// add tx record
+		var newUsersum model.UserSum
+		newUsersum, err = model.UserSum{}.UpdateUserSumWithDB(tx, user.ID, -s.WithdrawAmount, 0, -s.WithdrawAmount, 10001, cashOrder.ID)
+		if err != nil {
+			return
+		}
+		// sanity check
+		if newUsersum.Balance != userSum.Balance-s.WithdrawAmount||
+		newUsersum.MaxWithdrawable != userSum.MaxWithdrawable-s.WithdrawAmount ||
+		newUsersum.RemainingWager != userSum.RemainingWager {
+			err = errors.New("error handling user balance")
+			return
+		}
+		// if trigger review
+		// proceed with withdrawal order or hold and review
+		// send withdraw request
 		return
 	})
 	mutex.Unlock()
+
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
-	// check cash method rules
-	// check vip
-	// check cash out rules
-	// if trigger review
-	// proceed with withdrawal order or hold and review
-	// send withdraw request
-	cl.WithdrawV1(c)
+	if reviewRequired {
+		return
+	}
+
+	finpay.FinpayClient{}.WithdrawV1(c)
 	return
 }
 

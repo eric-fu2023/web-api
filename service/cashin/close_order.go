@@ -57,8 +57,9 @@ func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.Cash
 		}
 		_, err = model.UserSum{}.UpdateUserSumWithDB(tx,
 			newCashOrderState.UserId,
-			newCashOrderState.EffectiveCashInAmount-newCashOrderState.EffectiveCashOutAmount,
+			newCashOrderState.EffectiveCashInAmount,
 			newCashOrderState.WagerChange,
+			0,
 			transactionType,
 			newCashOrderState.ID)
 		if err != nil {
