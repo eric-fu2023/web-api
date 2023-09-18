@@ -1,10 +1,12 @@
 package serializer
 
 import (
+	"encoding/json"
 	"math"
 	"os"
 	"strings"
 	"web-api/conf/consts"
+	"web-api/util/i18n"
 
 	"github.com/gin-gonic/gin"
 )
@@ -115,4 +117,14 @@ func EnsureErr(c *gin.Context, err error, res Response) Response {
 		return res
 	}
 	return Err(c, "", CodeGeneralError, "", err)
+}
+
+func GeneralErr(c *gin.Context, err error) Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	return Err(c, "", CodeGeneralError, i18n.T("general_error"), err)
+}
+
+func JSON(jsonObj any) string {
+	bytes, _ := json.Marshal(jsonObj)
+	return string(bytes)
 }

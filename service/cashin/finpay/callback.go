@@ -1,15 +1,14 @@
 package cashin_finpay
 
 import (
-	"encoding/json"
 	"errors"
 	"web-api/model"
+	"web-api/serializer"
+	"web-api/service/cashin"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
-
 
 type FinpayCallback struct {
 	finpay.PaymentOrderCallBackReq
@@ -20,7 +19,6 @@ func (s *FinpayCallback) Handle(c *gin.Context) (err error) {
 		err = errors.New("invalid response")
 		return
 	}
-	var order model.CashOrder
 	// check api response
 	// lock cash order
 	// update cash order
@@ -28,21 +26,9 @@ func (s *FinpayCallback) Handle(c *gin.Context) (err error) {
 	// update user_sum
 	// create transaction history
 	// }
-	bytes,_ := json.Marshal(s)
-
-	err = model.DB.Debug().WithContext(c).Transaction(func(tx *gorm.DB) (e error) {
-		order, e = order.GetPendingWithLockWithDB(s.MerchantOrderNo, tx)
-		if e != nil {
-			return
-		}
-		order.Status = 2
-		order.Notes = string(bytes)
-		e = tx.Save(&order).Error
-		if e != nil {
-			return
-		}
-		
+	_, err = cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, serializer.JSON(s), "", "", model.DB,0)
+	if err != nil {
 		return
-	})
+	}
 	return
 }

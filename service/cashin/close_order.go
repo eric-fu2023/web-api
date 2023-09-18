@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // check api response
@@ -29,10 +28,10 @@ import (
 // Account
 // Remark
 
-func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, account, remark string, txDB *gorm.DB) (updatedCashOrder model.CashOrder, err error) {
+func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, account, remark string, txDB *gorm.DB, manualClosedBy int64) (updatedCashOrder model.CashOrder, err error) {
 	var newCashOrderState model.CashOrder
 	err = txDB.Transaction(func(tx *gorm.DB) (err error) {
-		err = txDB.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", orderNumber).First(&newCashOrderState).Error
+		newCashOrderState, err = model.CashOrder{}.GetPendingWithLockWithDB(orderNumber, tx)
 		if err != nil {
 			return
 		}
@@ -44,7 +43,8 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		newCashOrderState.Account = account
 		newCashOrderState.Remark = remark
 		newCashOrderState.Status = 2
-		updatedCashOrder, err = closeOrder(c, orderNumber, newCashOrderState, txDB, 10000)
+		newCashOrderState.ManualClosedBy = manualClosedBy
+		updatedCashOrder, err = closeOrder(c, orderNumber, newCashOrderState, tx, 10000)
 		if err != nil {
 			return
 		}
@@ -56,7 +56,8 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 
 func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
 	// update cash order
-	err = txDB.Where("id", orderNumber).Updates(newCashOrderState).Error
+
+	err = txDB.Updates(newCashOrderState).Error
 	// modify user sum
 	if err != nil {
 		return
@@ -71,6 +72,7 @@ func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.Cash
 	if err != nil {
 		return
 	}
+
 	updatedCashOrder = newCashOrderState
 	return
 }

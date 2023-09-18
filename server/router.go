@@ -5,6 +5,7 @@ import (
 	"time"
 	"web-api/api"
 	fb_api "web-api/api/fb"
+	internal_api "web-api/api/internalapi"
 	saba_api "web-api/api/saba"
 	"web-api/middleware"
 
@@ -40,6 +41,11 @@ func NewRouter() *gin.Engine {
 			sabaCallback.POST("/unsettle", saba_api.CallbackUnsettle)
 			sabaCallback.POST("/resettle", saba_api.CallbackResettle)
 		}
+	}
+
+	internal := r.Group("/internal")
+	{
+		internal.POST("/finpay/top-up-order-manual", internal_api.FinpayBackdoor)
 	}
 
 	// 中间件, 顺序不能改
@@ -81,6 +87,10 @@ func NewRouter() *gin.Engine {
 		auth := v1.Group("")
 		auth.Use(middleware.AuthRequired(true))
 		{
+			cash := auth.Group("/cash")
+			{
+				cash.POST("/top-up-orders", api.TopUpOrder)
+			}
 			user := auth.Group("/user")
 			{
 				user.GET("/me", api.Me)

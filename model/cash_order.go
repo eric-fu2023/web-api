@@ -14,6 +14,7 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 	return CashOrder{
 		models.CashOrderC{
 			ID:                  models.GenerateCashInOrderNo(),
+			UserId: userID,
 			CashMethodId:        CashMethodId,
 			OrderType:           1,
 			Status:              1,
@@ -42,6 +43,7 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account,
 			BalanceBefore:        balanceBefore,
 			Account:              account,
 			Remark:               remark,
+			RequireReview:        reviewRequired,
 			//Notes:, update later
 		},
 	}
