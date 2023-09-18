@@ -66,6 +66,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("/password", middleware.CheckAuth(), api.UserSetPassword)
 
 		v1.GET("/config", middleware.Cache(10*time.Minute), api.Config)
+		v1.GET("/announcements", middleware.Cache(1*time.Minute), api.Announcements)
 		v1.GET("/categories", middleware.Cache(1*time.Minute), api.CategoryList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)
 		v1.GET("/streamer", middleware.Cache(1*time.Minute), api.Streamer)
@@ -88,6 +89,9 @@ func NewRouter() *gin.Engine {
 				user.POST("/finish_setup", api.UserFinishSetup)
 				user.GET("/check_username", api.UserCheckUsername)
 				user.POST("/check_password", api.UserCheckPassword)
+				user.GET("/profile", api.ProfileGet)
+				user.POST("/profile", api.ProfileUpdate)
+				user.POST("/profile_pic", api.ProfilePicUpload)
 
 				user.GET("/following_ids", api.UserFollowingIdList)
 				user.GET("/followings", api.UserFollowingList)

@@ -148,3 +148,33 @@ func UserDelete(c *gin.Context) {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
+
+func ProfileGet(c *gin.Context) {
+	var service service.ProfileGetService
+	if err := c.ShouldBind(&service); err == nil {
+		res := service.Get(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
+func ProfileUpdate(c *gin.Context) {
+	var service service.ProfileUpdateService
+	if err := c.ShouldBind(&service); err == nil {
+		res := service.Update(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
+func ProfilePicUpload(c *gin.Context) {
+	var service service.ProfilePicService
+	if err := c.ShouldBind(&service); err == nil {
+		res := service.Upload(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
