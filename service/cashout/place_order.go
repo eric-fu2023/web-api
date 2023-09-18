@@ -81,7 +81,12 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		// make balance changes
 		// add tx record
 		var newUsersum model.UserSum
-		newUsersum, err = model.UserSum{}.UpdateUserSumWithDB(tx, user.ID, -s.WithdrawAmount, 0, -s.WithdrawAmount, 10001, cashOrder.ID)
+		newUsersum, err = model.UserSum{}.UpdateUserSumWithDB(
+			tx, 
+			user.ID, 
+			-s.WithdrawAmount, 
+			0, 
+			-s.WithdrawAmount, 10001, cashOrder.ID)
 		if err != nil {
 			return
 		}

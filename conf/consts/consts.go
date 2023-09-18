@@ -3,7 +3,7 @@ package consts
 const (
 	KycStatusPending   = 1
 	KycStatusCompleted = 2
-	GinErrorKey = "gin_error"
+	GinErrorKey        = "gin_error"
 )
 
 var (
@@ -81,8 +81,14 @@ var (
 		"csgo":       102,
 		"dota2":      103,
 	}
+	CashOrderStatus = map[int64]string{
+		1: "pending",
+		2: "success",
+		3: "cancelled",
+		4: "pending approval",
+		5: "rejected",
+	}
 )
-
 
 const (
 	CorrelationHeader = "X-Correlation-ID"

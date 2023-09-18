@@ -31,42 +31,46 @@ import (
 
 func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, account, remark string, txDB *gorm.DB) (updatedCashOrder model.CashOrder, err error) {
 	var newCashOrderState model.CashOrder
-	err = txDB.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", orderNumber).First(&newCashOrderState).Error
-	if err != nil {
+	err = txDB.Transaction(func(tx *gorm.DB) (err error) {
+		err = txDB.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", orderNumber).First(&newCashOrderState).Error
+		if err != nil {
+			return
+		}
+		newCashOrderState.ActualCashInAmount = actualAmount
+		newCashOrderState.BonusCashInAmount = bonusAmount
+		newCashOrderState.EffectiveCashInAmount = newCashOrderState.AppliedCashInAmount + bonusAmount
+		newCashOrderState.Notes = notes
+		newCashOrderState.WagerChange += additionalWagerChange
+		newCashOrderState.Account = account
+		newCashOrderState.Remark = remark
+		newCashOrderState.Status = 2
+		updatedCashOrder, err = closeOrder(c, orderNumber, newCashOrderState, txDB, 10000)
+		if err != nil {
+			return
+		}
 		return
-	}
-	newCashOrderState.ActualCashInAmount = actualAmount
-	newCashOrderState.BonusCashInAmount = bonusAmount
-	newCashOrderState.EffectiveCashInAmount = newCashOrderState.AppliedCashInAmount + bonusAmount
-	newCashOrderState.Notes = notes
-	newCashOrderState.WagerChange += additionalWagerChange
-	newCashOrderState.Account = account
-	newCashOrderState.Remark = remark
-	newCashOrderState.Status = 2
-	updatedCashOrder, err = closeOrder(c, orderNumber, newCashOrderState, txDB, 10000)
+	})
+
 	return
 }
 
 func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
-	err = txDB.Transaction(func(tx *gorm.DB) (err error) {
-		// update cash order
-		err = tx.Where("id", orderNumber).Updates(newCashOrderState).Error
-		// modify user sum
-		if err != nil {
-			return
-		}
-		_, err = model.UserSum{}.UpdateUserSumWithDB(tx,
-			newCashOrderState.UserId,
-			newCashOrderState.EffectiveCashInAmount,
-			newCashOrderState.WagerChange,
-			0,
-			transactionType,
-			newCashOrderState.ID)
-		if err != nil {
-			return
-		}
-		updatedCashOrder = newCashOrderState
+	// update cash order
+	err = txDB.Where("id", orderNumber).Updates(newCashOrderState).Error
+	// modify user sum
+	if err != nil {
 		return
-	})
+	}
+	_, err = model.UserSum{}.UpdateUserSumWithDB(txDB,
+		newCashOrderState.UserId,
+		newCashOrderState.EffectiveCashInAmount,
+		newCashOrderState.WagerChange,
+		0,
+		transactionType,
+		newCashOrderState.ID)
+	if err != nil {
+		return
+	}
+	updatedCashOrder = newCashOrderState
 	return
 }
