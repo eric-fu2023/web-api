@@ -21,10 +21,9 @@ func (service *ProfileGetService) Get(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	var userProfile ploutos.UserProfile
-	err := model.DB.Scopes(model.ByUserId(user.ID)).Find(&userProfile).Error
+	userProfile, err := getUserProfile(user.ID)
 	if err != nil {
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
 	return serializer.Response{
@@ -58,17 +57,16 @@ func (service *ProfileUpdateService) Update(c *gin.Context) serializer.Response 
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	var userProfile ploutos.UserProfile
-	err = model.DB.Scopes(model.ByUserId(user.ID)).Find(&userProfile).Error
+	userProfile, err := getUserProfile(user.ID)
 	if err != nil {
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
 	copier.Copy(&userProfile, &service)
 	userProfile.Birthday = birthday
 	err = model.DB.Save(&userProfile).Error
 	if err != nil {
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
 	return serializer.Response{
@@ -92,8 +90,7 @@ func (service *ProfilePicService) Upload(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	var userProfile ploutos.UserProfile
-	err := model.DB.Scopes(model.ByUserId(user.ID)).Find(&userProfile).Error
+	userProfile, err := getUserProfile(user.ID)
 	if err != nil {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 	}
@@ -116,17 +113,22 @@ func (service *ProfilePicService) Upload(c *gin.Context) serializer.Response {
 		&service.File,
 		profilePicContentTypeToExt[mt])
 	if err != nil {
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
 	userProfile.Pic = path
-	userProfile.UserId = user.ID
 	err = model.DB.Save(&userProfile).Error
 	if err != nil {
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
 	return serializer.Response{
 		Data: serializer.BuildProfile(c, userProfile),
 	}
+}
+
+func getUserProfile(userId int64) (userProfile ploutos.UserProfile, err error) {
+	userProfile.UserId = userId
+	err = model.DB.Scopes(model.ByUserId(userId)).Find(&userProfile).Error
+	return
 }
