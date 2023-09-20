@@ -89,11 +89,6 @@ func (service *ProfilePicService) Upload(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	userProfile, err := getUserProfile(user)
-	if err != nil {
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
-	}
-
 	mt := service.File.Header.Get("Content-Type")
 	if _, exists := profilePicContentTypeToExt[mt]; !exists {
 		return serializer.ParamErr(c, service, fmt.Sprintf(i18n.T("file_type_not_allowed"), mt), nil)
@@ -115,8 +110,13 @@ func (service *ProfilePicService) Upload(c *gin.Context) serializer.Response {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
-	userProfile.Pic = path
-	err = model.DB.Save(&userProfile).Error
+	user.Avatar = path
+	err = model.DB.Model(model.User{}).Where(`id`, user.ID).Update(`avatar`, path).Error
+	if err != nil {
+		return serializer.DBErr(c, service, i18n.T("general_error"), err)
+	}
+
+	userProfile, err := getUserProfile(user)
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}

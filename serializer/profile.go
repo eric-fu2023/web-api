@@ -13,7 +13,7 @@ type Profile struct {
 	Email       string `json:"email"`
 	CountryCode string `json:"country_code"`
 	Mobile      string `json:"mobile"`
-	Pic         string `json:"pic"`
+	Avatar      string `json:"avatar"`
 	FirstName   string `json:"first_name"`
 	MiddleName  string `json:"middle_name"`
 	LastName    string `json:"last_name"`
@@ -35,9 +35,6 @@ func BuildProfile(c *gin.Context, a model.UserProfile) (b Profile) {
 		City:       a.City,
 		Postcode:   a.Postcode,
 	}
-	if a.Pic != "" {
-		b.Pic = Url(a.Pic)
-	}
 	if !a.Birthday.IsZero() {
 		b.Birthday = a.Birthday.Format(time.DateOnly)
 	}
@@ -46,6 +43,7 @@ func BuildProfile(c *gin.Context, a model.UserProfile) (b Profile) {
 		b.Email = getMaskedEmail(a.User.Email)
 		b.CountryCode = a.User.CountryCode
 		b.Mobile = getMaskedMobile(a.User.Mobile)
+		b.Avatar = Url(a.User.Avatar)
 	}
 	return
 }
