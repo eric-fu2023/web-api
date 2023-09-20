@@ -1,7 +1,6 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
@@ -21,7 +20,7 @@ func (service *ProfileGetService) Get(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	userProfile, err := getUserProfile(user.ID)
+	userProfile, err := getUserProfile(user)
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
@@ -57,7 +56,7 @@ func (service *ProfileUpdateService) Update(c *gin.Context) serializer.Response 
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	userProfile, err := getUserProfile(user.ID)
+	userProfile, err := getUserProfile(user)
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
@@ -90,7 +89,7 @@ func (service *ProfilePicService) Upload(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	userProfile, err := getUserProfile(user.ID)
+	userProfile, err := getUserProfile(user)
 	if err != nil {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 	}
@@ -127,8 +126,9 @@ func (service *ProfilePicService) Upload(c *gin.Context) serializer.Response {
 	}
 }
 
-func getUserProfile(userId int64) (userProfile ploutos.UserProfile, err error) {
-	userProfile.UserId = userId
-	err = model.DB.Scopes(model.ByUserId(userId)).Find(&userProfile).Error
+func getUserProfile(user model.User) (userProfile model.UserProfile, err error) {
+	userProfile.User = &user
+	userProfile.UserId = user.ID
+	err = model.DB.Scopes(model.ByUserId(user.ID)).Find(&userProfile).Error
 	return
 }

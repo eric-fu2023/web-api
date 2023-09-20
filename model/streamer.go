@@ -1,12 +1,12 @@
 package model
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 )
 
 type Streamer struct {
-	models.Streamer
+	ploutos.Streamer
 	IsLive bool
 }
 
