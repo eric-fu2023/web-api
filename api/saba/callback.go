@@ -85,12 +85,12 @@ func CallbackCancelBet(c *gin.Context) {
 }
 
 func CallbackSettle(c *gin.Context) {
-	//decompressedBody, e := callback.DecompressRequest(c.Request.Body)
-	//if e != nil {
-	//	c.JSON(200, ErrorResponse(c, nil, e))
-	//	return
-	//}
-	//c.Request.Body = decompressedBody
+	decompressedBody, e := callback.DecompressRequest(c.Request.Body)
+	if e != nil {
+		c.JSON(200, ErrorResponse(c, nil, e))
+		return
+	}
+	c.Request.Body = decompressedBody
 	var req callback.SettleRequest
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := saba.SettleCallback(c, req); err != nil {
