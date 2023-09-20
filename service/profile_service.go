@@ -31,23 +31,23 @@ func (service *ProfileGetService) Get(c *gin.Context) serializer.Response {
 }
 
 type ProfileUpdateService struct {
-	Nickname   string `form:"nickname" json:"nickname"`
-	FirstName  string `form:"first_name" json:"first_name"`
-	MiddleName string `form:"middle_name" json:"middle_name"`
-	LastName   string `form:"last_name" json:"last_name"`
-	Street     string `form:"street" json:"street"`
-	Province   string `form:"province" json:"province"`
-	City       string `form:"city" json:"city"`
-	Postcode   string `form:"postcode" json:"postcode"`
-	Birthday   string `form:"birthday" json:"birthday"`
+	Nickname   *string `form:"nickname" json:"nickname"`
+	FirstName  *string `form:"first_name" json:"first_name"`
+	MiddleName *string `form:"middle_name" json:"middle_name"`
+	LastName   *string `form:"last_name" json:"last_name"`
+	Street     *string `form:"street" json:"street"`
+	Province   *string `form:"province" json:"province"`
+	City       *string `form:"city" json:"city"`
+	Postcode   *string `form:"postcode" json:"postcode"`
+	Birthday   *string `form:"birthday" json:"birthday"`
 }
 
 func (service *ProfileUpdateService) Update(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	var err error
 	var birthday time.Time
-	if service.Birthday != "" {
-		birthday, err = time.Parse(time.DateOnly, service.Birthday)
+	if service.Birthday != nil {
+		birthday, err = time.Parse(time.DateOnly, *service.Birthday)
 		if err != nil {
 			return serializer.ParamErr(c, service, fmt.Sprintf(i18n.T("kyc_invalid_birthday"), service.Birthday), err)
 		}

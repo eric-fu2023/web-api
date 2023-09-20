@@ -77,6 +77,9 @@ func ParamErr(c *gin.Context, service any, msg string, err error) Response {
 }
 
 func Url(original string) (new string) {
+	if original == "" {
+		return
+	}
 	if strings.HasPrefix(original, "http") {
 		new = original
 	} else {
