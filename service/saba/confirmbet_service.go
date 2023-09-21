@@ -42,8 +42,8 @@ func (c *ConfirmBet) NewCallback(userId int64) {
 			c.Transaction.CfmWinlostDate = &t
 		}
 		c.Transaction.ActualAmount = int64(txn.ActualAmount * 100)
-		ChangedAmount := int64(txn.CreditAmount * 100)
-		c.Transaction.DebitAmount = c.Transaction.DebitAmount - ChangedAmount
+		c.ChangedAmount = int64(txn.CreditAmount * 100)
+		c.Transaction.DebitAmount = c.Transaction.DebitAmount - c.ChangedAmount
 	}
 }
 

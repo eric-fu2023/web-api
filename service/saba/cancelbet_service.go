@@ -31,9 +31,9 @@ func (c *CancelBet) NewCallback(userId int64) {
 			t := v.UTC()
 			c.Transaction.CancUpdateTime = &t
 		}
-		ChangedAmount := int64(txn.CreditAmount * 100)
-		c.Transaction.ActualAmount = c.Transaction.ActualAmount - ChangedAmount
-		c.Transaction.DebitAmount = c.Transaction.DebitAmount - ChangedAmount
+		c.ChangedAmount = int64(txn.CreditAmount * 100)
+		c.Transaction.ActualAmount = c.Transaction.ActualAmount - c.ChangedAmount
+		c.Transaction.DebitAmount = c.Transaction.DebitAmount - c.ChangedAmount
 	}
 }
 
