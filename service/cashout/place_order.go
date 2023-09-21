@@ -15,37 +15,39 @@ import (
 	"gorm.io/gorm"
 )
 
-const userWithdrawLockKey = "user_withdraw_lock.%d"
+const userWithdrawLockKey = "user_withdraw_lock:%d"
 
 type WithdrawOrderService struct {
-	WithdrawMethodID  int64
-	WithdrawAccountNo string
-	WithdrawAmount    int64 ` binding:"required, min=0"`
+	MethodID  int64  `form:"method_id" json:"method_id" binding:"required"`
+	AccountNo string `form:"account_no" json:"account_no"`
+	Amount    int64  `form:"amount" json:"amount" binding:"required,min=0"`
 }
 
 func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
+	amount := s.Amount * 100
 
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
 	var reviewRequired bool = false
+	var cashOrder model.CashOrder
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, user.ID), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()
 	// check withdrawable
-	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+	err = model.DB.Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		var userSum model.UserSum
-		userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
+		userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB.Debug().WithContext(c))
 		if err != nil {
 			return
 		}
-		if userSum.MaxWithdrawable < s.WithdrawAmount || userSum.Balance < s.WithdrawAmount {
+		if userSum.MaxWithdrawable < amount || userSum.Balance < amount {
 			err = errors.New("withdraw exceeded")
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("err_insufficient_withdrawable"), err)
 			return
 		}
 		var cashMethod model.CashMethod
-		cashMethod, err = model.CashMethod{}.GetByID(c, s.WithdrawMethodID)
+		cashMethod, err = model.CashMethod{}.GetByID(c, s.MethodID)
 		if err != nil {
 			return
 		}
@@ -71,9 +73,9 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		}
 		totalOut, payoutCount := CalTxDetails(txns)
 		var msg string
-		reviewRequired, msg = rule.OK(s.WithdrawAmount, payoutCount+1, totalOut+s.WithdrawAmount, nil)
+		reviewRequired, msg = rule.OK(amount, payoutCount+1, totalOut+amount, nil)
 
-		cashOrder := model.NewCashOutOrder(user.ID, s.WithdrawMethodID, s.WithdrawAmount, userSum.Balance, s.WithdrawAccountNo, msg, reviewRequired)
+		cashOrder = model.NewCashOutOrder(user.ID, s.MethodID, amount, userSum.Balance, s.AccountNo, msg, reviewRequired)
 		err = tx.Create(&cashOrder).Error
 		if err != nil {
 			return
@@ -82,18 +84,18 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		// add tx record
 		var newUsersum model.UserSum
 		newUsersum, err = model.UserSum{}.UpdateUserSumWithDB(
-			tx, 
-			user.ID, 
-			-s.WithdrawAmount, 
-			0, 
-			-s.WithdrawAmount, 10001, cashOrder.ID)
+			tx,
+			user.ID,
+			-amount,
+			0,
+			-amount, 10001, cashOrder.ID)
 		if err != nil {
 			return
 		}
 		// sanity check
-		if newUsersum.Balance != userSum.Balance-s.WithdrawAmount||
-		newUsersum.MaxWithdrawable != userSum.MaxWithdrawable-s.WithdrawAmount ||
-		newUsersum.RemainingWager != userSum.RemainingWager {
+		if newUsersum.Balance != userSum.Balance-amount ||
+			newUsersum.MaxWithdrawable != userSum.MaxWithdrawable-amount ||
+			newUsersum.RemainingWager != userSum.RemainingWager {
 			err = errors.New("error handling user balance")
 			return
 		}
@@ -108,11 +110,19 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
+	r.Data = serializer.BuildWithdrawOrder(cashOrder)
 	if reviewRequired {
 		return
 	}
 
 	finpay.FinpayClient{}.WithdrawV1(c)
+
+	updatedCashOrder, err := CloseCashOutOrder(c, cashOrder.ID, 0, 0, 0, "", "", "", model.DB)
+	if err != nil {
+		r = serializer.EnsureErr(c, err, r)
+		return
+	}
+	r.Data = serializer.BuildWithdrawOrder(updatedCashOrder)
 	return
 }
 

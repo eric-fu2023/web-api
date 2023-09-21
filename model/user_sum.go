@@ -14,7 +14,7 @@ type (
 )
 
 func (UserSum) GetByUserIDWithLockWithDB(userID int64, tx *gorm.DB) (sum UserSum, err error) {
-	err = DB.Where("user_id", userID).First(&sum).Error
+	err = DB.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id", userID).First(&sum).Error
 	return
 }
 

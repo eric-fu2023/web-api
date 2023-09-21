@@ -46,6 +46,8 @@ func NewRouter() *gin.Engine {
 	internal := r.Group("/internal")
 	{
 		internal.POST("/finpay/top-up-order-manual", internal_api.FinpayBackdoor)
+		internal.POST("/withdraw-order/reject", internal_api.RejectWithdrawal)
+
 	}
 
 	// 中间件, 顺序不能改
@@ -90,6 +92,7 @@ func NewRouter() *gin.Engine {
 			cash := auth.Group("/cash")
 			{
 				cash.POST("/top-up-orders", api.TopUpOrder)
+				cash.POST("/withdraw-orders", api.WithdrawOrder)
 			}
 			user := auth.Group("/user")
 			{

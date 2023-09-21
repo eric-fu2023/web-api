@@ -31,7 +31,7 @@ func (s CloseCashOutOrderService) Do(c *gin.Context) (r serializer.Response, err
 
 func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, account, remark string, txDB *gorm.DB) (updatedCashOrder model.CashOrder, err error) {
 	var newCashOrderState model.CashOrder
-	err = txDB.Transaction(func(tx *gorm.DB) (err error) {
+	err = txDB.Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = txDB.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", orderNumber).First(&newCashOrderState).Error
 		if err != nil {
 			return

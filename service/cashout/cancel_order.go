@@ -17,10 +17,20 @@ type CancelCashOutOrderService struct {
 	WagerChange  int64  `form:"wager_change" json:"wager_change"`
 	// Notes        string `form:"notes" json:"notes" binding:"notes"`
 	// Account      string `form:"account" json:"account" binding:"account"`
-	Remark string `form:"remark" json:"remark" binding:"remark"`
+	Remark string `form:"remark" json:"remark"`
 }
 
-func (s CancelCashOutOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
+func (s CancelCashOutOrderService) Reject(c *gin.Context) (r serializer.Response, err error) {
+	_, err = RevertCashOutOrder(c, s.OrderNumber, serializer.JSON(s), "", s.Remark, 5, model.DB)
+	if err != nil {
+		r = serializer.GeneralErr(c, err)
+		return
+	}
+	r.Data = "Success"
+	return
+}
+
+func (s CancelCashOutOrderService) Cancel(c *gin.Context) (r serializer.Response, err error) {
 	_, err = RevertCashOutOrder(c, s.OrderNumber, serializer.JSON(s), "", s.Remark, 3, model.DB)
 	if err != nil {
 		r = serializer.GeneralErr(c, err)
