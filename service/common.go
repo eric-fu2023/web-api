@@ -100,14 +100,15 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	}
 	transaction := ploutos.Transaction{
 		ploutos.TransactionC{
-			UserId:            gpu.UserId,
-			Amount:            obj.GetAmount(),
-			BalanceBefore:     balance,
-			BalanceAfter:      newBalance,
+			UserId:               gpu.UserId,
+			Amount:               obj.GetAmount(),
+			BalanceBefore:        balance,
+			BalanceAfter:         newBalance,
 			ForeignTransactionId: obj.GetGameTransactionId(),
-			Wager:             userSum.RemainingWager - remainingWager,
-			WagerBefore:       remainingWager,
-			WagerAfter:        userSum.RemainingWager,
+			TransactionType:      obj.GetGameProviderId(),
+			Wager:                userSum.RemainingWager - remainingWager,
+			WagerBefore:          remainingWager,
+			WagerAfter:           userSum.RemainingWager,
 		},
 	}
 	err = tx.Save(&transaction).Error
