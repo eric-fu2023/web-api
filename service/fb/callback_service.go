@@ -74,6 +74,10 @@ func (c *Callback) GetBetAmount() (amount int64, err error) {
 	return
 }
 
+func (c *Callback) IsAdjustment() bool {
+	return false
+}
+
 const (
 	MONGODB_FB_CALLBACK_SYNC_ORDERS  = "fb_callback_sync_orders"
 	MONGODB_FB_CALLBACK_SYNC_CASHOUT = "fb_callback_sync_cashout"

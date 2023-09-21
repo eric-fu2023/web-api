@@ -14,7 +14,8 @@ import (
 
 type CancelBet struct {
 	Callback
-	Request callback.CancelBetRequest
+	Request       callback.CancelBetRequest
+	ChangedAmount int64
 }
 
 func (c *CancelBet) NewCallback(userId int64) {
@@ -30,9 +31,9 @@ func (c *CancelBet) NewCallback(userId int64) {
 			t := v.UTC()
 			c.Transaction.CancUpdateTime = &t
 		}
-		changedAmount := int64(txn.CreditAmount * 100)
-		c.Transaction.ActualAmount = c.Transaction.ActualAmount - changedAmount
-		c.Transaction.DebitAmount = c.Transaction.DebitAmount - changedAmount
+		ChangedAmount := int64(txn.CreditAmount * 100)
+		c.Transaction.ActualAmount = c.Transaction.ActualAmount - ChangedAmount
+		c.Transaction.DebitAmount = c.Transaction.DebitAmount - ChangedAmount
 	}
 }
 
@@ -44,6 +45,14 @@ func (c *CancelBet) ShouldProceed() bool {
 	if c.Transaction.RefId == "" {
 		return false
 	}
+	return true
+}
+
+func (c *CancelBet) GetAmount() int64 {
+	return c.ChangedAmount
+}
+
+func (c *CancelBet) IsAdjustment() bool {
 	return true
 }
 

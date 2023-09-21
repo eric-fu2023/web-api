@@ -44,3 +44,7 @@ func (c *Callback) GetBetAmount() (amount int64, err error) {
 		Where(`ref_id`, c.Transaction.RefId).Order(`id`).First(&amount).Error
 	return
 }
+
+func (c *Callback) IsAdjustment() bool {
+	return false
+}

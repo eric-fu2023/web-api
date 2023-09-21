@@ -14,7 +14,8 @@ import (
 
 type ConfirmBet struct {
 	Callback
-	Request callback.ConfirmBetRequest
+	Request       callback.ConfirmBetRequest
+	ChangedAmount int64
 }
 
 func (c *ConfirmBet) NewCallback(userId int64) {
@@ -41,8 +42,8 @@ func (c *ConfirmBet) NewCallback(userId int64) {
 			c.Transaction.CfmWinlostDate = &t
 		}
 		c.Transaction.ActualAmount = int64(txn.ActualAmount * 100)
-		changedAmount := int64(txn.CreditAmount * 100)
-		c.Transaction.DebitAmount = c.Transaction.DebitAmount - changedAmount
+		ChangedAmount := int64(txn.CreditAmount * 100)
+		c.Transaction.DebitAmount = c.Transaction.DebitAmount - ChangedAmount
 	}
 }
 
@@ -54,6 +55,14 @@ func (c *ConfirmBet) ShouldProceed() bool {
 	if c.Transaction.RefId == "" { // if confirmbet refId doesn't match with any of the existing refId
 		return false
 	}
+	return true
+}
+
+func (c *ConfirmBet) GetAmount() int64 {
+	return c.ChangedAmount
+}
+
+func (c *ConfirmBet) IsAdjustment() bool {
 	return true
 }
 

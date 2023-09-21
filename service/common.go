@@ -26,6 +26,7 @@ type CallbackInterface interface {
 	GetAmount() int64
 	GetWagerMultiplier() (int64, bool)
 	GetBetAmount() (int64, error)
+	IsAdjustment() bool
 }
 
 func GetUserAndSum(gameProvider int64, externalUserId string) (gameProviderUser ploutos.GameProviderUser, balance int64, remainingWager int64, maxWithdrawable int64, err error) {
