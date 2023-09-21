@@ -25,7 +25,7 @@ type CallbackInterface interface {
 	ShouldProceed() bool
 	GetAmount() int64
 	GetWagerMultiplier() (int64, bool)
-	GetBetAmount() (int64, error)
+	GetBetAmount() (int64, bool)
 	IsAdjustment() bool
 }
 
@@ -110,6 +110,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 			Wager:                userSum.RemainingWager - remainingWager,
 			WagerBefore:          remainingWager,
 			WagerAfter:           userSum.RemainingWager,
+			IsAdjustment:         obj.IsAdjustment(),
 		},
 	}
 	err = tx.Save(&transaction).Error
@@ -127,8 +128,8 @@ func calWager(obj CallbackInterface, originalWager int64) (newWager int64, err e
 	if !exists {
 		return
 	}
-	betAmount, err := obj.GetBetAmount()
-	if err != nil {
+	betAmount, exists := obj.GetBetAmount()
+	if !exists {
 		return
 	}
 	absBetAmount := abs(betAmount)

@@ -39,9 +39,12 @@ func (c *Callback) GetWagerMultiplier() (int64, bool) {
 	return -1, true
 }
 
-func (c *Callback) GetBetAmount() (amount int64, err error) {
-	err = model.DB.Model(models.SabaTransactionC{}).Select(`actual_amount`).
+func (c *Callback) GetBetAmount() (amount int64, exists bool) {
+	e := model.DB.Model(models.SabaTransactionC{}).Select(`actual_amount`).
 		Where(`ref_id`, c.Transaction.RefId).Order(`id`).First(&amount).Error
+	if e == nil {
+		exists = true
+	}
 	return
 }
 

@@ -67,10 +67,13 @@ func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
 	return
 }
 
-func (c *Callback) GetBetAmount() (amount int64, err error) {
-	err = model.DB.Model(ploutos.FbTransactionC{}).Select(`amount`).
+func (c *Callback) GetBetAmount() (amount int64, exists bool) {
+	e := model.DB.Model(ploutos.FbTransactionC{}).Select(`amount`).
 		Where(`business_id`, c.Transaction.BusinessId).
 		Where(`transfer_type`, `BET`).Order(`id`).First(&amount).Error
+	if e == nil {
+		exists = true
+	}
 	return
 }
 

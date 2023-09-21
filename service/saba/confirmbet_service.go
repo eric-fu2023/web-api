@@ -62,6 +62,10 @@ func (c *ConfirmBet) GetAmount() int64 {
 	return c.ChangedAmount
 }
 
+func (c *ConfirmBet) GetBetAmount() (amount int64, exists bool) {
+	return
+}
+
 func (c *ConfirmBet) IsAdjustment() bool {
 	return true
 }
