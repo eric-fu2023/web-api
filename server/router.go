@@ -40,6 +40,7 @@ func NewRouter() *gin.Engine {
 			sabaCallback.POST("/settle", saba_api.CallbackSettle)
 			sabaCallback.POST("/unsettle", saba_api.CallbackUnsettle)
 			sabaCallback.POST("/resettle", saba_api.CallbackResettle)
+			sabaCallback.POST("/placebetparlay", saba_api.CallbackPlaceBetParlay)
 		}
 	}
 
