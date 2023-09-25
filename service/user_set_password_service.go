@@ -54,6 +54,8 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 		return serializer.DBErr(c, service, i18n.T("密码修改失败"), err)
 	}
 
+	SendNotification(user, i18n.T("notification_password_reset"))
+
 	return serializer.Response{
 		Msg: i18n.T("success"),
 	}

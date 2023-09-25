@@ -5,6 +5,7 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"web-api/model"
+	"web-api/util"
 )
 
 type Platform struct {
@@ -163,4 +164,13 @@ func abs(x int64) int64 {
 		return -x
 	}
 	return x
+}
+
+func SendNotification(user model.User, text string) {
+	go func() {
+		notification := ploutos.NewUserNotification(user.UserC, text)
+		if err := notification.Send(model.DB); err != nil {
+			util.Log().Error("notification creation error", err)
+		}
+	}()
 }

@@ -6,14 +6,14 @@ import (
 	"strconv"
 	"time"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/golang-jwt/jwt/v4"
 )
 
 // User 用户模型
 type User struct {
-	models.UserC
-	UserSum *models.UserSum `gorm:"foreignKey:UserId;references:ID"`
+	ploutos.UserC
+	UserSum *ploutos.UserSum `gorm:"foreignKey:UserId;references:ID"`
 }
 
 const (

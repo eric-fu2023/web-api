@@ -48,8 +48,18 @@ func Sort(db *gorm.DB) *gorm.DB {
 	return db.Order(`sort DESC`)
 }
 
+func SortByCreated(db *gorm.DB) *gorm.DB {
+	return db.Order(`created_at DESC`)
+}
+
 func ByUserId(userId int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Where(`user_id`, userId).Limit(1)
+	}
+}
+
+func ByIds(ids []int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(`id`, ids)
 	}
 }

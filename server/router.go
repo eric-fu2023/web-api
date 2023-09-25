@@ -107,6 +107,8 @@ func NewRouter() *gin.Engine {
 				user.GET("/profile", api.ProfileGet)
 				user.POST("/profile", api.ProfileUpdate)
 				user.POST("/profile_pic", api.ProfilePicUpload)
+				user.GET("/notifications", api.UserNotificationList)
+				user.PUT("/notification/mark_read", api.UserNotificationMarkRead)
 
 				user.GET("/following_ids", api.UserFollowingIdList)
 				user.GET("/followings", api.UserFollowingList)
