@@ -3,7 +3,7 @@ module web-api
 go 1.20
 
 require (
-	blgit.rfdev.tech/taya/game-service v0.0.0-20230925031024-c99bce0dc9d4
+	blgit.rfdev.tech/taya/game-service v0.0.0-20230925054846-6eb4605b34a6
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20230918090526-4a7d9a50eead
 	blgit.rfdev.tech/taya/ploutos-object v0.0.9-0.20230925030955-3d7676e9a658
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20230907042417-f364543fe609

@@ -121,6 +121,20 @@ func CallbackPlaceBetParlay(c *gin.Context) {
 	}
 }
 
+func CallbackConfirmBetParlay(c *gin.Context) {
+	compressRequest(c)
+	var req callback.ConfirmBetParlayRequest
+	if err := c.ShouldBind(&req); err == nil {
+		if res, err := saba.ConfirmBetParlayCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
+}
+
 func compressRequest(c *gin.Context) {
 	if os.Getenv("ENV") == "local" {
 		return
