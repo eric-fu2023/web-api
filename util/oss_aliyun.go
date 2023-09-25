@@ -130,5 +130,5 @@ func InitAliyunOSS() (aliyunOss AliyunOssStruct, err error) {
 
 func BuildAliyunOSSUrl(path string) string {
 	bucketUrl := os.Getenv("ALIYUN_OSS_BUCKET_URL")
-	return bucketUrl + "/" + path
+	return bucketUrl + path
 }

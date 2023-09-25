@@ -252,6 +252,6 @@ func (service *SubmitKycService) buildKyc(c *gin.Context) model.Kyc {
 func (service *SubmitKycService) buildKycDocument(kycId int64, url string) model.KycDocument {
 	return model.KycDocument{KycDocumentC: models.KycDocumentC{
 		KycId: kycId,
-		Url:   url,
+		Url:   "/" + url,
 	}}
 }
