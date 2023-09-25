@@ -2,7 +2,6 @@ package saba
 
 import (
 	"blgit.rfdev.tech/taya/game-service/saba/callback"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -24,14 +23,16 @@ func (c *PlaceBet) NewCallback(userId int64) {
 	if v, e := time.Parse(time.RFC3339, c.Request.Message.UpdateTime); e == nil {
 		c.Transaction.UpdateTime = v.UTC()
 	}
-	ticketDetails := make([]ploutos.TicketDetail, 1)
+	//ticketDetails := make([]ploutos.TicketDetail, 1)
+	//copier.Copy(&ticketDetails[0], &c.Request.Message)
+	//if v, e := time.Parse(time.RFC3339, c.Request.Message.KickOffTime); e == nil {
+	//	ticketDetails[0].KickOffTime = v.UTC()
+	//}
+	//if v, e := time.Parse(time.RFC3339, c.Request.Message.MatchDatetime); e == nil {
+	//	ticketDetails[0].MatchDatetime = v.UTC()
+	//}
+	ticketDetails := make([]callback.TicketDetail, 1)
 	copier.Copy(&ticketDetails[0], &c.Request.Message)
-	if v, e := time.Parse(time.RFC3339, c.Request.Message.KickOffTime); e == nil {
-		ticketDetails[0].KickOffTime = v.UTC()
-	}
-	if v, e := time.Parse(time.RFC3339, c.Request.Message.MatchDatetime); e == nil {
-		ticketDetails[0].MatchDatetime = v.UTC()
-	}
 	if j, e := json.Marshal(ticketDetails); e == nil {
 		c.Transaction.TicketDetail = string(j)
 	}
