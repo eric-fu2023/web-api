@@ -82,13 +82,13 @@ var (
 		"dota2":      103,
 	}
 	CashOrderStatus = map[int64]string{
-		1: "pending",
-		2: "success",
-		3: "cancelled",
-		4: "pending", // approval
-		5: "rejected",
-		6: "pending",
-		7: "failed",
+		1: "Pending",
+		2: "Completed",
+		3: "Failed",
+		4: "Pending", // approval
+		5: "Failed",
+		6: "Pending",
+		7: "Failed",
 	}
 )
 
@@ -96,4 +96,7 @@ const (
 	CorrelationHeader = "X-Correlation-ID"
 	LogKey            = "logger"
 	CorrelationKey    = "correlation_id"
+	StdTimeFormat     = "2006-01-02 15:04:05"
+	OrderTypeTopup    = "top-up"
+	OrderTypeWithdraw = "withdraw"
 )

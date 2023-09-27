@@ -1,7 +1,6 @@
 package serializer
 
 import (
-	"time"
 	"web-api/conf/consts"
 	"web-api/model"
 
@@ -41,28 +40,31 @@ func BuildWithdrawOrder(p model.CashOrder) WithdrawOrder {
 }
 
 type GenericCashOrder struct {
-	OrderNo         string    `json:"order_no"`
-	OrderStatus     string    `json:"order_status"`
-	CreatedAt       time.Time `json:"created_at"`
-	Amount          int64     `json:"amount"`
-	EffectiveAmount int64     `json:"effective_amount"`
-	OrderType       string    `json:"order_type"`
+	OrderNo         string `json:"order_no"`
+	OrderStatus     string `json:"order_status"`
+	CreatedAt       string `json:"created_at"`
+	Amount          int64  `json:"amount"`
+	EffectiveAmount int64  `json:"effective_amount"`
+	OrderType       string `json:"order_type"`
 	// Currency    string    `json:"currency"`
 }
 
 func BuildGenericCashOrder(p model.CashOrder) GenericCashOrder {
 	amount := p.AppliedCashInAmount
 	effectiveAmount := p.EffectiveCashInAmount
+	orderType := consts.OrderTypeTopup
 	if p.OrderType < 0 {
 		amount = p.AppliedCashOutAmount
 		effectiveAmount = p.EffectiveCashOutAmount
+		orderType = consts.OrderTypeWithdraw
 	}
 
 	return GenericCashOrder{
 		OrderNo:         p.ID,
 		OrderStatus:     consts.CashOrderStatus[p.Status],
-		CreatedAt:       p.CreatedAt,
+		CreatedAt:       p.CreatedAt.Format(consts.StdTimeFormat),
 		Amount:          amount,
 		EffectiveAmount: effectiveAmount,
+		OrderType:       orderType,
 	}
 }
