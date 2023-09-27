@@ -5,6 +5,7 @@ import (
 	"time"
 	"web-api/api"
 	fb_api "web-api/api/fb"
+	api_finpay "web-api/api/finpay"
 	internal_api "web-api/api/internalapi"
 	saba_api "web-api/api/saba"
 	"web-api/middleware"
@@ -15,6 +16,8 @@ import (
 // NewRouter 路由配置
 func NewRouter() *gin.Engine {
 	r := gin.New()
+	r.Use(middleware.CorrelationID())
+	r.Use(middleware.ErrorLogStatus())
 	r.GET("/ts", api.Ts)
 
 	if os.Getenv("GAME_FB_EXPOSE_CALLBACKS") == "true" {
@@ -45,9 +48,15 @@ func NewRouter() *gin.Engine {
 		}
 	}
 
+	if os.Getenv("FINPAY_CALLBACK_ENABLED") == "true" {
+		fpCallback := r.Group("/callback/finpay")
+		fpCallback.POST("/payment-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayPaymentCallback)
+		fpCallback.POST("/transfer-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayTransferCallback)
+	}
+
 	internal := r.Group("/internal")
 	{
-		internal.POST("/finpay/top-up-order-manual", middleware.RequestLogger("internal"), internal_api.FinpayBackdoor)
+		internal.POST("/top-up-order/close", middleware.RequestLogger("internal"), internal_api.FinpayBackdoor)
 		internal.POST("/withdraw-order/reject", middleware.RequestLogger("internal"), internal_api.RejectWithdrawal)
 		internal.POST("/withdraw-order/approve", middleware.RequestLogger("internal"), internal_api.ApproveWithdrawal)
 
@@ -62,8 +71,6 @@ func NewRouter() *gin.Engine {
 	r.Use(middleware.Timezone())
 	r.Use(middleware.Location())
 	r.Use(middleware.Locale())
-	r.Use(middleware.CorrelationID())
-	r.Use(middleware.ErrorLogStatus())
 
 	r.GET("/ping", api.Ping)
 
@@ -96,6 +103,8 @@ func NewRouter() *gin.Engine {
 			{
 				cash.POST("/top-up-orders", api.TopUpOrder)
 				cash.POST("/withdraw-orders", api.WithdrawOrder)
+				cash.GET("/orders", api.ListCashOrder)
+
 			}
 			user := auth.Group("/user")
 			{

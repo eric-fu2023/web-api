@@ -51,6 +51,7 @@ func (s ApproveCashOutOrderService) Approve(c *gin.Context) (r serializer.Respon
 		Where("status", models.CashOrderStatusPendingApproval).
 		First(&cashOrder).Error
 	if err != nil {
+		r = serializer.EnsureErr(c, err, r)
 		return
 	}
 
@@ -69,7 +70,6 @@ func (s ApproveCashOutOrderService) Approve(c *gin.Context) (r serializer.Respon
 	r.Data = "Success"
 	return
 }
-
 
 // type CloseCashOutOrderService struct {
 // 	OrderNumber  string `form:"order_number" json:"order_number" binding:"required"`

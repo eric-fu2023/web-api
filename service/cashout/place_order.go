@@ -78,7 +78,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		var msg string
 		reviewRequired, msg = rule.OK(amount, payoutCount+1, totalOut+amount, nil)
 
-		cashOrder = model.NewCashOutOrder(user.ID, s.MethodID, amount, userSum.Balance, s.AccountNo, msg, reviewRequired)
+		cashOrder = model.NewCashOutOrder(user.ID, s.MethodID, amount, userSum.Balance, s.AccountNo, msg, reviewRequired, s.AccountName)
 		err = tx.Create(&cashOrder).Error
 		if err != nil {
 			return
@@ -124,8 +124,9 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		return
 	}
 	cashOrder.Status = models.CashOrderStatusTransferring
+	cashOrder.TransactionId = data.ChannelOrderNo
 	cashOrder.Notes = util.JSON(data)
-	err = model.DB.Save(&cashOrder).Error
+	err = model.DB.Updates(&cashOrder).Error
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return

@@ -10,11 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type FinpayCallback struct {
+type FinpayPaymentCallback struct {
 	finpay.PaymentOrderCallBackReq
 }
 
-func (s *FinpayCallback) Handle(c *gin.Context) (err error) {
+func (s *FinpayPaymentCallback) Handle(c *gin.Context) (err error) {
 	if !s.IsValid() {
 		err = errors.New("invalid response")
 		return
