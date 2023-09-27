@@ -22,6 +22,13 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
+	switch s.MethodID {
+	case 1:
+	default:
+		err = errors.New("unsupported method")
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
 
 	// check kyc
 	// create cash order

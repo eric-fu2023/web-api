@@ -99,13 +99,6 @@ func NewRouter() *gin.Engine {
 		auth := v1.Group("")
 		auth.Use(middleware.AuthRequired(true))
 		{
-			cash := auth.Group("/cash")
-			{
-				cash.POST("/top-up-orders", api.TopUpOrder)
-				cash.POST("/withdraw-orders", api.WithdrawOrder)
-				cash.GET("/orders", api.ListCashOrder)
-
-			}
 			user := auth.Group("/user")
 			{
 				user.GET("/me", api.Me)
@@ -134,6 +127,13 @@ func NewRouter() *gin.Engine {
 				{
 					kyc.GET("", api.GetKyc)
 					kyc.POST("", api.SubmitKyc)
+				}
+
+				cash := user.Group("/cash")
+				{
+					cash.POST("/top-up-orders", api.TopUpOrder)
+					cash.POST("/withdraw-orders", api.WithdrawOrder)
+					cash.GET("/orders", api.ListCashOrder)
 				}
 			}
 

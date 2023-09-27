@@ -30,6 +30,14 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	amount := s.Amount * 100
 
+	switch s.MethodID {
+	case 3:
+	default:
+		err = errors.New("unsupported method")
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
@@ -118,14 +126,22 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		return
 	}
 
-	data, err := finpay.FinpayClient{}.DefaultGcashCashOutV1(c, cashOrder.AppliedCashOutAmount, cashOrder.ID, cashOrder.Account, cashOrder.AccountName)
-	if err != nil {
-		r = serializer.EnsureErr(c, err, r)
+	switch s.MethodID {
+	case 3:
+		data, err := finpay.FinpayClient{}.DefaultGcashCashOutV1(c, cashOrder.AppliedCashOutAmount, cashOrder.ID, cashOrder.Account, cashOrder.AccountName)
+		if err != nil {
+			r = serializer.EnsureErr(c, err, r)
+			return r, err
+		}
+		cashOrder.Status = models.CashOrderStatusTransferring
+		cashOrder.TransactionId = data.ChannelOrderNo
+		cashOrder.Notes = util.JSON(data)
+	default:
+		err = errors.New("unsupported method")
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
-	cashOrder.Status = models.CashOrderStatusTransferring
-	cashOrder.TransactionId = data.ChannelOrderNo
-	cashOrder.Notes = util.JSON(data)
+
 	err = model.DB.Updates(&cashOrder).Error
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
