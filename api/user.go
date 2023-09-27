@@ -149,7 +149,7 @@ func UserDelete(c *gin.Context) {
 	}
 }
 
-func ProfileGet(c *gin.Context) {
+func PersonalInfo(c *gin.Context) {
 	var service service.ProfileGetService
 	if err := c.ShouldBind(&service); err == nil {
 		res := service.Get(c)
@@ -159,8 +159,8 @@ func ProfileGet(c *gin.Context) {
 	}
 }
 
-func ProfileUpdate(c *gin.Context) {
-	var service service.ProfileUpdateService
+func NicknameUpdate(c *gin.Context) {
+	var service service.NicknameUpdateService
 	if err := c.ShouldBind(&service); err == nil {
 		res := service.Update(c)
 		c.JSON(200, res)

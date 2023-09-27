@@ -4,6 +4,7 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"github.com/gin-gonic/gin"
+	"math/rand"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -62,6 +63,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		}
 		user.BrandId = int64(c.MustGet("_brand").(int))
 		user.AgentId = int64(c.MustGet("_agent").(int))
+		genNickname(&user)
 		err := model.DB.Create(&user).Error
 		if err != nil {
 			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
@@ -127,4 +129,15 @@ func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user mode
 	}
 
 	return model.LogAuthEvent(event)
+}
+
+func genNickname(user *model.User) {
+	var nicks []map[string]interface{}
+	model.DB.Table(`nicknames`).Find(&nicks)
+	if len(nicks) > 0 {
+		rand.Seed(time.Now().UnixNano())
+		r1 := rand.Intn(len(nicks))
+		r2 := rand.Intn(len(nicks))
+		user.Nickname = nicks[r1]["first_name"].(string) + nicks[r2]["last_name"].(string)
+	}
 }

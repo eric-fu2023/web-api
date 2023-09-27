@@ -1,11 +1,11 @@
 package service
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 	"mime/multipart"
-	"time"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -20,56 +20,38 @@ func (service *ProfileGetService) Get(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	userProfile, err := getUserProfile(user)
+	err := getKyc(&user)
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
 	return serializer.Response{
-		Data: serializer.BuildProfile(c, userProfile),
+		Data: serializer.BuildPersonalInfo(c, user),
 	}
 }
 
-type ProfileUpdateService struct {
-	Nickname   *string `form:"nickname" json:"nickname"`
-	FirstName  *string `form:"first_name" json:"first_name"`
-	MiddleName *string `form:"middle_name" json:"middle_name"`
-	LastName   *string `form:"last_name" json:"last_name"`
-	Street     *string `form:"street" json:"street"`
-	Province   *string `form:"province" json:"province"`
-	City       *string `form:"city" json:"city"`
-	Postcode   *string `form:"postcode" json:"postcode"`
-	Birthday   *string `form:"birthday" json:"birthday"`
+type NicknameUpdateService struct {
+	Nickname *string `form:"nickname" json:"nickname"`
 }
 
-func (service *ProfileUpdateService) Update(c *gin.Context) serializer.Response {
+func (service *NicknameUpdateService) Update(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	var err error
-	var birthday time.Time
-	if service.Birthday != nil {
-		birthday, err = time.Parse(time.DateOnly, *service.Birthday)
-		if err != nil {
-			return serializer.ParamErr(c, service, fmt.Sprintf(i18n.T("kyc_invalid_birthday"), service.Birthday), err)
-		}
-	}
-
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	userProfile, err := getUserProfile(user)
+	user.Nickname = *service.Nickname
+	err := model.DB.Model(model.User{}).Where(`id`, user.ID).Update(`nickname`, user.Nickname).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
-	copier.Copy(&userProfile, &service)
-	userProfile.Birthday = birthday
-	err = model.DB.Save(&userProfile).Error
+	err = getKyc(&user)
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
 	return serializer.Response{
-		Data: serializer.BuildProfile(c, userProfile),
+		Data: serializer.BuildPersonalInfo(c, user),
 	}
 }
 
@@ -116,19 +98,22 @@ func (service *ProfilePicService) Upload(c *gin.Context) serializer.Response {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
-	userProfile, err := getUserProfile(user)
+	err = getKyc(&user)
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
 	return serializer.Response{
-		Data: serializer.BuildProfile(c, userProfile),
+		Data: serializer.BuildPersonalInfo(c, user),
 	}
 }
 
-func getUserProfile(user model.User) (userProfile model.UserProfile, err error) {
-	userProfile.User = &user
-	userProfile.UserId = user.ID
-	err = model.DB.Scopes(model.ByUserId(user.ID)).Find(&userProfile).Error
+func getKyc(user *model.User) (err error) {
+	var kyc ploutos.KycC
+	err = model.DB.Where(`user_id`, user.ID).Where(`status`, consts.KycStatusCompleted).Order(`id DESC`).Limit(1).Find(&kyc).Error
+	if err != nil {
+		return
+	}
+	user.Kyc = &kyc
 	return
 }

@@ -14,6 +14,7 @@ import (
 type User struct {
 	ploutos.UserC
 	UserSum *ploutos.UserSum `gorm:"foreignKey:UserId;references:ID"`
+	Kyc     *ploutos.KycC    `gorm:"foreignKey:UserId;references:ID"`
 }
 
 const (
