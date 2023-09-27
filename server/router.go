@@ -47,8 +47,9 @@ func NewRouter() *gin.Engine {
 
 	internal := r.Group("/internal")
 	{
-		internal.POST("/finpay/top-up-order-manual", internal_api.FinpayBackdoor)
-		internal.POST("/withdraw-order/reject", internal_api.RejectWithdrawal)
+		internal.POST("/finpay/top-up-order-manual", middleware.RequestLogger("internal"), internal_api.FinpayBackdoor)
+		internal.POST("/withdraw-order/reject", middleware.RequestLogger("internal"), internal_api.RejectWithdrawal)
+		internal.POST("/withdraw-order/approve", middleware.RequestLogger("internal"), internal_api.ApproveWithdrawal)
 
 	}
 
