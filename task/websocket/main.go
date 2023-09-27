@@ -65,36 +65,36 @@ func welcomeToRoom(message string) {
 						Type:      consts.WebSocketMessageType["text"],
 					}
 					msg.Send()
+				}
 
-					coll := model.MongoDB.Collection("room_message")
-					filter := bson.M{"room": room}
-					opts := options.Find()
-					opts.SetLimit(20)
-					opts.SetSort(bson.D{{"timestamp", -1}, {"_id", -1}})
-					ctx := context.TODO()
-					cursor, err := coll.Find(ctx, filter, opts)
-					if err != nil {
-						return
+				coll := model.MongoDB.Collection("room_message")
+				filter := bson.M{"room": room}
+				opts := options.Find()
+				opts.SetLimit(20)
+				opts.SetSort(bson.D{{"timestamp", -1}, {"_id", -1}})
+				ctx := context.TODO()
+				cursor, err := coll.Find(ctx, filter, opts)
+				if err != nil {
+					return
+				}
+				var ms []model.RoomMessage
+				for cursor.Next(ctx) {
+					var pm model.RoomMessage
+					cursor.Decode(&pm)
+					ms = append(ms, pm)
+				}
+				for _, n := range ms {
+					msg1 := ws.RoomMessage{
+						SocketId:  j["socket_id"].(string),
+						Room:      room,
+						Timestamp: n.Timestamp,
+						Message:   n.Message,
+						UserId:    n.UserId,
+						UserType:  n.UserType,
+						Nickname:  n.Nickname,
+						Type:      n.Type,
 					}
-					var ms []model.RoomMessage
-					for cursor.Next(ctx) {
-						var pm model.RoomMessage
-						cursor.Decode(&pm)
-						ms = append(ms, pm)
-					}
-					for _, n := range ms {
-						msg1 := ws.RoomMessage{
-							SocketId:  j["socket_id"].(string),
-							Room:      room,
-							Timestamp: n.Timestamp,
-							Message:   n.Message,
-							UserId:    n.UserId,
-							UserType:  n.UserType,
-							Nickname:  n.Nickname,
-							Type:      n.Type,
-						}
-						msg1.Send()
-					}
+					msg1.Send()
 				}
 			}
 		}
