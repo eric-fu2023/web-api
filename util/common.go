@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	random "crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -46,4 +47,9 @@ func MapSlice[T any, M any](a []T, f func(T) M) []M {
 		n[i] = f(e)
 	}
 	return n
+}
+
+func JSON(jsonObj any) string {
+	bytes, _ := json.Marshal(jsonObj)
+	return string(bytes)
 }

@@ -7,9 +7,11 @@ import (
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/util"
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
 	"gorm.io/gorm"
@@ -18,9 +20,10 @@ import (
 const userWithdrawLockKey = "user_withdraw_lock:%d"
 
 type WithdrawOrderService struct {
-	MethodID  int64  `form:"method_id" json:"method_id" binding:"required"`
-	AccountNo string `form:"account_no" json:"account_no"`
-	Amount    int64  `form:"amount" json:"amount" binding:"required,min=0"`
+	MethodID    int64  `form:"method_id" json:"method_id" binding:"required"`
+	AccountNo   string `form:"account_no" json:"account_no" binding:"required"`
+	Amount      int64  `form:"amount" json:"amount" binding:"required,min=0"`
+	AccountName string `form:"account_name" json:"account_name" binding:"required"`
 }
 
 func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
@@ -115,14 +118,19 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		return
 	}
 
-	finpay.FinpayClient{}.WithdrawV1(c)
-
-	updatedCashOrder, err := CloseCashOutOrder(c, cashOrder.ID, 0, 0, 0, "", "", "", model.DB)
+	data, err := finpay.FinpayClient{}.DefaultGcashCashOutV1(c, cashOrder.AppliedCashOutAmount, cashOrder.ID, cashOrder.Account, cashOrder.AccountName)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
-	r.Data = serializer.BuildWithdrawOrder(updatedCashOrder)
+	cashOrder.Status = models.CashOrderStatusTransferring
+	cashOrder.Notes = util.JSON(data)
+	err = model.DB.Save(&cashOrder).Error
+	if err != nil {
+		r = serializer.EnsureErr(c, err, r)
+		return
+	}
+	r.Data = serializer.BuildWithdrawOrder(cashOrder)
 	return
 }
 

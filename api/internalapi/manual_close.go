@@ -9,10 +9,10 @@ import (
 func FinpayBackdoor(c *gin.Context) {
 	var service cashin_finpay.ManualCloseService
 	if err := c.ShouldBind(&service); err == nil {
-		if _, err := service.Do(c); err == nil {
+		if res, err := service.Do(c); err == nil {
 			c.String(200, "success")
 		} else {
-			c.String(500, "failed")
+			c.JSON(500, res)
 		}
 	} else {
 		c.String(400, "param error")

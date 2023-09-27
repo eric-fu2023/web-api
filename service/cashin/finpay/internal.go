@@ -4,6 +4,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/cashin"
+	"web-api/util"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +16,7 @@ type ManualCloseService struct {
 }
 
 func (s ManualCloseService) Do(c *gin.Context) (r serializer.Response, err error) {
-	if _, err = cashin.CloseCashInOrder(c, s.OrderNumber, 0, 0, 0, serializer.JSON(s), "", s.Remark, model.DB, s.ManualClosedBy); err != nil {
+	if _, err = cashin.CloseCashInOrder(c, s.OrderNumber, 0, 0, 0, util.JSON(s), "", s.Remark, model.DB, s.ManualClosedBy); err != nil {
 		r = serializer.Err(c, s, serializer.CodeGeneralError, "", err)
 		return
 	}

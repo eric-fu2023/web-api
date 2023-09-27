@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -55,5 +57,27 @@ func (CashOrder) GetPendingWithLockWithDB(orderID string, tx *gorm.DB) (c CashOr
 		Where("id", orderID).
 		Where("status = 1").
 		First(&c).Error
+	return
+}
+
+func (CashOrder) List(userID int64, topupOnly, withdrawOnly bool, startTime, endTime *time.Time, page, limit int) (list []CashOrder, err error) {
+	db := DB.Scopes(Paginate(page, limit))
+	if startTime != nil {
+		db = db.Where("created_at > ?", startTime)
+	}
+	if endTime != nil {
+		db = db.Where("created_at < ?", endTime)
+	}
+	if topupOnly {
+		db = db.Where("order_type > 0")
+	}
+	if withdrawOnly {
+		db = db.Where("order_type < 0")
+	}
+
+	err = db.
+		Where("user_id", userID).
+		Order("id DESC").
+		Find(&list).Error
 	return
 }

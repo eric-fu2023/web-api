@@ -87,6 +87,8 @@ var (
 		3: "cancelled",
 		4: "pending", // approval
 		5: "rejected",
+		6: "pending",
+		7: "failed",
 	}
 )
 

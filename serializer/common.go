@@ -1,7 +1,6 @@
 package serializer
 
 import (
-	"encoding/json"
 	"math"
 	"os"
 	"strings"
@@ -127,7 +126,4 @@ func GeneralErr(c *gin.Context, err error) Response {
 	return Err(c, "", CodeGeneralError, i18n.T("general_error"), err)
 }
 
-func JSON(jsonObj any) string {
-	bytes, _ := json.Marshal(jsonObj)
-	return string(bytes)
-}
+
