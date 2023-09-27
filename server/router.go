@@ -16,9 +16,9 @@ import (
 // NewRouter 路由配置
 func NewRouter() *gin.Engine {
 	r := gin.New()
+
 	r.Use(middleware.CorrelationID())
 	r.Use(middleware.ErrorLogStatus())
-	r.GET("/ts", api.Ts)
 
 	if os.Getenv("GAME_FB_EXPOSE_CALLBACKS") == "true" {
 		fbCallback := r.Group("/fb/callback")
@@ -64,6 +64,8 @@ func NewRouter() *gin.Engine {
 
 	// 中间件, 顺序不能改
 	r.Use(middleware.Cors())
+	r.GET("/ts", api.Ts)
+
 	r.Use(middleware.EncryptPayload())
 	r.Use(middleware.CheckSignature())
 	r.Use(middleware.Ip())

@@ -21,7 +21,7 @@ type Stream struct {
 	StreamCategoryId     int64     `json:"category_id,omitempty"`
 	StreamCategoryTypeId int64     `json:"category_type_id,omitempty"`
 	RecommendStreamerId  int64     `json:"recommend_streamer_id,omitempty"`
-	RoomId               string    `json:"room_id,omitempty"`
+	ChatRoom             string    `json:"chat_room,omitempty"`
 	Match                *Match    `json:"match,omitempty"`
 	Streamer             *Streamer `json:"streamer,omitempty"`
 }
@@ -43,7 +43,7 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 		b.ImgUrl = Url(a.ImgUrl)
 	}
 	if a.StreamerId > 0 {
-		b.RoomId = fmt.Sprintf(`stream:%d`, a.StreamerId)
+		b.ChatRoom = fmt.Sprintf(`stream:%d`, a.ID)
 	}
 	if a.Match != nil {
 		m := BuildMatch(c, *a.Match)
