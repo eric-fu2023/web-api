@@ -2,9 +2,11 @@ package cashin
 
 import (
 	"errors"
+	"strconv"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service"
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
@@ -34,14 +36,24 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	// create cash order
 	// create payment order
 	// err handling and return
-	var kyc model.Kyc
-	kyc, err = model.GetKycWithLock(model.DB.Debug(), user.ID)
+	value, err := service.GetCachedConfig(c, consts.ConfigKeyTopupKycCheck)
 	if err != nil {
 		return
 	}
-	if kyc.Status != consts.KycStatusCompleted {
-		err = errors.New("kyc not completed")
+	required, err := strconv.ParseBool(value)
+	if err != nil {
 		return
+	}
+	if required {
+		var kyc model.Kyc
+		kyc, err = model.GetKycWithLock(model.DB.Debug(), user.ID)
+		if err != nil {
+			return
+		}
+		if kyc.Status != consts.KycStatusCompleted {
+			err = errors.New("kyc not completed")
+			return
+		}
 	}
 
 	var userSum model.UserSum

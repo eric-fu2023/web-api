@@ -39,6 +39,7 @@ func Init() {
 	cache.RedisSession()
 	cache.RedisShare()
 	cache.RedisSyncTransaction()
+	cache.RedisConfig()
 	cache.SetupRedisStore()
 	cache.RedisLock()
 	model.SetupMongo(os.Getenv("MONGO_URI"))
