@@ -7,11 +7,8 @@ import (
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
-	"web-api/util"
 	"web-api/util/i18n"
 
-	"blgit.rfdev.tech/taya/payment-service/finpay"
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
 	"gorm.io/gorm"
@@ -125,28 +122,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	if reviewRequired {
 		return
 	}
-
-	switch s.MethodID {
-	case 3:
-		data, err := finpay.FinpayClient{}.DefaultGcashCashOutV1(c, cashOrder.AppliedCashOutAmount, cashOrder.ID, cashOrder.Account, cashOrder.AccountName)
-		if err != nil {
-			r = serializer.EnsureErr(c, err, r)
-			return r, err
-		}
-		cashOrder.TransactionId = data.ChannelOrderNo
-		cashOrder.Notes = util.JSON(data)
-		if data.IsSuccess() {
-			cashOrder.Status = models.CashOrderStatusTransferring
-		} else {
-			cashOrder, err = RevertCashOutOrder(c, cashOrder.ID, util.JSON(data), "Request Failed", 7, model.DB)
-			if err != nil {
-				r = serializer.EnsureErr(c, err, r)
-				return r, err
-			}
-		}
-	}
-
-	err = model.DB.Updates(&cashOrder).Error
+	cashOrder, err = DispatchOrder(c, cashOrder, s.MethodID)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return

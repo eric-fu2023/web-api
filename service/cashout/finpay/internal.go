@@ -6,7 +6,6 @@ import (
 	"web-api/service/cashout"
 	"web-api/util"
 
-	"blgit.rfdev.tech/taya/payment-service/finpay"
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
@@ -51,17 +50,10 @@ func (s CashOutOrderService) Approve(c *gin.Context) (r serializer.Response, err
 		return
 	}
 
-	data, err := finpay.FinpayClient{}.DefaultGcashCashOutV1(c, cashOrder.AppliedCashOutAmount, cashOrder.ID, cashOrder.Account, cashOrder.AccountName)
+	cashOrder, err = cashout.DispatchOrder(c, cashOrder, cashOrder.CashMethodId)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
-		return
-	}
-	cashOrder.Status = models.CashOrderStatusTransferring
-	cashOrder.Notes = util.JSON(data)
-	err = model.DB.Save(&cashOrder).Error
-	if err != nil {
-		r = serializer.EnsureErr(c, err, r)
-		return
+		return r, err
 	}
 	r.Data = "Success"
 	return
