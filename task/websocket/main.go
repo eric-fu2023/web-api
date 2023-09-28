@@ -71,7 +71,7 @@ func welcomeToRoom(message string) {
 				filter := bson.M{"room": room}
 				opts := options.Find()
 				opts.SetLimit(20)
-				opts.SetSort(bson.D{{"timestamp", -1}, {"_id", -1}})
+				opts.SetSort(bson.D{{"timestamp", 1}, {"_id", -1}})
 				ctx := context.TODO()
 				cursor, err := coll.Find(ctx, filter, opts)
 				if err != nil {

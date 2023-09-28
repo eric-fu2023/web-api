@@ -1,6 +1,9 @@
 package serializer
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"os"
 	"strings"
@@ -43,12 +46,14 @@ type UserInfo struct {
 	Avatar         string   `json:"avatar"`
 	Bio            string   `json:"bio"`
 	CurrencyId     int64    `json:"currency_id"`
+	Signature      string   `json:"signature,omitempty"`
 	FollowingCount int64    `json:"following_count"`
 	SetupRequired  bool     `json:"setup_required"`
 	UserSum        *UserSum `json:"sum,omitempty"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
+	signatureHash := md5.Sum([]byte(fmt.Sprintf("%d%s", user.ID, os.Getenv("USER_SIGNATURE_SALT"))))
 	u := UserInfo{
 		ID:             user.ID,
 		CountryCode:    user.CountryCode,
@@ -59,6 +64,7 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		Avatar:         Url(user.Avatar),
 		Bio:            user.Bio,
 		CurrencyId:     user.CurrencyId,
+		Signature:      hex.EncodeToString(signatureHash[:]),
 		FollowingCount: user.FollowingCount,
 	}
 	if user.Username == "" {
