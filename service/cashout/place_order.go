@@ -133,13 +133,17 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 			r = serializer.EnsureErr(c, err, r)
 			return r, err
 		}
-		cashOrder.Status = models.CashOrderStatusTransferring
 		cashOrder.TransactionId = data.ChannelOrderNo
 		cashOrder.Notes = util.JSON(data)
-	default:
-		err = errors.New("unsupported method")
-		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
+		if data.IsSuccess() {
+			cashOrder.Status = models.CashOrderStatusTransferring
+		} else {
+			cashOrder, err = RevertCashOutOrder(c, cashOrder.ID, util.JSON(data), "Request Failed", 7, model.DB)
+			if err != nil {
+				r = serializer.EnsureErr(c, err, r)
+				return r, err
+			}
+		}
 	}
 
 	err = model.DB.Updates(&cashOrder).Error
