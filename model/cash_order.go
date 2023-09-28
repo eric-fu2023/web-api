@@ -19,7 +19,7 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 			UserId:              userID,
 			CashMethodId:        CashMethodId,
 			OrderType:           1,
-			Status:              1,
+			Status:              models.CashOrderStatusFailed,
 			AppliedCashInAmount: amount,
 			BalanceBefore:       balanceBefore,
 			WagerChange:         wagerChange,

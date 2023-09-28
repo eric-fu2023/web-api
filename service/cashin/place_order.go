@@ -10,6 +10,7 @@ import (
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
@@ -72,6 +73,10 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	}
 	var transactionID string
 	switch s.MethodID {
+	default:
+		err = errors.New("unsupported method")
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
 	case 1:
 		var data finpay.PaymentOrderRespData
 		data, err = finpay.FinpayClient{}.PlaceDefaultGcashOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID)
@@ -81,12 +86,9 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		}
 		transactionID = data.PaymentOrderNo
 		r.Data = serializer.BuildPaymentOrder(data)
-	default:
-		err = errors.New("unsupported method")
-		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
 	}
 	cashOrder.TransactionId = transactionID
+	cashOrder.Status = models.CashOrderStatusPending
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
 	return
 }
