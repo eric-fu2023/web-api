@@ -2,6 +2,7 @@ package model
 
 import (
 	"gorm.io/gorm"
+	"time"
 )
 
 func GameProviderUserByProviderAndExternalUser(provider int64, userId string) func(db *gorm.DB) *gorm.DB {
@@ -61,5 +62,20 @@ func ByUserId(userId int64) func(db *gorm.DB) *gorm.DB {
 func ByIds(ids []int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Where(`id`, ids)
+	}
+}
+
+func ByOrderListConditions(userId int64, t int64, isSettled bool, start time.Time, end time.Time) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		db.Where(`user_id`, userId).Where(`series_type`, t)
+		if isSettled {
+			db.Where(`reward_status`, 5)
+		} else {
+			db.Where(`reward_status != ?`, 5)
+		}
+		if !start.IsZero() && !end.IsZero() {
+			db.Where(`bet_time >= ?`, start).Where(`bet_time <= ?`, end)
+		}
+		return db
 	}
 }
