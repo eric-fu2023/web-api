@@ -8,12 +8,12 @@ import (
 )
 
 func RejectWithdrawal(c *gin.Context) {
-	var service cashout_finpay.CancelCashOutOrderService
+	var service cashout_finpay.CashOutOrderService
 	if err := c.ShouldBind(&service); err == nil {
 		if res, err := service.Reject(c); err == nil {
 			c.JSON(200, res)
 		} else {
-			c.JSON(500, res)
+			c.JSON(500, api.ErrorResponse(c, service, err))
 		}
 	} else {
 		c.JSON(400, api.ErrorResponse(c, service, err))
@@ -21,12 +21,12 @@ func RejectWithdrawal(c *gin.Context) {
 }
 
 func ApproveWithdrawal(c *gin.Context) {
-	var service cashout_finpay.ApproveCashOutOrderService
+	var service cashout_finpay.CashOutOrderService
 	if err := c.ShouldBind(&service); err == nil {
 		if res, err := service.Approve(c); err == nil {
 			c.JSON(200, res)
 		} else {
-			c.JSON(500, res)
+			c.JSON(500, api.ErrorResponse(c, service, err))
 		}
 	} else {
 		c.JSON(400, api.ErrorResponse(c, service, err))

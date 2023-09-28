@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type CancelCashOutOrderService struct {
+type CashOutOrderService struct {
 	OrderNumber string `form:"order_number" json:"order_number" binding:"required"`
 	// ActualAmount int64  `form:"actual_amount" json:"actual_amount" binding:"required"`
 	// BonusAmount  int64  `form:"bonus_amount" json:"bonus_amount"`
@@ -21,7 +21,7 @@ type CancelCashOutOrderService struct {
 	// Remark string `form:"remark" json:"remark"`
 }
 
-func (s CancelCashOutOrderService) Reject(c *gin.Context) (r serializer.Response, err error) {
+func (s CashOutOrderService) Reject(c *gin.Context) (r serializer.Response, err error) {
 
 	var cashOrder model.CashOrder
 	err = model.DB.Where("id", s.OrderNumber).
@@ -40,11 +40,7 @@ func (s CancelCashOutOrderService) Reject(c *gin.Context) (r serializer.Response
 	return
 }
 
-type ApproveCashOutOrderService struct {
-	OrderNumber string `form:"order_number" json:"order_number" binding:"required"`
-}
-
-func (s ApproveCashOutOrderService) Approve(c *gin.Context) (r serializer.Response, err error) {
+func (s CashOutOrderService) Approve(c *gin.Context) (r serializer.Response, err error) {
 	var cashOrder model.CashOrder
 	err = model.DB.Where("id", s.OrderNumber).
 		Where("review_status", 2).
