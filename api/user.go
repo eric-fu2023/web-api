@@ -15,6 +15,16 @@ import (
 	"web-api/util/i18n"
 )
 
+func Me(c *gin.Context) {
+	var service service.MeService
+	if err := c.ShouldBind(&service); err == nil {
+		res := service.Get(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
 func UserLogout(c *gin.Context) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
@@ -143,16 +153,6 @@ func UserDelete(c *gin.Context) {
 	var service service.UserDeleteService
 	if err := c.ShouldBind(&service); err == nil {
 		res := service.Delete(c)
-		c.JSON(200, res)
-	} else {
-		c.JSON(400, ErrorResponse(c, service, err))
-	}
-}
-
-func PersonalInfo(c *gin.Context) {
-	var service service.ProfileGetService
-	if err := c.ShouldBind(&service); err == nil {
-		res := service.Get(c)
 		c.JSON(200, res)
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))

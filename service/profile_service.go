@@ -1,34 +1,14 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"mime/multipart"
-	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
 )
-
-type ProfileGetService struct {
-}
-
-func (service *ProfileGetService) Get(c *gin.Context) serializer.Response {
-	i18n := c.MustGet("i18n").(i18n.I18n)
-	u, _ := c.Get("user")
-	user := u.(model.User)
-
-	err := getKyc(&user)
-	if err != nil {
-		return serializer.DBErr(c, service, i18n.T("general_error"), err)
-	}
-
-	return serializer.Response{
-		Data: serializer.BuildPersonalInfo(c, user),
-	}
-}
 
 type NicknameUpdateService struct {
 	Nickname *string `form:"nickname" json:"nickname"`
@@ -45,13 +25,8 @@ func (service *NicknameUpdateService) Update(c *gin.Context) serializer.Response
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
-	err = getKyc(&user)
-	if err != nil {
-		return serializer.DBErr(c, service, i18n.T("general_error"), err)
-	}
-
 	return serializer.Response{
-		Data: serializer.BuildPersonalInfo(c, user),
+		Data: serializer.BuildUserInfo(c, user),
 	}
 }
 
@@ -98,22 +73,7 @@ func (service *ProfilePicService) Upload(c *gin.Context) serializer.Response {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
-	err = getKyc(&user)
-	if err != nil {
-		return serializer.DBErr(c, service, i18n.T("general_error"), err)
-	}
-
 	return serializer.Response{
-		Data: serializer.BuildPersonalInfo(c, user),
+		Data: serializer.BuildUserInfo(c, user),
 	}
-}
-
-func getKyc(user *model.User) (err error) {
-	var kyc ploutos.KycC
-	err = model.DB.Where(`user_id`, user.ID).Where(`status`, consts.KycStatusCompleted).Order(`id DESC`).Limit(1).Find(&kyc).Error
-	if err != nil {
-		return
-	}
-	user.Kyc = &kyc
-	return
 }

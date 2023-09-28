@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"os"
-	"strings"
+	"time"
 	"web-api/model"
 )
 
@@ -49,7 +49,9 @@ type UserInfo struct {
 	Signature      string   `json:"signature,omitempty"`
 	FollowingCount int64    `json:"following_count"`
 	SetupRequired  bool     `json:"setup_required"`
+	KycRequired    bool     `json:"kyc_required"`
 	UserSum        *UserSum `json:"sum,omitempty"`
+	Kyc            *Kyc     `json:"kyc,omitempty"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
@@ -74,104 +76,14 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		t := BuildUserSum(*user.UserSum)
 		u.UserSum = &t
 	}
-
-	return u
-}
-
-type PersonalInfo struct {
-	Nickname         string `json:"nickname"`
-	Username         string `json:"username"`
-	Email            string `json:"email"`
-	CountryCode      string `json:"country_code"`
-	Mobile           string `json:"mobile"`
-	Avatar           string `json:"avatar"`
-	FirstName        string `json:"first_name"`
-	MiddleName       string `json:"middle_name"`
-	LastName         string `json:"last_name"`
-	PermanentAddress string `json:"permanent_address"`
-	CurrentAddress   string `json:"current_address"`
-	Birthday         string `json:"birthday"`
-}
-
-func BuildPersonalInfo(c *gin.Context, user model.User) PersonalInfo {
-	u := PersonalInfo{
-		Username:    getMaskedUsername(user.Username),
-		Nickname:    user.Nickname,
-		CountryCode: user.CountryCode,
-		Mobile:      getMaskedMobile(user.Mobile),
-		Email:       getMaskedEmail(user.Email),
-		Avatar:      Url(user.Avatar),
-	}
 	if user.Kyc != nil {
-		u.FirstName = user.Kyc.FirstName
-		u.MiddleName = user.Kyc.MiddleName
-		u.LastName = user.Kyc.LastName
-		u.PermanentAddress = user.Kyc.PermanentAddress
-		u.CurrentAddress = user.Kyc.CurrentAddress
-		u.Birthday = user.Kyc.Birthday
+		t := BuildKyc(*user.Kyc, []model.KycDocument{})
+		u.Kyc = &t
+	} else {
+		if user.KycCheckRequired && user.CreatedAt.Before(time.Now().Add(-7*24*time.Hour)) {
+			u.KycRequired = true
+		}
 	}
 
 	return u
-}
-
-func getMaskedUsername(original string) (new string) {
-	l := len(original)
-	if l == 0 {
-		return
-	}
-	q := l / 3
-	r := l % 3
-	if q >= 1 {
-		ast := ""
-		for i := 0; i < q+r; i++ {
-			ast += "*"
-		}
-		new = original[:q] + ast + original[l-q:l]
-	} else {
-		new = original[:1] + "*"
-	}
-	return
-}
-
-func getMaskedEmail(original string) (new string) {
-	if len(original) == 0 {
-		return
-	}
-	l := strings.Index(original, "@")
-	if l == -1 || l == 0 {
-		new = original
-		return
-	}
-	q := l / 2
-	r := l % 2
-	if q >= 1 {
-		ast := ""
-		for i := 0; i < q+r; i++ {
-			ast += "*"
-		}
-		new = original[:q] + ast
-	} else {
-		new = original[:1] + "*"
-	}
-	new += original[l:]
-	return
-}
-
-func getMaskedMobile(original string) (new string) {
-	l := len(original)
-	if l == 0 {
-		return
-	}
-	q := l / 2
-	r := l % 2
-	if q >= 1 {
-		ast := ""
-		for i := 0; i < q+r; i++ {
-			ast += "*"
-		}
-		new = original[:q] + ast
-	} else {
-		new = original[:1] + "*"
-	}
-	return
 }

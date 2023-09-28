@@ -13,8 +13,9 @@ import (
 // User 用户模型
 type User struct {
 	ploutos.UserC
-	UserSum *ploutos.UserSum `gorm:"foreignKey:UserId;references:ID"`
-	Kyc     *ploutos.KycC    `gorm:"foreignKey:UserId;references:ID"`
+	KycCheckRequired bool
+	UserSum          *ploutos.UserSum `gorm:"foreignKey:UserId;references:ID"`
+	Kyc              *Kyc             `gorm:"foreignKey:UserId;references:ID"`
 }
 
 const (

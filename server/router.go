@@ -109,7 +109,6 @@ func NewRouter() *gin.Engine {
 				user.POST("/finish_setup", api.UserFinishSetup)
 				user.GET("/check_username", api.UserCheckUsername)
 				user.POST("/check_password", api.UserCheckPassword)
-				user.GET("/personal_info", api.PersonalInfo)
 				user.POST("/nickname", api.NicknameUpdate)
 				user.POST("/profile_pic", api.ProfilePicUpload)
 				user.GET("/notifications", api.UserNotificationList)

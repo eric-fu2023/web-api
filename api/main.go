@@ -1,14 +1,12 @@
 package api
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	validator "gopkg.in/go-playground/validator.v8"
 	"time"
 	"web-api/conf"
-	"web-api/model"
 	"web-api/serializer"
 )
 
@@ -29,19 +27,6 @@ func Ts(c *gin.Context) {
 	c.JSON(200, serializer.Response{
 		Code: 0,
 		Data: time.Now().Unix(),
-	})
-}
-
-func Me(c *gin.Context) {
-	u, _ := c.Get("user")
-	user := u.(model.User)
-	var userSum ploutos.UserSum
-	if e := model.DB.Where(`user_id`, user.ID).First(&userSum).Error; e == nil {
-		user.UserSum = &userSum
-	}
-	c.JSON(200, serializer.Response{
-		Code: 0,
-		Data: serializer.BuildUserInfo(c, user),
 	})
 }
 

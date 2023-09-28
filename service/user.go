@@ -4,9 +4,11 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"os"
 	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/serializer"
 	"web-api/util"
 )
 
@@ -89,4 +91,31 @@ func CreateUser(user model.User) error {
 	}
 
 	return nil
+}
+
+type MeService struct {
+	WithKyc bool `form:"with_kyc" json:"with_kyc"`
+}
+
+func (service *MeService) Get(c *gin.Context) serializer.Response {
+	u, _ := c.Get("user")
+	user := u.(model.User)
+	var userSum ploutos.UserSum
+	if e := model.DB.Where(`user_id`, user.ID).First(&userSum).Error; e == nil {
+		user.UserSum = &userSum
+	}
+	if service.WithKyc {
+		var appConfig ploutos.AppConfig
+		model.DB.Where(`key`, `kyc_check_required`).First(&appConfig)
+		if appConfig.Value == "true" {
+			user.KycCheckRequired = true
+		}
+		var kyc model.Kyc
+		if e := model.DB.Where(`user_id`, user.ID).Order(`id DESC`).First(&kyc).Error; e == nil {
+			user.Kyc = &kyc
+		}
+	}
+	return serializer.Response{
+		Data: serializer.BuildUserInfo(c, user),
+	}
 }
