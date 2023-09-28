@@ -46,8 +46,13 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 	}
 	cache.RedisSessionClient.Set(context.TODO(), "otp:"+service.CountryCode+service.Mobile, otp, 2*time.Minute)
 
+	msg := i18n.T("success")
+	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
+		msg = otp
+	}
+
 	return serializer.Response{
-		Msg: i18n.T("success"),
+		Msg: msg,
 	}
 }
 
