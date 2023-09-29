@@ -2,101 +2,56 @@ package websocket
 
 import (
 	"context"
-	"encoding/json"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"fmt"
+	"github.com/gorilla/websocket"
+	"os"
 	"strings"
 	"time"
-	"web-api/conf/consts"
-	"web-api/model"
+	modelWebsocket "web-api/model/websocket"
 	"web-api/util"
-	"web-api/util/ws"
 )
 
-func Reply() {
-	for {
-		<-ws.Conn.Ready
-		ws.Conn.Send(`42["join_admin", {"room":"administration"}]`)
+var Conn modelWebsocket.Connection
+var Functions []func(ctx context.Context, cancelFunc context.CancelFunc)
 
-	loop:
-		for {
-			select {
-			case <-ws.Conn.Ready:
-				_, msg, err := ws.Conn.Socket.ReadMessage()
-				if err != nil {
-					util.Log().Panic("ws read error", err)
-					ws.Conn.Close()
-					return
-				}
-				message := string(msg)
-				if message == "2" { // reply pong to ping from server
-					ws.Conn.Send(`3`)
-				}
-				if strings.Contains(message, "socket_id") {
-					switch {
-					case strings.Contains(message, `"room_join"`):
-						go welcomeToRoom(message)
-					}
-				}
-			case <-ws.Conn.Closed:
-				break loop
-			}
-		}
+func Connect(retryInterval int64) {
+	for {
+		ctx := connect()
+		<-ctx.Done()
+		util.Log().Info(fmt.Sprintf(`retrying in %d seconds...`, retryInterval))
+		time.Sleep(time.Duration(retryInterval) * time.Second)
 	}
 }
 
-func welcomeToRoom(message string) {
-	str := strings.Replace(message, `42["room_join",`, "", 1)
-	str = strings.Replace(str, `"}]`, `"}`, 1)
-	var j map[string]interface{}
-	if e := json.Unmarshal([]byte(str), &j); e == nil {
-		if rm, exists := j["room"]; exists {
-			room := rm.(string)
-			if v, exists := j["rejoin"]; !exists || !v.(bool) {
-				for _, m := range consts.ChatSystem["messages"] {
-					msg := ws.RoomMessage{
-						SocketId:  j["socket_id"].(string),
-						Room:      room,
-						Timestamp: time.Now().Unix(),
-						Message:   m,
-						UserId:    consts.ChatSystemId,
-						UserType:  consts.ChatUserType["system"],
-						Nickname:  consts.ChatSystem["names"][0],
-						Type:      consts.WebSocketMessageType["text"],
-					}
-					msg.Send()
-				}
+func connect() (ctx context.Context) {
+	ctx, cancelFunc := context.WithCancel(context.TODO())
+	util.Log().Info(`connecting to ` + os.Getenv("WS_URL"))
+	c, _, err := websocket.DefaultDialer.Dial(os.Getenv("WS_URL"), nil)
+	if err != nil {
+		util.Log().Error("ws connection error", err)
+		cancelFunc()
+		return
+	}
+	util.Log().Info(`connected`)
+	Conn.Socket = c
 
-				coll := model.MongoDB.Collection("room_message")
-				filter := bson.M{"room": room}
-				opts := options.Find()
-				opts.SetLimit(20)
-				opts.SetSort(bson.D{{"timestamp", 1}, {"_id", -1}})
-				ctx := context.TODO()
-				cursor, err := coll.Find(ctx, filter, opts)
-				if err != nil {
-					return
+	go func() {
+		for {
+			_, msg, err := Conn.Socket.ReadMessage()
+			if err != nil {
+				util.Log().Error("ws read error", err)
+				cancelFunc()
+				return
+			}
+			message := string(msg)
+			if strings.Contains(message, "socket_id") && strings.Contains(message, "welcome") {
+				for _, f := range Functions {
+					go f(ctx, cancelFunc)
 				}
-				var ms []model.RoomMessage
-				for cursor.Next(ctx) {
-					var pm model.RoomMessage
-					cursor.Decode(&pm)
-					ms = append(ms, pm)
-				}
-				for _, n := range ms {
-					msg1 := ws.RoomMessage{
-						SocketId:  j["socket_id"].(string),
-						Room:      room,
-						Timestamp: n.Timestamp,
-						Message:   n.Message,
-						UserId:    n.UserId,
-						UserType:  n.UserType,
-						Nickname:  n.Nickname,
-						Type:      n.Type,
-					}
-					msg1.Send()
-				}
+				return
 			}
 		}
-	}
+	}()
+	Conn.Send(`40{"token":"` + os.Getenv("WS_TOKEN") + `"}`)
+	return
 }

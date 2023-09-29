@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/gin-contrib/pprof"
 	"github.com/robfig/cron/v3"
 	"log"
@@ -10,7 +11,6 @@ import (
 	"web-api/server"
 	"web-api/task"
 	"web-api/task/websocket"
-	"web-api/util/ws"
 )
 
 var runTask bool
@@ -36,9 +36,10 @@ func main() {
 		go task.ProcessFbSyncTransaction()
 		go task.ProcessSabaSettle()
 		go func() {
-			ws.InitWebsocket()
-			<-ws.Conn.Ready
-			go websocket.Reply()
+			websocket.Functions = []func(context.Context, context.CancelFunc){ // modules to be run when connected
+				websocket.Reply,
+			}
+			websocket.Connect(10)
 		}()
 
 		c := cron.New(cron.WithSeconds())
