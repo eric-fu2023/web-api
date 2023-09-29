@@ -1,6 +1,7 @@
 package cashout_finpay
 
 import (
+	"errors"
 	"web-api/model"
 	"web-api/service/cashout"
 	"web-api/util"
@@ -17,10 +18,10 @@ type FinpayTransferCallback struct {
 }
 
 func (s *FinpayTransferCallback) Handle(c *gin.Context) (err error) {
-	// if !s.IsValid() {
-	// 	err = errors.New("invalid request")
-	// 	return
-	// }
+	if !s.IsValid() {
+		err = errors.New("invalid request")
+		return
+	}
 	if s.IsSucess() {
 		_, err = cashout.CloseCashOutOrder(c, s.MerchantOrderNo, int64(s.Amount), 0, 0, util.JSON(s), "", model.DB)
 		if err != nil {
