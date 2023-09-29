@@ -30,7 +30,7 @@ import (
 
 func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes string, txDB *gorm.DB) (updatedCashOrder model.CashOrder, err error) {
 	var newCashOrderState model.CashOrder
-	err = txDB.Transaction(func(tx *gorm.DB) (err error) {
+	err = txDB.Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		newCashOrderState, err = model.CashOrder{}.GetPendingWithLockWithDB(orderNumber, tx)
 		if err != nil {
 			return

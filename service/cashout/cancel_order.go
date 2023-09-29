@@ -19,7 +19,7 @@ func RevertCashOutOrder(c *gin.Context, orderNumber string, notes, remark string
 		err = errors.New("wrong status")
 		return
 	}
-	err = txDB.Transaction(func(tx *gorm.DB) (err error) {
+	err = txDB.Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = txDB.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", orderNumber).First(&newCashOrderState).Error
 		if err != nil {
 			return
