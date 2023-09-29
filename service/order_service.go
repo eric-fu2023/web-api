@@ -11,7 +11,7 @@ import (
 )
 
 type OrderListService struct {
-	Type      int64  `form:"type" json:"type"`
+	IsParlay  bool   `form:"is_parlay" json:"is_parlay"`
 	IsSettled bool   `form:"is_settled" json:"is_settled"`
 	Start     string `form:"start" json:"start" binding:"required"`
 	End       string `form:"end" json:"end" binding:"required"`
@@ -38,7 +38,7 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 			fmt.Println(end)
 		}
 	}
-	err = model.DB.Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, service.Type, service.IsSettled, start, end)).Find(&list).Error
+	err = model.DB.Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, service.IsParlay, service.IsSettled, start, end)).Find(&list).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}

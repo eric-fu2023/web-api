@@ -21,11 +21,13 @@ func ProcessSabaSettle() {
 		keys := make(map[string][]string)
 		for iter.Next(ctx) {
 			str := strings.Split(iter.Val(), ":")
-			arr, ok := keys[str[1]]
-			if !ok {
-				keys[str[1]] = make([]string, 0)
+			if len(str) == 3 {
+				arr, ok := keys[str[1]]
+				if !ok {
+					keys[str[1]] = make([]string, 0)
+				}
+				keys[str[1]] = append(arr, str[2])
 			}
-			keys[str[1]] = append(arr, str[2])
 		}
 
 		var wg sync.WaitGroup

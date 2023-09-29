@@ -10,7 +10,7 @@ type BetReport struct {
 	OrderId    string   `json:"order_id"`
 	Ts         int64    `json:"ts"`
 	Status     int64    `json:"status"`
-	Type       int64    `json:"type"`
+	IsParlay   bool     `json:"is_parlay"`
 	MatchCount int64    `json:"match_count"`
 	BetType    string   `json:"bet_type"`
 	Stake      float64  `json:"stake"`
@@ -24,8 +24,8 @@ func BuildBetReportFb(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 		OrderId:    a.OrderId,
 		Ts:         a.BetTime.Unix(),
 		Status:     a.RewardStatus,
-		Type:       a.SeriesType,
-		MatchCount: a.AllUp,
+		IsParlay:   a.IsParlay,
+		MatchCount: a.MatchCount,
 		BetType:    a.BetType,
 		Stake:      float64(a.Bet) / 100,
 	}
