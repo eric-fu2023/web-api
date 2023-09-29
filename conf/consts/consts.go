@@ -7,11 +7,11 @@ const (
 )
 
 var (
-	Platform = map[int64]string{
-		1: "pc",
-		2: "h5",
-		3: "android",
-		4: "ios",
+	Platform = map[string]int64{
+		"pc":      1,
+		"h5":      2,
+		"android": 3,
+		"ios":     4,
 	}
 	PlatformIdToFbPlatformId = map[int64]string{
 		1: "pc",

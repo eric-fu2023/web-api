@@ -3,6 +3,7 @@ package model
 import (
 	"gorm.io/gorm"
 	"time"
+	"web-api/conf/consts"
 )
 
 func GameVendorUserByVendorAndExternalUser(vendor int64, userId string) func(db *gorm.DB) *gorm.DB {
@@ -53,6 +54,10 @@ func SortByCreated(db *gorm.DB) *gorm.DB {
 	return db.Order(`created_at DESC`)
 }
 
+func ByStatus(db *gorm.DB) *gorm.DB {
+	return db.Where(`status`, 1)
+}
+
 func ByUserId(userId int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Where(`user_id`, userId).Limit(1)
@@ -77,5 +82,26 @@ func ByOrderListConditions(userId int64, isParlay bool, isSettled bool, start ti
 			db.Where(`bet_time >= ?`, start).Where(`bet_time <= ?`, end)
 		}
 		return db
+	}
+}
+
+func ByPlatformExpended(platform int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if platform == consts.Platform["pc"] {
+			db.Where(`web`, 1)
+		} else if platform == consts.Platform["h5"] {
+			db.Where(`h5`, 1)
+		} else if platform == consts.Platform["android"] {
+			db.Where(`android`, 1)
+		} else if platform == consts.Platform["ios"] {
+			db.Where(`ios`, 1)
+		}
+		return db
+	}
+}
+
+func ByGameTypeAndBrand(t int64, brand int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(`category_id`, t).Where(`brand_id = ? OR brand_id = 0`, brand)
 	}
 }

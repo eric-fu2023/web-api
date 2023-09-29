@@ -88,6 +88,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/config", middleware.Cache(10*time.Minute), api.Config)
 		v1.GET("/announcements", middleware.Cache(1*time.Minute), api.Announcements)
 		v1.GET("/categories", middleware.Cache(1*time.Minute), api.CategoryList)
+		v1.GET("/games", middleware.Cache(1*time.Minute), api.GameList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)
 		v1.GET("/streamer", middleware.Cache(1*time.Minute), api.Streamer)
 		v1.GET("/topup-methods", middleware.Cache(1*time.Minute), api.TopupMethodList)
