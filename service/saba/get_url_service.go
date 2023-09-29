@@ -27,16 +27,16 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 	url, err := client.GetSabaUrl(user.Username, consts.PlatformIdToSabaPlatformId[service.Platform.Platform])
 	if err != nil {
 		if err.Error() == "member not found" {
-			var currency ploutos.CurrencyGameProvider
-			err = model.DB.Where(`game_provider_id`, consts.GameProvider["saba"]).Where(`currency_id`, user.CurrencyId).First(&currency).Error
+			var currency ploutos.CurrencyGameVendor
+			err = model.DB.Where(`game_vendor_id`, consts.GameVendor["saba"]).Where(`currency_id`, user.CurrencyId).First(&currency).Error
 			if err != nil {
 				res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("empty_currency_id"), err)
 				return
 			}
 			if r, e := client.CreateMember(user.Username, currency.Value, os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
-				sabaGpu := ploutos.GameProviderUser{
-					ploutos.GameProviderUserC{
-						GameProviderId:     consts.GameProvider["saba"],
+				sabaGpu := ploutos.GameVendorUser{
+					ploutos.GameVendorUserC{
+						GameVendorId:       consts.GameVendor["saba"],
 						UserId:             user.ID,
 						ExternalUserId:     user.Username,
 						ExternalCurrencyId: currency.Value,

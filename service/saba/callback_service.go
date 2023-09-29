@@ -11,8 +11,8 @@ type Callback struct {
 	Transaction models.SabaTransactionC
 }
 
-func (c *Callback) GetGameProviderId() int64 {
-	return consts.GameProvider["saba"]
+func (c *Callback) GetGameVendorId() int64 {
+	return consts.GameVendor["saba"]
 }
 
 func (c *Callback) GetGameTransactionId() int64 {

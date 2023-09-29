@@ -5,9 +5,9 @@ import (
 	"time"
 )
 
-func GameProviderUserByProviderAndExternalUser(provider int64, userId string) func(db *gorm.DB) *gorm.DB {
+func GameVendorUserByVendorAndExternalUser(vendor int64, userId string) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Where(`game_provider_id`, provider).Where(`external_user_id`, userId)
+		return db.Where(`game_vendor_id`, vendor).Where(`external_user_id`, userId)
 	}
 }
 

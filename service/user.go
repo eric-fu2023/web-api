@@ -38,25 +38,25 @@ func CreateUser(user model.User) error {
 	}
 	tx.Commit()
 
-	var currencies []ploutos.CurrencyGameProvider
+	var currencies []ploutos.CurrencyGameVendor
 	err = model.DB.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
 	if err != nil {
 		return ErrEmptyCurrencyId
 	}
 	currMap := make(map[int64]int64)
 	for _, cur := range currencies {
-		currMap[cur.GameProviderId] = cur.Value
+		currMap[cur.GameVendorId] = cur.Value
 	}
 
-	fbCurrency, fbCurrExists := currMap[consts.GameProvider["fb"]]
+	fbCurrency, fbCurrExists := currMap[consts.GameVendor["fb"]]
 	if !fbCurrExists {
 		return ErrEmptyCurrencyId
 	}
 	fbClient := util.FBFactory.NewClient()
 	if res, e := fbClient.CreateUser(user.Username, []int64{}, 0); e == nil {
-		fbGpu := ploutos.GameProviderUser{
-			ploutos.GameProviderUserC{
-				GameProviderId:     consts.GameProvider["fb"],
+		fbGpu := ploutos.GameVendorUser{
+			ploutos.GameVendorUserC{
+				GameVendorId:       consts.GameVendor["fb"],
 				UserId:             user.ID,
 				ExternalUserId:     user.Username,
 				ExternalCurrencyId: fbCurrency,
@@ -69,15 +69,15 @@ func CreateUser(user model.User) error {
 		}
 	}
 
-	sabaCurrency, sabaCurrExists := currMap[consts.GameProvider["saba"]]
+	sabaCurrency, sabaCurrExists := currMap[consts.GameVendor["saba"]]
 	if !sabaCurrExists {
 		return ErrEmptyCurrencyId
 	}
 	sabaClient := util.SabaFactory.NewClient()
 	if res, e := sabaClient.CreateMember(user.Username, sabaCurrency, os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
-		sabaGpu := ploutos.GameProviderUser{
-			ploutos.GameProviderUserC{
-				GameProviderId:     consts.GameProvider["saba"],
+		sabaGpu := ploutos.GameVendorUser{
+			ploutos.GameVendorUserC{
+				GameVendorId:       consts.GameVendor["saba"],
 				UserId:             user.ID,
 				ExternalUserId:     user.Username,
 				ExternalCurrencyId: sabaCurrency,

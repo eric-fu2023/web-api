@@ -38,8 +38,8 @@ func (c *Callback) NewCallback(userId int64) {
 	c.Transaction.Amount = int64(c.Request.Amount * 100)
 }
 
-func (c *Callback) GetGameProviderId() int64 {
-	return consts.GameProvider["fb"]
+func (c *Callback) GetGameVendorId() int64 {
+	return consts.GameVendor["fb"]
 }
 
 func (c *Callback) GetGameTransactionId() int64 {
@@ -87,7 +87,7 @@ const (
 )
 
 func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.BaseResponse, err error) {
-	gpu, balance, _, _, err := service.GetUserAndSum(consts.GameProvider["fb"], req.MerchantUserId)
+	gpu, balance, _, _, err := service.GetUserAndSum(consts.GameVendor["fb"], req.MerchantUserId)
 	if err != nil {
 		return
 	}

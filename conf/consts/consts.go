@@ -25,7 +25,7 @@ var (
 		3: "3",
 		4: "3",
 	}
-	GameProvider = map[string]int64{
+	GameVendor = map[string]int64{
 		"fb":   1,
 		"saba": 2,
 	}

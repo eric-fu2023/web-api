@@ -19,7 +19,7 @@ type Page struct {
 
 type CallbackInterface interface {
 	NewCallback(int64)
-	GetGameProviderId() int64
+	GetGameVendorId() int64
 	GetGameTransactionId() int64
 	GetExternalUserId() string
 	SaveGameTransaction(*gorm.DB) error
@@ -30,24 +30,24 @@ type CallbackInterface interface {
 	IsAdjustment() bool
 }
 
-func GetUserAndSum(gameProvider int64, externalUserId string) (gameProviderUser ploutos.GameProviderUser, balance int64, remainingWager int64, maxWithdrawable int64, err error) {
-	gameProviderUser, err = GetGameProviderUser(gameProvider, externalUserId)
+func GetUserAndSum(gameVendor int64, externalUserId string) (gameVendorUser ploutos.GameVendorUser, balance int64, remainingWager int64, maxWithdrawable int64, err error) {
+	gameVendorUser, err = GetGameVendorUser(gameVendor, externalUserId)
 	if err != nil {
 		return
 	}
-	balance, remainingWager, maxWithdrawable, err = GetSums(gameProviderUser)
+	balance, remainingWager, maxWithdrawable, err = GetSums(gameVendorUser)
 	if err != nil {
 		return
 	}
 	return
 }
 
-func GetGameProviderUser(provider int64, userId string) (gpu ploutos.GameProviderUser, err error) {
-	err = model.DB.Scopes(model.GameProviderUserByProviderAndExternalUser(provider, userId)).First(&gpu).Error
+func GetGameVendorUser(vendor int64, userId string) (gpu ploutos.GameVendorUser, err error) {
+	err = model.DB.Scopes(model.GameVendorUserByVendorAndExternalUser(vendor, userId)).First(&gpu).Error
 	return
 }
 
-func GetSums(gpu ploutos.GameProviderUser) (balance int64, remainingWager int64, maxWithdrawable int64, err error) {
+func GetSums(gpu ploutos.GameVendorUser) (balance int64, remainingWager int64, maxWithdrawable int64, err error) {
 	var userSum ploutos.UserSum
 	err = model.DB.Where(`user_id`, gpu.UserId).First(&userSum).Error
 	if err != nil {
@@ -60,7 +60,7 @@ func GetSums(gpu ploutos.GameProviderUser) (balance int64, remainingWager int64,
 }
 
 func ProcessTransaction(obj CallbackInterface) (err error) {
-	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(obj.GetGameProviderId(), obj.GetExternalUserId())
+	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(obj.GetGameVendorId(), obj.GetExternalUserId())
 	if err != nil {
 		return
 	}
@@ -107,7 +107,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 			BalanceBefore:        balance,
 			BalanceAfter:         newBalance,
 			ForeignTransactionId: obj.GetGameTransactionId(),
-			TransactionType:      obj.GetGameProviderId(),
+			TransactionType:      obj.GetGameVendorId(),
 			Wager:                userSum.RemainingWager - remainingWager,
 			WagerBefore:          remainingWager,
 			WagerAfter:           userSum.RemainingWager,

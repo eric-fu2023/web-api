@@ -29,8 +29,8 @@ func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err e
 	client := util.FBFactory.NewClient()
 	r, err := client.GetToken(user.Username, consts.PlatformIdToFbPlatformId[service.Platform.Platform], "")
 	if err != nil {
-		var currency ploutos.CurrencyGameProvider
-		err = model.DB.Where(`game_provider_id`, consts.GameProvider["fb"]).Where(`currency_id`, user.CurrencyId).First(&currency).Error
+		var currency ploutos.CurrencyGameVendor
+		err = model.DB.Where(`game_vendor_id`, consts.GameVendor["fb"]).Where(`currency_id`, user.CurrencyId).First(&currency).Error
 		if err != nil {
 			res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("empty_currency_id"), err)
 			return
@@ -41,9 +41,9 @@ func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err e
 			res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
 			return
 		}
-		fbGpu := ploutos.GameProviderUser{
-			ploutos.GameProviderUserC{
-				GameProviderId:     consts.GameProvider["fb"],
+		fbGpu := ploutos.GameVendorUser{
+			ploutos.GameVendorUserC{
+				GameVendorId:       consts.GameVendor["fb"],
 				UserId:             user.ID,
 				ExternalUserId:     user.Username,
 				ExternalCurrencyId: currency.Value,

@@ -9,7 +9,7 @@ import (
 )
 
 func GetBalanceCallback(c *gin.Context, req callback.GetBalanceRequest) (res any, err error) {
-	gpu, balance, _, _, err := service.GetUserAndSum(consts.GameProvider["saba"], req.Message.UserId)
+	gpu, balance, _, _, err := service.GetUserAndSum(consts.GameVendor["saba"], req.Message.UserId)
 	if err != nil {
 		return
 	}
