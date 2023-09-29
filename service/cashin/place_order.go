@@ -47,7 +47,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	}
 	if required {
 		var kyc model.Kyc
-		kyc, err = model.GetKycWithLock(model.DB.Debug(), user.ID)
+		kyc, err = model.GetKycWithLock(model.DB, user.ID)
 		if err != nil {
 			return
 		}
