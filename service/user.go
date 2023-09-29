@@ -105,10 +105,10 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 		user.UserSum = &userSum
 	}
 	if service.WithKyc {
-		var appConfig ploutos.AppConfig
-		model.DB.Where(`key`, `kyc_check_required`).First(&appConfig)
-		if appConfig.Value == "true" {
-			user.KycCheckRequired = true
+		if value, err := GetCachedConfig(c, consts.ConfigKeyTopupKycCheck); err == nil {
+			if value == "true" {
+				user.KycCheckRequired = true
+			}
 		}
 		var kyc model.Kyc
 		if e := model.DB.Where(`user_id`, user.ID).Order(`id DESC`).First(&kyc).Error; e == nil {

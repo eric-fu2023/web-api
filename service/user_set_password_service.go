@@ -72,12 +72,12 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	if user.Username != "" || user.Password != "" || user.CurrencyId != 0 {
+	if user.Username != "" && user.Password != "" && user.CurrencyId != 0 {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("setup_finished"), nil)
 	}
 
 	var existing model.User
-	if r := model.DB.Where(`username`, service.Username).Limit(1).Find(&existing).RowsAffected; r != 0 {
+	if r := model.DB.Unscoped().Where(`username`, service.Username).Limit(1).Find(&existing).RowsAffected; r != 0 {
 		return serializer.Err(c, service, serializer.CodeExistingUsername, i18n.T("existing_username"), nil)
 	}
 	bytes, err := bcrypt.GenerateFromPassword([]byte(service.Password), model.PassWordCost)
