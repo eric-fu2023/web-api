@@ -64,32 +64,34 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 		provider = utilities.SMS_PROVIDER_AWSSNS
 	} else if os.Getenv("USE_BULKSMS") == "true" {
 		provider = utilities.SMS_PROVIDER_BULKSMS
-	} else {
+	} else if os.Getenv("USE_TENCENT_SMS") == "true" {
 		provider = utilities.SMS_PROVIDER_TENCENT
 	}
 
-	smsProvider := utilities.SmsProvider{
-		Provider:        provider,
-		HuanXunTemplate: `您的验证码是 %s，5分钟有效，请尽快验证`,
-		BulkSmsTemplate: i18n.T("Your_request_otp"),
-		AwsSnsTemplate:  i18n.T("Your_request_otp"),
-	}
-	if err := smsProvider.Send(service.CountryCode, service.Mobile, otp); err != nil {
-		return err
-	}
+	if provider != 0 {
+		smsProvider := utilities.SmsProvider{
+			Provider:        provider,
+			HuanXunTemplate: `您的验证码是 %s，5分钟有效，请尽快验证`,
+			BulkSmsTemplate: i18n.T("Your_request_otp"),
+			AwsSnsTemplate:  i18n.T("Your_request_otp"),
+		}
+		if err := smsProvider.Send(service.CountryCode, service.Mobile, otp); err != nil {
+			return err
+		}
 
-	event := model.OtpEvent{
-		OtpEventC: models.OtpEventC{
-			CountryCode: service.CountryCode,
-			Mobile:      service.Mobile,
-			Otp:         otp,
-			Provider:    utilities.SmsProviderName[provider],
-			DateTime:    time.Now().Format(time.DateTime),
-		},
-	}
-	if err := model.LogOtpEvent(event); err != nil {
-		// Just log error
-		util.Log().Error("log otp event err", err)
+		event := model.OtpEvent{
+			OtpEventC: models.OtpEventC{
+				CountryCode: service.CountryCode,
+				Mobile:      service.Mobile,
+				Otp:         otp,
+				Provider:    utilities.SmsProviderName[provider],
+				DateTime:    time.Now().Format(time.DateTime),
+			},
+		}
+		if err := model.LogOtpEvent(event); err != nil {
+			// Just log error
+			util.Log().Error("log otp event err", err)
+		}
 	}
 
 	return nil
