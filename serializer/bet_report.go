@@ -23,7 +23,7 @@ func BuildBetReportFb(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 	b = BetReport{
 		OrderId:    a.OrderId,
 		Ts:         a.BetTime.Unix(),
-		Status:     a.RewardStatus,
+		Status:     a.Status,
 		IsParlay:   a.IsParlay,
 		MatchCount: a.MatchCount,
 		BetType:    a.BetType,
@@ -34,7 +34,7 @@ func BuildBetReportFb(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 			b.MaxReturn = v / 100
 		}
 	}
-	if a.RewardStatus == 5 {
+	if a.Status == 5 {
 		t := float64(a.Win) / 100
 		b.Won = &t
 	}

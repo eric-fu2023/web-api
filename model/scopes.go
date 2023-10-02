@@ -74,9 +74,9 @@ func ByOrderListConditions(userId int64, isParlay bool, isSettled bool, start ti
 	return func(db *gorm.DB) *gorm.DB {
 		db.Where(`user_id`, userId).Where(`is_parlay`, isParlay)
 		if isSettled {
-			db.Where(`reward_status`, 5)
+			db.Where(`status`, 5)
 		} else {
-			db.Where(`reward_status != ?`, 5)
+			db.Where(`status != ?`, 5)
 		}
 		if !start.IsZero() && !end.IsZero() {
 			db.Where(`bet_time >= ?`, start).Where(`bet_time <= ?`, end)
