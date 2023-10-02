@@ -1,6 +1,7 @@
 package api
 
 import (
+	"web-api/serializer"
 	"web-api/service"
 	"web-api/service/cashin"
 	"web-api/service/cashout"
@@ -11,8 +12,11 @@ import (
 func TopUpOrder(c *gin.Context) {
 	var service cashin.TopUpOrderService
 	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.CreateOrder(c)
-		c.JSON(200, res)
+		if res, err := service.CreateOrder(c); err != nil {
+			c.JSON(200, serializer.EnsureErr(c, err, res))
+		} else {
+			c.JSON(200, res)
+		}
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
