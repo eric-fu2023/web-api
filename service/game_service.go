@@ -10,7 +10,7 @@ import (
 
 type GameListService struct {
 	Platform int64 `form:"platform" json:"platform" binding:"required"`
-	Type     int64 `form:"type" json:"type" binding:"required"`
+	Type     int64 `form:"type" json:"type"`
 }
 
 func (service *GameListService) List(c *gin.Context) (r serializer.Response, err error) {

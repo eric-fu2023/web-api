@@ -8,6 +8,7 @@ import (
 type GameVendorBrand struct {
 	ID               int64  `json:"id"`
 	Name             string `json:"name"`
+	Type             int64  `json:"type"`
 	WebIcon          string `json:"web_icon,omitempty"`
 	AppIcon          string `json:"app_icon,omitempty"`
 	IsMaintenance    bool   `json:"is_maintenance,omitempty"`
@@ -19,6 +20,7 @@ func BuildGameVendorBrand(a ploutos.GameVendorBrand) (b GameVendorBrand) {
 	b = GameVendorBrand{
 		ID:      a.ID,
 		Name:    a.Name,
+		Type:    a.CategoryId,
 		WebIcon: Url(a.WebIcon),
 		AppIcon: Url(a.AppIcon),
 	}

@@ -102,6 +102,10 @@ func ByPlatformExpended(platform int64) func(db *gorm.DB) *gorm.DB {
 
 func ByGameTypeAndBrand(t int64, brand int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Where(`category_id`, t).Where(`brand_id = ? OR brand_id = 0`, brand)
+		db.Where(`brand_id = ? OR brand_id = 0`, brand)
+		if t != 0 {
+			db.Where(`category_id`, t)
+		}
+		return db
 	}
 }
