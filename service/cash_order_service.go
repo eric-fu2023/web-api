@@ -21,12 +21,14 @@ type CashOrderService struct {
 func (s CashOrderService) List(c *gin.Context) (r serializer.Response, err error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
+	loc := c.MustGet("_tz").(*time.Location)
+
 	var startTime *time.Time
-	if val, err := time.Parse(consts.StdTimeFormat, s.StartTime); err == nil {
+	if val, err := time.ParseInLocation(consts.StdTimeFormat, s.StartTime, loc); err == nil {
 		startTime = &val
 	}
 	var endTime *time.Time
-	if val, err := time.Parse(consts.StdTimeFormat, s.EndTime); err == nil {
+	if val, err := time.ParseInLocation(consts.StdTimeFormat, s.EndTime, loc); err == nil {
 		endTime = &val
 	}
 
