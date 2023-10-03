@@ -35,6 +35,8 @@ type Callback struct {
 
 func (c *Callback) NewCallback(userId int64) {
 	copier.Copy(&c.Transaction, &c.Request)
+	c.Transaction.ExternalUserId = c.Request.UserId
+	c.Transaction.ExternalCurrencyId = c.Request.CurrencyId
 	c.Transaction.UserId = userId
 	c.Transaction.Amount = int64(c.Request.Amount * 100)
 }
