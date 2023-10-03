@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"strconv"
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -91,9 +92,13 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 	if err != nil {
 		return
 	}
+	currency, err := strconv.Atoi(gpu.ExternalCurrency)
+	if err != nil {
+		return
+	}
 	data := callback.BalanceResponse{
 		Balance:    fmt.Sprintf("%.2f", float64(balance)/100),
-		CurrencyId: gpu.ExternalCurrencyId,
+		CurrencyId: int64(currency),
 	}
 	res = callback.BaseResponse{
 		Code: 0,

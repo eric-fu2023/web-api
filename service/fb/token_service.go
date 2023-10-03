@@ -43,11 +43,11 @@ func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err e
 		}
 		fbGpu := ploutos.GameVendorUser{
 			ploutos.GameVendorUserC{
-				GameVendorId:       consts.GameVendor["fb"],
-				UserId:             user.ID,
-				ExternalUserId:     user.Username,
-				ExternalCurrencyId: currency.Value,
-				ExternalId:         fmt.Sprintf("%d", extId),
+				GameVendorId:     consts.GameVendor["fb"],
+				UserId:           user.ID,
+				ExternalUserId:   user.Username,
+				ExternalCurrency: currency.Value,
+				ExternalId:       fmt.Sprintf("%d", extId),
 			},
 		}
 		err = model.DB.Save(&fbGpu).Error

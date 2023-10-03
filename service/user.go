@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"os"
+	"strconv"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -43,7 +44,7 @@ func CreateUser(user model.User) error {
 	if err != nil {
 		return ErrEmptyCurrencyId
 	}
-	currMap := make(map[int64]int64)
+	currMap := make(map[int64]string)
 	for _, cur := range currencies {
 		currMap[cur.GameVendorId] = cur.Value
 	}
@@ -56,11 +57,11 @@ func CreateUser(user model.User) error {
 	if res, e := fbClient.CreateUser(user.Username, []int64{}, 0); e == nil {
 		fbGpu := ploutos.GameVendorUser{
 			ploutos.GameVendorUserC{
-				GameVendorId:       consts.GameVendor["fb"],
-				UserId:             user.ID,
-				ExternalUserId:     user.Username,
-				ExternalCurrencyId: fbCurrency,
-				ExternalId:         fmt.Sprintf("%d", res),
+				GameVendorId:     consts.GameVendor["fb"],
+				UserId:           user.ID,
+				ExternalUserId:   user.Username,
+				ExternalCurrency: fbCurrency,
+				ExternalId:       fmt.Sprintf("%d", res),
 			},
 		}
 		err = model.DB.Save(&fbGpu).Error
@@ -74,14 +75,18 @@ func CreateUser(user model.User) error {
 		return ErrEmptyCurrencyId
 	}
 	sabaClient := util.SabaFactory.NewClient()
-	if res, e := sabaClient.CreateMember(user.Username, sabaCurrency, os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
+	currency, err := strconv.Atoi(sabaCurrency)
+	if err != nil {
+		return err
+	}
+	if res, e := sabaClient.CreateMember(user.Username, int64(currency), os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
 		sabaGpu := ploutos.GameVendorUser{
 			ploutos.GameVendorUserC{
-				GameVendorId:       consts.GameVendor["saba"],
-				UserId:             user.ID,
-				ExternalUserId:     user.Username,
-				ExternalCurrencyId: sabaCurrency,
-				ExternalId:         res,
+				GameVendorId:     consts.GameVendor["saba"],
+				UserId:           user.ID,
+				ExternalUserId:   user.Username,
+				ExternalCurrency: sabaCurrency,
+				ExternalId:       res,
 			},
 		}
 		err = model.DB.Save(&sabaGpu).Error

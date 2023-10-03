@@ -4,6 +4,7 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"os"
+	"strconv"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -33,14 +34,19 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 				res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("empty_currency_id"), err)
 				return
 			}
-			if r, e := client.CreateMember(user.Username, currency.Value, os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
+			curr, e := strconv.Atoi(currency.Value)
+			if e != nil {
+				res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("saba_create_user_failed"), err)
+				return
+			}
+			if r, e := client.CreateMember(user.Username, int64(curr), os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
 				sabaGpu := ploutos.GameVendorUser{
 					ploutos.GameVendorUserC{
-						GameVendorId:       consts.GameVendor["saba"],
-						UserId:             user.ID,
-						ExternalUserId:     user.Username,
-						ExternalCurrencyId: currency.Value,
-						ExternalId:         r,
+						GameVendorId:     consts.GameVendor["saba"],
+						UserId:           user.ID,
+						ExternalUserId:   user.Username,
+						ExternalCurrency: currency.Value,
+						ExternalId:       r,
 					},
 				}
 				err = model.DB.Save(&sabaGpu).Error
