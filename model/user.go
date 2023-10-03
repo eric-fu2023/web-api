@@ -13,7 +13,7 @@ import (
 // User 用户模型
 type User struct {
 	ploutos.UserC
-	KycCheckRequired bool
+	KycCheckRequired bool             `gorm:"-"`
 	UserSum          *ploutos.UserSum `gorm:"foreignKey:UserId;references:ID"`
 	Kyc              *Kyc             `gorm:"foreignKey:UserId;references:ID"`
 }
