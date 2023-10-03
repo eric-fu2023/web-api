@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"os"
-	"strconv"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -54,7 +53,7 @@ func CreateUser(user model.User) error {
 		return ErrEmptyCurrencyId
 	}
 	fbClient := util.FBFactory.NewClient()
-	if res, e := fbClient.CreateUser(user.Username, []int64{}, 0); e == nil {
+	if res, e := fbClient.CreateUser(user.Username, []string{}, 0); e == nil {
 		fbGpu := ploutos.GameVendorUser{
 			ploutos.GameVendorUserC{
 				GameVendorId:     consts.GameVendor["fb"],
@@ -75,11 +74,7 @@ func CreateUser(user model.User) error {
 		return ErrEmptyCurrencyId
 	}
 	sabaClient := util.SabaFactory.NewClient()
-	currency, err := strconv.Atoi(sabaCurrency)
-	if err != nil {
-		return err
-	}
-	if res, e := sabaClient.CreateMember(user.Username, int64(currency), os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
+	if res, e := sabaClient.CreateMember(user.Username, sabaCurrency, os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
 		sabaGpu := ploutos.GameVendorUser{
 			ploutos.GameVendorUserC{
 				GameVendorId:     consts.GameVendor["saba"],

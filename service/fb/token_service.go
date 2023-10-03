@@ -36,7 +36,7 @@ func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err e
 			return
 		}
 		var extId int64
-		extId, err = client.CreateUser(user.Username, []int64{}, 0)
+		extId, err = client.CreateUser(user.Username, []string{}, 0)
 		if err != nil {
 			res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
 			return
