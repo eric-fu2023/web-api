@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -19,13 +20,22 @@ const userWithdrawLockKey = "user_withdraw_lock:%d"
 type WithdrawOrderService struct {
 	MethodID    int64  `form:"method_id" json:"method_id" binding:"required"`
 	AccountNo   string `form:"account_no" json:"account_no" binding:"required"`
-	Amount      int64  `form:"amount" json:"amount" binding:"required,min=0"`
+	Amount      string `form:"amount" json:"amount" binding:"required,min=0"`
 	AccountName string `form:"account_name" json:"account_name" binding:"required"`
 }
 
 func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	amount := s.Amount * 100
+	amountDecimal, err := decimal.NewFromString(s.Amount)
+	if err != nil {
+		return
+	}
+	amount := amountDecimal.Mul(decimal.NewFromInt(100)).IntPart()
+	if amount < 0 {
+		err = errors.New("illegal amount")
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
 
 	switch s.MethodID {
 	case 3:

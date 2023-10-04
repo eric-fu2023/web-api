@@ -21,15 +21,20 @@ type TopUpOrderService struct {
 }
 
 func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	u, _ := c.Get("user")
+	user := u.(model.User)
+
 	amountDecimal, err := decimal.NewFromString(s.Amount)
 	if err != nil {
 		return
 	}
 	amount := amountDecimal.Mul(decimal.NewFromInt(100)).IntPart()
-
-	i18n := c.MustGet("i18n").(i18n.I18n)
-	u, _ := c.Get("user")
-	user := u.(model.User)
+	if amount < 0 {
+		err = errors.New("illegal amount")
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
 	switch s.MethodID {
 	case 1:
 	default:
