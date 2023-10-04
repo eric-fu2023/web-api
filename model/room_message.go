@@ -7,6 +7,7 @@ import (
 )
 
 type RoomMessage struct {
+	Id        string `bson:"_id"`
 	Room      string
 	Message   string
 	Nickname  string

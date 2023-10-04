@@ -7,6 +7,7 @@ import (
 )
 
 type RoomMessage struct {
+	Id        string `json:"_id,omitempty"`
 	SocketId  string `json:"socket_id"`
 	Room      string `json:"room"`
 	Timestamp int64  `json:"timestamp"`

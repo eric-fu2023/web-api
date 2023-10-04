@@ -81,6 +81,7 @@ func welcomeToRoom(message string) {
 				}
 				for _, n := range ms {
 					msg1 := websocket.RoomMessage{
+						Id:        n.Id,
 						SocketId:  j["socket_id"].(string),
 						Room:      room,
 						Timestamp: n.Timestamp,
@@ -89,6 +90,7 @@ func welcomeToRoom(message string) {
 						UserType:  n.UserType,
 						Nickname:  n.Nickname,
 						Type:      n.Type,
+						IsHistory: true,
 					}
 					msg1.Send(Conn)
 				}
