@@ -22,6 +22,7 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/mailgun/mailgun-go/v4 v4.10.0
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.711
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.711

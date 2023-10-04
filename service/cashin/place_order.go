@@ -12,15 +12,20 @@ import (
 	"blgit.rfdev.tech/taya/payment-service/finpay"
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 )
 
 type TopUpOrderService struct {
-	Amount   int64 `form:"amount" json:"amount"`
-	MethodID int64 `form:"method_id" json:"method_id"`
+	Amount   string `form:"amount" json:"amount"`
+	MethodID int64  `form:"method_id" json:"method_id"`
 }
 
 func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, err error) {
-	amount := s.Amount * 100
+	amountDecimal, err := decimal.NewFromString(s.Amount)
+	if err != nil {
+		return
+	}
+	amount := amountDecimal.Mul(decimal.NewFromInt(100)).IntPart()
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
