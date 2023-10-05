@@ -2,7 +2,6 @@ package service
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"time"
 	"web-api/model"
@@ -29,13 +28,11 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	if service.Start != "" {
 		if v, e := time.ParseInLocation(time.DateOnly, service.Start, loc); e == nil {
 			start = v.UTC()
-			fmt.Println(start)
 		}
 	}
 	if service.End != "" {
 		if v, e := time.ParseInLocation(time.DateOnly, service.End, loc); e == nil {
 			end = v.UTC().Add(24*time.Hour - 1*time.Second)
-			fmt.Println(end)
 		}
 	}
 	err = model.DB.Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, service.IsParlay, service.IsSettled, start, end)).Find(&list).Error
