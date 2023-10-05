@@ -133,7 +133,11 @@ func MarshalService(service any) string {
 func GetLoggerEntry(c context.Context) *logrus.Entry {
 	logger := c.Value(consts.LogKey)
 	if logger == nil {
-		logrus.SetLevel(logrus.DebugLevel)
+		logLevel := logrus.DebugLevel
+		if l, e := logrus.ParseLevel(os.Getenv("LOG_LEVEL")); e == nil {
+			logLevel = l
+		}
+		logrus.SetLevel(logLevel)
 		return logrus.WithField(consts.CorrelationKey, c.Value(consts.CorrelationKey))
 	}
 	return logger.(*logrus.Entry)
