@@ -60,7 +60,7 @@ func welcomeToRoom(message string) {
 						Nickname:  consts.ChatSystem["names"][0],
 						Type:      consts.WebSocketMessageType["text"],
 					}
-					msg.Send(Conn)
+					msg.Send(&Conn)
 				}
 
 				coll := model.MongoDB.Collection("room_message")
@@ -92,7 +92,7 @@ func welcomeToRoom(message string) {
 						Type:      n.Type,
 						IsHistory: true,
 					}
-					msg1.Send(Conn)
+					msg1.Send(&Conn)
 				}
 			}
 		}

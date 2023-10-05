@@ -19,7 +19,7 @@ type RoomMessage struct {
 	IsHistory bool   `json:"is_history"`
 }
 
-func (a RoomMessage) Send(conn Connection) (err error) {
+func (a RoomMessage) Send(conn *Connection) (err error) {
 	event := "room"
 	if a.SocketId != "" {
 		event = "room_socket"
