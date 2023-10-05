@@ -471,3 +471,7 @@ err_insufficient_withdrawable: "Insufficient withdrawable amount"
 
 notification_welcome: "Welcome to Taya!"
 notification_password_reset: "Your password has been reset successfully."
+
+negative_amount: "Amount cannot be negative"
+first_topup_amount: "First top up should be at least %d pesos"
+topup_amount: "Top up should be at least %d pesos"
