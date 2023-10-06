@@ -4,9 +4,11 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"blgit.rfdev.tech/zhibo/utilities"
 	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"math/rand"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 	"web-api/cache"
@@ -14,6 +16,10 @@ import (
 	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
+)
+
+var (
+	errIgnoreCountry = errors.New("ignore country")
 )
 
 type SmsOtpService struct {
@@ -26,6 +32,18 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 
 	if service.Mobile[:1] == "0" {
 		service.Mobile = service.Mobile[1:]
+	}
+
+	err := service.verifyMobileNumber()
+	if err != nil && errors.Is(err, errIgnoreCountry) {
+		return serializer.Response{
+			Data: serializer.User{
+				CountryCode: service.CountryCode,
+				Mobile:      service.Mobile,
+			},
+		}
+	} else if err != nil {
+		return serializer.ParamErr(c, service, i18n.T("invalid_mobile_number_format"), nil)
 	}
 
 	otpSent := cache.RedisSessionClient.Get(context.TODO(), "otp:"+service.CountryCode+service.Mobile)
@@ -59,38 +77,47 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
-	var provider int
-	if os.Getenv("USE_AWS_SNS") == "true" {
-		provider = utilities.SMS_PROVIDER_AWSSNS
-	} else if os.Getenv("USE_BULKSMS") == "true" {
-		provider = utilities.SMS_PROVIDER_BULKSMS
-	} else if os.Getenv("USE_TENCENT_SMS") == "true" {
-		provider = utilities.SMS_PROVIDER_TENCENT
+	smsManager := utilities.SmsManager{
+		HuanXunTemplate: `您的验证码是 %s，5分钟有效，请尽快验证`,
+		BulkSmsTemplate: i18n.T("Your_request_otp"),
+		AwsSnsTemplate:  i18n.T("Your_request_otp"),
+		M360Template:    i18n.T("m360_otp_content"),
+	}
+	res, err := smsManager.Send(service.CountryCode, service.Mobile, otp)
+	if err != nil {
+		util.Log().Error("send sms err", err)
+	}
+	if !res.HasSucceeded {
+		return err
 	}
 
-	if provider != 0 {
-		smsProvider := utilities.SmsProvider{
-			Provider:        provider,
-			HuanXunTemplate: `您的验证码是 %s，5分钟有效，请尽快验证`,
-			BulkSmsTemplate: i18n.T("Your_request_otp"),
-			AwsSnsTemplate:  i18n.T("Your_request_otp"),
-		}
-		if err := smsProvider.Send(service.CountryCode, service.Mobile, otp); err != nil {
-			return err
-		}
+	event := model.OtpEvent{
+		OtpEventC: models.OtpEventC{
+			CountryCode: service.CountryCode,
+			Mobile:      service.Mobile,
+			Otp:         otp,
+			Provider:    utilities.SmsProviderName[res.Provider],
+			DateTime:    time.Now().Format(time.DateTime),
+		},
+	}
+	if err := model.LogOtpEvent(event); err != nil {
+		// Just log error
+		util.Log().Error("log otp event err", err)
+	}
 
-		event := model.OtpEvent{
-			OtpEventC: models.OtpEventC{
-				CountryCode: service.CountryCode,
-				Mobile:      service.Mobile,
-				Otp:         otp,
-				Provider:    utilities.SmsProviderName[provider],
-				DateTime:    time.Now().Format(time.DateTime),
-			},
-		}
-		if err := model.LogOtpEvent(event); err != nil {
-			// Just log error
-			util.Log().Error("log otp event err", err)
+	return nil
+}
+
+func (service *SmsOtpService) verifyMobileNumber() error {
+	if service.CountryCode != "+63" && service.CountryCode != "+65" {
+		return errIgnoreCountry
+	}
+
+	if service.CountryCode == "+63" {
+		phMobilepattern := `^(9\d{9})$`
+		phMobileRegex := regexp.MustCompile(phMobilepattern)
+		if !phMobileRegex.MatchString(service.Mobile) {
+			return errors.New("invalid mobile number format")
 		}
 	}
 

@@ -6,7 +6,7 @@ require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20231003065155-9c3c76cfcc8b
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20231004061927-4d495c794630
 	blgit.rfdev.tech/taya/ploutos-object v0.0.10-0.20231003043537-0dd7398cd4f9
-	blgit.rfdev.tech/zhibo/utilities v0.0.0-20230907042417-f364543fe609
+	blgit.rfdev.tech/zhibo/utilities v0.0.0-20231006040648-60a9f0c202a6
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/chenyahui/gin-cache v1.7.1
 	github.com/gin-contrib/cors v1.3.1

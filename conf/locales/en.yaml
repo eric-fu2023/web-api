@@ -112,6 +112,7 @@ Both_cannot_be_empty: "Both mobile and username cannot be empty."
 Error_token_generation: "An error occurred in token generation."
 Error_token_refreshing: "An error occurred in token refreshing."
 Your_request_otp: "Your requested OTP is %s."
+m360_otp_content: "%s - OTP for BOLA. Valid for 2 mins. Do not share it with anyone. RefCode: #{REFCODE}#{PIN}"
 Otp_email_subject: "Your requested OTP"
 Otp_html_email: "<html><body><p>Hello!</p><p>You're getting this email because you have requested for a One Time Passcode (OTP). Your OTP is:</p><p><h2>%s</h2></p></body></html>"
 
