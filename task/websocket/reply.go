@@ -67,7 +67,7 @@ func welcomeToRoom(message string) {
 				filter := bson.M{"room": room}
 				opts := options.Find()
 				opts.SetLimit(20)
-				opts.SetSort(bson.D{{"timestamp", 1}, {"_id", -1}})
+				opts.SetSort(bson.D{{"timestamp", -1}, {"_id", -1}})
 				ctx := context.TODO()
 				cursor, err := coll.Find(ctx, filter, opts)
 				if err != nil {
@@ -79,17 +79,17 @@ func welcomeToRoom(message string) {
 					cursor.Decode(&pm)
 					ms = append(ms, pm)
 				}
-				for _, n := range ms {
+				for i := len(ms) - 1; i >= 0; i-- {
 					msg1 := websocket.RoomMessage{
-						Id:        n.Id,
+						Id:        ms[i].Id,
 						SocketId:  j["socket_id"].(string),
 						Room:      room,
-						Timestamp: n.Timestamp,
-						Message:   n.Message,
-						UserId:    n.UserId,
-						UserType:  n.UserType,
-						Nickname:  n.Nickname,
-						Type:      n.Type,
+						Timestamp: ms[i].Timestamp,
+						Message:   ms[i].Message,
+						UserId:    ms[i].UserId,
+						UserType:  ms[i].UserType,
+						Nickname:  ms[i].Nickname,
+						Type:      ms[i].Type,
 						IsHistory: true,
 					}
 					msg1.Send(&Conn)
