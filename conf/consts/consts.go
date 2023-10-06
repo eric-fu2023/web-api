@@ -38,6 +38,11 @@ var (
 		"typing":     100,
 		"empty":      101,
 	}
+	UserRole = map[string]int64{
+		"user":      1,
+		"test_user": 2,
+		"streamer":  3,
+	}
 	ChatUserType = map[string]int64{
 		"system":    1,
 		"bot":       2,

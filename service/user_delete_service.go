@@ -27,7 +27,7 @@ func (service *UserDeleteService) Delete(c *gin.Context) serializer.Response {
 		return serializer.ParamErr(c, service, i18n.T("验证码错误"), nil)
 	}
 
-	if rows := model.DB.Delete(&user).RowsAffected; rows < 1 {
+	if rows := model.DB.Model(model.User{}).Where(`id`, user.ID).Update(`status`, 2).RowsAffected; rows < 1 {
 		return serializer.DBErr(c, service, i18n.T("失败"), nil)
 	}
 	return serializer.Response{

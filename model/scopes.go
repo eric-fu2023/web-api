@@ -64,6 +64,16 @@ func ByUserId(userId int64) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
+func ByUserStatusAndRole(status []int64, role []int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(`status`, status).Where(`role`, role)
+	}
+}
+
+func ByActiveNonStreamerUser(db *gorm.DB) *gorm.DB {
+	return ByUserStatusAndRole([]int64{1}, []int64{consts.UserRole["user"], consts.UserRole["test_user"]})(db)
+}
+
 func ByIds(ids []int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Where(`id`, ids)

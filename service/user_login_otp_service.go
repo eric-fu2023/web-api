@@ -51,7 +51,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		q = q.Where(`email`, service.Email)
 	}
 	setupRequired := false
-	if rows := q.Find(&user).RowsAffected; rows == 0 { // new user
+	if rows := q.Scopes(model.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 { // new user
 		user = model.User{
 			UserC: models.UserC{
 				Email:       service.Email,

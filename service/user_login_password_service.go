@@ -48,7 +48,7 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 	} else {
 		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
 	}
-	if err := q.First(&user).Error; err != nil {
+	if err := q.Scopes(model.ByActiveNonStreamerUser).First(&user).Error; err != nil {
 		return serializer.DBErr(c, service, errStr, nil)
 	}
 
