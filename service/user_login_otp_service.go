@@ -34,6 +34,9 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		key += service.Email
 		errStr = i18n.T("Email_invalid")
 	} else if service.CountryCode != "" && service.Mobile != "" {
+		if service.Mobile[:1] == "0" {
+			service.Mobile = service.Mobile[1:]
+		}
 		key += service.CountryCode + service.Mobile
 		errStr = i18n.T("Mobile_invalid")
 	} else {
