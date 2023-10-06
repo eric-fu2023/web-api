@@ -37,10 +37,7 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 	err := service.verifyMobileNumber()
 	if err != nil && errors.Is(err, errIgnoreCountry) {
 		return serializer.Response{
-			Data: serializer.User{
-				CountryCode: service.CountryCode,
-				Mobile:      service.Mobile,
-			},
+			Msg: i18n.T("success"),
 		}
 	} else if err != nil {
 		return serializer.ParamErr(c, service, i18n.T("invalid_mobile_number_format"), nil)
