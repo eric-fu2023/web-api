@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -86,4 +87,16 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 	}
 
 	return u
+}
+
+type UserAvatar struct {
+	ID     int64  `json:"id"`
+	Avatar string `json:"avatar"`
+}
+
+func BuildUserAvatar(c *gin.Context, user ploutos.User) UserAvatar {
+	return UserAvatar{
+		ID:     user.ID,
+		Avatar: Url(user.Avatar),
+	}
 }

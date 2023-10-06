@@ -93,6 +93,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/streamer", middleware.Cache(1*time.Minute), api.Streamer)
 		v1.GET("/topup-methods", middleware.Cache(1*time.Minute), api.TopupMethodList)
 		v1.GET("/withdraw-methods", middleware.Cache(1*time.Minute), api.WithdrawMethodList)
+		v1.GET("/avatars", middleware.Cache(1*time.Minute), api.AvatarList)
 
 		saba := v1.Group("/saba")
 		{

@@ -54,6 +54,10 @@ func SortByCreated(db *gorm.DB) *gorm.DB {
 	return db.Order(`created_at DESC`)
 }
 
+func SortById(db *gorm.DB) *gorm.DB {
+	return db.Order(`id`)
+}
+
 func ByStatus(db *gorm.DB) *gorm.DB {
 	return db.Where(`status`, 1)
 }
