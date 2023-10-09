@@ -77,6 +77,34 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 	}
 }
 
+func (service *SmsOtpService) GetUsernameSMS(c *gin.Context, username string) serializer.Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+
+	otpSent := cache.RedisSessionClient.Get(context.TODO(), "otp:"+username)
+	if otpSent.Val() != "" {
+		return serializer.ParamErr(c, service, i18n.T("Sms_wait"), nil)
+	}
+
+	var otp string
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < 6; i++ {
+		otp += strconv.Itoa(rand.Intn(9))
+	}
+
+	if os.Getenv("ENV") == "production" || os.Getenv("SEND_SMS_IN_TEST") == "true" {
+		err := service.sendSMS(c, otp)
+		if errors.Is(err, errReachedOtpLimit) {
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("otp_limit_reached"), err)
+		}
+		if err != nil {
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Sms_fail"), err)
+		}
+	}
+	cache.RedisSessionClient.Set(context.TODO(), "otp:"+username, otp, 2*time.Minute)
+
+	return serializer.Response{}
+}
+
 func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 

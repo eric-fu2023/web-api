@@ -180,9 +180,9 @@ func (service *UserLoginPasswordService) sendOtp(c *gin.Context, user model.User
 	} else if service.CountryCode != "" && service.Mobile != "" {
 		resp = smsOtpService.GetSMS(c)
 	} else if user.Email != "" {
-		resp = emailOtpService.GetEmail(c)
+		resp = emailOtpService.GetUsernameEmail(c, user.Username)
 	} else if user.CountryCode != "" && user.Mobile != "" {
-		resp = smsOtpService.GetSMS(c)
+		resp = smsOtpService.GetUsernameSMS(c, user.Username)
 	} else {
 		return serializer.Response{}, errNoEmailOrMobile
 	}
