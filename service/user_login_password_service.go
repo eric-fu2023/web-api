@@ -83,11 +83,11 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 		util.Log().Error("log successful login err", err)
 	}
 
-	// Return masked email and mobile if user logs in with username
+	// Return masked email and mobile
 	respData := map[string]interface{}{}
-	if service.Username != "" && user.Email != "" {
+	if service.Email != "" || user.Email != "" {
 		respData["email"] = util.MaskEmail(user.Email)
-	} else if service.Username != "" && user.CountryCode != "" && user.Mobile != "" {
+	} else if (service.CountryCode != "" && service.Mobile != "") || (user.CountryCode != "" && user.Mobile != "") {
 		respData["country_code"] = user.CountryCode
 		respData["mobile"] = util.MaskMobile(user.Mobile)
 	}
