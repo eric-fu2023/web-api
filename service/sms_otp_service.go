@@ -5,6 +5,7 @@ import (
 	"blgit.rfdev.tech/zhibo/utilities"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"
 	"os"
@@ -19,7 +20,8 @@ import (
 )
 
 var (
-	errIgnoreCountry = errors.New("ignore country")
+	errIgnoreCountry   = errors.New("ignore country")
+	errReachedOtpLimit = errors.New("reached otp limit")
 )
 
 type SmsOtpService struct {
@@ -55,7 +57,11 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 	}
 
 	if os.Getenv("ENV") == "production" || os.Getenv("SEND_SMS_IN_TEST") == "true" {
-		if err := service.sendSMS(c, otp); err != nil {
+		err := service.sendSMS(c, otp)
+		if errors.Is(err, errReachedOtpLimit) {
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("otp_limit_reached"), err)
+		}
+		if err != nil {
 			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Sms_fail"), err)
 		}
 	}
@@ -73,6 +79,18 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 
 func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	i18n := c.MustGet("i18n").(i18n.I18n)
+
+	// Check and increase OTP limit
+	deviceInfo, _ := util.GetDeviceInfo(c)
+	ip := c.ClientIP()
+	isWithinLimit, err := cache.IncreaseSendOtpLimit(service.Mobile, ip, deviceInfo.Uuid, time.Now())
+	if err != nil {
+		fmt.Println("Increase OTP limit error:", err.Error())
+		return err
+	}
+	if !isWithinLimit {
+		return errReachedOtpLimit
+	}
 
 	smsManager := utilities.SmsManager{
 		HuanXunTemplate: `您的验证码是 %s，5分钟有效，请尽快验证`,
