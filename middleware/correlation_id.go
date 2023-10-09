@@ -16,15 +16,16 @@ import (
 // correlation ID into the net.Context. If no header is found, a new UUID will
 // be generated.
 func CorrelationID() gin.HandlerFunc {
-	logrus.SetOutput(os.Stdout)
-
 	return func(c *gin.Context) {
 		u := c.Request.Header.Get(consts.CorrelationHeader)
 		if u == "" {
 			u = uuid.NewString()
 		}
-		logrus.SetLevel(logrus.DebugLevel)
-		contextLogger := logrus.WithField("correlation_id", u)
+		logger := logrus.New()
+		logger.SetOutput(os.Stdout)
+		logger.SetLevel(logrus.DebugLevel)
+		contextLogger := logger.WithField("correlation_id", u)
+		// contextLogger.Logger.SetLevel(logrus.DebugLevel)
 		c.Set(consts.LogKey, contextLogger)
 		c.Set(consts.CorrelationKey, u)
 		c.Header(consts.CorrelationHeader, u)
