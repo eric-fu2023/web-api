@@ -18,7 +18,7 @@ func StreamsOnlineSorted(categoryOrder string, categoryTypeOrder string) func(db
 		if len(categoryOrder) > 0 {
 			order = `(stream_category_id in ` + categoryOrder + `) DESC, (stream_category_type_id in ` + categoryTypeOrder + `) DESC, ` + order
 		}
-		return db.Scopes(StreamsOnline).Preload(`Match`).Joins(`INNER JOIN streamers ON streamers.id = live_streams.streamer_id AND streamers.enable = 1`).Order(order)
+		return db.Scopes(StreamsOnline).Preload(`Match`).Joins(`INNER JOIN users ON users.id = live_streams.streamer_id AND users.enable = 1`).Order(order)
 	}
 }
 

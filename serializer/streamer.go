@@ -20,17 +20,13 @@ type Streamer struct {
 
 func BuildStreamer(c *gin.Context, a model.Streamer) (b Streamer) {
 	b = Streamer{
-		ID:        a.ID,
-		Nickname:  a.Nickname,
-		Followers: a.Followers,
-		Streams:   a.Streams,
-		IsLive:    a.IsLive,
-	}
-	if a.Avatar != "" {
-		b.Avatar = Url(a.Avatar)
-	}
-	if a.CoverImage != "" {
-		b.CoverImage = Url(a.CoverImage)
+		ID:         a.ID,
+		Nickname:   a.Nickname,
+		Followers:  a.Followers,
+		Streams:    a.Streams,
+		IsLive:     a.IsLive,
+		Avatar:     Url(a.Avatar),
+		CoverImage: Url(a.CoverImage),
 	}
 	if !a.LastLiveAt.IsZero() {
 		b.LastLiveAtTs = a.LastLiveAt.Unix()

@@ -50,7 +50,7 @@ func (service *UserFollowingListService) List(c *gin.Context) (r serializer.Resp
 	var list []serializer.Streamer
 	for _, following := range followings {
 		streamer := model.Streamer{
-			Streamer: *following.Streamer,
+			User: *following.Streamer,
 		}
 		if len(following.Streamer.LiveStreams) > 0 {
 			streamer.IsLive = true

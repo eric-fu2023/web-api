@@ -5,7 +5,7 @@ go 1.20
 require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20231003065155-9c3c76cfcc8b
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20231004061927-4d495c794630
-	blgit.rfdev.tech/taya/ploutos-object v0.0.10-0.20231003043537-0dd7398cd4f9
+	blgit.rfdev.tech/taya/ploutos-object v0.0.10-0.20231010040516-1940d01b1680
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20231006040648-60a9f0c202a6
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/chenyahui/gin-cache v1.7.1
@@ -27,9 +27,9 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.711
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.711
 	go.mongodb.org/mongo-driver v1.11.2
-	golang.org/x/crypto v0.13.0
+	golang.org/x/crypto v0.14.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
-	golang.org/x/sys v0.12.0
+	golang.org/x/sys v0.13.0
 	golang.org/x/text v0.13.0
 	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/yaml.v2 v2.4.0
