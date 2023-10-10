@@ -4,6 +4,7 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-redis/redis/v8"
 	"time"
 	"web-api/cache"
@@ -71,7 +72,7 @@ func UserLogout(c *gin.Context) {
 
 func SmsOtp(c *gin.Context) {
 	var service service.SmsOtpService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
 		res := service.GetSMS(c)
 		c.JSON(200, res)
 	} else {
@@ -81,7 +82,7 @@ func SmsOtp(c *gin.Context) {
 
 func EmailOtp(c *gin.Context) {
 	var service service.EmailOtpService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
 		res := service.GetEmail(c)
 		c.JSON(200, res)
 	} else {
@@ -91,7 +92,7 @@ func EmailOtp(c *gin.Context) {
 
 func UserLoginOtp(c *gin.Context) {
 	var service service.UserLoginOtpService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
 		res := service.Login(c)
 		c.JSON(200, res)
 	} else {
@@ -101,7 +102,7 @@ func UserLoginOtp(c *gin.Context) {
 
 func UserLoginPassword(c *gin.Context) {
 	var service service.UserLoginPasswordService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
 		res := service.Login(c)
 		c.JSON(200, res)
 	} else {
@@ -111,7 +112,7 @@ func UserLoginPassword(c *gin.Context) {
 
 func UserFinishSetup(c *gin.Context) {
 	var service service.UserFinishSetupService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
 		res := service.Set(c)
 		c.JSON(200, res)
 	} else {
@@ -131,7 +132,7 @@ func UserCheckUsername(c *gin.Context) {
 
 func UserCheckPassword(c *gin.Context) {
 	var service service.UserCheckPasswordService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
 		res := service.Check(c)
 		c.JSON(200, res)
 	} else {
@@ -141,7 +142,7 @@ func UserCheckPassword(c *gin.Context) {
 
 func UserSetPassword(c *gin.Context) {
 	var service service.UserSetPasswordService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
 		res := service.SetPassword(c)
 		c.JSON(200, res)
 	} else {
@@ -151,7 +152,7 @@ func UserSetPassword(c *gin.Context) {
 
 func UserDelete(c *gin.Context) {
 	var service service.UserDeleteService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
 		res := service.Delete(c)
 		c.JSON(200, res)
 	} else {
@@ -161,7 +162,7 @@ func UserDelete(c *gin.Context) {
 
 func NicknameUpdate(c *gin.Context) {
 	var service service.NicknameUpdateService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
 		res := service.Update(c)
 		c.JSON(200, res)
 	} else {
@@ -171,7 +172,7 @@ func NicknameUpdate(c *gin.Context) {
 
 func ProfilePicUpload(c *gin.Context) {
 	var service service.ProfilePicService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
 		res := service.Upload(c)
 		c.JSON(200, res)
 	} else {

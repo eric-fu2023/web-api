@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"web-api/service"
 )
 
@@ -27,7 +28,7 @@ func UserFollowingList(c *gin.Context) {
 
 func UserFollowingAdd(c *gin.Context) {
 	var service service.UserFollowingService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
 		res, _ := service.Add(c)
 		c.JSON(200, res)
 	} else {
@@ -37,7 +38,7 @@ func UserFollowingAdd(c *gin.Context) {
 
 func UserFollowingRemove(c *gin.Context) {
 	var service service.UserFollowingService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
 		res, _ := service.Remove(c)
 		c.JSON(200, res)
 	} else {
