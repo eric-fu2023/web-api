@@ -11,6 +11,7 @@ type RoomMessage struct {
 	Room      string
 	Message   string
 	Nickname  string
+	Avatar    string
 	UserType  int64 `bson:"user_type"`
 	Type      int64
 	UserId    int64 `bson:"user_id"`

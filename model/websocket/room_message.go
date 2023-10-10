@@ -15,6 +15,7 @@ type RoomMessage struct {
 	UserId    int64  `json:"user_id"`
 	UserType  int64  `json:"user_type"`
 	Nickname  string `json:"nickname"`
+	Avatar    string `json:"avatar"`
 	Type      int64  `json:"type"`
 	IsHistory bool   `json:"is_history"`
 }

@@ -89,6 +89,7 @@ func welcomeToRoom(message string) {
 						UserId:    ms[i].UserId,
 						UserType:  ms[i].UserType,
 						Nickname:  ms[i].Nickname,
+						Avatar:    ms[i].Avatar,
 						Type:      ms[i].Type,
 						IsHistory: true,
 					}
