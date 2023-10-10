@@ -3,6 +3,7 @@ package service
 import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -18,6 +19,10 @@ import (
 
 const (
 	passwordLockEndTimeKey = "password_lock_end_time:%d" // password_lock_end_time:<userId>
+)
+
+var (
+	errNoEmailOrMobile = errors.New("user has no email or mobile")
 )
 
 type UserLoginPasswordService struct {
@@ -64,33 +69,32 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 		return service.handlePasswordMismatch(c, user)
 	}
 
-	tokenString, err := user.GenToken()
-	if err != nil {
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
+	otpResp, err := service.sendOtp(c, user)
+	if errors.Is(err, errNoEmailOrMobile) {
+		return serializer.ParamErr(c, service, i18n.T("User_needs_email_or_mobile"), nil)
+	} else if err != nil {
+		return serializer.GeneralErr(c, err)
+	} else if otpResp.Code != 0 {
+		return otpResp
 	}
-	cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, 20*time.Minute)
 
 	loginTime := time.Now()
-	update := model.User{
-		UserC: models.UserC{
-			LastLoginIp:   c.ClientIP(),
-			LastLoginTime: loginTime,
-		},
-	}
-	if err = model.DB.Model(&user).
-		Select("last_login_ip", "last_login_time").
-		Updates(update).Error; err != nil {
-		util.Log().Error("update last login ip and time err", err)
-	}
-
 	if err = service.logSuccessfulLogin(c, user, loginTime); err != nil {
 		util.Log().Error("log successful login err", err)
 	}
 
+	// Return masked email and mobile
+	respData := map[string]interface{}{}
+	if service.Email != "" || user.Email != "" {
+		respData["email"] = util.MaskEmail(user.Email)
+	} else if (service.CountryCode != "" && service.Mobile != "") || (user.CountryCode != "" && user.Mobile != "") {
+		respData["country_code"] = user.CountryCode
+		respData["mobile"] = util.MaskMobile(user.Mobile)
+	}
+
 	return serializer.Response{
-		Data: map[string]interface{}{
-			"token": tokenString,
-		},
+		Msg:  i18n.T("success"),
+		Data: respData,
 	}
 }
 
@@ -166,6 +170,25 @@ func (service *UserLoginPasswordService) handlePasswordMismatch(c *gin.Context, 
 	return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Password_lock_wait"), nil)
 }
 
+func (service *UserLoginPasswordService) sendOtp(c *gin.Context, user model.User) (serializer.Response, error) {
+	var resp serializer.Response
+	emailOtpService := EmailOtpService{Email: user.Email}
+	smsOtpService := SmsOtpService{CountryCode: user.CountryCode, Mobile: user.Mobile}
+
+	if service.Email != "" {
+		resp = emailOtpService.GetEmail(c)
+	} else if service.CountryCode != "" && service.Mobile != "" {
+		resp = smsOtpService.GetSMS(c)
+	} else if user.Email != "" {
+		resp = emailOtpService.GetUsernameEmail(c, user.Username)
+	} else if user.CountryCode != "" && user.Mobile != "" {
+		resp = smsOtpService.GetUsernameSMS(c, user.Username)
+	} else {
+		return serializer.Response{}, errNoEmailOrMobile
+	}
+
+	return resp, nil
+}
 func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time) error {
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {

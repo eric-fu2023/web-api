@@ -49,6 +49,33 @@ func (service *EmailOtpService) GetEmail(c *gin.Context) serializer.Response {
 	}
 }
 
+func (service *EmailOtpService) GetUsernameEmail(c *gin.Context, username string) serializer.Response {
+	service.Email = strings.ToLower(service.Email)
+
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	otpSent := cache.RedisSessionClient.Get(context.TODO(), "otp:"+username)
+	if otpSent.Val() != "" {
+		return serializer.ParamErr(c, service, i18n.T("Email_wait"), nil)
+	}
+
+	var otp string
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < 6; i++ {
+		otp += strconv.Itoa(rand.Intn(9))
+	}
+
+	if os.Getenv("ENV") == "production" || os.Getenv("SEND_EMAIL_IN_TEST") == "true" {
+		if err := service.sendEmail(c, otp); err != nil {
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Email_fail"), err)
+		}
+	}
+	cache.RedisSessionClient.Set(context.TODO(), "otp:"+username, otp, 2*time.Minute)
+
+	return serializer.Response{
+		Msg: i18n.T("success"),
+	}
+}
+
 func (service *EmailOtpService) sendEmail(c *gin.Context, otp string) error {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 

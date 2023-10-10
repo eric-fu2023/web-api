@@ -2,6 +2,7 @@ package cashin
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -128,7 +129,7 @@ func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64) (r s
 	}
 
 	var firstTime bool = false
-	err = model.DB.Where("user_id", user.ID).Where("order_type > 0").Where("status", models.CashOrderStatusSuccess).First(&model.CashOrder{}).Error
+	err = model.DB.WithContext(c).Where("user_id", user.ID).Where("order_type > 0").Where("status", models.CashOrderStatusSuccess).First(&model.CashOrder{}).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			firstTime = true
@@ -145,11 +146,11 @@ func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64) (r s
 	if amount < minAmount {
 		if firstTime {
 			err = errors.New("illegal amount")
-			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("first_topup_amount"), err)
+			r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("first_topup_amount"), consts.FirstTopupMinimum/100), err)
 			return
 		} else {
 			err = errors.New("illegal amount")
-			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("topup_amount"), err)
+			r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("topup_amount"), consts.TopupMinimum/100), err)
 			return
 		}
 	}

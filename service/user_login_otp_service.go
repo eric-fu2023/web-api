@@ -19,6 +19,7 @@ type UserLoginOtpService struct {
 	CountryCode string `form:"country_code" json:"country_code"`
 	Mobile      string `form:"mobile" json:"mobile"`
 	Email       string `form:"email" json:"email"`
+	Username    string `form:"username" json:"username"`
 	Otp         string `form:"otp" json:"otp" binding:"required"`
 }
 
@@ -34,11 +35,11 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		key += service.Email
 		errStr = i18n.T("Email_invalid")
 	} else if service.CountryCode != "" && service.Mobile != "" {
-		if service.Mobile[:1] == "0" {
-			service.Mobile = service.Mobile[1:]
-		}
 		key += service.CountryCode + service.Mobile
 		errStr = i18n.T("Mobile_invalid")
+	} else if service.Username != "" {
+		key += service.Username
+		errStr = i18n.T("Username_invalid")
 	} else {
 		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
 	}
@@ -48,12 +49,13 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	}
 
 	q := model.DB
-	if service.CountryCode != "" && service.Mobile != "" {
-		q = q.Where(`country_code = ? AND mobile = ?`, service.CountryCode, service.Mobile)
-	} else {
+	if service.Email != "" {
 		q = q.Where(`email`, service.Email)
+	} else if service.CountryCode != "" && service.Mobile != "" {
+		q = q.Where(`country_code = ? AND mobile = ?`, service.CountryCode, service.Mobile)
+	} else if service.Username != "" {
+		q = q.Where(`username = ?`, service.Username)
 	}
-	setupRequired := false
 	if rows := q.Scopes(model.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 { // new user
 		user = model.User{
 			UserC: models.UserC{
@@ -73,6 +75,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		}
 	}
 
+	setupRequired := false
 	if user.Username == "" {
 		setupRequired = true
 	}
