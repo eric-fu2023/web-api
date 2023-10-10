@@ -49,6 +49,9 @@ func (service *UserFollowingListService) List(c *gin.Context) (r serializer.Resp
 	}
 	var list []serializer.Streamer
 	for _, following := range followings {
+		if following.Streamer == nil {
+			continue
+		}
 		streamer := model.Streamer{
 			User: *following.Streamer,
 		}
