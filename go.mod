@@ -5,7 +5,7 @@ go 1.20
 require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20231003065155-9c3c76cfcc8b
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20231004061927-4d495c794630
-	blgit.rfdev.tech/taya/ploutos-object v0.0.10-0.20231010040516-1940d01b1680
+	blgit.rfdev.tech/taya/ploutos-object v0.0.11-0.20231011032846-d2f987fd9483
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20231006040648-60a9f0c202a6
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/chenyahui/gin-cache v1.7.1
@@ -34,7 +34,7 @@ require (
 	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.2
-	gorm.io/gorm v1.25.4
+	gorm.io/gorm v1.25.5
 	gorm.io/plugin/dbresolver v1.4.1
 )
 
