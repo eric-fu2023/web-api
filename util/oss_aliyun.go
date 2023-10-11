@@ -90,6 +90,8 @@ func (a *AliyunOssStruct) UploadFile(aliyunOssFolder string, userId int64, file 
 		return
 	}
 
+	path = "/" + path
+
 	return
 }
 
