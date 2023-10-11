@@ -66,7 +66,7 @@ func NewRouter() *gin.Engine {
 	r.Use(middleware.Cors())
 	r.GET("/ts", api.Ts)
 
-	//r.Use(middleware.EncryptPayload())
+	r.Use(middleware.EncryptPayload())
 	r.Use(middleware.CheckSignature())
 	r.Use(middleware.Ip())
 	r.Use(middleware.BrandAgent())
