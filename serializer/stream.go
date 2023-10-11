@@ -17,6 +17,7 @@ type Stream struct {
 	PullUrl              map[string]string `json:"src"`
 	ImgUrl               string            `json:"img_url"`
 	ScheduleTimeTS       int64             `json:"schedule_time_ts"`
+	OnlineAtTs           int64             `json:"online_at_ts"`
 	CurrentView          int64             `json:"current_view"`
 	TotalView            int64             `json:"total_view"`
 	StreamCategoryId     int64             `json:"category_id,omitempty"`
@@ -36,6 +37,7 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 		CurrentView:          a.CurrentView * 9,
 		Title:                a.Title,
 		ScheduleTimeTS:       a.ScheduleTime.Unix(),
+		OnlineAtTs:           a.OnlineAt.Unix(),
 		StreamCategoryId:     a.StreamCategoryId,
 		StreamCategoryTypeId: a.StreamCategoryTypeId,
 	}
