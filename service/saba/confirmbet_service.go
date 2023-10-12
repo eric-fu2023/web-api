@@ -9,7 +9,7 @@ import (
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
-	"web-api/service"
+	"web-api/service/common"
 )
 
 type ConfirmBet struct {
@@ -74,11 +74,11 @@ func ConfirmBetCallback(c *gin.Context, req callback.ConfirmBetRequest) (res any
 	j, _ := json.Marshal(req)
 	fmt.Println("confirmbet: ", string(j))
 	clb := ConfirmBet{Request: req}
-	err = service.ProcessTransaction(&clb)
+	err = common.ProcessTransaction(&clb)
 	if err != nil {
 		return
 	}
-	_, balance, _, _, err := service.GetUserAndSum(consts.GameVendor["saba"], req.Message.UserId)
+	_, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["saba"], req.Message.UserId)
 	if err != nil {
 		return
 	}

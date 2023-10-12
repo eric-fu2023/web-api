@@ -2,18 +2,17 @@ package fb
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
-	"web-api/service"
+	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
 )
 
 type TokenService struct {
-	service.Platform
+	common.Platform
 }
 
 func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err error) {
@@ -35,29 +34,15 @@ func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err e
 			res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("empty_currency_id"), err)
 			return
 		}
-		var extId int64
-		extId, err = client.CreateUser(user.Username, []string{}, 0)
-		if err != nil {
-			res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
-			return
-		}
-		fbGpu := ploutos.GameVendorUser{
-			ploutos.GameVendorUserC{
-				GameVendorId:     consts.GameVendor["fb"],
-				UserId:           user.ID,
-				ExternalUserId:   user.Username,
-				ExternalCurrency: currency.Value,
-				ExternalId:       fmt.Sprintf("%d", extId),
-			},
-		}
-		err = model.DB.Save(&fbGpu).Error
+		var game UserRegister
+		err = game.CreateUser(user, currency.Value)
 		if err != nil {
 			res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
 			return
 		}
 		r, err = client.GetToken(user.Username, consts.PlatformIdToFbPlatformId[service.Platform.Platform], "")
 		if err != nil {
-			res = serializer.Err(c, service, serializer.CodeGeneralError, "", err)
+			res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 			return
 		}
 	}

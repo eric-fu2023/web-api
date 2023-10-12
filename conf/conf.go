@@ -46,4 +46,5 @@ func Init() {
 
 	util.InitFbFactory()
 	util.InitSabaFactory()
+	util.InitDcFactory()
 }

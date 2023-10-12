@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 	"web-api/api"
+	dc_api "web-api/api/dc"
 	fb_api "web-api/api/fb"
 	api_finpay "web-api/api/finpay"
 	internal_api "web-api/api/internalapi"
@@ -45,6 +46,13 @@ func NewRouter() *gin.Engine {
 			sabaCallback.POST("/resettle", saba_api.CallbackResettle)
 			sabaCallback.POST("/placebetparlay", saba_api.CallbackPlaceBetParlay)
 			sabaCallback.POST("/confirmbetparlay", saba_api.CallbackConfirmBetParlay)
+		}
+	}
+
+	if os.Getenv("GAME_DC_EXPOSE_CALLBACKS") == "true" {
+		dcCallback := r.Group("/dcs")
+		{
+			dcCallback.POST("/login", dc_api.CallbackLogin)
 		}
 	}
 
@@ -126,6 +134,11 @@ func NewRouter() *gin.Engine {
 				fb := user.Group("/fb")
 				{
 					fb.GET("/token", fb_api.GetToken)
+				}
+
+				dc := user.Group("/dc")
+				{
+					dc.GET("/get_url", dc_api.GetUrl)
 				}
 
 				kyc := user.Group("/kyc")

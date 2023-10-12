@@ -3,17 +3,16 @@ package saba
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
-	"os"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
-	"web-api/service"
+	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
 )
 
 type GetUrlService struct {
-	service.Platform
+	common.Platform
 }
 
 func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err error) {
@@ -33,23 +32,10 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 				res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("empty_currency_id"), err)
 				return
 			}
-			if r, e := client.CreateMember(user.Username, currency.Value, os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
-				sabaGpu := ploutos.GameVendorUser{
-					ploutos.GameVendorUserC{
-						GameVendorId:     consts.GameVendor["saba"],
-						UserId:           user.ID,
-						ExternalUserId:   user.Username,
-						ExternalCurrency: currency.Value,
-						ExternalId:       r,
-					},
-				}
-				err = model.DB.Save(&sabaGpu).Error
-				if err != nil {
-					res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("saba_create_user_failed"), err)
-					return
-				}
-			} else {
-				res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("saba_create_user_failed"), e)
+			var game UserRegister
+			err = game.CreateUser(user, currency.Value)
+			if err != nil {
+				res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("saba_create_user_failed"), err)
 				return
 			}
 			url, err = client.GetSabaUrl(user.Username, consts.PlatformIdToSabaPlatformId[service.Platform.Platform])
@@ -58,7 +44,7 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 				return
 			}
 		} else {
-			res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("saba_user_error"), err)
+			res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 			return
 		}
 	}

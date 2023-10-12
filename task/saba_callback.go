@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 	"web-api/cache"
-	"web-api/service"
+	"web-api/service/common"
 	"web-api/service/saba"
 	"web-api/util"
 )
@@ -46,7 +46,7 @@ func ProcessSabaSettle() {
 						continue
 					}
 					clb := saba.Settle{Request: req.Txn, OperationId: req.OpId}
-					err = service.ProcessTransaction(&clb)
+					err = common.ProcessTransaction(&clb)
 					if err != nil {
 						util.Log().Error("Task:ProcessFbSyncTransaction error", err, req)
 						return

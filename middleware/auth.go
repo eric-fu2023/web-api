@@ -70,6 +70,7 @@ func doAuth(c *gin.Context, getUser bool) (err error) {
 		return
 	}
 	tokenString := strings.TrimSpace(authHeader[len(BEARER_SCHEMA):])
+	c.Set("_token_string", tokenString)
 	token, err := jwt.ParseWithClaims(tokenString, &AuthClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("SELF_JWT_HMAV_SECRET")), nil
 	})
@@ -77,9 +78,9 @@ func doAuth(c *gin.Context, getUser bool) (err error) {
 		return
 	}
 	a := token.Claims.(*AuthClaims)
-	otp := cache.RedisSessionClient.Get(context.TODO(), a.GetRedisSessionKey())
-	if otp.Val() != tokenString {
-		err = errors.New("invalid otp")
+	sess := cache.RedisSessionClient.Get(context.TODO(), a.GetRedisSessionKey())
+	if sess.Val() != tokenString {
+		err = errors.New("invalid token")
 		return
 	}
 	go func() {

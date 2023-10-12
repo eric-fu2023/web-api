@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 	"web-api/cache"
-	"web-api/service"
+	"web-api/service/common"
 	"web-api/service/fb"
 	"web-api/util"
 )
@@ -47,7 +47,7 @@ func ProcessFbSyncTransaction() {
 						continue
 					}
 
-					err = service.ProcessTransaction(&fb.Callback{Request: orderPayRequest})
+					err = common.ProcessTransaction(&fb.Callback{Request: orderPayRequest})
 					if err != nil {
 						util.Log().Error("Task:ProcessFbSyncTransaction error", err, orderPayRequest)
 						return

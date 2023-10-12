@@ -6,16 +6,23 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"os"
+	"strings"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
-	"web-api/util"
+	"web-api/service/common"
+	"web-api/service/dc"
+	"web-api/service/fb"
+	"web-api/service/saba"
 )
 
 var (
-	ErrEmptyCurrencyId      = errors.New("empty currency id")
-	ErrFbCreateUserFailed   = errors.New("fb create user failed")
-	ErrSabaCreateUserFailed = errors.New("saba create user failed")
+	ErrEmptyCurrencyId           = errors.New("empty currency id")
+	GameVendorUserRegisterStruct = map[string]common.UserRegisterInterface{
+		"fb":   &fb.UserRegister{},
+		"saba": &saba.UserRegister{},
+		"dc":   &dc.UserRegister{},
+	}
 )
 
 func CreateUser(user model.User) error {
@@ -48,45 +55,16 @@ func CreateUser(user model.User) error {
 		currMap[cur.GameVendorId] = cur.Value
 	}
 
-	fbCurrency, fbCurrExists := currMap[consts.GameVendor["fb"]]
-	if !fbCurrExists {
-		return ErrEmptyCurrencyId
-	}
-	fbClient := util.FBFactory.NewClient()
-	if res, e := fbClient.CreateUser(user.Username, []string{}, 0); e == nil {
-		fbGpu := ploutos.GameVendorUser{
-			ploutos.GameVendorUserC{
-				GameVendorId:     consts.GameVendor["fb"],
-				UserId:           user.ID,
-				ExternalUserId:   user.Username,
-				ExternalCurrency: fbCurrency,
-				ExternalId:       fmt.Sprintf("%d", res),
-			},
+	games := strings.Split(os.Getenv("GAMES_REGISTERED_FOR_NEW_USER"), ",")
+	for _, g := range games {
+		currency, exists := currMap[consts.GameVendor[g]]
+		if !exists {
+			return ErrEmptyCurrencyId
 		}
-		err = model.DB.Save(&fbGpu).Error
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrFbCreateUserFailed, err)
-		}
-	}
-
-	sabaCurrency, sabaCurrExists := currMap[consts.GameVendor["saba"]]
-	if !sabaCurrExists {
-		return ErrEmptyCurrencyId
-	}
-	sabaClient := util.SabaFactory.NewClient()
-	if res, e := sabaClient.CreateMember(user.Username, sabaCurrency, os.Getenv("GAME_SABA_ODDS_TYPE")); e == nil {
-		sabaGpu := ploutos.GameVendorUser{
-			ploutos.GameVendorUserC{
-				GameVendorId:     consts.GameVendor["saba"],
-				UserId:           user.ID,
-				ExternalUserId:   user.Username,
-				ExternalCurrency: sabaCurrency,
-				ExternalId:       res,
-			},
-		}
-		err = model.DB.Save(&sabaGpu).Error
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrSabaCreateUserFailed, err)
+		game := GameVendorUserRegisterStruct[g]
+		err = game.CreateUser(user, currency)
+		if err != nil && !errors.Is(err, game.VendorRegisterError()) { // if create vendor user failed, can proceed safely. when user first enter the game, it will retry
+			return fmt.Errorf("%w: %w", game.OthersError(), err)
 		}
 	}
 

@@ -25,9 +25,16 @@ var (
 		3: "3",
 		4: "3",
 	}
+	PlatformIdToDcPlatformId = map[int64]string{
+		1: "pc",
+		2: "mobile",
+		3: "mobile",
+		4: "mobile",
+	}
 	GameVendor = map[string]int64{
 		"fb":   1,
 		"saba": 2,
+		"dc":   3,
 	}
 	WebSocketMessageType = map[string]int64{
 		"text":       1,

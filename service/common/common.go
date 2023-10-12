@@ -1,4 +1,4 @@
-package service
+package common
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -15,6 +15,12 @@ type Platform struct {
 type Page struct {
 	Page  int `form:"page" json:"page" binding:"min=1"`
 	Limit int `form:"limit" json:"limit" binding:"min=1"`
+}
+
+type UserRegisterInterface interface {
+	CreateUser(model.User, string) error
+	VendorRegisterError() error
+	OthersError() error
 }
 
 type CallbackInterface interface {

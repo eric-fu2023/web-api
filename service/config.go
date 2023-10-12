@@ -5,11 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/common"
 	"web-api/util/i18n"
 )
 
 type AppConfigService struct {
-	Platform
+	common.Platform
 	Key string `form:"key" json:"key"`
 }
 
@@ -34,7 +35,7 @@ func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err
 }
 
 type AnnouncementsService struct {
-	Platform
+	common.Platform
 }
 
 func (service *AnnouncementsService) Get(c *gin.Context) (r serializer.Response, err error) {

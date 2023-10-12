@@ -5,6 +5,7 @@ import (
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/common"
 	"web-api/util"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +16,7 @@ type CashOrderService struct {
 	WithdrawOnly bool   `form:"withdraw_only" json:"withdraw_only"`
 	StartTime    string `form:"start_time" json:"start_time"`
 	EndTime      string `form:"end_time" json:"end_time"`
-	Page
+	common.Page
 }
 
 func (s CashOrderService) List(c *gin.Context) (r serializer.Response, err error) {

@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"time"
-	"web-api/service"
+	"web-api/service/common"
 )
 
 type PlaceBet struct {
@@ -52,7 +52,7 @@ func PlaceBetCallback(c *gin.Context, req callback.PlaceBetRequest) (res any, er
 	j, _ := json.Marshal(req)
 	fmt.Println("placebet: ", string(j))
 	clb := PlaceBet{Request: req}
-	err = service.ProcessTransaction(&clb)
+	err = common.ProcessTransaction(&clb)
 	if err != nil {
 		return
 	}

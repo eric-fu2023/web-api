@@ -9,6 +9,9 @@ import (
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/common"
+	"web-api/service/fb"
+	"web-api/service/saba"
 	"web-api/util/i18n"
 )
 
@@ -54,7 +57,7 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 		return serializer.DBErr(c, service, i18n.T("密码修改失败"), err)
 	}
 
-	SendNotification(user, i18n.T("notification_password_reset"))
+	common.SendNotification(user, i18n.T("notification_password_reset"))
 
 	return serializer.Response{
 		Msg: i18n.T("success"),
@@ -91,9 +94,9 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 	err = CreateUser(user)
 	if err != nil && errors.Is(err, ErrEmptyCurrencyId) {
 		return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
-	} else if err != nil && errors.Is(err, ErrFbCreateUserFailed) {
+	} else if err != nil && errors.Is(err, fb.ErrOthers) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
-	} else if err != nil && errors.Is(err, ErrSabaCreateUserFailed) {
+	} else if err != nil && errors.Is(err, saba.ErrOthers) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("saba_create_user_failed"), err)
 	} else if err != nil {
 		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)

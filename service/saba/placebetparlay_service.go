@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"time"
-	"web-api/service"
+	"web-api/service/common"
 )
 
 type PlaceBetParlay struct {
@@ -53,7 +53,7 @@ func PlaceBetParlayCallback(c *gin.Context, req callback.PlaceBetParlayRequest) 
 		copier.Copy(&newReq, req)
 		newReq.Message.Txns = []callback.PlaceBetParlayTxns{t}
 		clb := PlaceBetParlay{Request: newReq}
-		err = service.ProcessTransaction(&clb)
+		err = common.ProcessTransaction(&clb)
 		if err != nil {
 			return
 		}

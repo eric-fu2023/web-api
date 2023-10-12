@@ -7,11 +7,12 @@ import (
 	"strings"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/common"
 	"web-api/util/i18n"
 )
 
 type UserNotificationListService struct {
-	Page
+	common.Page
 }
 
 func (service *UserNotificationListService) List(c *gin.Context) (r serializer.Response, err error) {

@@ -458,6 +458,7 @@ finish_setup: "Please finish the account setup first."
 
 fb_create_user_failed: "Creating FB user can't be completed."
 saba_create_user_failed: "Creating Saba user can't be completed."
+dc_create_user_failed: "Creating game user can't be completed."
 saba_user_error: "Something went wrong while logging into Saba Sports."
 already_followed: "You have already followed the streamer."
 

@@ -10,7 +10,7 @@ import (
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
-	"web-api/service"
+	"web-api/service/common"
 )
 
 type ConfirmBetParlay struct {
@@ -79,12 +79,12 @@ func ConfirmBetParlayCallback(c *gin.Context, req callback.ConfirmBetParlayReque
 		copier.Copy(&newReq, req)
 		newReq.Message.Txns = []callback.ConfirmBetParlayTxns{t}
 		clb := ConfirmBetParlay{Request: newReq}
-		err = service.ProcessTransaction(&clb)
+		err = common.ProcessTransaction(&clb)
 		if err != nil {
 			return
 		}
 	}
-	_, balance, _, _, err := service.GetUserAndSum(consts.GameVendor["saba"], req.Message.UserId)
+	_, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["saba"], req.Message.UserId)
 	if err != nil {
 		return
 	}

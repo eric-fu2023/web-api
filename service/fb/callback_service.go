@@ -13,7 +13,7 @@ import (
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
-	"web-api/service"
+	"web-api/service/common"
 	"web-api/util"
 )
 
@@ -90,7 +90,7 @@ const (
 )
 
 func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.BaseResponse, err error) {
-	gpu, balance, _, _, err := service.GetUserAndSum(consts.GameVendor["fb"], req.MerchantUserId)
+	gpu, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["fb"], req.MerchantUserId)
 	if err != nil {
 		return
 	}
@@ -112,7 +112,7 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
 	j, _ := json.Marshal(req)
 	fmt.Println("order_pay: ", string(j))
-	err = service.ProcessTransaction(&Callback{Request: req})
+	err = common.ProcessTransaction(&Callback{Request: req})
 	if err != nil {
 		return
 	}

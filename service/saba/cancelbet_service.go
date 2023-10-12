@@ -9,7 +9,7 @@ import (
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
-	"web-api/service"
+	"web-api/service/common"
 )
 
 type CancelBet struct {
@@ -63,12 +63,12 @@ func CancelBetCallback(c *gin.Context, req callback.CancelBetRequest) (res any, 
 		r := req
 		r.Message.Txns = r.Message.Txns[i : i+1]
 		clb := CancelBet{Request: r}
-		err = service.ProcessTransaction(&clb)
+		err = common.ProcessTransaction(&clb)
 		if err != nil {
 			return
 		}
 	}
-	_, balance, _, _, err := service.GetUserAndSum(consts.GameVendor["saba"], req.Message.UserId)
+	_, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["saba"], req.Message.UserId)
 	if err != nil {
 		return
 	}
