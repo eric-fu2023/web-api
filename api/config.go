@@ -15,6 +15,16 @@ func Config(c *gin.Context) {
 	}
 }
 
+func AppUpdate(c *gin.Context) {
+	var service service.AppUpdateService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Get(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
 func Announcements(c *gin.Context) {
 	var service service.AnnouncementsService
 	if err := c.ShouldBind(&service); err == nil {

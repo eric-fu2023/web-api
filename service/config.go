@@ -9,6 +9,10 @@ import (
 	"web-api/util/i18n"
 )
 
+const (
+	RedisKeyAppUpdate = "app_update"
+)
+
 type AppConfigService struct {
 	common.Platform
 	Key string `form:"key" json:"key"`
@@ -54,6 +58,32 @@ func (service *AnnouncementsService) Get(c *gin.Context) (r serializer.Response,
 	}
 	r = serializer.Response{
 		Data: texts,
+	}
+	return
+}
+
+type AppUpdateService struct {
+	Platform int64  `form:"platform" json:"platform" binding:"required"`
+	Channel  int64  `form:"channel" json:"channel" binding:"required"`
+	Version  string `form:"version" json:"version" binding:"required"`
+}
+
+func (service *AppUpdateService) Get(c *gin.Context) (r serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	brandId := c.MustGet("_brand").(int)
+	var app model.AppUpdate
+	err = app.Get(int64(brandId), service.Platform, service.Channel, service.Version)
+	if err != nil {
+		r = serializer.Err(c, "", serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+	var data *serializer.AppUpdate
+	if app.ID != 0 {
+		d := serializer.BuildAppUpdate(app)
+		data = &d
+	}
+	r = serializer.Response{
+		Data: data,
 	}
 	return
 }
