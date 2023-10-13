@@ -63,6 +63,7 @@ func (service *SubmitKycService) SubmitKyc(c *gin.Context) serializer.Response {
 	if err != nil && errors.Is(err, errUpdateCompletedKyc) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("kyc_cannot_update_completed_kyc"), err)
 	} else if err != nil {
+		util.GetLoggerEntry(c).Errorf("Create or update kyc error: %s", err.Error())
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("kyc_submit_failed"), err)
 	}
 
@@ -79,7 +80,7 @@ func (service *SubmitKycService) createOrUpdateKyc(c *gin.Context) error {
 
 	curKyc, err := model.GetKycWithLock(tx, user.ID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		util.Log().Error("get kyc with lock err", err)
+		util.GetLoggerEntry(c).Errorf("Get kyc with lock error: %s", err.Error())
 		return err
 	}
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
@@ -102,7 +103,7 @@ func (service *SubmitKycService) createKycInfo(c *gin.Context, tx *gorm.DB) erro
 	kyc := service.buildKyc(c)
 	err := tx.Create(&kyc).Error
 	if err != nil {
-		util.Log().Error("create kyc err", err)
+		util.GetLoggerEntry(c).Errorf("Create kyc error: %s", err.Error())
 		return err
 	}
 
@@ -110,7 +111,7 @@ func (service *SubmitKycService) createKycInfo(c *gin.Context, tx *gorm.DB) erro
 	for _, d := range service.Documents {
 		err = service.uploadKycDoc(c, tx, kyc.ID, d)
 		if err != nil {
-			util.Log().Error("upload kyc doc err", err)
+			util.GetLoggerEntry(c).Errorf("Upload kyc doc error: %s", err.Error())
 			return err
 		}
 	}
@@ -126,13 +127,13 @@ func (service *SubmitKycService) updateKycInfo(c *gin.Context, tx *gorm.DB, curK
 	update := service.buildKycForUpdate(c, curKyc.ID)
 	err := model.UpdateKyc(tx, update)
 	if err != nil {
-		util.Log().Error("update kyc err", err)
+		util.GetLoggerEntry(c).Errorf("Update kyc error: %s", err.Error())
 		return err
 	}
 
 	err = service.updateKycDocuments(c, tx, curKyc.ID)
 	if err != nil {
-		util.Log().Error("update kyc documents err", err)
+		util.GetLoggerEntry(c).Errorf("Update kyc documents error: %s", err.Error())
 		return err
 	}
 
@@ -143,14 +144,14 @@ func (service *SubmitKycService) updateKycDocuments(c *gin.Context, tx *gorm.DB,
 	// Get current docs from db
 	curDocs, err := model.GetKycDocumentsWithLock(tx, kycId)
 	if err != nil {
-		util.Log().Error("get cur kyc docs err", err)
+		util.GetLoggerEntry(c).Errorf("Get cur kyc docs error: %s", err.Error())
 		return err
 	}
 
 	// Delete all current docs from db
 	err = model.DeleteKycDocuments(tx, kycId)
 	if err != nil {
-		util.Log().Error("delete kyc docs err", err)
+		util.GetLoggerEntry(c).Errorf("Delete kyc docs error: %s", err.Error())
 		return err
 	}
 
@@ -158,7 +159,7 @@ func (service *SubmitKycService) updateKycDocuments(c *gin.Context, tx *gorm.DB,
 	for _, d := range service.Documents {
 		err = service.uploadKycDoc(c, tx, kycId, d)
 		if err != nil {
-			util.Log().Error("upload kyc doc err", err)
+			util.GetLoggerEntry(c).Errorf("Upload kyc doc error: %s", err.Error())
 			return err
 		}
 	}
@@ -166,13 +167,13 @@ func (service *SubmitKycService) updateKycDocuments(c *gin.Context, tx *gorm.DB,
 	// Delete old docs from oss
 	oss, err := util.InitAliyunOSS()
 	if err != nil {
-		util.Log().Error("init oss err", err)
+		util.GetLoggerEntry(c).Errorf("Init oss error: %s", err.Error())
 		return err
 	}
 	for _, d := range curDocs {
 		err = oss.DeleteFile(d.Url)
 		if err != nil {
-			util.Log().Error("oss delete file err", err)
+			util.GetLoggerEntry(c).Errorf("OSS delete file error: %s", err.Error())
 			return err
 		}
 	}
@@ -191,7 +192,7 @@ func (service *SubmitKycService) uploadKycDoc(
 
 	oss, err := util.InitAliyunOSS()
 	if err != nil {
-		util.Log().Error("init oss err", err)
+		util.GetLoggerEntry(c).Errorf("Init oss error: %s", err.Error())
 		return err
 	}
 	path, err := oss.UploadFile(
@@ -200,20 +201,19 @@ func (service *SubmitKycService) uploadKycDoc(
 		&document,
 		kycFileContentTypeToExtension[document.Header.Get("Content-Type")])
 	if err != nil {
-		util.Log().Error("oss upload file err", err)
+		util.GetLoggerEntry(c).Errorf("OSS upload file error: %s", err.Error())
 		return err
 	}
 
 	kycDocument := service.buildKycDocument(kycId, path)
 	err = tx.Create(&kycDocument).Error
 	if err != nil {
-		util.Log().Error("create kyc document err", err)
+		util.GetLoggerEntry(c).Errorf("Create kyc document error: %s", err.Error())
 
 		err = oss.DeleteFile(path)
 		if err != nil {
-			util.Log().Error("oss delete file err", err)
+			util.GetLoggerEntry(c).Errorf("OSS delete file error: %s", err.Error())
 		}
-
 		return err
 	}
 

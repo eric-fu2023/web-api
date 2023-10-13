@@ -96,11 +96,11 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	if err = model.DB.Model(&user).
 		Select("last_login_ip", "last_login_time").
 		Updates(update).Error; err != nil {
-		util.Log().Error("update last login ip and time err", err)
+		util.GetLoggerEntry(c).Errorf("Update last login ip and time error: %s", err.Error())
 	}
 
 	if err = service.logSuccessfulLogin(c, user, loginTime); err != nil {
-		util.Log().Error("log successful login err", err)
+		util.GetLoggerEntry(c).Errorf("Log successful login error: %s", err.Error())
 	}
 
 	return serializer.Response{
@@ -115,7 +115,7 @@ func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user mode
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		// Just log error if failed
-		util.Log().Error("get device info err", err)
+		util.GetLoggerEntry(c).Errorf("Get device info error: %s", err.Error())
 	}
 
 	event := model.AuthEvent{

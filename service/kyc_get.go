@@ -26,7 +26,7 @@ func (service *GetKycService) GetKyc(c *gin.Context) serializer.Response {
 	}
 	res := model.DB.Where(&kyc).First(&kyc)
 	if res.Error != nil && !errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		util.Log().Error("find kyc err", res.Error)
+		util.GetLoggerEntry(c).Errorf("Find kyc error: %s", res.Error.Error())
 		return serializer.DBErr(c, service, i18n.T("kyc_get_failed"), res.Error)
 	}
 
@@ -38,7 +38,7 @@ func (service *GetKycService) GetKyc(c *gin.Context) serializer.Response {
 	}
 	res = model.DB.Where(kycDocCond).Find(&kycDocs)
 	if res.Error != nil && !errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		util.Log().Error("find kyc err", res.Error)
+		util.GetLoggerEntry(c).Errorf("Find kyc docs error: %s", res.Error.Error())
 		return serializer.DBErr(c, service, i18n.T("kyc_get_failed"), res.Error)
 	}
 

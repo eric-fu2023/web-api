@@ -5,7 +5,6 @@ import (
 	"blgit.rfdev.tech/zhibo/utilities"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"
 	"os"
@@ -113,7 +112,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	ip := c.ClientIP()
 	isWithinLimit, err := cache.IncreaseSendOtpLimit(service.Mobile, ip, deviceInfo.Uuid, time.Now())
 	if err != nil {
-		fmt.Println("Increase OTP limit error:", err.Error())
+		util.GetLoggerEntry(c).Errorf("Increase OTP limit error: %s", err.Error())
 		return err
 	}
 	if !isWithinLimit {
@@ -128,7 +127,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	}
 	res, err := smsManager.Send(service.CountryCode, service.Mobile, otp)
 	if err != nil {
-		util.Log().Error("send sms err", err)
+		util.GetLoggerEntry(c).Errorf("Send sms error: %s", err.Error())
 	}
 	if !res.HasSucceeded {
 		return err
@@ -145,7 +144,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	}
 	if err := model.LogOtpEvent(event); err != nil {
 		// Just log error
-		util.Log().Error("log otp event err", err)
+		util.GetLoggerEntry(c).Errorf("log otp event error: %s", err.Error())
 	}
 
 	return nil

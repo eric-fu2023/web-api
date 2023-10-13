@@ -98,7 +98,7 @@ func (service *EmailOtpService) sendEmail(c *gin.Context, otp string) error {
 	}
 	if err := model.LogOtpEvent(event); err != nil {
 		// Just log error
-		util.Log().Error("log otp event err", err)
+		util.GetLoggerEntry(c).Errorf("Log otp event error: %s", err.Error())
 	}
 
 	return nil
