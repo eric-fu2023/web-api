@@ -15,14 +15,13 @@ func LoginCallback(c *gin.Context, req callback.LoginRequest) (res callback.Base
 	if err != nil {
 		return
 	}
-	data := callback.LoginResponse{
-		BrandUid: gpu.ExternalUserId,
-		Currency: gpu.ExternalCurrency,
-		Balance:  float64(balance) / 100,
-	}
 	res = callback.BaseResponse{
 		Code: 1000,
-		Data: []callback.LoginResponse{data},
+		Data: callback.LoginResponse{
+			BrandUid: gpu.ExternalUserId,
+			Currency: gpu.ExternalCurrency,
+			Balance:  float64(balance) / 100,
+		},
 	}
 	return
 }
