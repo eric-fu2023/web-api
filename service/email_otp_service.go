@@ -44,8 +44,14 @@ func (service *EmailOtpService) GetEmail(c *gin.Context) serializer.Response {
 	}
 	cache.RedisSessionClient.Set(context.TODO(), "otp:"+service.Email, otp, 2*time.Minute)
 
+	resp := serializer.SendOtp{}
+	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
+		resp.Otp = otp
+	}
+
 	return serializer.Response{
-		Msg: i18n.T("success"),
+		Msg:  i18n.T("success"),
+		Data: resp,
 	}
 }
 
@@ -71,8 +77,14 @@ func (service *EmailOtpService) GetUsernameEmail(c *gin.Context, username string
 	}
 	cache.RedisSessionClient.Set(context.TODO(), "otp:"+username, otp, 2*time.Minute)
 
+	resp := serializer.SendOtp{}
+	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
+		resp.Otp = otp
+	}
+
 	return serializer.Response{
-		Msg: i18n.T("success"),
+		Msg:  i18n.T("success"),
+		Data: resp,
 	}
 }
 

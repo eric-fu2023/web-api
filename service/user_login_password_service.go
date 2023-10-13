@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"os"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -90,6 +91,12 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 	} else if (service.CountryCode != "" && service.Mobile != "") || (user.CountryCode != "" && user.Mobile != "") {
 		respData["country_code"] = user.CountryCode
 		respData["mobile"] = util.MaskMobile(user.Mobile)
+	}
+
+	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
+		if otpRespData, ok := otpResp.Data.(serializer.SendOtp); ok {
+			respData["otp"] = otpRespData.Otp
+		}
 	}
 
 	return serializer.Response{

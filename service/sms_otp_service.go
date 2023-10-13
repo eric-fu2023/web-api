@@ -66,13 +66,14 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 	}
 	cache.RedisSessionClient.Set(context.TODO(), "otp:"+service.CountryCode+service.Mobile, otp, 2*time.Minute)
 
-	msg := i18n.T("success")
+	resp := serializer.SendOtp{}
 	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
-		msg = otp
+		resp.Otp = otp
 	}
 
 	return serializer.Response{
-		Msg: msg,
+		Msg:  i18n.T("success"),
+		Data: resp,
 	}
 }
 
@@ -101,7 +102,15 @@ func (service *SmsOtpService) GetUsernameSMS(c *gin.Context, username string) se
 	}
 	cache.RedisSessionClient.Set(context.TODO(), "otp:"+username, otp, 2*time.Minute)
 
-	return serializer.Response{}
+	resp := serializer.SendOtp{}
+	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
+		resp.Otp = otp
+	}
+
+	return serializer.Response{
+		Msg:  i18n.T("success"),
+		Data: resp,
+	}
 }
 
 func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
