@@ -24,5 +24,6 @@ func BuildCashMethod(a model.CashMethod) CashMethod {
 		MethodType:  methodType,
 		BaseURL:     a.BaseURL,
 		CallbackURL: a.CallbackURL,
+		AccountType: a.AccountType,
 	}
 }
