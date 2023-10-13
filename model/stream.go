@@ -3,7 +3,6 @@ package model
 import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
-	"time"
 )
 
 type Stream struct {
@@ -35,9 +34,9 @@ func StreamsOnline(db *gorm.DB) *gorm.DB {
 	return db.Where(`live_streams.status`, 2)
 }
 
-func FollowingStreams(followingIds []int64) func(db *gorm.DB) *gorm.DB {
+func StreamsByMatchId(matchId int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Preload(`Streamer`).Preload(`Match`).Where(`streamer_id`, followingIds).
-			Where(`status = 3 OR (status = 2 AND schedule_time > ?)`, time.Now().Add(-1*time.Hour)).Order(`sort_factor DESC, schedule_time`)
+		return db.Where(`match_id`, matchId).
+			Where(`status`, 2).Order(`sort_factor DESC, schedule_time`)
 	}
 }

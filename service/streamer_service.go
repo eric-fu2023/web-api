@@ -9,7 +9,8 @@ import (
 )
 
 type StreamerService struct {
-	Id             int64 `form:"id" json:"id" binding:"required"`
+	Id             int64 `form:"id" json:"id" binding:"required_without=MatchId"`
+	MatchId        int64 `form:"match_id" json:"match_id"`
 	RecommendCount int64 `form:"recommend_count" json:"recommend_count"`
 }
 
@@ -22,11 +23,22 @@ type StreamerWithRecommends struct {
 func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	var streamer ploutos.User
-	streamer.ID = service.Id
+	if service.Id != 0 {
+		streamer.ID = service.Id
+	} else {
+		var stream ploutos.LiveStream
+		if err = model.DB.Scopes(model.StreamsByMatchId(service.MatchId)).First(&stream).Error; err != nil {
+			r = serializer.Err(c, service, serializer.CodeNoStream, i18n.T("stream_not_found"), err)
+			return
+		}
+		streamer.ID = stream.StreamerId
+	}
+
 	if err = model.DB.Scopes(model.StreamerWithLiveStream, model.StreamerWithGallery).Preload(`StreamerCategories`).First(&streamer).Error; err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("streamer_not_found"), err)
 		return
 	}
+
 	var isLive bool
 	if len(streamer.LiveStreams) > 0 {
 		isLive = true

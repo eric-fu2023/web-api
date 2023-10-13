@@ -43,6 +43,7 @@ const (
 	//CodeParamErr 各种奇奇怪怪的参数错误
 	CodeParamErr         = 40001
 	CodeExistingUsername = 40002
+	CodeNoStream         = 100
 )
 
 // Err 通用错误处理
@@ -125,5 +126,3 @@ func GeneralErr(c *gin.Context, err error) Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	return Err(c, "", CodeGeneralError, i18n.T("general_error"), err)
 }
-
-
