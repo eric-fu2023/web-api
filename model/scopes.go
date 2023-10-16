@@ -123,3 +123,10 @@ func ByGameTypeAndBrand(t int64, brand int64) func(db *gorm.DB) *gorm.DB {
 		return db
 	}
 }
+
+func ByDcRoundAndWager(roundId string, wagerId string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		db.Where(`round_id`, roundId).Where(`wager_id`, wagerId)
+		return db
+	}
+}

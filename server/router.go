@@ -53,6 +53,7 @@ func NewRouter() *gin.Engine {
 		dcCallback := r.Group("/dcs")
 		{
 			dcCallback.POST("/login", dc_api.CallbackLogin)
+			dcCallback.POST("/wager", dc_api.CallbackWager)
 		}
 	}
 
