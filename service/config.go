@@ -9,10 +9,6 @@ import (
 	"web-api/util/i18n"
 )
 
-const (
-	RedisKeyAppUpdate = "app_update"
-)
-
 type AppConfigService struct {
 	common.Platform
 	Key string `form:"key" json:"key"`
