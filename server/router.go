@@ -54,6 +54,8 @@ func NewRouter() *gin.Engine {
 		{
 			dcCallback.POST("/login", dc_api.CallbackLogin)
 			dcCallback.POST("/wager", dc_api.CallbackWager)
+			dcCallback.POST("/cancelWager", dc_api.CallbackCancelWager)
+			dcCallback.POST("/appendWager", dc_api.CallbackAppendWager)
 			dcCallback.POST("/endWager", dc_api.CallbackEndWager)
 		}
 	}

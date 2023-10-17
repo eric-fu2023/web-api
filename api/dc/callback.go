@@ -34,6 +34,32 @@ func CallbackWager(c *gin.Context) {
 	}
 }
 
+func CallbackCancelWager(c *gin.Context) {
+	var req callback.CancelWagerRequest
+	if err := c.ShouldBind(&req); err == nil {
+		if res, err := dc.CancelWagerCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
+}
+
+func CallbackAppendWager(c *gin.Context) {
+	var req callback.AppendWagerRequest
+	if err := c.ShouldBind(&req); err == nil {
+		if res, err := dc.AppendWagerCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
+}
+
 func CallbackEndWager(c *gin.Context) {
 	var req callback.EndWagerRequest
 	if err := c.ShouldBind(&req); err == nil {
