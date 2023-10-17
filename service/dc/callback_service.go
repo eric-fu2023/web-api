@@ -30,10 +30,6 @@ func (c *Callback) ShouldProceed() bool {
 	return true // dc doesn't have wager that shouldn't proceed
 }
 
-func (c *Callback) GetAmount() int64 {
-	return c.Transaction.Amount
-}
-
 func (c *Callback) GetWagerMultiplier() (int64, bool) {
 	return -1, true
 }
