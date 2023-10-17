@@ -22,7 +22,7 @@ type StreamerWithRecommends struct {
 
 func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	var streamer ploutos.User
+	var streamer model.Streamer
 	if service.Id != 0 {
 		streamer.ID = service.Id
 	} else {
@@ -34,20 +34,16 @@ func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err 
 		streamer.ID = stream.StreamerId
 	}
 
-	if err = model.DB.Scopes(model.StreamerWithLiveStream, model.StreamerWithGallery).Preload(`StreamerCategories`).First(&streamer).Error; err != nil {
+	if err = model.DB.Scopes(model.StreamerDefaultPreloads, model.StreamerWithLiveStream, model.StreamerWithGallery).First(&streamer).Error; err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("streamer_not_found"), err)
 		return
 	}
 
-	var isLive bool
 	if len(streamer.LiveStreams) > 0 {
-		isLive = true
+		streamer.IsLive = true
 	}
 	data := StreamerWithRecommends{
-		Streamer: serializer.BuildStreamer(c, model.Streamer{
-			User:   streamer,
-			IsLive: isLive,
-		}),
+		Streamer: serializer.BuildStreamer(c, streamer),
 	}
 	if len(streamer.LiveStreams) == 0 && service.RecommendCount > 0 {
 		if e := model.DB.Model(model.Stream{}).Select(`recommend_streamer_id`).

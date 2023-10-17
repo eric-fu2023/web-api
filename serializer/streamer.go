@@ -16,6 +16,7 @@ type Streamer struct {
 	LastLiveAtTs      int64             `json:"last_live_at_ts,omitempty"`
 	LiveStream        *Stream           `json:"live,omitempty"`
 	StreamerGalleries []StreamerGallery `json:"gallery,omitempty"`
+	Tags              []UserTag         `json:"tags,omitempty"`
 }
 
 func BuildStreamer(c *gin.Context, a model.Streamer) (b Streamer) {
@@ -43,6 +44,11 @@ func BuildStreamer(c *gin.Context, a model.Streamer) (b Streamer) {
 			galleries = append(galleries, BuildStreamerGallery(g))
 		}
 		b.StreamerGalleries = galleries
+	}
+	if len(a.UserTags) > 0 {
+		for _, t := range a.UserTags {
+			b.Tags = append(b.Tags, BuildUserTag(t))
+		}
 	}
 	return
 }
