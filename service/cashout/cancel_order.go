@@ -21,7 +21,7 @@ func RevertCashOutOrder(c *gin.Context, orderNumber string, notes, remark string
 	}
 	err = txDB.Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", orderNumber).
-			Where("status in ?", append(models.CashOrderStatusCollectionNonTerminal), models.CashOrderStatusFailed).
+			Where("status in ?", append(models.CashOrderStatusCollectionNonTerminal, models.CashOrderStatusFailed)).
 			First(&newCashOrderState).Error
 		if err != nil || newCashOrderState.Status == models.CashOrderStatusFailed {
 			return

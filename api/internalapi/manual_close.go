@@ -10,12 +10,12 @@ import (
 func FinpayBackdoor(c *gin.Context) {
 	var service cashin_finpay.ManualCloseService
 	if err := c.ShouldBind(&service); err == nil {
-		if _, err := service.Do(c); err == nil {
-			c.String(200, "success")
+		if res, err := service.Do(c); err == nil {
+			c.JSON(200, res)
 		} else {
 			c.JSON(500, api.ErrorResponse(c, service, err))
 		}
 	} else {
-		c.String(400, "param error")
+		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }
