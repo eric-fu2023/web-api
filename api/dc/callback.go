@@ -73,6 +73,32 @@ func CallbackEndWager(c *gin.Context) {
 	}
 }
 
+func CallbackFreeSpinResult(c *gin.Context) {
+	var req callback.FreeSpinResultRequest
+	if err := c.ShouldBind(&req); err == nil {
+		if res, err := dc.FreeSpinResultCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
+}
+
+func CallbackPromoPayout(c *gin.Context) {
+	var req callback.PromoPayoutRequest
+	if err := c.ShouldBind(&req); err == nil {
+		if res, err := dc.PromoPayoutCallback(c, req); err != nil {
+			c.JSON(200, ErrorResponse(c, req, err))
+		} else {
+			c.JSON(200, res)
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, req, err))
+	}
+}
+
 func ErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {
 	res = callback.BaseResponse{
 		Code: 1001,

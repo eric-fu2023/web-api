@@ -53,10 +53,13 @@ func NewRouter() *gin.Engine {
 		dcCallback := r.Group("/dcs")
 		{
 			dcCallback.POST("/login", dc_api.CallbackLogin)
+			dcCallback.POST("/getBalance", dc_api.CallbackLogin) // getBalance response is the same as login
 			dcCallback.POST("/wager", dc_api.CallbackWager)
 			dcCallback.POST("/cancelWager", dc_api.CallbackCancelWager)
 			dcCallback.POST("/appendWager", dc_api.CallbackAppendWager)
 			dcCallback.POST("/endWager", dc_api.CallbackEndWager)
+			dcCallback.POST("/freeSpinResult", dc_api.CallbackFreeSpinResult)
+			dcCallback.POST("/promoPayout", dc_api.CallbackPromoPayout)
 		}
 	}
 
