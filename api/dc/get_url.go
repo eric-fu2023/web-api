@@ -15,3 +15,13 @@ func GetUrl(c *gin.Context) {
 		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }
+
+func FunPlay(c *gin.Context) {
+	var service dc.FunPlayService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.FunPlay(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}

@@ -18,7 +18,7 @@ type GameVendorBrand struct {
 
 func BuildGameVendorBrand(a ploutos.GameVendorBrand) (b GameVendorBrand) {
 	b = GameVendorBrand{
-		ID:      a.ID,
+		ID:      a.GameVendorId,
 		Name:    a.Name,
 		Type:    a.CategoryId,
 		WebIcon: Url(a.WebIcon),

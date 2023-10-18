@@ -72,3 +72,36 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 	}
 	return
 }
+
+type FunPlayService struct {
+	GetUrlService
+	CurrencyId int64 `form:"currency_id" json:"currency_id" binding:"required"`
+}
+
+func (service *FunPlayService) FunPlay(c *gin.Context) (res serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+
+	var currency string
+	err = model.DB.Model(ploutos.CurrencyGameVendor{}).Select(`value`).
+		Where(`game_vendor_id`, consts.GameVendor["dc"]).Where(`currency_id`, service.CurrencyId).First(&currency).Error
+	if err != nil {
+		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+
+	client := util.DCFactory.NewClient()
+	lang := c.MustGet("_language").(string)
+	if lang == "zh" {
+		lang = "zh_hans"
+	}
+	cc := strings.ToUpper(c.MustGet("_country_code").(string))
+	r, err := client.TryGame(service.GameId, currency, lang, consts.PlatformIdToDcPlatformId[service.Platform.Platform], cc, "", &service.Fullscreen)
+	if err != nil {
+		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+	res = serializer.Response{
+		Data: r,
+	}
+	return
+}
