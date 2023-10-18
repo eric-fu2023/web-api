@@ -12,7 +12,7 @@ type CashOrder struct {
 	models.CashOrderC
 }
 
-func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, account string) CashOrder {
+func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, account, ip string) CashOrder {
 	return CashOrder{
 		models.CashOrderC{
 			ID:                  models.GenerateCashInOrderNo(),
@@ -25,11 +25,12 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 			WagerChange:         wagerChange,
 			Account:             account,
 			//Notes:, update later
+			Ip: ip,
 		},
 	}
 }
 
-func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account, remark string, reviewRequired bool, accountName string) CashOrder {
+func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account, remark string, reviewRequired bool, accountName, ip string) CashOrder {
 	var orderStatus int64 = 1
 	if reviewRequired {
 		orderStatus = 4
@@ -49,6 +50,7 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account,
 			RequireReview:        reviewRequired,
 			AccountName:          accountName,
 			//Notes:, update later
+			Ip: ip,
 		},
 	}
 }

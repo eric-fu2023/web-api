@@ -93,7 +93,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		var msg string
 		reviewRequired, msg = rule.OK(amount, payoutCount+1, totalOut+amount, nil)
 
-		cashOrder = model.NewCashOutOrder(user.ID, s.MethodID, amount, userSum.Balance, s.AccountNo, msg, reviewRequired, s.AccountName)
+		cashOrder = model.NewCashOutOrder(user.ID, s.MethodID, amount, userSum.Balance, s.AccountNo, msg, reviewRequired, s.AccountName, c.ClientIP())
 		err = tx.Create(&cashOrder).Error
 		if err != nil {
 			return

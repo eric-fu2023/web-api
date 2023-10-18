@@ -90,7 +90,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		amount,
 		userSum.Balance,
 		GetWagerFromAmount(amount, DefaultWager),
-		"")
+		"", c.ClientIP())
 	if err = model.DB.Debug().WithContext(c).Create(&cashOrder).Error; err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
