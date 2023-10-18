@@ -34,9 +34,9 @@ func StreamsOnline(db *gorm.DB) *gorm.DB {
 	return db.Where(`live_streams.status`, 2)
 }
 
-func StreamsByMatchId(matchId int64) func(db *gorm.DB) *gorm.DB {
+func StreamsByFbMatchIdSportId(matchId int64, sportId int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Where(`match_id`, matchId).
-			Where(`status`, 2).Order(`sort_factor DESC, schedule_time`)
+		return db.Joins(`JOIN matches ON live_streams.match_id = matches.id`).Where(`matches.match_id`, matchId).Where(`matches.sport_id`, sportId).
+			Where(`live_streams.status`, 2).Order(`live_streams.sort_factor DESC, live_streams.schedule_time`)
 	}
 }

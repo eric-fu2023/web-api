@@ -11,6 +11,7 @@ import (
 type StreamerService struct {
 	Id             int64 `form:"id" json:"id" binding:"required_without=MatchId"`
 	MatchId        int64 `form:"match_id" json:"match_id"`
+	SportId        int64 `form:"sport_id" json:"sport_id"`
 	RecommendCount int64 `form:"recommend_count" json:"recommend_count"`
 }
 
@@ -27,7 +28,7 @@ func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err 
 		streamer.ID = service.Id
 	} else {
 		var stream ploutos.LiveStream
-		if err = model.DB.Scopes(model.StreamsByMatchId(service.MatchId)).First(&stream).Error; err != nil {
+		if err = model.DB.Scopes(model.StreamsByFbMatchIdSportId(service.MatchId, service.SportId)).First(&stream).Error; err != nil {
 			r = serializer.Err(c, service, serializer.CodeNoStream, i18n.T("stream_not_found"), err)
 			return
 		}
