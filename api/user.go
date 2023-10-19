@@ -179,3 +179,13 @@ func ProfilePicUpload(c *gin.Context) {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
+
+func UserSetSecondaryPassword(c *gin.Context) {
+	var service service.UserSecondaryPasswordService
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
+		res := service.SetSecondaryPassword(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}

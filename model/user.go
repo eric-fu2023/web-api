@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // User 用户模型
@@ -47,4 +49,11 @@ func (user *User) GenToken() (tokenString string, err error) {
 
 func (user *User) GetRedisSessionKey() string {
 	return fmt.Sprintf(`session:%d`, user.ID)
+}
+
+func (user *User) VerifySecondaryPassword(secondaryPassword string) (err error) {
+	if secondaryPassword == "" {
+		return errors.New("empty password")
+	}
+	return bcrypt.CompareHashAndPassword([]byte(user.SecondaryPassword), []byte(secondaryPassword))
 }

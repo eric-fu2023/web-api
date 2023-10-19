@@ -144,6 +144,8 @@ func NewRouter() *gin.Engine {
 				user.POST("/follow", api.UserFollowingAdd)
 				user.DELETE("/follow", api.UserFollowingRemove)
 
+				user.PUT("/secondary-password", api.UserSetSecondaryPassword)
+
 				user.GET("/orders", api.OrderList)
 
 				fb := user.Group("/fb")
