@@ -104,7 +104,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/app_update", middleware.Cache(1*time.Minute), api.AppUpdate)
 		v1.GET("/announcements", middleware.Cache(1*time.Minute), api.Announcements)
 		v1.GET("/categories", middleware.Cache(1*time.Minute), api.CategoryList)
-		v1.GET("/vendors", middleware.Cache(1*time.Minute), api.GameList)
+		v1.GET("/vendors", middleware.Cache(1*time.Minute), api.VendorList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)
 		v1.GET("/streamer", middleware.Cache(1*time.Minute), api.Streamer)
 		v1.GET("/topup-methods", middleware.Cache(1*time.Minute), api.TopupMethodList)
@@ -112,6 +112,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/avatars", middleware.Cache(1*time.Minute), api.AvatarList)
 		v1.POST("/share", api.ShareCreate)
 		v1.GET("/share", api.ShareGet)
+		v1.GET("/games", middleware.Cache(1*time.Minute), api.GameList)
 
 		saba := v1.Group("/saba")
 		{
@@ -120,7 +121,7 @@ func NewRouter() *gin.Engine {
 
 		dc := v1.Group("/dc")
 		{
-			dc.GET("/fun_play", dc_api.FunPlay)
+			dc.GET("/fun_play", middleware.CheckAuth(), dc_api.FunPlay)
 		}
 
 		auth := v1.Group("")
@@ -147,6 +148,7 @@ func NewRouter() *gin.Engine {
 				user.PUT("/secondary-password", api.UserSetSecondaryPassword)
 
 				user.GET("/orders", api.OrderList)
+				user.GET("/games", api.UserGameList)
 
 				fb := user.Group("/fb")
 				{

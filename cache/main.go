@@ -20,6 +20,7 @@ var RedisSyncTransactionClient *redis.Client
 var RedisStore *persist.RedisStore
 var RedisLockClient *redsync.Redsync
 var RedisConfigClient *redis.Client
+var RedisRecentGamesClient *redis.Client
 
 // Redis 在中间件中初始化redis链接
 func Redis() {
@@ -120,4 +121,16 @@ func RedisLock() {
 	rs := redsync.New(pool)
 
 	RedisLockClient = rs
+}
+
+func RedisRecentGames() {
+	db, _ := strconv.ParseUint(os.Getenv("REDIS_RECENT_GAMES"), 10, 64)
+	client := redis.NewClient(&redis.Options{
+		Addr:       os.Getenv("REDIS_ADDR"),
+		Password:   os.Getenv("REDIS_PW"),
+		DB:         int(db),
+		MaxRetries: 1,
+	})
+
+	RedisRecentGamesClient = client
 }

@@ -1,7 +1,9 @@
 package model
 
 import (
+	"fmt"
 	"gorm.io/gorm"
+	"strings"
 	"time"
 	"web-api/conf/consts"
 )
@@ -114,11 +116,11 @@ func ByPlatformExpended(platform int64) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
-func ByGameTypeAndBrand(t int64, brand int64) func(db *gorm.DB) *gorm.DB {
+func ByCategoryAndBrand(categoryId int64, brandId int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		db.Where(`brand_id = ? OR brand_id = 0`, brand)
-		if t != 0 {
-			db.Where(`category_id`, t)
+		db.Where(`brand_id = ? OR brand_id = 0`, brandId)
+		if categoryId != 0 {
+			db.Where(`category_id`, categoryId)
 		}
 		return db
 	}
@@ -129,4 +131,43 @@ func ByDcRoundAndWager(roundId string, wagerId string) func(db *gorm.DB) *gorm.D
 		db.Where(`round_id`, roundId).Where(`wager_id`, wagerId)
 		return db
 	}
+}
+
+func ByGameIdsBrandAndIsFeatured(gameIds []string, brandId int64, isFeatured bool) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		db.Where(`sub_game_brand.brand_id = ? OR sub_game_brand.brand_id = 0`, brandId)
+		if len(gameIds) > 0 {
+			db.Where(`sub_game_brand.id`, gameIds).Order(fmt.Sprintf(`ARRAY_POSITION(ARRAY[%s], sub_game_brand.id)`, strings.Join(gameIds, ",")))
+		} else {
+			db.Order(`sub_game_brand.sort`)
+		}
+		if isFeatured {
+			db.Where(`sub_game_brand.is_featured`, true)
+		}
+		return db
+	}
+}
+
+func ByPlatformAndStatusOfSubAndVendor(platform int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		db.Joins(`JOIN game_vendor_brand gvb ON sub_game_brand.vendor_brand_id = gvb.id`).
+			Where(`gvb.status`, 1).Where(`sub_game_brand.status`, 1)
+		if platform == consts.Platform["pc"] {
+			db.Where(`gvb.web`, 1).Where(`sub_game_brand.web`, 1)
+		} else if platform == consts.Platform["h5"] {
+			db.Where(`gvb.web`, 1).Where(`sub_game_brand.h5`, 1)
+		} else if platform == consts.Platform["android"] {
+			db.Where(`gvb.web`, 1).Where(`sub_game_brand.android`, 1)
+		} else if platform == consts.Platform["ios"] {
+			db.Where(`gvb.web`, 1).Where(`sub_game_brand.ios`, 1)
+		}
+		return db
+	}
+}
+
+func ByMaintenance(db *gorm.DB) *gorm.DB {
+	now := time.Now()
+	db.Where(`gvb.start_time IS NULL OR gvb.start_time = '0001-01-01' OR ? NOT BETWEEN gvb.start_time AND gvb.end_time`, now).
+		Where(`sub_game_brand.start_time IS NULL OR sub_game_brand.start_time = '0001-01-01' OR ? NOT BETWEEN sub_game_brand.start_time AND sub_game_brand.end_time`, now)
+	return db
 }
