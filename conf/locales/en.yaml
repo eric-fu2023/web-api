@@ -462,6 +462,7 @@ dc_create_user_failed: "Creating game user can't be completed."
 saba_user_error: "Something went wrong while logging into Saba Sports."
 game_not_found: "Game not found."
 already_followed: "You have already followed the streamer."
+favourite_already_added: "You have already added the game to your favourites."
 
 kyc_invalid_birthday: "Invalid birthday given %s."
 kyc_cannot_update_completed_kyc: "Completed KYC cannot be updated."

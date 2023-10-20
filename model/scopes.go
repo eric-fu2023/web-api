@@ -171,3 +171,19 @@ func ByMaintenance(db *gorm.DB) *gorm.DB {
 		Where(`sub_game_brand.start_time IS NULL OR sub_game_brand.start_time = '0001-01-01' OR ? NOT BETWEEN sub_game_brand.start_time AND sub_game_brand.end_time`, now)
 	return db
 }
+
+func UserFavouriteByUserIdTypeAndSportId(userId, t, sportId int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		db.Where(`user_id`, userId).Where(`type`, t)
+		if sportId != 0 {
+			db.Where(`sport_id`, sportId)
+		}
+		return db
+	}
+}
+
+func UserFavouriteByUserIdTypeGameIdAndSportId(userId, t, gameId, sportId int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Scopes(UserFavouriteByUserIdTypeAndSportId(userId, t, sportId)).Where(`game_id`, gameId)
+	}
+}

@@ -145,6 +145,10 @@ func NewRouter() *gin.Engine {
 				user.POST("/follow", api.UserFollowingAdd)
 				user.DELETE("/follow", api.UserFollowingRemove)
 
+				user.GET("/favourites", api.UserFavouriteList)
+				user.POST("/favourite", api.UserFavouriteAdd)
+				user.DELETE("/favourite", api.UserFavouriteRemove)
+
 				user.PUT("/secondary-password", api.UserSetSecondaryPassword)
 
 				user.GET("/orders", api.OrderList)

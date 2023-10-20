@@ -126,7 +126,6 @@ func (service *FunPlayService) FunPlay(c *gin.Context) (res serializer.Response,
 	}
 
 	u, isUser := c.Get("user")
-	fmt.Println(isUser)
 	if isUser {
 		user := u.(model.User)
 		go insertIntoRedis(user.ID, service.GameId)
