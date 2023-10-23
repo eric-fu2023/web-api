@@ -15,8 +15,8 @@ func GameList(c *gin.Context) {
 	}
 }
 
-func UserGameList(c *gin.Context) {
-	var service service.UserGameListService
+func UserRecentGameList(c *gin.Context) {
+	var service service.UserRecentGameListService
 	if err := c.ShouldBind(&service); err == nil {
 		res, _ := service.List(c)
 		c.JSON(200, res)
