@@ -6,16 +6,17 @@ import (
 )
 
 type SubGameBrand struct {
-	Id               int64  `json:"id"`
-	Name             string `json:"name"`
-	SubGameId        int64  `json:"sub_game_id"`
-	GameCode         string `json:"game_code"`
-	GameType         string `json:"game_type"`
-	WebIcon          string `json:"web_icon,omitempty"`
-	AppIcon          string `json:"app_icon,omitempty"`
-	IsMaintenance    bool   `json:"is_maintenance,omitempty"`
-	MaintenanceStart int64  `json:"maintenance_start,omitempty"`
-	MaintenanceEnd   int64  `json:"maintenance_end,omitempty"`
+	Id               int64            `json:"id"`
+	Name             string           `json:"name"`
+	SubGameId        int64            `json:"sub_game_id"`
+	GameCode         string           `json:"game_code"`
+	GameType         string           `json:"game_type"`
+	WebIcon          string           `json:"web_icon,omitempty"`
+	AppIcon          string           `json:"app_icon,omitempty"`
+	IsMaintenance    bool             `json:"is_maintenance,omitempty"`
+	MaintenanceStart int64            `json:"maintenance_start,omitempty"`
+	MaintenanceEnd   int64            `json:"maintenance_end,omitempty"`
+	Vendor           *GameVendorBrand `json:"vendor,omitempty"`
 }
 
 func BuildSubGameBrand(a ploutos.SubGameBrand) (b SubGameBrand) {
@@ -36,6 +37,10 @@ func BuildSubGameBrand(a ploutos.SubGameBrand) (b SubGameBrand) {
 				b.MaintenanceEnd = a.EndTime.Unix()
 			}
 		}
+	}
+	if a.GameVendorBrand != nil {
+		t := BuildGameVendorBrand(*a.GameVendorBrand)
+		b.Vendor = &t
 	}
 	return
 }
