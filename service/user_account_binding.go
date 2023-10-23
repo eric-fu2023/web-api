@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -54,15 +55,16 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (serializer.Response, erro
 }
 
 type DeleteWithdrawAccountService struct {
-	AccountBindingID int64 `form:"account_binding_id" json:"account_binding_id,string" binding:"required"`
+	AccountBindingID json.Number `form:"account_binding_id" json:"account_binding_id" binding:"required"`
 }
 
 func (s DeleteWithdrawAccountService) Do(c *gin.Context) (serializer.Response, error) {
 	user := c.MustGet("user").(model.User)
+	accID, _ := s.AccountBindingID.Int64()
 
 	accountBinding := model.UserAccountBinding{
 		UserAccountBindingC: models.UserAccountBindingC{
-			BASE:     models.BASE{ID: s.AccountBindingID},
+			BASE:     models.BASE{ID: accID},
 			UserID:   user.ID,
 			IsActive: true,
 		},
