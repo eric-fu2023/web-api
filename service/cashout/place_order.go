@@ -18,26 +18,26 @@ import (
 const userWithdrawLockKey = "user_withdraw_lock:%d"
 
 type WithdrawOrderService struct {
-	MethodID    int64  `form:"method_id" json:"method_id" binding:"required"`
-	AccountNo   string `form:"account_no" json:"account_no" binding:"required"`
-	Amount      string `form:"amount" json:"amount" binding:"required,min=0"`
-	AccountName string `form:"account_name" json:"account_name" binding:"required"`
+	Amount           float64 `form:"amount" json:"amount" `
+	AccountBindingID int64   `form:"account_binding_id" json:"account_binding_id" `
 }
 
 func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	amountDecimal, err := decimal.NewFromString(s.Amount)
-	if err != nil {
-		return
-	}
-	amount := amountDecimal.Mul(decimal.NewFromInt(100)).IntPart()
+	amountDecimal := decimal.NewFromFloat(s.Amount).IntPart()
+	amount := amountDecimal * 100
 	if amount < 0 {
 		err = errors.New("illegal amount")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
+	var accountBinding model.UserAccountBinding
+	err = model.DB.First(&accountBinding, s.AccountBindingID).Error
+	if err != nil {
+		return
+	}
 
-	switch s.MethodID {
+	switch accountBinding.CashMethodID {
 	case 3:
 	default:
 		err = errors.New("unsupported method")
@@ -64,14 +64,14 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("err_insufficient_withdrawable"), err)
 			return
 		}
-		var cashMethod model.CashMethod
-		cashMethod, err = model.CashMethod{}.GetByID(c, s.MethodID)
-		if err != nil {
-			return
-		}
-		// TODO: check payment method id, if supported, if valid
-		// TODO: check cash method rules maybe
-		fmt.Println(cashMethod, "place holder")
+		// var cashMethod model.CashMethod
+		// cashMethod, err = model.CashMethod{}.GetByID(c, s.MethodID)
+		// if err != nil {
+		// 	return
+		// }
+		// // TODO: check payment method id, if supported, if valid
+		// // TODO: check cash method rules maybe
+		// fmt.Println(cashMethod, "place holder")
 
 		// Get vip level from somewhere else
 		// check vip
@@ -93,7 +93,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		var msg string
 		reviewRequired, msg = rule.OK(amount, payoutCount+1, totalOut+amount, nil)
 
-		cashOrder = model.NewCashOutOrder(user.ID, s.MethodID, amount, userSum.Balance, s.AccountNo, msg, reviewRequired, s.AccountName, c.ClientIP())
+		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance, accountBinding.AccountNumber, msg, reviewRequired, accountBinding.AccountName, c.ClientIP())
 		err = tx.Create(&cashOrder).Error
 		if err != nil {
 			return
@@ -132,7 +132,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	if reviewRequired {
 		return
 	}
-	cashOrder, err = DispatchOrder(c, cashOrder, s.MethodID)
+	cashOrder, err = DispatchOrder(c, cashOrder, accountBinding.CashMethodID)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return

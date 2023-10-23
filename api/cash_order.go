@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin/binding"
 	"web-api/serializer"
 	"web-api/service"
 	"web-api/service/cashin"
@@ -12,11 +11,11 @@ import (
 
 func TopUpOrder(c *gin.Context) {
 	var service cashin.TopUpOrderService
-	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
-		if res, err := service.CreateOrder(c); err != nil {
-			c.JSON(200, serializer.EnsureErr(c, err, res))
-		} else {
+	if err := c.ShouldBind(&service); err == nil {
+		if res, err := service.CreateOrder(c); err == nil {
 			c.JSON(200, res)
+		} else {
+			c.JSON(200, serializer.EnsureErr(c, err, res))
 		}
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
@@ -25,9 +24,12 @@ func TopUpOrder(c *gin.Context) {
 
 func WithdrawOrder(c *gin.Context) {
 	var service cashout.WithdrawOrderService
-	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
-		res, _ := service.Do(c)
-		c.JSON(200, res)
+	if err := c.ShouldBind(&service); err == nil {
+		if res, err := service.Do(c); err == nil {
+			c.JSON(200, res)
+		} else {
+			c.JSON(200, serializer.EnsureErr(c, err, res))
+		}
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
