@@ -2,6 +2,8 @@ package model
 
 import (
 	"database/sql"
+	"errors"
+	"web-api/conf/consts"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
@@ -23,6 +25,9 @@ func (b *UserAccountBinding) AddToDb() (err error) {
 		err = tx.Model(&UserAccountBinding{}).Where("user_id", b.UserID).Where("is_active").Count(&num).Error
 		if err != nil {
 			return
+		}
+		if num >= consts.WithdrawMethodLimit {
+			return errors.New("limit exceeded")
 		}
 		err = tx.Create(b).Error
 		return

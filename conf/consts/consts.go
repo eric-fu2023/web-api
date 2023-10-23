@@ -114,4 +114,5 @@ const (
 	ConfigKeyTopupKycCheck string = "kyc_check_required"
 	FirstTopupMinimum      int64  = 1000_00
 	TopupMinimum           int64  = 500_00
+	WithdrawMethodLimit           = 5
 )
