@@ -26,13 +26,15 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	amountDecimal := decimal.NewFromFloat(s.Amount).IntPart()
 	amount := amountDecimal * 100
+	user := c.MustGet("user").(model.User)
+
 	if amount < 0 {
 		err = errors.New("illegal amount")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
 	var accountBinding model.UserAccountBinding
-	err = model.DB.First(&accountBinding, s.AccountBindingID).Error
+	err = model.DB.Where("user_id", user.ID).Where("id", s.AccountBindingID).First(&accountBinding).Error
 	if err != nil {
 		return
 	}
@@ -44,9 +46,6 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
-
-	u, _ := c.Get("user")
-	user := u.(model.User)
 
 	var reviewRequired bool = false
 	var cashOrder model.CashOrder

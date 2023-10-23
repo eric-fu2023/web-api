@@ -54,7 +54,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (serializer.Response, erro
 }
 
 type DeleteWithdrawAccountService struct {
-	AccountBindingID int64 `form:"account_binding_id" json:"account_binding_id" binding:"required"`
+	AccountBindingID int64 `form:"account_binding_id" json:"account_binding_id,string" binding:"required"`
 }
 
 func (s DeleteWithdrawAccountService) Do(c *gin.Context) (serializer.Response, error) {
