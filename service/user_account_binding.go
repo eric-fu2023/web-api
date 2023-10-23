@@ -5,6 +5,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
+	"web-api/util/i18n"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
@@ -37,6 +38,7 @@ type AddWithdrawAccountService struct {
 
 func (s AddWithdrawAccountService) Do(c *gin.Context) (serializer.Response, error) {
 	user := c.MustGet("user").(model.User)
+	i18n := c.MustGet("i18n").(i18n.I18n)
 
 	accountBinding := model.UserAccountBinding{
 		UserAccountBindingC: models.UserAccountBindingC{
@@ -51,7 +53,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (serializer.Response, erro
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
 	}
-	return serializer.Response{Data: "sucess"}, nil
+	return serializer.Response{Msg: i18n.T("success")}, nil
 }
 
 type DeleteWithdrawAccountService struct {
@@ -60,6 +62,8 @@ type DeleteWithdrawAccountService struct {
 
 func (s DeleteWithdrawAccountService) Do(c *gin.Context) (serializer.Response, error) {
 	user := c.MustGet("user").(model.User)
+	i18n := c.MustGet("i18n").(i18n.I18n)
+
 	accID, _ := s.AccountBindingID.Int64()
 
 	accountBinding := model.UserAccountBinding{
@@ -73,5 +77,5 @@ func (s DeleteWithdrawAccountService) Do(c *gin.Context) (serializer.Response, e
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
 	}
-	return serializer.Response{Data: "sucess"}, nil
+	return serializer.Response{Msg: i18n.T("success")}, nil
 }
