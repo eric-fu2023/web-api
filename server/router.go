@@ -158,6 +158,8 @@ func NewRouter() *gin.Engine {
 				user.DELETE("/withdraw-accounts", api.WthdrawAccountsRemove)
 				user.GET("/withdraw-accounts", api.WthdrawAccountsList)
 
+				user.GET("/otp-check", api.VerifyOtp)
+
 				fb := user.Group("/fb")
 				{
 					fb.GET("/token", fb_api.GetToken)

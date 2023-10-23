@@ -485,3 +485,5 @@ stream_not_found: "No live stream found."
 password_must_be_digits: "Secondary password must be 6 digits"
 notification_secondary_password_reset: "Your secondary password has been reset successfully."
 secondary_password_mismatch: "Secondary password mismatch"
+
+验证码超时: "OTP has expired."

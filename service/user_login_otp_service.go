@@ -1,9 +1,7 @@
 package service
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
-	"github.com/gin-gonic/gin"
 	"math/rand"
 	"strings"
 	"time"
@@ -13,7 +11,35 @@ import (
 	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	models "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
+
+type UserOtpVerificationService struct {
+	Otp string `form:"otp" json:"otp" binding:"required"`
+}
+
+func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	user := c.MustGet("user").(model.User)
+
+	key := "otp:" + user.Email
+	otp := cache.RedisSessionClient.Get(context.TODO(), key)
+	if otp.Err() == redis.Nil {
+		key = "otp:" + user.CountryCode + user.Mobile
+		otp = cache.RedisSessionClient.Get(context.TODO(), key)
+	}
+	if otp.Val() != s.Otp {
+		return serializer.ParamErr(c, s, i18n.T("验证码错误"), nil)
+	}
+	// THINK: may not need this
+	// _ = cache.RedisSessionClient.Expire(context.TODO(), key, 2*time.Minute)
+	return serializer.Response{
+		Msg: i18n.T("success"),
+	}
+}
 
 type UserLoginOtpService struct {
 	CountryCode string `form:"country_code" json:"country_code"`
