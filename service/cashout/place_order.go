@@ -12,14 +12,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/shopspring/decimal"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 const userWithdrawLockKey = "user_withdraw_lock:%d"
 
 type WithdrawOrderService struct {
-	Amount           float64 `form:"amount" json:"amount" `
-	AccountBindingID int64   `form:"account_binding_id" json:"account_binding_id" `
+	Amount            float64 `form:"amount" json:"amount" binding:"required"`
+	AccountBindingID  int64   `form:"account_binding_id" json:"account_binding_id" binding:"required"`
+	SecondaryPassword string  `form:"secondary_password" json:"secondary_password" binding:"required"`
 }
 
 func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
@@ -27,6 +29,10 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	amountDecimal := decimal.NewFromFloat(s.Amount).IntPart()
 	amount := amountDecimal * 100
 	user := c.MustGet("user").(model.User)
+
+	if err = bcrypt.CompareHashAndPassword([]byte(user.SecondaryPassword), []byte(s.SecondaryPassword)); err != nil {
+		return serializer.ParamErr(c, s, i18n.T("secondary_password_mismatch"), nil), err
+	}
 
 	if amount < 0 {
 		err = errors.New("illegal amount")
