@@ -31,6 +31,6 @@ func (b *UserAccountBinding) AddToDb() (err error) {
 }
 
 func (b *UserAccountBinding) Remove() (err error) {
-	err = DB.Model(b).Update("is_active", false).Error
+	err = DB.Model(&UserAccountBinding{}).Where(&b).Update("is_active", false).Error
 	return
 }
