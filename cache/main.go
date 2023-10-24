@@ -132,5 +132,9 @@ func RedisRecentGames() {
 		MaxRetries: 1,
 	})
 
+	if _, err := client.Ping(context.TODO()).Result(); err != nil {
+		util.Log().Panic("unable to connect recent games redis", err)
+	}
+
 	RedisRecentGamesClient = client
 }

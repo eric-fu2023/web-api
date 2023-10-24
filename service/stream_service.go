@@ -2,9 +2,12 @@ package service
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
+	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -70,6 +73,28 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 	}
 	for _, stream := range streams {
 		r = append(r, serializer.BuildStream(c, stream))
+	}
+	return
+}
+
+type StreamStatusService struct {
+	StreamerId int64 `form:"streamer_id" json:"streamer_id"`
+}
+
+func (service *StreamStatusService) Get(c *gin.Context) (r serializer.Response, err error) {
+	u, _ := c.Get("user")
+	user := u.(model.User)
+
+	var silencedUntil int
+	re := cache.RedisSessionClient.Get(context.TODO(), fmt.Sprintf("silenced:%d:%d", service.StreamerId, user.ID))
+	if re.Err() == nil {
+		if v, e := strconv.Atoi(re.Val()); e == nil {
+			silencedUntil = v
+		}
+	}
+
+	r = serializer.Response{
+		Data: silencedUntil,
 	}
 	return
 }
