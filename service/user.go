@@ -34,7 +34,7 @@ func CreateUser(user model.User) error {
 	}
 
 	userSum := ploutos.UserSum{
-		ploutos.UserSumC{
+		UserSumC: ploutos.UserSumC{
 			UserId: user.ID,
 		},
 	}
