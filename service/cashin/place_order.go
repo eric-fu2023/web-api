@@ -111,7 +111,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		transactionID = data.PaymentOrderNo
 		r.Data = serializer.BuildPaymentOrder(data)
 	}
-	cashOrder.TransactionId = transactionID
+	cashOrder.TransactionId = &transactionID
 	cashOrder.Status = models.CashOrderStatusPending
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
 	return

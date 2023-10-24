@@ -32,8 +32,12 @@ type WithdrawOrder struct {
 }
 
 func BuildWithdrawOrder(p model.CashOrder) WithdrawOrder {
+	txnID := ""
+	if p.TransactionId != nil {
+		txnID = *p.TransactionId
+	}
 	return WithdrawOrder{
-		WithdrawOrderNo:     p.TransactionId,
+		WithdrawOrderNo:     txnID,
 		WithdrawOrderStatus: consts.CashOrderStatus[p.Status],
 		OrderNumber:         p.ID,
 	}

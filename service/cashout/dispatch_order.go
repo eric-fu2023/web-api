@@ -20,7 +20,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, methodID int64) (u
 		data, err = finpay.FinpayClient{}.DefaultGcashCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, updatedCashOrder.Account, updatedCashOrder.AccountName)
 		if data.IsSuccess() {
 			updatedCashOrder.Status = models.CashOrderStatusTransferring
-			updatedCashOrder.TransactionId = data.TransferId
+			updatedCashOrder.TransactionId = &data.TransferId
 			updatedCashOrder.Notes = util.JSON(data)
 			err = model.DB.Debug().WithContext(c).Updates(&updatedCashOrder).Error
 			if err != nil {
