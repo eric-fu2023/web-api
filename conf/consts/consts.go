@@ -3,6 +3,7 @@ package consts
 const (
 	KycStatusPending   = 1
 	KycStatusCompleted = 2
+	KycStatusRejected  = 3
 	GinErrorKey        = "gin_error"
 )
 
@@ -113,6 +114,6 @@ const (
 	OrderTypeWithdraw             = "withdraw"
 	ConfigKeyTopupKycCheck string = "kyc_check_required"
 	FirstTopupMinimum      int64  = 10_00 //1000_00
-	TopupMinimum           int64  = 5_00 //500_00
+	TopupMinimum           int64  = 5_00  //500_00
 	WithdrawMethodLimit           = 5
 )

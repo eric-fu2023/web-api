@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"io"
 	"mime/multipart"
+	"os"
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -54,12 +56,12 @@ func (service *SubmitKycService) SubmitKyc(c *gin.Context) serializer.Response {
 		if _, exists := kycFileContentTypeToExtension[mt]; !exists {
 			return serializer.ParamErr(c, service, fmt.Sprintf(i18n.T("file_type_not_allowed"), mt), err)
 		}
-		if d.Size > 5*1024*1024 {
-			return serializer.ParamErr(c, service, fmt.Sprintf(i18n.T("file_size_exceeded"), "5 MB"), err)
+		if d.Size > 2*1024*1024 {
+			return serializer.ParamErr(c, service, fmt.Sprintf(i18n.T("file_size_exceeded"), "2MB"), err)
 		}
 	}
 
-	err = service.createOrUpdateKyc(c)
+	kyc, err := service.createOrUpdateKyc(c)
 	if err != nil && errors.Is(err, errUpdateCompletedKyc) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("kyc_cannot_update_completed_kyc"), err)
 	} else if err != nil {
@@ -67,12 +69,14 @@ func (service *SubmitKycService) SubmitKyc(c *gin.Context) serializer.Response {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("kyc_submit_failed"), err)
 	}
 
+	go service.verifyDocuments(c, kyc.ID)
+
 	return serializer.Response{
 		Msg: i18n.T("success"),
 	}
 }
 
-func (service *SubmitKycService) createOrUpdateKyc(c *gin.Context) error {
+func (service *SubmitKycService) createOrUpdateKyc(c *gin.Context) (kyc model.Kyc, err error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
@@ -81,30 +85,30 @@ func (service *SubmitKycService) createOrUpdateKyc(c *gin.Context) error {
 	curKyc, err := model.GetKycWithLock(tx, user.ID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		util.GetLoggerEntry(c).Errorf("Get kyc with lock error: %s", err.Error())
-		return err
+		return
 	}
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		err = service.createKycInfo(c, tx)
+		kyc, err = service.createKycInfo(c, tx)
 	} else {
-		err = service.updateKycInfo(c, tx, curKyc)
+		kyc, err = service.updateKycInfo(c, tx, curKyc)
 	}
 
 	if err != nil {
 		tx.Rollback()
-		return err
+		return
 	}
 
 	tx.Commit()
-	return nil
+	return
 }
 
-func (service *SubmitKycService) createKycInfo(c *gin.Context, tx *gorm.DB) error {
+func (service *SubmitKycService) createKycInfo(c *gin.Context, tx *gorm.DB) (kyc model.Kyc, err error) {
 	// Create KYC
-	kyc := service.buildKyc(c)
-	err := tx.Create(&kyc).Error
+	kyc = service.buildKyc(c)
+	err = tx.Create(&kyc).Error
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("Create kyc error: %s", err.Error())
-		return err
+		return
 	}
 
 	// Create Kyc Documents
@@ -112,32 +116,33 @@ func (service *SubmitKycService) createKycInfo(c *gin.Context, tx *gorm.DB) erro
 		err = service.uploadKycDoc(c, tx, kyc.ID, d)
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("Upload kyc doc error: %s", err.Error())
-			return err
+			return
 		}
 	}
 
-	return nil
+	return
 }
 
-func (service *SubmitKycService) updateKycInfo(c *gin.Context, tx *gorm.DB, curKyc model.Kyc) error {
+func (service *SubmitKycService) updateKycInfo(c *gin.Context, tx *gorm.DB, curKyc model.Kyc) (kyc model.Kyc, err error) {
 	if curKyc.Status == consts.KycStatusCompleted {
-		return errUpdateCompletedKyc
+		err = errUpdateCompletedKyc
+		return
 	}
 
-	update := service.buildKycForUpdate(c, curKyc.ID)
-	err := model.UpdateKyc(tx, update)
+	kyc = service.buildKycForUpdate(c, curKyc.ID)
+	err = model.UpdateKyc(tx, kyc)
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("Update kyc error: %s", err.Error())
-		return err
+		return
 	}
 
 	err = service.updateKycDocuments(c, tx, curKyc.ID)
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("Update kyc documents error: %s", err.Error())
-		return err
+		return
 	}
 
-	return nil
+	return
 }
 
 func (service *SubmitKycService) updateKycDocuments(c *gin.Context, tx *gorm.DB, kycId int64) error {
@@ -254,4 +259,38 @@ func (service *SubmitKycService) buildKycDocument(kycId int64, url string) model
 		KycId: kycId,
 		Url:   url,
 	}}
+}
+
+func (service *SubmitKycService) verifyDocuments(c *gin.Context, kycId int64) {
+	var images [][]byte
+	shufti := util.Shufti{
+		ClientId:  os.Getenv("SHUFTI_CLIENT_ID"),
+		SecretKey: os.Getenv("SHUFTI_SECRET_KEY"),
+	}
+	for _, d := range service.Documents {
+		if f, e := d.Open(); e == nil {
+			defer f.Close()
+			if b, e := io.ReadAll(f); e == nil {
+				images = append(images, b)
+			}
+		}
+	}
+	isAccepted, reason, err := shufti.VerifyDocument(kycId, service.FirstName, service.MiddleName, service.LastName, service.Birthday, images[0], images[1])
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("Shufti document verification error: %s", err.Error())
+		return
+	}
+	if isAccepted {
+		err = model.AcceptKyc(kycId)
+		if err != nil {
+			util.GetLoggerEntry(c).Errorf("Update kyc status error: %s", err.Error())
+			return
+		}
+	} else {
+		err = model.RejectKycWithReason(kycId, reason)
+		if err != nil {
+			util.GetLoggerEntry(c).Errorf("Update kyc status error: %s", err.Error())
+			return
+		}
+	}
 }

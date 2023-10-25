@@ -4,6 +4,7 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"web-api/conf/consts"
 	"web-api/util"
 )
 
@@ -39,4 +40,12 @@ func UpdateKyc(tx *gorm.DB, kyc Kyc) error {
 	}
 
 	return nil
+}
+
+func AcceptKyc(kycId int64) error {
+	return DB.Model(Kyc{}).Where(`id`, kycId).Update(`status`, consts.KycStatusCompleted).Error
+}
+
+func RejectKycWithReason(kycId int64, reason string) error {
+	return DB.Model(Kyc{}).Where(`id`, kycId).Updates(map[string]interface{}{"status": consts.KycStatusRejected, "remark": reason}).Error
 }
