@@ -51,6 +51,7 @@ type UserLoginOtpService struct {
 
 func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	service.Email = strings.ToLower(service.Email)
+	service.Username = strings.ToLower(service.Username)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 

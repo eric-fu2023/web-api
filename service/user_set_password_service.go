@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
@@ -71,6 +72,8 @@ type UserFinishSetupService struct {
 }
 
 func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
+	service.Username = strings.ToLower(service.Username)
+
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
@@ -112,6 +115,7 @@ type UserCheckUsernameService struct {
 }
 
 func (service *UserCheckUsernameService) Check(c *gin.Context) serializer.Response {
+	service.Username = strings.ToLower(service.Username)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	var existing model.User
 	if r := model.DB.Where(`username`, service.Username).Limit(1).Find(&existing).RowsAffected; r != 0 {
