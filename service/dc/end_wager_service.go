@@ -33,7 +33,7 @@ func (c *EndWager) GetExternalUserId() string {
 func EndWagerCallback(c *gin.Context, req callback.EndWagerRequest) (res callback.BaseResponse, err error) {
 	j, _ := json.Marshal(req)
 	fmt.Println(`end_wager: `, string(j))
-	res, err = CheckDuplicate2(c, model.ByDcRoundAndWager(req.RoundId, req.WagerId), req.BrandUid)
+	res, err = CheckDuplicate(c, model.ByDcRoundAndWager(req.RoundId, req.WagerId), req.BrandUid)
 	if res.Code != 0 || err != nil {
 		return
 	}
@@ -43,6 +43,6 @@ func EndWagerCallback(c *gin.Context, req callback.EndWagerRequest) (res callbac
 	if err != nil {
 		return
 	}
-	res, err = SuccessResponse2(c, req.BrandUid)
+	res, err = SuccessResponse(c, req.BrandUid)
 	return
 }
