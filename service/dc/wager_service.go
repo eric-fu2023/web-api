@@ -43,6 +43,6 @@ func WagerCallback(c *gin.Context, req callback.WagerRequest) (res callback.Base
 	if err != nil {
 		return
 	}
-	res, err = SuccessResponse(c, req.BrandUid)
+	res, err = SuccessResponse2(c, req.BrandUid)
 	return
 }

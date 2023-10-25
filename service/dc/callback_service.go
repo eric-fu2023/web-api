@@ -63,6 +63,22 @@ func SuccessResponse(c *gin.Context, brandUid string) (res callback.BaseResponse
 	return
 }
 
+func SuccessResponse2(c *gin.Context, brandUid string) (res callback.BaseResponse, err error) {
+	gpu, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["dc"], brandUid)
+	if err != nil {
+		return
+	}
+	res = callback.BaseResponse{
+		Code: 5001,
+		Data: callback.CommonResponse{
+			BrandUid: gpu.ExternalUserId,
+			Currency: gpu.ExternalCurrency,
+			Balance:  float64(balance) / 100,
+		},
+	}
+	return
+}
+
 func CheckDuplicate(c *gin.Context, scope func(*gorm.DB) *gorm.DB, brandUid string) (res callback.BaseResponse, err error) {
 	var dcTx ploutos.DcTransactionC
 	rows := model.DB.Model(ploutos.DcTransactionC{}).Scopes(scope).First(&dcTx).RowsAffected
