@@ -67,8 +67,8 @@ func BuildGenericCashOrder(p model.CashOrder) GenericCashOrder {
 		OrderNo:         p.ID,
 		OrderStatus:     consts.CashOrderStatus[p.Status],
 		CreatedAt:       p.CreatedAt.Format(consts.StdTimeFormat),
-		Amount:          amount,
-		EffectiveAmount: effectiveAmount,
+		Amount:          amount / 100,
+		EffectiveAmount: effectiveAmount / 100,
 		OrderType:       orderType,
 	}
 }
