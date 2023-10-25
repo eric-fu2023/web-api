@@ -16,7 +16,8 @@ type BetReport struct {
 	Stake      float64  `json:"stake"`
 	MaxReturn  float64  `json:"max_return,omitempty"`
 	Won        *float64 `json:"won,omitempty"`
-	Bets       []Bet    `json:"bets"`
+	Bets       []Bet    `json:"bets,omitempty"`
+	Game       *Game    `json:"game,omitempty"`
 }
 
 func BuildBetReportFb(c *gin.Context, a ploutos.BetReport) (b BetReport) {
@@ -42,6 +43,10 @@ func BuildBetReportFb(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 		for _, l := range a.Bets {
 			b.Bets = append(b.Bets, BuildBet(c, l))
 		}
+	}
+	if a.Game != nil {
+		t := BuildGame(c, *a.Game)
+		b.Game = &t
 	}
 	return
 }

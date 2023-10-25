@@ -6,14 +6,22 @@ import (
 	"time"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/common"
 	"web-api/util/i18n"
 )
 
+var orderType = map[int64][]int64{
+	1: {ploutos.GAME_FB, ploutos.GAME_SABA},
+	2: {ploutos.GAME_HACKSAW},
+}
+
 type OrderListService struct {
+	Type      int64  `form:"type" json:"type" binding:"required"`
 	IsParlay  bool   `form:"is_parlay" json:"is_parlay"`
 	IsSettled bool   `form:"is_settled" json:"is_settled"`
 	Start     string `form:"start" json:"start" binding:"required"`
 	End       string `form:"end" json:"end" binding:"required"`
+	common.Page
 }
 
 func (service *OrderListService) List(c *gin.Context) serializer.Response {
@@ -35,7 +43,9 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 			end = v.UTC().Add(24*time.Hour - 1*time.Second)
 		}
 	}
-	err = model.DB.Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, service.IsParlay, service.IsSettled, start, end)).Find(&list).Error
+	err = model.DB.Model(ploutos.BetReport{}).
+		Scopes(model.ByOrderListConditions(user.ID, orderType[service.Type], service.IsParlay, service.IsSettled, start, end), model.Paginate(service.Page.Page, service.Page.Limit)).
+		Find(&list).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
