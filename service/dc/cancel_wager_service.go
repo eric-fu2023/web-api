@@ -45,7 +45,7 @@ func (c *CancelWager) ShouldProceed() bool {
 func CancelWagerCallback(c *gin.Context, req callback.CancelWagerRequest) (res callback.BaseResponse, err error) {
 	j, _ := json.Marshal(req)
 	fmt.Println(`cancel_wager: `, string(j))
-	res, err = CheckDuplicate(c, model.ByDcRoundAndWager(req.RoundId, req.WagerId), req.BrandUid)
+	res, err = CheckDuplicate(c, model.ByDcRoundWagerAndWagerType(req.RoundId, req.WagerId), req.BrandUid)
 	if res.Code != 0 || err != nil {
 		return
 	}
