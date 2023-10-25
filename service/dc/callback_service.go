@@ -90,6 +90,16 @@ func CheckDuplicate(c *gin.Context, scope func(*gorm.DB) *gorm.DB, brandUid stri
 	return
 }
 
+func CheckDuplicate2(c *gin.Context, scope func(*gorm.DB) *gorm.DB, brandUid string) (res callback.BaseResponse, err error) {
+	time.Sleep(5 * time.Minute)
+	var dcTx ploutos.DcTransactionC
+	rows := model.DB.Model(ploutos.DcTransactionC{}).Scopes(scope).First(&dcTx).RowsAffected
+	if rows > 0 {
+		res, err = DuplicatedTxResponse(c, brandUid)
+	}
+	return
+}
+
 func DuplicatedTxResponse(c *gin.Context, brandUid string) (res callback.BaseResponse, err error) {
 	gpu, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["dc"], brandUid)
 	if err != nil {
