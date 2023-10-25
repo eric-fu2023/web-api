@@ -5,6 +5,7 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"time"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
@@ -76,6 +77,7 @@ func SuccessResponse2(c *gin.Context, brandUid string) (res callback.BaseRespons
 			Balance:  float64(balance) / 100,
 		},
 	}
+	time.Sleep(5 * time.Minute)
 	return
 }
 
