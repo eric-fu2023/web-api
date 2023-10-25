@@ -13,7 +13,7 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 	err = txDB.Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("id", orderNumber).
-			Where("status in ?", append(models.CashOrderStatusCollectionNonTerminal), models.CashOrderStatusSuccess).
+			Where("status in ?", append(models.CashOrderStatusCollectionNonTerminal, models.CashOrderStatusSuccess)).
 			First(&updatedCashOrder).Error
 		if err != nil || updatedCashOrder.Status == models.CashOrderStatusSuccess {
 			return
