@@ -158,6 +158,8 @@ func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user mode
 			Mobile:      service.Mobile,
 			Ip:          c.ClientIP(),
 			Platform:    deviceInfo.Platform,
+			BrandId:     user.BrandId,
+			AgentId:     user.AgentId,
 		},
 	}
 

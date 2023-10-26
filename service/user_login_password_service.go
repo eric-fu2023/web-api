@@ -217,6 +217,8 @@ func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user
 			Username:    user.Username,
 			Ip:          c.ClientIP(),
 			Platform:    deviceInfo.Platform,
+			BrandId:     user.BrandId,
+			AgentId:     user.AgentId,
 		},
 	}
 
@@ -243,6 +245,8 @@ func (service *UserLoginPasswordService) logFailedLogin(c *gin.Context, user mod
 			Username:    user.Username,
 			Ip:          c.ClientIP(),
 			Platform:    deviceInfo.Platform,
+			BrandId:     user.BrandId,
+			AgentId:     user.AgentId,
 		},
 	}
 

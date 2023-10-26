@@ -57,6 +57,8 @@ func UserLogout(c *gin.Context) {
 			DateTime: time.Now().Format(time.DateTime),
 			Ip:       c.ClientIP(),
 			Platform: deviceInfo.Platform,
+			BrandId:  user.BrandId,
+			AgentId:  user.AgentId,
 		},
 	}
 	if err := model.LogAuthEvent(event); err != nil {
