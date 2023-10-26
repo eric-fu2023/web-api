@@ -24,6 +24,12 @@ type OrderListService struct {
 	common.Page
 }
 
+type OrderSummary struct {
+	Count  int64 `gorm:"column:count"`
+	Amount int64 `gorm:"column:amount"`
+	Win    int64 `gorm:"column:win"`
+}
+
 func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	var err error
 	i18n := c.MustGet("i18n").(i18n.I18n)
@@ -31,6 +37,7 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	user := u.(model.User)
 
 	var list []ploutos.BetReport
+	var orderSummary OrderSummary
 	var start, end time.Time
 	loc := c.MustGet("_tz").(*time.Location)
 	if service.Start != "" {
@@ -43,9 +50,13 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 			end = v.UTC().Add(24*time.Hour - 1*time.Second)
 		}
 	}
-	err = model.DB.Model(ploutos.BetReport{}).
-		Scopes(model.ByOrderListConditions(user.ID, orderType[service.Type], service.IsParlay, service.IsSettled, start, end), model.Paginate(service.Page.Page, service.Page.Limit)).
-		Find(&list).Error
+
+	commonScope := model.ByOrderListConditions(user.ID, orderType[service.Type], service.IsParlay, service.IsSettled, start, end)
+	err = model.DB.Model(ploutos.BetReport{}).Scopes(commonScope).Select(`COUNT(1) as count, SUM(bet) as amount, SUM(win) as win`).Find(&orderSummary).Error
+	if err != nil {
+		return serializer.DBErr(c, service, i18n.T("general_error"), err)
+	}
+	err = model.DB.Model(ploutos.BetReport{}).Scopes(commonScope, model.ByBetTimeSort, model.Paginate(service.Page.Page, service.Page.Limit)).Find(&list).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
@@ -55,12 +66,7 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 		list[i] = l
 	}
 
-	var data []serializer.BetReport
-	for _, l := range list {
-		data = append(data, serializer.BuildBetReportFb(c, l))
-	}
-
 	return serializer.Response{
-		Data: data,
+		Data: serializer.BuildPaginatedBetReport(c, list, orderSummary.Count, orderSummary.Amount, orderSummary.Win),
 	}
 }

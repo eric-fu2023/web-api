@@ -20,7 +20,7 @@ type BetReport struct {
 	Game       *Game    `json:"game,omitempty"`
 }
 
-func BuildBetReportFb(c *gin.Context, a ploutos.BetReport) (b BetReport) {
+func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 	b = BetReport{
 		OrderId:    a.OrderId,
 		Ts:         a.BetTime.Unix(),
@@ -47,6 +47,25 @@ func BuildBetReportFb(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 	if a.Game != nil {
 		t := BuildGame(c, *a.Game)
 		b.Game = &t
+	}
+	return
+}
+
+type PaginatedBetReport struct {
+	TotalCount  int64       `json:"total_count"`
+	TotalAmount float64     `json:"total_amount"`
+	TotalWin    float64     `json:"total_win"`
+	List        []BetReport `json:"list,omitempty"`
+}
+
+func BuildPaginatedBetReport(c *gin.Context, a []ploutos.BetReport, total, amount, win int64) (b PaginatedBetReport) {
+	b = PaginatedBetReport{
+		TotalCount:  total,
+		TotalAmount: float64(amount) / 100,
+		TotalWin:    float64(win) / 100,
+	}
+	for _, aa := range a {
+		b.List = append(b.List, BuildBetReport(c, aa))
 	}
 	return
 }
