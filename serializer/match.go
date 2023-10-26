@@ -7,6 +7,7 @@ import (
 
 type Match struct {
 	ID           int64  `json:"id"`
+	MatchId      int64  `json:"match_id"`
 	SportId      int64  `json:"sport_id"`
 	LeagueId     int64  `json:"league_id"`
 	LeagueNameEn string `json:"league_name_en"`
@@ -25,6 +26,7 @@ type Match struct {
 func BuildMatch(c *gin.Context, a ploutos.Match) (b Match) {
 	b = Match{
 		ID:           a.ID,
+		MatchId:      a.MatchId,
 		SportId:      a.SportId,
 		LeagueId:     a.LeagueId,
 		LeagueNameEn: a.LeagueNameEn,
