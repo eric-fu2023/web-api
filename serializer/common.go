@@ -62,16 +62,18 @@ func Err(c *gin.Context, service any, errCode int, msg string, err error) Respon
 
 // DBErr 数据库操作失败
 func DBErr(c *gin.Context, service any, msg string, err error) Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
 	if msg == "" {
-		msg = "数据库操作失败"
+		msg = i18n.T("database_error")
 	}
 	return Err(c, service, CodeDBError, msg, err)
 }
 
 // ParamErr 各种参数错误
 func ParamErr(c *gin.Context, service any, msg string, err error) Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
 	if msg == "" {
-		msg = "参数错误"
+		msg = i18n.T("parameter_error")
 	}
 	return Err(c, service, CodeParamErr, msg, err)
 }

@@ -488,3 +488,7 @@ notification_secondary_password_reset: "Your secondary password has been reset s
 secondary_password_mismatch: "Secondary password mismatch"
 
 验证码超时: "OTP has expired."
+
+database_error: "Database error"
+parameter_error: "Invalid parameter value"
+json_type_mismatch: "Json type mismatch"
