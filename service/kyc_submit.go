@@ -34,7 +34,7 @@ type SubmitKycService struct {
 	LastName         string                 `form:"last_name" json:"last_name" binding:"required"`
 	Birthday         string                 `form:"birthday" json:"birthday" binding:"required"`
 	DocumentType     int                    `form:"document_type" json:"document_type" binding:"required"`
-	Documents        []multipart.FileHeader `form:"documents" json:"documents" binding:"gt=0"`
+	Documents        []multipart.FileHeader `form:"documents" json:"documents" binding:"eq=2"`
 	Nationality      int                    `form:"nationality" json:"nationality" binding:"required"`
 	CurrentAddress   string                 `form:"current_address" json:"current_address" binding:"required"`
 	PermanentAddress string                 `form:"permanent_address" json:"permanent_address" binding:"required"`
@@ -275,6 +275,10 @@ func (service *SubmitKycService) verifyDocuments(c *gin.Context, kycId int64) {
 				images = append(images, b)
 			}
 		}
+	}
+	if len(images) != 2 {
+		util.GetLoggerEntry(c).Errorf("Document verification cannot proceed: images error")
+		return
 	}
 	isAccepted, reason, err := shufti.VerifyDocument(kycId, service.FirstName, service.MiddleName, service.LastName, service.Birthday, strconv.Itoa(service.Nationality), images[0], images[1])
 	if err != nil {
