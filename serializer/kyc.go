@@ -1,8 +1,11 @@
 package serializer
 
 import (
+	"github.com/gin-gonic/gin"
+	"strings"
 	"web-api/model"
 	"web-api/util"
+	"web-api/util/i18n"
 )
 
 type Kyc struct {
@@ -23,13 +26,15 @@ type Kyc struct {
 	Remark           string   `json:"remark"`
 }
 
-func BuildKyc(dbKyc model.Kyc, dbKycDocs []model.KycDocument) Kyc {
+func BuildKyc(c *gin.Context, dbKyc model.Kyc, dbKycDocs []model.KycDocument) Kyc {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+
 	var docUrls []string
 	for _, d := range dbKycDocs {
 		docUrls = append(docUrls, util.BuildAliyunOSSUrl(d.Url))
 	}
 
-	return Kyc{
+	kyc := Kyc{
 		Id:               dbKyc.ID,
 		FirstName:        dbKyc.FirstName,
 		MiddleName:       dbKyc.MiddleName,
@@ -44,6 +49,10 @@ func BuildKyc(dbKyc model.Kyc, dbKycDocs []model.KycDocument) Kyc {
 		IncomeSource:     dbKyc.IncomeSource,
 		AssociatedStore:  dbKyc.AssociatedStore,
 		Status:           dbKyc.Status,
-		Remark:           dbKyc.Remark,
 	}
+	if dbKyc.Remark != "" {
+		kyc.Remark = strings.TrimSuffix(dbKyc.Remark, ".")
+		kyc.Remark += i18n.T("kyc_rejected_reason_suffix")
+	}
+	return kyc
 }

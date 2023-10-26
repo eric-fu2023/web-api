@@ -80,7 +80,7 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		u.UserSum = &t
 	}
 	if user.Kyc != nil {
-		t := BuildKyc(*user.Kyc, []model.KycDocument{})
+		t := BuildKyc(c, *user.Kyc, []model.KycDocument{})
 		u.Kyc = &t
 	} else {
 		if user.KycCheckRequired && user.CreatedAt.Before(time.Now().Add(-7*24*time.Hour)) {
