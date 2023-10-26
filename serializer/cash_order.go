@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"os"
 	"web-api/conf/consts"
 	"web-api/model"
 
@@ -13,6 +14,7 @@ type TopupOrder struct {
 	OrderNumber      string  `json:"order_number"`
 	TopupData        *string `json:"topup_data"`
 	TopupDataType    *string `json:"topup_data_type"`
+	RedirectUrl      string  `json:"redirect_url"`
 }
 
 func BuildPaymentOrder(p finpay.PaymentOrderRespData) TopupOrder {
@@ -22,6 +24,7 @@ func BuildPaymentOrder(p finpay.PaymentOrderRespData) TopupOrder {
 		OrderNumber:      p.MerchantOrderNo,
 		TopupData:        p.PaymentData,
 		TopupDataType:    p.PaymentDataType,
+		RedirectUrl:      os.Getenv("FINPAY_REDIRECT_URL"),
 	}
 }
 
