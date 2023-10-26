@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"web-api/conf/consts"
 )
 
 type Shufti struct {
@@ -16,7 +17,7 @@ type Shufti struct {
 	SecretKey string
 }
 
-func (s *Shufti) VerifyDocument(id int64, firstName, middleName, lastName, dob string, document, face []byte) (isAccepted bool, reason string, err error) {
+func (s *Shufti) VerifyDocument(id int64, firstName, middleName, lastName, dob, nationality string, document, face []byte) (isAccepted bool, reason string, err error) {
 	reference := fmt.Sprintf(`%d-%d`, id, time.Now().Unix())
 	documentBase64 := base64Encode(document)
 	faceBase64 := base64Encode(face)
@@ -26,6 +27,7 @@ func (s *Shufti) VerifyDocument(id int64, firstName, middleName, lastName, dob s
 
 	payloadMap := map[string]interface{}{
 		"reference":         reference,
+		"country":           consts.CountryISO[nationality],
 		"verification_mode": "any",
 		"face": map[string]interface{}{
 			"proof": faceBase64,

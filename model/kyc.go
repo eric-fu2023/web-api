@@ -43,7 +43,7 @@ func UpdateKyc(tx *gorm.DB, kyc Kyc) error {
 }
 
 func AcceptKyc(kycId int64) error {
-	return DB.Model(Kyc{}).Where(`id`, kycId).Update(`status`, consts.KycStatusCompleted).Error
+	return DB.Model(Kyc{}).Where(`id`, kycId).Updates(map[string]interface{}{"status": consts.KycStatusCompleted, "remark": ""}).Error
 }
 
 func RejectKycWithReason(kycId int64, reason string) error {

@@ -9,6 +9,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"strconv"
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -275,7 +276,7 @@ func (service *SubmitKycService) verifyDocuments(c *gin.Context, kycId int64) {
 			}
 		}
 	}
-	isAccepted, reason, err := shufti.VerifyDocument(kycId, service.FirstName, service.MiddleName, service.LastName, service.Birthday, images[0], images[1])
+	isAccepted, reason, err := shufti.VerifyDocument(kycId, service.FirstName, service.MiddleName, service.LastName, service.Birthday, strconv.Itoa(service.Nationality), images[0], images[1])
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("Shufti document verification error: %s", err.Error())
 		return
