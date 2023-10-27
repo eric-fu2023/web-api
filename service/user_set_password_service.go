@@ -19,7 +19,7 @@ import (
 type UserSetPasswordService struct {
 	CountryCode string `form:"country_code" json:"country_code" validate:"omitempty,startswith=+"`
 	Mobile      string `form:"mobile" json:"mobile" validate:"omitempty,number"`
-	Password    string `form:"password" json:"password" binding:"required"`
+	Password    string `form:"password" json:"password" binding:"required,password"`
 	Otp         string `form:"otp" json:"otp" binding:"required"`
 }
 
@@ -66,8 +66,8 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 }
 
 type UserFinishSetupService struct {
-	Username   string `form:"username" json:"username" binding:"required,excludesall=' '"`
-	Password   string `form:"password" json:"password" binding:"required"`
+	Username   string `form:"username" json:"username" binding:"required,username"`
+	Password   string `form:"password" json:"password" binding:"required,password"`
 	CurrencyId int64  `form:"currency_id" json:"currency_id" binding:"required,numeric"`
 }
 

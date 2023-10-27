@@ -1,6 +1,8 @@
 package conf
 
 import (
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"os"
 	"strings"
@@ -48,4 +50,9 @@ func Init() {
 	util.InitFbFactory()
 	util.InitSabaFactory()
 	util.InitDcFactory()
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("username", util.UsernameValidation)
+		v.RegisterValidation("password", util.PasswordValidation)
+	}
 }
