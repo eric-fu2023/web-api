@@ -88,11 +88,12 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	if rows := q.Scopes(model.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 { // new user
 		user = model.User{
 			UserC: models.UserC{
-				Email:       service.Email,
-				CountryCode: service.CountryCode,
-				Mobile:      service.Mobile,
-				Status:      1,
-				Role:        1, // default role user
+				Email:          service.Email,
+				CountryCode:    service.CountryCode,
+				Mobile:         service.Mobile,
+				Status:         1,
+				Role:           1, // default role user
+				RegistrationIp: c.ClientIP(),
 			},
 		}
 		user.BrandId = int64(c.MustGet("_brand").(int))
