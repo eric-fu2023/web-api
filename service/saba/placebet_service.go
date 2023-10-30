@@ -3,7 +3,6 @@ package saba
 import (
 	"blgit.rfdev.tech/taya/game-service/saba/callback"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"time"
@@ -49,8 +48,7 @@ func (c *PlaceBet) GetExternalUserId() string {
 }
 
 func PlaceBetCallback(c *gin.Context, req callback.PlaceBetRequest) (res any, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("placebet: ", string(j))
+	go common.LogGameCallbackRequest("placebet", req)
 	clb := PlaceBet{Request: req}
 	err = common.ProcessTransaction(&clb)
 	if err != nil {

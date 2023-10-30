@@ -3,8 +3,6 @@ package saba
 import (
 	"blgit.rfdev.tech/taya/game-service/saba/callback"
 	models "blgit.rfdev.tech/taya/ploutos-object"
-	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"time"
 	"web-api/conf/consts"
@@ -57,8 +55,7 @@ func (c *CancelBet) IsAdjustment() bool {
 }
 
 func CancelBetCallback(c *gin.Context, req callback.CancelBetRequest) (res any, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("cancelbet: ", string(j))
+	go common.LogGameCallbackRequest("cancelbet", req)
 	for i, _ := range req.Message.Txns {
 		r := req
 		r.Message.Txns = r.Message.Txns[i : i+1]

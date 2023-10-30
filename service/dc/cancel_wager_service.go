@@ -2,8 +2,6 @@ package dc
 
 import (
 	"blgit.rfdev.tech/taya/game-service/dc/callback"
-	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"web-api/model"
@@ -43,8 +41,7 @@ func (c *CancelWager) ShouldProceed() bool {
 }
 
 func CancelWagerCallback(c *gin.Context, req callback.CancelWagerRequest) (res callback.BaseResponse, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println(`cancel_wager: `, string(j))
+	go common.LogGameCallbackRequest("cancel_wager", req)
 	res, err = CheckDuplicate(c, model.ByDcRoundWagerAndWagerType(req.RoundId, req.WagerId), req.BrandUid)
 	if res.Code != 0 || err != nil {
 		return

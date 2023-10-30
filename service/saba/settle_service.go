@@ -11,6 +11,7 @@ import (
 	"time"
 	"web-api/cache"
 	"web-api/model"
+	"web-api/service/common"
 	"web-api/util"
 )
 
@@ -57,8 +58,7 @@ type SettleRedis struct {
 }
 
 func SettleCallback(c *gin.Context, req callback.SettleRequest) (res any, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("settle: ", string(j))
+	go common.LogGameCallbackRequest("settle", req)
 	go func(c *gin.Context, req callback.SettleRequest) {
 		for _, txn := range req.Message.Txns {
 			sr := SettleRedis{OpId: req.Message.OperationId, Txn: txn}
@@ -77,8 +77,7 @@ func SettleCallback(c *gin.Context, req callback.SettleRequest) (res any, err er
 }
 
 func UnsettleCallback(c *gin.Context, req callback.SettleRequest) (res any, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("unsettle: ", string(j))
+	go common.LogGameCallbackRequest("unsettle", req)
 	go func(c *gin.Context, req callback.SettleRequest) {
 		for _, txn := range req.Message.Txns {
 			txn.Status = "unsettle"
@@ -99,8 +98,7 @@ func UnsettleCallback(c *gin.Context, req callback.SettleRequest) (res any, err 
 }
 
 func ResettleCallback(c *gin.Context, req callback.SettleRequest) (res any, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("resettle: ", string(j))
+	go common.LogGameCallbackRequest("resettle", req)
 	go func(c *gin.Context, req callback.SettleRequest) {
 		for _, txn := range req.Message.Txns {
 			sr := SettleRedis{OpId: req.Message.OperationId, Txn: txn}

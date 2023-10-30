@@ -2,8 +2,6 @@ package dc
 
 import (
 	"blgit.rfdev.tech/taya/game-service/dc/callback"
-	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"web-api/service/common"
@@ -34,8 +32,7 @@ func (c *PromoPayout) GetBetAmount() (amount int64, exists bool) {
 }
 
 func PromoPayoutCallback(c *gin.Context, req callback.PromoPayoutRequest) (res callback.BaseResponse, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println(`promo_payout: `, string(j))
+	go common.LogGameCallbackRequest("promo_payout", req)
 
 	a := PromoPayout{Request: req}
 	err = common.ProcessTransaction(&a)

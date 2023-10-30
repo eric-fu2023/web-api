@@ -2,6 +2,7 @@ package common
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"encoding/json"
 	"errors"
 	"gorm.io/gorm"
 	"web-api/model"
@@ -179,4 +180,9 @@ func SendNotification(user model.User, text string) {
 			util.Log().Error("notification creation error", err)
 		}
 	}()
+}
+
+func LogGameCallbackRequest(action string, request any) {
+	j, _ := json.Marshal(request)
+	util.Log().Info(`%s: %s`, action, string(j))
 }

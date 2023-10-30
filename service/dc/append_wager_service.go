@@ -2,8 +2,6 @@ package dc
 
 import (
 	"blgit.rfdev.tech/taya/game-service/dc/callback"
-	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"web-api/model"
@@ -31,8 +29,7 @@ func (c *AppendWager) GetExternalUserId() string {
 }
 
 func AppendWagerCallback(c *gin.Context, req callback.AppendWagerRequest) (res callback.BaseResponse, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println(`append_wager: `, string(j))
+	go common.LogGameCallbackRequest("append_wager", req)
 	res, err = CheckDuplicate(c, model.ByDcRoundAndWager(req.RoundId, req.WagerId), req.BrandUid)
 	if res.Code != 0 || err != nil {
 		return

@@ -110,8 +110,7 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 }
 
 func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("order_pay: ", string(j))
+	go common.LogGameCallbackRequest("order_pay", req)
 	err = common.ProcessTransaction(&Callback{Request: req})
 	if err != nil {
 		return
@@ -123,8 +122,7 @@ func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callbac
 }
 
 func CheckOrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("check_order_pay: ", string(j))
+	go common.LogGameCallbackRequest("check_order_pay", req)
 	var fbTx ploutos.FbTransaction
 	rows := model.DB.Where(`transaction_id`, req.TransactionId).First(&fbTx).RowsAffected
 	if rows == 1 {
@@ -137,8 +135,7 @@ func CheckOrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res ca
 }
 
 func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (res callback.BaseResponse, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("sync_transaction: ", string(j))
+	go common.LogGameCallbackRequest("sync_transaction", req)
 	go func(c *gin.Context, req []callback.OrderPayRequest) {
 		for _, r := range req {
 			jj, _ := json.Marshal(r)
@@ -155,8 +152,7 @@ func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (re
 }
 
 func SyncOrdersCallback(c *gin.Context, req callback.SyncOrdersRequest) (res callback.BaseResponse, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("sync_orders: ", string(j))
+	go common.LogGameCallbackRequest("sync_orders", req)
 	go func(c *gin.Context, req callback.SyncOrdersRequest) {
 		coll := model.MongoDB.Collection(MONGODB_FB_CALLBACK_SYNC_ORDERS)
 		_, e := coll.InsertOne(context.TODO(), req)
@@ -171,8 +167,7 @@ func SyncOrdersCallback(c *gin.Context, req callback.SyncOrdersRequest) (res cal
 }
 
 func SyncCashoutCallback(c *gin.Context, req callback.SyncCashoutRequest) (res callback.BaseResponse, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("sync_cashout: ", string(j))
+	go common.LogGameCallbackRequest("sync_cashout", req)
 	go func(c *gin.Context, req callback.SyncCashoutRequest) {
 		coll := model.MongoDB.Collection(MONGODB_FB_CALLBACK_SYNC_CASHOUT)
 		_, e := coll.InsertOne(context.TODO(), req)

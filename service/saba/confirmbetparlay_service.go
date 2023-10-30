@@ -3,8 +3,6 @@ package saba
 import (
 	"blgit.rfdev.tech/taya/game-service/saba/callback"
 	models "blgit.rfdev.tech/taya/ploutos-object"
-	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"time"
@@ -72,8 +70,7 @@ func (c *ConfirmBetParlay) IsAdjustment() bool {
 }
 
 func ConfirmBetParlayCallback(c *gin.Context, req callback.ConfirmBetParlayRequest) (res any, err error) {
-	j, _ := json.Marshal(req)
-	fmt.Println("confirmbetparlay: ", string(j))
+	go common.LogGameCallbackRequest("confirmbetparlay", req)
 	for _, t := range req.Message.Txns {
 		var newReq callback.ConfirmBetParlayRequest
 		copier.Copy(&newReq, req)
