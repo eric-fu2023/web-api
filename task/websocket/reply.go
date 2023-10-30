@@ -64,7 +64,7 @@ func welcomeToRoom(message string) {
 				}
 
 				coll := model.MongoDB.Collection("room_message")
-				filter := bson.M{"room": room}
+				filter := bson.M{"room": room, "deleted_at": nil}
 				opts := options.Find()
 				opts.SetLimit(20)
 				opts.SetSort(bson.D{{"timestamp", -1}, {"_id", -1}})
