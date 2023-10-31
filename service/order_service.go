@@ -66,7 +66,13 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 		list[i] = l
 	}
 
+	go updateOrderLastSeen(user.ID)
+
 	return serializer.Response{
 		Data: serializer.BuildPaginatedBetReport(c, list, orderSummary.Count, orderSummary.Amount, orderSummary.Win),
 	}
+}
+
+func updateOrderLastSeen(userId int64) {
+	model.DB.Model(ploutos.UserCounter{}).Scopes(model.ByUserId(userId)).Updates(map[string]interface{}{"order_count": 0, "order_last_seen": time.Now()})
 }

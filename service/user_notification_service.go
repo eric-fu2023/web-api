@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
+	"time"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -30,6 +31,8 @@ func (service *UserNotificationListService) List(c *gin.Context) (r serializer.R
 	for _, notification := range notifications {
 		list = append(list, serializer.BuildUserNotification(c, notification))
 	}
+
+	go updateNotificationLastSeen(user.ID)
 
 	r = serializer.Response{
 		Data: list,
@@ -60,4 +63,8 @@ func (service *UserNotificationMarkReadService) MarkRead(c *gin.Context) (r seri
 	}
 	r.Msg = "Success"
 	return
+}
+
+func updateNotificationLastSeen(userId int64) {
+	model.DB.Model(ploutos.UserCounter{}).Scopes(model.ByUserId(userId)).Update(`notification_last_seen`, time.Now())
 }

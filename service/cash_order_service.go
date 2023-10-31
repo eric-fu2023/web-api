@@ -1,6 +1,7 @@
 package service
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -39,5 +40,10 @@ func (s CashOrderService) List(c *gin.Context) (r serializer.Response, err error
 		return
 	}
 	r.Data = util.MapSlice(list, serializer.BuildGenericCashOrder)
+	go updateTransactionLastSeen(user.ID)
 	return
+}
+
+func updateTransactionLastSeen(userId int64) {
+	model.DB.Model(ploutos.UserCounter{}).Scopes(model.ByUserId(userId)).Update(`transaction_last_seen`, time.Now())
 }

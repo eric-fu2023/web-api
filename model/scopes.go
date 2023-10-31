@@ -198,3 +198,9 @@ func UserFavouriteByUserIdTypeGameIdAndSportId(userId, t, gameId, sportId int64)
 		return db.Scopes(UserFavouriteByUserIdTypeAndSportId(userId, t, sportId)).Where(`game_id`, gameId)
 	}
 }
+
+func ByCreatedAtGreaterThan(time time.Time) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(`created_at > ?`, time)
+	}
+}
