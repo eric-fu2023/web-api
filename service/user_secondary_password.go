@@ -50,7 +50,7 @@ func (service *UserSecondaryPasswordService) SetSecondaryPassword(c *gin.Context
 		return serializer.DBErr(c, service, i18n.T("密码修改失败"), err)
 	}
 
-	common.SendNotification(user, i18n.T("notification_secondary_password_reset"))
+	common.SendNotification(user, i18n.T("notification_pin_reset"))
 
 	return serializer.Response{
 		Msg: i18n.T("success"),

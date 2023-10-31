@@ -14,6 +14,7 @@ import (
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
 )
@@ -70,7 +71,10 @@ func (service *SubmitKycService) SubmitKyc(c *gin.Context) serializer.Response {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("kyc_submit_failed"), err)
 	}
 
-	go service.verifyDocuments(c, kyc.ID)
+	u, _ := c.Get("user")
+	user := u.(model.User)
+	go service.verifyDocuments(c, user, kyc.ID)
+	common.SendNotification(user, i18n.T("notification_kyc_pending"))
 
 	return serializer.Response{
 		Msg: i18n.T("success"),
@@ -262,7 +266,7 @@ func (service *SubmitKycService) buildKycDocument(kycId int64, url string) model
 	}}
 }
 
-func (service *SubmitKycService) verifyDocuments(c *gin.Context, kycId int64) {
+func (service *SubmitKycService) verifyDocuments(c *gin.Context, user model.User, kycId int64) {
 	var images [][]byte
 	shufti := util.Shufti{
 		ClientId:  os.Getenv("SHUFTI_CLIENT_ID"),
@@ -285,17 +289,21 @@ func (service *SubmitKycService) verifyDocuments(c *gin.Context, kycId int64) {
 		util.GetLoggerEntry(c).Errorf("Shufti document verification error: %s", err.Error())
 		return
 	}
+
+	i18n := c.MustGet("i18n").(i18n.I18n)
 	if isAccepted {
 		err = model.AcceptKyc(kycId)
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("Update kyc status error: %s", err.Error())
 			return
 		}
+		common.SendNotification(user, i18n.T("notification_kyc_approved"))
 	} else {
 		err = model.RejectKycWithReason(kycId, reason)
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("Update kyc status error: %s", err.Error())
 			return
 		}
+		common.SendNotification(user, i18n.T("notification_kyc_rejected"))
 	}
 }

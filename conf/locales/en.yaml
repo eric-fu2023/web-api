@@ -477,6 +477,10 @@ err_insufficient_withdrawable: "Insufficient withdrawable amount"
 
 notification_welcome: "Welcome to Taya!"
 notification_password_reset: "Your password has been reset successfully."
+notification_pin_reset: "Your authentication PIN has been reset successfully."
+notification_kyc_approved: "Congratulations! Your KYC verification has been approved."
+notification_kyc_rejected: "Your KYC verification has not been successful. Please review the provided information and resubmit."
+notification_kyc_pending: "Your KYC verification is being processed. Please be patient."
 
 negative_amount: "Amount cannot be negative"
 first_topup_amount: "First top up should be at least %d pesos"
@@ -484,7 +488,6 @@ topup_amount: "Top up should be at least %d pesos"
 
 stream_not_found: "No live stream found."
 password_must_be_digits: "Secondary password must be 6 digits"
-notification_secondary_password_reset: "Your secondary password has been reset successfully."
 secondary_password_mismatch: "Secondary password mismatch"
 
 验证码超时: "OTP has expired."
