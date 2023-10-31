@@ -1,7 +1,7 @@
 package internal_api
 
 import (
-	"web-api/api"
+	"web-api/serializer"
 	"web-api/service/cashout"
 
 	"github.com/gin-gonic/gin"
@@ -13,9 +13,9 @@ func CustomOrder(c *gin.Context) {
 		if res, err := service.Handle(c); err == nil {
 			c.JSON(200, res)
 		} else {
-			c.JSON(500, api.ErrorResponse(c, service, err))
+			c.JSON(500, serializer.EnsureErr(c, err, res))
 		}
 	} else {
-		c.JSON(400, api.ErrorResponse(c, service, err))
+		c.JSON(400, serializer.ParamErr(c, service, "", err))
 	}
 }
