@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -70,10 +71,12 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	} else {
 		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
 	}
-	if service.Otp != "159357" { // to be deleted when go live
-		otp := cache.RedisSessionClient.Get(context.TODO(), key)
-		if otp.Val() != service.Otp {
-			return serializer.ParamErr(c, service, errStr, nil)
+	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" { // for testing convenience
+		if service.Otp != "159357" {
+			otp := cache.RedisSessionClient.Get(context.TODO(), key)
+			if otp.Val() != service.Otp {
+				return serializer.ParamErr(c, service, errStr, nil)
+			}
 		}
 	}
 

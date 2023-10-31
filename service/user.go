@@ -43,6 +43,18 @@ func CreateUser(user model.User) error {
 		tx.Rollback()
 		return err
 	}
+
+	userCounter := ploutos.UserCounter{
+		UserCounterC: ploutos.UserCounterC{
+			UserId: user.ID,
+		},
+	}
+	err = tx.Create(&userCounter).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	tx.Commit()
 
 	var currencies []ploutos.CurrencyGameVendor
