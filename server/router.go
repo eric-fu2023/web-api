@@ -140,6 +140,7 @@ func NewRouter() *gin.Engine {
 				user.GET("/notifications", api.UserNotificationList)
 				user.PUT("/notification/mark_read", api.UserNotificationMarkRead)
 				user.GET("/silenced", api.Silenced)
+				user.GET("/counters", api.UserCounters)
 
 				user.GET("/following_ids", api.UserFollowingIdList)
 				user.GET("/followings", api.UserFollowingList)

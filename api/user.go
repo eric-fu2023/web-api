@@ -191,3 +191,13 @@ func UserSetSecondaryPassword(c *gin.Context) {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
+
+func UserCounters(c *gin.Context) {
+	var service service.CounterService
+	if err := c.ShouldBind(&service); err == nil {
+		res := service.Get(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
