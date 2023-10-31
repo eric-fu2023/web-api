@@ -5,7 +5,7 @@ go 1.20
 require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20231018035118-bc61fa14f821
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20231031034333-e7f907207712
-	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231030022209-a45a5b730723
+	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231031025332-cb6f3986b3aa
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20231006040648-60a9f0c202a6
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/chenyahui/gin-cache v1.7.1
