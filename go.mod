@@ -4,8 +4,8 @@ go 1.20
 
 require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20231018035118-bc61fa14f821
-	blgit.rfdev.tech/taya/payment-service v0.0.0-20231004061927-4d495c794630
-	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231031025332-cb6f3986b3aa
+	blgit.rfdev.tech/taya/payment-service v0.0.0-20231031034333-e7f907207712
+	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231030022209-a45a5b730723
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20231006040648-60a9f0c202a6
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/chenyahui/gin-cache v1.7.1
@@ -13,6 +13,7 @@ require (
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-playground/validator/v10 v10.14.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redsync/redsync/v4 v4.9.4
 	github.com/golang-jwt/jwt/v4 v4.5.0
@@ -50,7 +51,6 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.14.0 // indirect
 	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect

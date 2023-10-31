@@ -15,7 +15,7 @@ type FinpayPaymentCallback struct {
 }
 
 func (s *FinpayPaymentCallback) Handle(c *gin.Context) (err error) {
-	if !s.IsValid() {
+	if !s.IsValid() || !s.IsSuccess() {
 		err = errors.New("invalid response")
 		return
 	}

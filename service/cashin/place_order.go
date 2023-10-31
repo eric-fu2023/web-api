@@ -8,6 +8,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service"
+	"web-api/util"
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
@@ -105,14 +106,15 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		var data finpay.PaymentOrderRespData
 		data, err = finpay.FinpayClient{}.PlaceDefaultGcashOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID)
 		if err != nil {
+			_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(s))
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 			return
 		}
 		transactionID = data.PaymentOrderNo
 		r.Data = serializer.BuildPaymentOrder(data)
+		cashOrder.TransactionId = &transactionID
+		cashOrder.Status = models.CashOrderStatusPending
 	}
-	cashOrder.TransactionId = &transactionID
-	cashOrder.Status = models.CashOrderStatusPending
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
 	return
 }
