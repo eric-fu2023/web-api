@@ -5,10 +5,21 @@ import (
 	"encoding/json"
 	"errors"
 	"firebase.google.com/go/v4/messaging"
+	"fmt"
 	"gorm.io/gorm"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/util"
 )
+
+const NOTIFICATION_PLACE_BET_TITLE = "Bet placed successfully!"
+const NOTIFICATION_PLACE_BET = "You have successfully placed a bet. Keep watching the event or check your bet history in your account. Wish you good luck!"
+const NOTIFICATION_DEPOSIT_APPROVED_TITLE = "Deposit Transaction Approved"
+const NOTIFICATION_DEPOSIT_APPROVED = "Your deposit transaction with the amount of %.2f %s has been approved."
+const NOTIFICATION_WITHDRAWAL_APPROVED_TITLE = "Withdrawal Transaction Approved"
+const NOTIFICATION_WITHDRAWAL_APPROVED = "Your withdrawal transaction with the amount of %.2f %s has been approved."
+const NOTIFICATION_WITHDRAWAL_DECLINED_TITLE = "Withdrawal Transaction Declined"
+const NOTIFICATION_WITHDRAWAL_DECLINED = "Your withdrawal transaction with the amount of %.2f %s has been declined."
 
 type Platform struct {
 	Platform int64 `form:"platform" json:"platform" binding:"required"`
@@ -128,6 +139,9 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 		return
 	}
 	tx.Commit()
+
+	SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
+
 	return
 }
 
@@ -174,13 +188,18 @@ func abs(x int64) int64 {
 	return x
 }
 
-func SendNotification(user model.User, notificationType string, title string, text string) {
+func SendNotification(userId int64, notificationType string, title string, text string) { // add to notification list and push
 	go func() {
-		notification := ploutos.NewUserNotification(user.UserC, text)
+		notification := ploutos.NewUserNotification(userId, text)
 		if err := notification.Send(model.DB); err != nil {
 			util.Log().Error("notification creation error: ", err.Error())
+			return
 		}
 	}()
+	PushNotification(userId, notificationType, title, text)
+}
+
+func PushNotification(userId int64, notificationType string, title string, text string) {
 	go func() {
 		msgData := map[string]string{
 			"notification_type": notificationType,
@@ -189,14 +208,16 @@ func SendNotification(user model.User, notificationType string, title string, te
 			Title: title,
 			Body:  text,
 		}
-		tokens, err := model.GetFcmTokenStrings([]int64{user.ID})
+		tokens, err := model.GetFcmTokenStrings([]int64{userId})
 		if err != nil {
 			util.Log().Error("fcm token generation error: ", err.Error())
+			return
 		}
 		client := util.FCMFactory.NewClient(false)
 		err = client.SendMessageToAll(msgData, notification, tokens)
 		if err != nil {
 			util.Log().Error("fcm sending error: ", err.Error())
+			return
 		}
 	}()
 }
@@ -204,4 +225,28 @@ func SendNotification(user model.User, notificationType string, title string, te
 func LogGameCallbackRequest(action string, request any) {
 	j, _ := json.Marshal(request)
 	util.Log().Info(`%s: %s`, action, string(j))
+}
+
+func SendCashNotification(userId int64, notificationType string, title string, text string, amount int64, currencyId int64) {
+	go func() {
+		var currency ploutos.Currency
+		err := model.DB.Where(`id`, currencyId).First(&currency).Error
+		if err != nil {
+			util.Log().Error("send cash notification error (query currency): ", err.Error())
+			return
+		}
+		SendNotification(userId, notificationType, title, fmt.Sprintf(text, float64(amount)/100, currency.Name))
+	}()
+}
+
+func SendCashNotificationWithoutCurrencyId(userId int64, notificationType string, title string, text string, amount int64) {
+	go func() {
+		var user ploutos.User
+		err := model.DB.Where(`id`, userId).First(&user).Error
+		if err != nil {
+			util.Log().Error("send cash notification error (query user): ", err.Error())
+			return
+		}
+		SendCashNotification(userId, notificationType, title, text, amount, user.CurrencyId)
+	}()
 }

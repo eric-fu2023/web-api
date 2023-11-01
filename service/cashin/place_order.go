@@ -8,6 +8,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service"
+	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
 
@@ -128,6 +129,8 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		cashOrder.Status = models.CashOrderStatusPending
 	}
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
+
+	common.SendCashNotification(user.ID, consts.Notification_Type_Cash_Transaction, i18n.T("notification_deposit_pending_title"), i18n.T("notification_deposit_pending"), cashOrder.AppliedCashInAmount, user.CurrencyId)
 	return
 }
 

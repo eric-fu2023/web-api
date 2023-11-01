@@ -8,6 +8,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"strings"
 	"web-api/cache"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -58,7 +59,7 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 		return serializer.DBErr(c, service, i18n.T("密码修改失败"), err)
 	}
 
-	common.SendNotification(user, "password_reset", i18n.T("notification_password_reset_title"), i18n.T("notification_password_reset"))
+	common.SendNotification(user.ID, consts.Notification_Type_Password_Reset, i18n.T("notification_password_reset_title"), i18n.T("notification_password_reset"))
 
 	return serializer.Response{
 		Msg: i18n.T("success"),
@@ -105,7 +106,7 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 	}
 
-	common.SendNotification(user, "user_registration", i18n.T("notification_welcome_title"), i18n.T("notification_welcome"))
+	common.SendNotification(user.ID, consts.Notification_Type_User_Registration, i18n.T("notification_welcome_title"), i18n.T("notification_welcome"))
 
 	return serializer.Response{
 		Msg: i18n.T("success"),

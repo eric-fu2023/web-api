@@ -1,7 +1,9 @@
 package cashout
 
 import (
+	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/service/common"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
@@ -30,6 +32,8 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 		if err != nil {
 			return
 		}
+
+		common.SendCashNotificationWithoutCurrencyId(updatedCashOrder.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_WITHDRAWAL_APPROVED_TITLE, common.NOTIFICATION_WITHDRAWAL_APPROVED, updatedCashOrder.AppliedCashInAmount)
 		return
 	})
 

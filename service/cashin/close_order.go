@@ -1,7 +1,9 @@
 package cashin
 
 import (
+	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/service/common"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -71,5 +73,7 @@ func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.Cash
 	}
 
 	updatedCashOrder = newCashOrderState
+
+	common.SendCashNotificationWithoutCurrencyId(newCashOrderState.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_DEPOSIT_APPROVED_TITLE, common.NOTIFICATION_DEPOSIT_APPROVED, newCashOrderState.AppliedCashInAmount)
 	return
 }

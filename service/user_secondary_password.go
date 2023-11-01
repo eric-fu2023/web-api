@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 	"web-api/cache"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -50,7 +51,7 @@ func (service *UserSecondaryPasswordService) SetSecondaryPassword(c *gin.Context
 		return serializer.DBErr(c, service, i18n.T("密码修改失败"), err)
 	}
 
-	common.SendNotification(user, "pin_reset", i18n.T("notification_pin_reset_title"), i18n.T("notification_pin_reset"))
+	common.SendNotification(user.ID, consts.Notification_Type_Pin_Reset, i18n.T("notification_pin_reset_title"), i18n.T("notification_pin_reset"))
 
 	return serializer.Response{
 		Msg: i18n.T("success"),

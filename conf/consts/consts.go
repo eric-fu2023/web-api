@@ -376,4 +376,11 @@ const (
 	FirstTopupMinimum      int64  = 10_00 //1000_00
 	TopupMinimum           int64  = 5_00  //500_00
 	WithdrawMethodLimit           = 5
+
+	Notification_Type_User_Registration = "user_registration"
+	Notification_Type_Password_Reset    = "password_reset"
+	Notification_Type_Pin_Reset         = "pin_reset"
+	Notification_Type_Kyc               = "kyc"
+	Notification_Type_Bet_Placement     = "bet_transaction"
+	Notification_Type_Cash_Transaction  = "cash_transaction"
 )

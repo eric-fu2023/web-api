@@ -2,7 +2,9 @@ package cashout
 
 import (
 	"errors"
+	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/service/common"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
@@ -44,6 +46,7 @@ func RevertCashOutOrder(c *gin.Context, orderNumber string, notes, remark string
 			10002,
 			newCashOrderState.ID)
 
+		common.SendCashNotificationWithoutCurrencyId(updatedCashOrder.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_WITHDRAWAL_DECLINED_TITLE, common.NOTIFICATION_WITHDRAWAL_DECLINED, updatedCashOrder.AppliedCashInAmount)
 		return
 	})
 
