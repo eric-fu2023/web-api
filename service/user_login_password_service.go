@@ -82,10 +82,7 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 			return otpResp
 		}
 
-		loginTime := time.Now()
-		if err = service.logSuccessfulLogin(c, user, loginTime); err != nil {
-			util.Log().Error("log successful login err", err)
-		}
+		go service.logSuccessfulLogin(c, user)
 	}
 
 	// Return masked email and mobile
@@ -200,7 +197,7 @@ func (service *UserLoginPasswordService) sendOtp(c *gin.Context, user model.User
 
 	return resp, nil
 }
-func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time) error {
+func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user model.User) {
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		// Just log error if failed
@@ -225,7 +222,9 @@ func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user
 		},
 	}
 
-	return model.LogAuthEvent(event)
+	if err = model.LogAuthEvent(event); err != nil {
+		util.GetLoggerEntry(c).Errorf("Log auth event error: %s", err.Error())
+	}
 }
 
 func (service *UserLoginPasswordService) logFailedLogin(c *gin.Context, user model.User) error {

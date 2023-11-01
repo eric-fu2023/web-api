@@ -75,6 +75,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		if service.Otp != "159357" {
 			otp := cache.RedisSessionClient.Get(context.TODO(), key)
 			if otp.Val() != service.Otp {
+				go service.logFailedLogin(c, user)
 				return serializer.ParamErr(c, service, errStr, nil)
 			}
 		}
@@ -132,9 +133,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		util.GetLoggerEntry(c).Errorf("Update last login ip and time error: %s", err.Error())
 	}
 
-	if err = service.logSuccessfulLogin(c, user, loginTime); err != nil {
-		util.GetLoggerEntry(c).Errorf("Log successful login error: %s", err.Error())
-	}
+	go service.logSuccessfulLogin(c, user, loginTime)
 
 	return serializer.Response{
 		Data: map[string]interface{}{
@@ -144,7 +143,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	}
 }
 
-func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time) error {
+func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time) {
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		// Just log error if failed
@@ -169,7 +168,39 @@ func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user mode
 		},
 	}
 
-	return model.LogAuthEvent(event)
+	if err = model.LogAuthEvent(event); err != nil {
+		util.GetLoggerEntry(c).Errorf("Log auth event error: %s", err.Error())
+	}
+}
+
+func (service *UserLoginOtpService) logFailedLogin(c *gin.Context, user model.User) {
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil {
+		// Just log error if failed
+		util.GetLoggerEntry(c).Errorf("Get device info error: %s", err.Error())
+	}
+
+	event := model.AuthEvent{
+		AuthEventC: models.AuthEventC{
+			UserId:      user.ID,
+			Type:        consts.AuthEventType["login"],
+			Status:      consts.AuthEventStatus["failed"],
+			DateTime:    time.Now().Format(time.DateTime),
+			LoginMethod: consts.AuthEventLoginMethod["otp"],
+			Username:    user.Username,
+			Email:       service.Email,
+			CountryCode: service.CountryCode,
+			Mobile:      service.Mobile,
+			Ip:          c.ClientIP(),
+			Platform:    deviceInfo.Platform,
+			BrandId:     user.BrandId,
+			AgentId:     user.AgentId,
+		},
+	}
+
+	if err = model.LogAuthEvent(event); err != nil {
+		util.GetLoggerEntry(c).Errorf("Log auth event error: %s", err.Error())
+	}
 }
 
 func genNickname(user *model.User) {
