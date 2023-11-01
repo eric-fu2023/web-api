@@ -51,6 +51,8 @@ func Init() {
 	util.InitSabaFactory()
 	util.InitDcFactory()
 
+	util.InitFCMFactory()
+
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("username", util.UsernameValidation)
 		v.RegisterValidation("password", util.PasswordValidation)

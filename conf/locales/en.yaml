@@ -495,3 +495,6 @@ secondary_password_mismatch: "Secondary password mismatch"
 database_error: "Database error"
 parameter_error: "Invalid parameter value"
 json_type_mismatch: "Json type mismatch"
+
+"missing_device_uuid": "UUID cannot be empty."
+"invalid_device_info": "Device Info is invalid."
