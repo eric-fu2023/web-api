@@ -475,11 +475,17 @@ file_size_exceeded: "File size should not exceed %s."
 
 err_insufficient_withdrawable: "Insufficient withdrawable amount"
 
-notification_welcome: "Welcome to Taya!"
+notification_welcome_title: "Welcome to Taya!"
+notification_welcome: "Thanks for signing up! Start exploring our services, complete your profile and start your journey here!"
+notification_password_reset_title: "Successfully Reset Password"
 notification_password_reset: "Your password has been reset successfully."
+notification_pin_reset_title: "Successfully Reset TAYA PIN"
 notification_pin_reset: "Your authentication PIN has been reset successfully."
+notification_kyc_approved_title: "KYC Verification Approved"
 notification_kyc_approved: "Congratulations! Your KYC verification has been approved."
+notification_kyc_rejected_title: "KYC Verification Declined"
 notification_kyc_rejected: "Your KYC verification has not been successful. Please review the provided information and resubmit."
+notification_kyc_pending_title: "KYC Verification is Pending"
 notification_kyc_pending: "Your KYC verification is being processed. Please be patient."
 
 negative_amount: "Amount cannot be negative"

@@ -43,28 +43,47 @@ func (c *client) SendMessageToAll(data map[string]string, notification messaging
 		return err
 	}
 
-	message := &messaging.MulticastMessage{
-		Tokens:       fcmTokens,
-		Data:         data,
-		Notification: &notification,
+	var grps [][]string
+	var i, j int
+	q := len(fcmTokens) / 500 // MulticastMessage can only send to 500 tokens
+	r := len(fcmTokens) % 500
+	for i = 0; i < q; i++ {
+		j = i + 1
+		grps = append(grps, fcmTokens[i*500:j*500])
+	}
+	if r > 0 {
+		grps = append(grps, fcmTokens[j*500:])
 	}
 
-	if c.dryRun {
-		resp, err := msgClient.SendEachForMulticastDryRun(ctx, message)
-		if err != nil {
-			return err
+	var failures int
+	for _, tokens := range grps {
+		message := &messaging.MulticastMessage{
+			Tokens:       tokens,
+			Data:         data,
+			Notification: &notification,
 		}
-		if resp.FailureCount > 0 {
-			return errors.Errorf("failed sending %d messages\n", resp.FailureCount)
+
+		if c.dryRun {
+			resp, err := msgClient.SendEachForMulticastDryRun(ctx, message)
+			if err != nil {
+				return err
+			}
+			if resp.FailureCount > 0 {
+				failures += resp.FailureCount
+			}
+		} else {
+			resp, err := msgClient.SendEachForMulticast(ctx, message)
+			if err != nil {
+				return err
+			}
+			if resp.FailureCount > 0 {
+				failures += resp.FailureCount
+			}
 		}
-	} else {
-		resp, err := msgClient.SendEachForMulticast(ctx, message)
-		if err != nil {
-			return err
-		}
-		if resp.FailureCount > 0 {
-			return errors.Errorf("failed sending %d messages\n", resp.FailureCount)
-		}
+	}
+
+	if failures > 0 {
+		return errors.Errorf("failed sending %d messages\n", failures)
 	}
 
 	return nil

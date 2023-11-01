@@ -2,6 +2,7 @@ package model
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm/clause"
 	"web-api/util"
@@ -11,7 +12,21 @@ type FcmToken struct {
 	ploutos.FcmTokenC
 }
 
-func GetFcmTokens(userIds []int64) ([]FcmToken, error) {
+func GetFcmTokenStrings(userIds []int64) ([]string, error) {
+	var fcmTokens []FcmToken
+	fcmTokens, err := getFcmTokens(userIds)
+	if err != nil {
+		fmt.Println("Get fcm tokens error:", err.Error())
+		return nil, err
+	}
+	fcmTokenStr := make([]string, len(fcmTokens))
+	for i, fcmToken := range fcmTokens {
+		fcmTokenStr[i] = fcmToken.Token
+	}
+	return fcmTokenStr, nil
+}
+
+func getFcmTokens(userIds []int64) ([]FcmToken, error) {
 	var fcmTokens []FcmToken
 	err := DB.Where("user_id IN ?", userIds).Find(&fcmTokens).Error
 	return fcmTokens, err

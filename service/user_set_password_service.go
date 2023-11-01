@@ -58,7 +58,7 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 		return serializer.DBErr(c, service, i18n.T("密码修改失败"), err)
 	}
 
-	common.SendNotification(user, i18n.T("notification_password_reset"))
+	common.SendNotification(user, "password_reset", i18n.T("notification_password_reset_title"), i18n.T("notification_password_reset"))
 
 	return serializer.Response{
 		Msg: i18n.T("success"),
@@ -104,6 +104,8 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 	} else if err != nil {
 		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 	}
+
+	common.SendNotification(user, "user_registration", i18n.T("notification_welcome_title"), i18n.T("notification_welcome"))
 
 	return serializer.Response{
 		Msg: i18n.T("success"),

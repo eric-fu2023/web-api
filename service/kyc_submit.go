@@ -74,7 +74,7 @@ func (service *SubmitKycService) SubmitKyc(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 	go service.verifyDocuments(c, user, kyc.ID)
-	common.SendNotification(user, i18n.T("notification_kyc_pending"))
+	common.SendNotification(user, "kyc", i18n.T("notification_kyc_pending_title"), i18n.T("notification_kyc_pending"))
 
 	return serializer.Response{
 		Msg: i18n.T("success"),
@@ -297,13 +297,13 @@ func (service *SubmitKycService) verifyDocuments(c *gin.Context, user model.User
 			util.GetLoggerEntry(c).Errorf("Update kyc status error: %s", err.Error())
 			return
 		}
-		common.SendNotification(user, i18n.T("notification_kyc_approved"))
+		common.SendNotification(user, "kyc", i18n.T("notification_kyc_approved_title"), i18n.T("notification_kyc_approved"))
 	} else {
 		err = model.RejectKycWithReason(kycId, reason)
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("Update kyc status error: %s", err.Error())
 			return
 		}
-		common.SendNotification(user, i18n.T("notification_kyc_rejected"))
+		common.SendNotification(user, "kyc", i18n.T("notification_kyc_rejected_title"), i18n.T("notification_kyc_rejected"))
 	}
 }

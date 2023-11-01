@@ -4,6 +4,7 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"encoding/json"
 	"errors"
+	"firebase.google.com/go/v4/messaging"
 	"gorm.io/gorm"
 	"web-api/model"
 	"web-api/util"
@@ -173,11 +174,29 @@ func abs(x int64) int64 {
 	return x
 }
 
-func SendNotification(user model.User, text string) {
+func SendNotification(user model.User, notificationType string, title string, text string) {
 	go func() {
 		notification := ploutos.NewUserNotification(user.UserC, text)
 		if err := notification.Send(model.DB); err != nil {
-			util.Log().Error("notification creation error", err)
+			util.Log().Error("notification creation error: ", err.Error())
+		}
+	}()
+	go func() {
+		msgData := map[string]string{
+			"notification_type": notificationType,
+		}
+		notification := messaging.Notification{
+			Title: title,
+			Body:  text,
+		}
+		tokens, err := model.GetFcmTokenStrings([]int64{user.ID})
+		if err != nil {
+			util.Log().Error("fcm token generation error: ", err.Error())
+		}
+		client := util.FCMFactory.NewClient(false)
+		err = client.SendMessageToAll(msgData, notification, tokens)
+		if err != nil {
+			util.Log().Error("fcm sending error: ", err.Error())
 		}
 	}()
 }
