@@ -38,7 +38,11 @@ func Heartbeat(c *gin.Context) {
 }
 
 func ErrorResponse(c *gin.Context, service any, err error) serializer.Response {
-	i18n := c.MustGet("i18n").(i18n.I18n)
+	t, exists := c.Get("i18n")
+	if !exists {
+		return serializer.ParamErr(c, service, "", err)
+	}
+	i18n := t.(i18n.I18n)
 	if ve, ok := err.(validator.ValidationErrors); ok {
 		for _, e := range ve {
 			field := conf.T(fmt.Sprintf("Field.%s", e.Field))
