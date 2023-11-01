@@ -45,7 +45,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		return
 	}
 	switch s.MethodID {
-	case 1:
+	case 1, 8:
 	default:
 		err = errors.New("unsupported method")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
@@ -105,6 +105,18 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	case 1:
 		var data finpay.PaymentOrderRespData
 		data, err = finpay.FinpayClient{}.PlaceDefaultGcashOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID)
+		if err != nil {
+			_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data))
+			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+			return
+		}
+		transactionID = data.PaymentOrderNo
+		r.Data = serializer.BuildPaymentOrder(data)
+		cashOrder.TransactionId = &transactionID
+		cashOrder.Status = models.CashOrderStatusPending
+	case 8:
+		var data finpay.PaymentOrderRespData
+		data, err = finpay.FinpayClient{}.PlaceDefaultMayaOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID)
 		if err != nil {
 			_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data))
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
