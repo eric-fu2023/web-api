@@ -75,7 +75,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		if service.Otp != "159357" {
 			otp := cache.RedisSessionClient.Get(context.TODO(), key)
 			if otp.Val() != service.Otp {
-				go service.logFailedLogin(c, user)
+				go service.logFailedLogin(c)
 				return serializer.ParamErr(c, service, errStr, nil)
 			}
 		}
@@ -173,7 +173,7 @@ func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user mode
 	}
 }
 
-func (service *UserLoginOtpService) logFailedLogin(c *gin.Context, user model.User) {
+func (service *UserLoginOtpService) logFailedLogin(c *gin.Context) {
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		// Just log error if failed
@@ -182,19 +182,18 @@ func (service *UserLoginOtpService) logFailedLogin(c *gin.Context, user model.Us
 
 	event := model.AuthEvent{
 		AuthEventC: models.AuthEventC{
-			UserId:      user.ID,
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["failed"],
 			DateTime:    time.Now().Format(time.DateTime),
 			LoginMethod: consts.AuthEventLoginMethod["otp"],
-			Username:    user.Username,
+			Username:    service.Username,
 			Email:       service.Email,
 			CountryCode: service.CountryCode,
 			Mobile:      service.Mobile,
 			Ip:          c.ClientIP(),
 			Platform:    deviceInfo.Platform,
-			BrandId:     user.BrandId,
-			AgentId:     user.AgentId,
+			BrandId:     int64(c.MustGet("_brand").(int)),
+			AgentId:     int64(c.MustGet("_agent").(int)),
 		},
 	}
 
