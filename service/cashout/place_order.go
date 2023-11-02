@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"time"
 	"web-api/cache"
-	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
-	"web-api/service/common"
 	"web-api/util/i18n"
 
 	"github.com/gin-gonic/gin"
@@ -145,8 +143,6 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		return
 	}
 	r.Data = serializer.BuildWithdrawOrder(cashOrder)
-
-	common.SendCashNotification(user.ID, consts.Notification_Type_Cash_Transaction, i18n.T("notification_withdrawal_pending_title"), i18n.T("notification_withdrawal_pending"), cashOrder.AppliedCashInAmount, user.CurrencyId)
 	return
 }
 

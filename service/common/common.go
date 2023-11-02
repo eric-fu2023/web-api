@@ -14,12 +14,12 @@ import (
 
 const NOTIFICATION_PLACE_BET_TITLE = "Bet placed successfully!"
 const NOTIFICATION_PLACE_BET = "You have successfully placed a bet. Keep watching the event or check your bet history in your account. Wish you good luck!"
-const NOTIFICATION_DEPOSIT_APPROVED_TITLE = "Deposit Transaction Approved"
-const NOTIFICATION_DEPOSIT_APPROVED = "Your deposit transaction with the amount of %.2f %s has been approved."
-const NOTIFICATION_WITHDRAWAL_APPROVED_TITLE = "Withdrawal Transaction Approved"
-const NOTIFICATION_WITHDRAWAL_APPROVED = "Your withdrawal transaction with the amount of %.2f %s has been approved."
-const NOTIFICATION_WITHDRAWAL_DECLINED_TITLE = "Withdrawal Transaction Declined"
-const NOTIFICATION_WITHDRAWAL_DECLINED = "Your withdrawal transaction with the amount of %.2f %s has been declined."
+const NOTIFICATION_DEPOSIT_SUCCESS_TITLE = "Deposit Transaction Successful"
+const NOTIFICATION_DEPOSIT_SUCCESS = "Your deposit transaction with the amount of %.2f %s has been successful."
+const NOTIFICATION_WITHDRAWAL_SUCCESS_TITLE = "Withdrawal Transaction Successful"
+const NOTIFICATION_WITHDRAWAL_SUCCESS = "Your withdrawal transaction with the amount of %.2f %s has been successful."
+const NOTIFICATION_WITHDRAWAL_FAILED_TITLE = "Withdrawal Transaction Failed"
+const NOTIFICATION_WITHDRAWAL_FAILED = "Your withdrawal transaction with the amount of %.2f %s was unsuccessful. Please try again later or contact our customer support for more information."
 
 type Platform struct {
 	Platform int64 `form:"platform" json:"platform" binding:"required"`

@@ -33,7 +33,7 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 			return
 		}
 
-		common.SendCashNotificationWithoutCurrencyId(updatedCashOrder.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_WITHDRAWAL_APPROVED_TITLE, common.NOTIFICATION_WITHDRAWAL_APPROVED, updatedCashOrder.AppliedCashInAmount)
+		common.SendCashNotificationWithoutCurrencyId(updatedCashOrder.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_WITHDRAWAL_SUCCESS_TITLE, common.NOTIFICATION_WITHDRAWAL_SUCCESS, updatedCashOrder.AppliedCashInAmount)
 		return
 	})
 

@@ -74,6 +74,6 @@ func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.Cash
 
 	updatedCashOrder = newCashOrderState
 
-	common.SendCashNotificationWithoutCurrencyId(newCashOrderState.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_DEPOSIT_APPROVED_TITLE, common.NOTIFICATION_DEPOSIT_APPROVED, newCashOrderState.AppliedCashInAmount)
+	common.SendCashNotificationWithoutCurrencyId(newCashOrderState.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_DEPOSIT_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_SUCCESS, newCashOrderState.AppliedCashInAmount)
 	return
 }
