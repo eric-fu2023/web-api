@@ -1,6 +1,7 @@
 package model
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,9 +16,7 @@ type RoomMessage struct {
 	UserType  int64 `bson:"user_type"`
 	Type      int64
 	UserId    int64 `bson:"user_id"`
-	MatchId   int64 `bson:"match_id"`
-	Sender    *User
-	Count     int64
+	Sender    *ploutos.User
 	Timestamp int64
 }
 

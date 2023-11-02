@@ -112,6 +112,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("/share", api.ShareCreate)
 		v1.GET("/share", api.ShareGet)
 		v1.GET("/games", middleware.Cache(1*time.Minute), api.GameList)
+		v1.GET("/room_chat/history", api.RoomChatHistory)
 
 		saba := v1.Group("/saba")
 		{
