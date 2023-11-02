@@ -23,7 +23,7 @@ type RoomMessage struct {
 func (a RoomMessage) List(room string, from int64, page int64, limit int64) (r []RoomMessage, err error) {
 	ctx := context.TODO()
 	coll := MongoDB.Collection("room_message")
-	filter := bson.M{"room": room}
+	filter := bson.M{"room": room, "deleted_at": nil}
 	opts := options.Find()
 	opts.SetLimit(limit)
 	opts.SetSort(bson.D{{"timestamp", -1}, {"_id", -1}})
