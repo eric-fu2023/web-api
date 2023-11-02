@@ -83,7 +83,7 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		t := BuildKyc(c, *user.Kyc, []model.KycDocument{})
 		u.Kyc = &t
 	} else {
-		if user.KycCheckRequired && user.CreatedAt.Before(time.Now().Add(-7*24*time.Hour)) {
+		if user.KycCheckRequired && user.SetupCompletedAt.Before(time.Now().Add(-7*24*time.Hour)) {
 			u.KycRequired = true
 		}
 	}

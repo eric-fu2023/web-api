@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"os"
 	"strings"
+	"time"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -50,6 +51,12 @@ func CreateUser(user model.User) error {
 		},
 	}
 	err = tx.Create(&userCounter).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Model(ploutos.User{}).Where(`id`, user.ID).Update(`setup_completed_at`, time.Now()).Error
 	if err != nil {
 		tx.Rollback()
 		return err
