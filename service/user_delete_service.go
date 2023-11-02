@@ -24,11 +24,11 @@ func (service *UserDeleteService) Delete(c *gin.Context) serializer.Response {
 		otp = cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.CountryCode+user.Mobile)
 	}
 	if otp.Val() != service.Otp {
-		return serializer.ParamErr(c, service, i18n.T("验证码错误"), nil)
+		return serializer.ParamErr(c, service, i18n.T("otp_invalid"), nil)
 	}
 
 	if rows := model.DB.Model(model.User{}).Where(`id`, user.ID).Update(`status`, 2).RowsAffected; rows < 1 {
-		return serializer.DBErr(c, service, i18n.T("失败"), nil)
+		return serializer.DBErr(c, service, i18n.T("failed"), nil)
 	}
 	return serializer.Response{
 		Msg: i18n.T("success"),

@@ -37,7 +37,6 @@ func (a AuthClaims) GetRedisSessionKey() string {
 	return fmt.Sprintf(`session:%d`, a.UserId)
 }
 
-// AuthRequired 需要登录
 func AuthRequired(getUser bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		i18n := c.MustGet("i18n").(i18n.I18n)
@@ -45,7 +44,7 @@ func AuthRequired(getUser bool) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(401, serializer.Response{
 				Code:  serializer.CodeCheckLogin,
-				Msg:   i18n.T("Token无效"),
+				Msg:   i18n.T("operation_not_allowed"),
 				Error: err.Error(),
 			})
 			c.Abort()

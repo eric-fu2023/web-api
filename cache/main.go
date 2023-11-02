@@ -12,7 +12,6 @@ import (
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
 )
 
-// RedisClient Redis缓存客户端单例
 var RedisClient *redis.Client
 var RedisSessionClient *redis.Client
 var RedisShareClient *redis.Client
@@ -22,7 +21,6 @@ var RedisLockClient *redsync.Redsync
 var RedisConfigClient *redis.Client
 var RedisRecentGamesClient *redis.Client
 
-// Redis 在中间件中初始化redis链接
 func Redis() {
 	db, _ := strconv.ParseUint(os.Getenv("REDIS_DB"), 10, 64)
 	client := redis.NewClient(&redis.Options{
@@ -33,7 +31,7 @@ func Redis() {
 	})
 
 	if _, err := client.Ping(context.TODO()).Result(); err != nil {
-		util.Log().Panic("连接Redis不成功", err)
+		util.Log().Panic("Fail to connect to Redis", err)
 	}
 
 	RedisClient = client
@@ -65,7 +63,7 @@ func RedisShare() {
 	})
 
 	if _, err := client.Ping(context.TODO()).Result(); err != nil {
-		util.Log().Panic("连接Redis 2不成功", err)
+		util.Log().Panic("Fail to connect to Redis Share", err)
 	}
 
 	RedisShareClient = client
@@ -81,7 +79,7 @@ func RedisConfig() {
 	})
 
 	if _, err := client.Ping(context.TODO()).Result(); err != nil {
-		util.Log().Panic("连接Redis 2不成功", err)
+		util.Log().Panic("Fail to connect to Redis Config", err)
 	}
 
 	RedisConfigClient = client

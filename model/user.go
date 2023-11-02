@@ -12,7 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// User 用户模型
 type User struct {
 	ploutos.UserC
 	KycCheckRequired bool             `gorm:"-"`
@@ -21,14 +20,10 @@ type User struct {
 }
 
 const (
-	// PassWordCost 密码加密难度
-	PassWordCost = 4
-	// Active 激活用户
-	Active string = "active"
-	// Inactive 未激活用户
-	Inactive string = "inactive"
-	// Suspend 被封禁用户
-	Suspend string = "suspend"
+	PassWordCost        = 4
+	Active       string = "active"
+	Inactive     string = "inactive"
+	Suspend      string = "suspend"
 )
 
 func (user *User) GenToken() (tokenString string, err error) {

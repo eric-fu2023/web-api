@@ -129,7 +129,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	}
 
 	smsManager := utilities.SmsManager{
-		HuanXunTemplate: `您的验证码是 %s，5分钟有效，请尽快验证`,
+		HuanXunTemplate: "",
 		BulkSmsTemplate: i18n.T("Your_request_otp"),
 		AwsSnsTemplate:  i18n.T("Your_request_otp"),
 		M360Template:    i18n.T("m360_otp_content"),

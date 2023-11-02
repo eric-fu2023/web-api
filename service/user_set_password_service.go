@@ -47,16 +47,16 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 		otp = cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.CountryCode+user.Mobile)
 	}
 	if otp.Val() != service.Otp {
-		return serializer.ParamErr(c, service, i18n.T("验证码错误"), nil)
+		return serializer.ParamErr(c, service, i18n.T("otp_invalid"), nil)
 	}
 
 	bytes, err := bcrypt.GenerateFromPassword([]byte(service.Password), model.PassWordCost)
 	if err != nil {
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("密码加密失败"), err)
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("password_encrypt_failed"), err)
 	}
 
 	if err = model.DB.Model(&user).Update(`password`, string(bytes)).Error; err != nil {
-		return serializer.DBErr(c, service, i18n.T("密码修改失败"), err)
+		return serializer.DBErr(c, service, i18n.T("password_update_failed"), err)
 	}
 
 	common.SendNotification(user.ID, consts.Notification_Type_Password_Reset, i18n.T("notification_password_reset_title"), i18n.T("notification_password_reset"))
@@ -89,7 +89,7 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 	}
 	bytes, err := bcrypt.GenerateFromPassword([]byte(service.Password), model.PassWordCost)
 	if err != nil {
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("密码加密失败"), err)
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("password_encrypt_failed"), err)
 	}
 	user.Username = service.Username
 	user.Password = string(bytes)

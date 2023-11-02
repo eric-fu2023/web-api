@@ -35,7 +35,7 @@ func UserLogout(c *gin.Context) {
 	if cmd.Err() == redis.Nil {
 		c.JSON(401, serializer.Response{
 			Code: serializer.CodeCheckLogin,
-			Msg:  i18n.T("账号错误"),
+			Msg:  i18n.T("account_invalid"),
 		})
 		c.Abort()
 		return
@@ -68,7 +68,7 @@ func UserLogout(c *gin.Context) {
 
 	c.JSON(200, serializer.Response{
 		Code: 0,
-		Msg:  i18n.T("登出成功"),
+		Msg:  i18n.T("logout_success"),
 	})
 }
 

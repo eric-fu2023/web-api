@@ -33,7 +33,7 @@ func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
 		otp = cache.RedisSessionClient.Get(context.TODO(), key)
 	}
 	if otp.Val() != s.Otp {
-		return serializer.ParamErr(c, s, i18n.T("验证码错误"), nil)
+		return serializer.ParamErr(c, s, i18n.T("otp_invalid"), nil)
 	}
 	// THINK: may not need this
 	// _ = cache.RedisSessionClient.Expire(context.TODO(), key, 2*time.Minute)

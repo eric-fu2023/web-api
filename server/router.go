@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// NewRouter 路由配置
 func NewRouter() *gin.Engine {
 	r := gin.New()
 
@@ -77,7 +76,7 @@ func NewRouter() *gin.Engine {
 		internal.POST("/withdraw-order/insert", middleware.RequestLogger("internal"), internal_api.CustomOrder)
 	}
 
-	// 中间件, 顺序不能改
+	// middlewares order can't be changed
 	r.Use(middleware.Cors())
 	r.GET("/ts", api.Ts)
 

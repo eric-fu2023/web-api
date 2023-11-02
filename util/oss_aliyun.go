@@ -114,14 +114,12 @@ func InitAliyunOSS() (aliyunOss AliyunOssStruct, err error) {
 		fmt.Println("ALIYUN_OSS_BASE_PATH is empty")
 	}
 
-	// 创建OSSClient实例。
 	client, err := oss.New(aliyunOss.Info.Endpoint, aliyunOss.Info.AccessKeyId, aliyunOss.Info.AccessKeySecret)
 	if err != nil {
 		return
 	}
 	aliyunOss.Client = client
 
-	// 获取存储空间。
 	bucket, err := client.Bucket(aliyunOss.Info.BucketName)
 	if err != nil {
 		return
