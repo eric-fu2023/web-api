@@ -94,6 +94,10 @@ var (
 		"csgo":       102,
 		"dota2":      103,
 	}
+	AnnouncementType = map[string]int64{
+		"text":  1,
+		"image": 2,
+	}
 	CashOrderStatus = map[int64]string{
 		1: "Pending",
 		2: "Completed",

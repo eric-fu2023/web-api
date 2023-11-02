@@ -3,6 +3,7 @@ package service
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -43,17 +44,24 @@ func (service *AnnouncementsService) Get(c *gin.Context) (r serializer.Response,
 	var announcements []ploutos.Announcement
 	brand := c.MustGet(`_brand`).(int)
 	agent := c.MustGet(`_agent`).(int)
-	err = model.DB.Scopes(model.ByBrandAgentAndPlatform(int64(brand), int64(agent), service.Platform.Platform), model.Sort).Find(&announcements).Error
+	err = model.DB.Scopes(model.ByBrandAgentAndPlatform(int64(brand), int64(agent), service.Platform.Platform), model.ByStatus, model.Sort).Find(&announcements).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
-	var texts []string
+	var texts, images []string
 	for _, a := range announcements {
-		texts = append(texts, a.Text)
+		if a.Type == consts.AnnouncementType["text"] {
+			texts = append(texts, a.Text)
+		} else if a.Type == consts.AnnouncementType["image"] {
+			images = append(images, serializer.Url(a.Image))
+		}
 	}
 	r = serializer.Response{
-		Data: texts,
+		Data: map[string][]string{
+			"texts":  texts,
+			"images": images,
+		},
 	}
 	return
 }
