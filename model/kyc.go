@@ -1,11 +1,13 @@
 package model
 
 import (
+	"strings"
+	"web-api/conf/consts"
+	"web-api/util"
+
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"web-api/conf/consts"
-	"web-api/util"
 )
 
 type Kyc struct {
@@ -48,4 +50,22 @@ func AcceptKyc(kycId int64) error {
 
 func RejectKycWithReason(kycId int64, reason string) error {
 	return DB.Model(Kyc{}).Where(`id`, kycId).Updates(map[string]interface{}{"status": consts.KycStatusRejected, "remark": reason}).Error
+}
+
+func (k Kyc) NameMatch(name string) bool {
+	return name == k.FullName()
+}
+
+func (k Kyc) FullName() string {
+	list := []string{}
+	if k.FirstName != "" {
+		list = append(list, k.FirstName)
+	}
+	if k.MiddleName != "" {
+		list = append(list, k.MiddleName)
+	}
+	if k.LastName != "" {
+		list = append(list, k.LastName)
+	}
+	return strings.Join(list, " ")
 }

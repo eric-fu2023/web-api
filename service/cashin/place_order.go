@@ -3,7 +3,6 @@ package cashin
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -56,30 +55,11 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	// create cash order
 	// create payment order
 	// err handling and return
-	value, err := service.GetCachedConfig(c, consts.ConfigKeyTopupKycCheck)
+	_, err = service.VerifyKyc(c, user.ID)
 	if err != nil {
-		r = serializer.EnsureErr(c, err, r)
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("kyc_get_failed"), err)
 		return
 	}
-	required, err := strconv.ParseBool(value)
-	if err != nil {
-		r = serializer.EnsureErr(c, err, r)
-		return
-	}
-	if required {
-		var kyc model.Kyc
-		kyc, err = model.GetKycWithLock(model.DB, user.ID)
-		if err != nil {
-			r = serializer.EnsureErr(c, err, r)
-			return
-		}
-		if kyc.Status != consts.KycStatusCompleted {
-			err = errors.New("kyc not completed")
-			r = serializer.EnsureErr(c, err, r)
-			return
-		}
-	}
-
 	var userSum model.UserSum
 	userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
 	if err != nil {

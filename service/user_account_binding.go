@@ -39,6 +39,10 @@ type AddWithdrawAccountService struct {
 func (s AddWithdrawAccountService) Do(c *gin.Context) (serializer.Response, error) {
 	user := c.MustGet("user").(model.User)
 	i18n := c.MustGet("i18n").(i18n.I18n)
+	r, err := VerifyKycWithName(c, user.ID, s.AccountName)
+	if err != nil {
+		return r, err
+	}
 
 	accountBinding := model.UserAccountBinding{
 		UserAccountBindingC: models.UserAccountBindingC{
@@ -49,7 +53,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (serializer.Response, erro
 			IsActive:      true,
 		},
 	}
-	err := accountBinding.AddToDb()
+	err = accountBinding.AddToDb()
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
 	}
