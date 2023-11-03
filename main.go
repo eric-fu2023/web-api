@@ -10,7 +10,8 @@ import (
 	"web-api/model"
 	"web-api/server"
 	"web-api/task"
-	"web-api/task/websocket"
+	websocketTask "web-api/task/websocket"
+	"web-api/websocket"
 )
 
 var runTask bool
@@ -37,7 +38,7 @@ func main() {
 		go task.ProcessSabaSettle()
 		go func() {
 			websocket.Functions = []func(context.Context, context.CancelFunc){ // modules to be run when connected
-				websocket.Reply,
+				websocketTask.Reply,
 			}
 			websocket.Connect(10)
 		}()

@@ -9,19 +9,19 @@ import (
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
-	"web-api/model/websocket"
 	"web-api/util"
+	"web-api/websocket"
 )
 
 func Reply(ctx context.Context, cancelFunc context.CancelFunc) {
-	Conn.Send(`42["join_admin", {"room":"administration"}]`)
+	websocket.Conn.Send(`42["join_admin", {"room":"administration"}]`)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			_, msg, err := Conn.Socket.ReadMessage()
+			_, msg, err := websocket.Conn.Socket.ReadMessage()
 			if err != nil {
 				util.Log().Error("ws read error", err)
 				cancelFunc()
@@ -29,7 +29,7 @@ func Reply(ctx context.Context, cancelFunc context.CancelFunc) {
 			}
 			message := string(msg)
 			if message == "2" { // reply pong to ping from server
-				Conn.Send(`3`)
+				websocket.Conn.Send(`3`)
 			}
 			if strings.Contains(message, "socket_id") {
 				switch {
@@ -60,7 +60,7 @@ func welcomeToRoom(message string) {
 						Nickname:  consts.ChatSystem["names"][0],
 						Type:      consts.WebSocketMessageType["text"],
 					}
-					msg.Send(&Conn)
+					msg.Send(&websocket.Conn)
 				}
 
 				coll := model.MongoDB.Collection("room_message")
@@ -93,7 +93,7 @@ func welcomeToRoom(message string) {
 						Type:      ms[i].Type,
 						IsHistory: true,
 					}
-					msg1.Send(&Conn)
+					msg1.Send(&websocket.Conn)
 				}
 			}
 		}

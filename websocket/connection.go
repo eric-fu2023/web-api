@@ -2,28 +2,25 @@ package websocket
 
 import (
 	"context"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"os"
 	"strings"
-	"time"
-	modelWebsocket "web-api/model/websocket"
+	"sync"
 	"web-api/util"
 )
 
-var Conn modelWebsocket.Connection
-var Functions []func(ctx context.Context, cancelFunc context.CancelFunc)
-
-func Connect(retryInterval int64) {
-	for {
-		ctx := connect()
-		<-ctx.Done()
-		util.Log().Info(fmt.Sprintf(`retrying in %d seconds...`, retryInterval))
-		time.Sleep(time.Duration(retryInterval) * time.Second)
-	}
+type Connection struct {
+	Socket     *websocket.Conn
+	writeMutex sync.Mutex
 }
 
-func connect() (ctx context.Context) {
+func (conn *Connection) Send(message string) error {
+	conn.writeMutex.Lock()
+	defer conn.writeMutex.Unlock()
+	return conn.Socket.WriteMessage(websocket.TextMessage, []byte(message))
+}
+
+func (conn *Connection) Connect() (ctx context.Context) {
 	ctx, cancelFunc := context.WithCancel(context.TODO())
 	util.Log().Info(`connecting to ` + os.Getenv("WS_URL"))
 	c, _, err := websocket.DefaultDialer.Dial(os.Getenv("WS_URL"), nil)
@@ -33,11 +30,11 @@ func connect() (ctx context.Context) {
 		return
 	}
 	util.Log().Info(`connected`)
-	Conn.Socket = c
+	conn.Socket = c
 
 	go func() {
 		for {
-			_, msg, err := Conn.Socket.ReadMessage()
+			_, msg, err := conn.Socket.ReadMessage()
 			if err != nil {
 				util.Log().Error("ws read error", err)
 				cancelFunc()
@@ -52,6 +49,6 @@ func connect() (ctx context.Context) {
 			}
 		}
 	}()
-	Conn.Send(`40{"token":"` + os.Getenv("WS_TOKEN") + `"}`)
+	conn.Send(`40{"token":"` + os.Getenv("WS_TOKEN") + `"}`)
 	return
 }
