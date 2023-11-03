@@ -165,6 +165,7 @@ func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user mode
 			Platform:    deviceInfo.Platform,
 			BrandId:     user.BrandId,
 			AgentId:     user.AgentId,
+			Uuid:        deviceInfo.Uuid,
 		},
 	}
 
@@ -194,6 +195,7 @@ func (service *UserLoginOtpService) logFailedLogin(c *gin.Context) {
 			Platform:    deviceInfo.Platform,
 			BrandId:     int64(c.MustGet("_brand").(int)),
 			AgentId:     int64(c.MustGet("_agent").(int)),
+			Uuid:        deviceInfo.Uuid,
 		},
 	}
 

@@ -59,6 +59,7 @@ func UserLogout(c *gin.Context) {
 			Platform: deviceInfo.Platform,
 			BrandId:  user.BrandId,
 			AgentId:  user.AgentId,
+			Uuid:     deviceInfo.Uuid,
 		},
 	}
 	if err := model.LogAuthEvent(event); err != nil {

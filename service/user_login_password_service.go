@@ -219,6 +219,7 @@ func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user
 			Platform:    deviceInfo.Platform,
 			BrandId:     user.BrandId,
 			AgentId:     user.AgentId,
+			Uuid:        deviceInfo.Uuid,
 		},
 	}
 
@@ -249,6 +250,7 @@ func (service *UserLoginPasswordService) logFailedLogin(c *gin.Context, user mod
 			Platform:    deviceInfo.Platform,
 			BrandId:     user.BrandId,
 			AgentId:     user.AgentId,
+			Uuid:        deviceInfo.Uuid,
 		},
 	}
 
