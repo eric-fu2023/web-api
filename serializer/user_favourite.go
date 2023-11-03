@@ -5,19 +5,18 @@ import (
 )
 
 type UserFavourite struct {
-	GameId  int64         `json:"game_id"`
-	SportId int64         `json:"sport_id,omitempty"`
-	Game    *SubGameBrand `json:"game,omitempty"`
+	GameId  int64 `json:"game_id,omitempty"`
+	SportId int64 `json:"sport_id,omitempty"`
+	*SubGameBrand
 }
 
 func BuildUserFavourite(a ploutos.UserFavourite) (b UserFavourite) {
-	b = UserFavourite{
-		GameId:  a.GameId,
-		SportId: a.SportId,
-	}
 	if a.SubGameBrand != nil {
 		t := BuildSubGameBrand(*a.SubGameBrand)
-		b.Game = &t
+		b.SubGameBrand = &t
+	} else {
+		b.GameId = a.GameId
+		b.SportId = a.SportId
 	}
 	return
 }

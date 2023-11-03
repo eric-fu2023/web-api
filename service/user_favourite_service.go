@@ -3,6 +3,7 @@ package service
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util/i18n"
@@ -26,7 +27,9 @@ func (service *UserFavouriteListService) List(c *gin.Context) (r serializer.Resp
 	var favourites []ploutos.UserFavourite
 	q := model.DB.Scopes(model.UserFavouriteByUserIdTypeAndSportId(user.ID, service.Type, service.SportId))
 	if service.Type == FavouriteType["game"] {
-		q.Preload(`SubGameBrand`)
+		q.Preload(`SubGameBrand`, func(db *gorm.DB) *gorm.DB {
+			return db.Preload(`GameVendorBrand`)
+		})
 	}
 	err = q.Find(&favourites).Order(`id DESC`).Error
 	if err != nil {
