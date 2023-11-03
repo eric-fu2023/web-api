@@ -2,15 +2,18 @@ package model
 
 import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
+	"context"
+	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"os"
+	"web-api/websocket"
 )
 
 type (
 	UserSum struct {
 		models.UserSumC
 	}
-
 )
 
 func (UserSum) GetByUserIDWithLockWithDB(userID int64, tx *gorm.DB) (sum UserSum, err error) {
@@ -51,4 +54,22 @@ func (UserSum) UpdateUserSumWithDB(txDB *gorm.DB, userID, amount, wagerChange, w
 		return
 	})
 	return
+}
+
+func (u *UserSum) AfterUpdate(tx *gorm.DB) (err error) {
+	conn := websocket.Connection{}
+	conn.Connect(os.Getenv("WS_NOTIFY_URL"), os.Getenv("WS_NOTIFY_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
+		u.sendMsg,
+	})
+	return
+}
+
+func (u *UserSum) sendMsg(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
+	select {
+	case <-ctx.Done():
+		return
+	default:
+		str := fmt.Sprintf(`42["room_door", {"room":"%s","event":"balance_change","balance":%.2f}]`, UserSignature(u.UserId), float64(u.Balance)/100)
+		conn.Send(str)
+	}
 }

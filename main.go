@@ -37,10 +37,10 @@ func main() {
 		go task.ProcessFbSyncTransaction()
 		go task.ProcessSabaSettle()
 		go func() {
-			websocket.Functions = []func(context.Context, context.CancelFunc){ // modules to be run when connected
+			websocketTask.Functions = []func(*websocket.Connection, context.Context, context.CancelFunc){ // modules to be run when connected
 				websocketTask.Reply,
 			}
-			websocket.Connect(10)
+			websocketTask.Connect(10)
 		}()
 
 		c := cron.New(cron.WithSeconds())

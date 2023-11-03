@@ -2,9 +2,6 @@ package serializer
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"crypto/md5"
-	"encoding/hex"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"os"
 	"time"
@@ -57,7 +54,6 @@ type UserInfo struct {
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
-	signatureHash := md5.Sum([]byte(fmt.Sprintf("%d%s", user.ID, os.Getenv("USER_SIGNATURE_SALT"))))
 	u := UserInfo{
 		ID:                 user.ID,
 		CountryCode:        user.CountryCode,
@@ -68,7 +64,7 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		Avatar:             Url(user.Avatar),
 		Bio:                user.Bio,
 		CurrencyId:         user.CurrencyId,
-		Signature:          hex.EncodeToString(signatureHash[:]),
+		Signature:          UserSignature(user.ID),
 		FollowingCount:     user.FollowingCount,
 		HasSetSecondaryPwd: len(user.SecondaryPassword) > 0,
 	}

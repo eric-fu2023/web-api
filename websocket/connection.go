@@ -2,8 +2,8 @@ package websocket
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/websocket"
-	"os"
 	"strings"
 	"sync"
 	"web-api/util"
@@ -20,10 +20,10 @@ func (conn *Connection) Send(message string) error {
 	return conn.Socket.WriteMessage(websocket.TextMessage, []byte(message))
 }
 
-func (conn *Connection) Connect() (ctx context.Context) {
+func (conn *Connection) Connect(url string, token string, functions []func(conn *Connection, ctx context.Context, cancelFunc context.CancelFunc)) (ctx context.Context) {
 	ctx, cancelFunc := context.WithCancel(context.TODO())
-	util.Log().Info(`connecting to ` + os.Getenv("WS_URL"))
-	c, _, err := websocket.DefaultDialer.Dial(os.Getenv("WS_URL"), nil)
+	util.Log().Info(`connecting to ` + url)
+	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		util.Log().Error("ws connection error", err)
 		cancelFunc()
@@ -42,13 +42,13 @@ func (conn *Connection) Connect() (ctx context.Context) {
 			}
 			message := string(msg)
 			if strings.Contains(message, "socket_id") && strings.Contains(message, "welcome") {
-				for _, f := range Functions {
-					go f(ctx, cancelFunc)
+				for _, f := range functions {
+					go f(conn, ctx, cancelFunc)
 				}
 				return
 			}
 		}
 	}()
-	conn.Send(`40{"token":"` + os.Getenv("WS_TOKEN") + `"}`)
+	conn.Send(fmt.Sprintf(`40{"token":"%s"}`, token))
 	return
 }

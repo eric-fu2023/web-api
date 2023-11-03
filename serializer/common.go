@@ -1,6 +1,9 @@
 package serializer
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
 	"math"
 	"os"
 	"strings"
@@ -111,4 +114,9 @@ func EnsureErr(c *gin.Context, err error, res Response) Response {
 func GeneralErr(c *gin.Context, err error) Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	return Err(c, "", CodeGeneralError, i18n.T("general_error"), err)
+}
+
+func UserSignature(userId int64) string {
+	signatureHash := md5.Sum([]byte(fmt.Sprintf("%d%s", userId, os.Getenv("USER_SIGNATURE_SALT"))))
+	return hex.EncodeToString(signatureHash[:])
 }

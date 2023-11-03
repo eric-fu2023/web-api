@@ -1,7 +1,11 @@
 package model
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
 	"gorm.io/gorm"
+	"os"
 	"strconv"
 	"time"
 )
@@ -40,4 +44,9 @@ func Paginate(page int, limit int) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Limit(limit).Offset(limit * (page - 1))
 	}
+}
+
+func UserSignature(userId int64) string {
+	signatureHash := md5.Sum([]byte(fmt.Sprintf("%d%s", userId, os.Getenv("USER_SIGNATURE_SALT"))))
+	return hex.EncodeToString(signatureHash[:])
 }
