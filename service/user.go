@@ -27,8 +27,14 @@ var (
 )
 
 func CreateUser(user model.User) error {
+	var currencies []ploutos.CurrencyGameVendor
+	err := model.DB.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
+	if err != nil {
+		return ErrEmptyCurrencyId
+	}
+
 	tx := model.DB.Begin()
-	err := tx.Save(&user).Error
+	err = tx.Save(&user).Error
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -64,11 +70,6 @@ func CreateUser(user model.User) error {
 
 	tx.Commit()
 
-	var currencies []ploutos.CurrencyGameVendor
-	err = model.DB.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
-	if err != nil {
-		return ErrEmptyCurrencyId
-	}
 	currMap := make(map[int64]string)
 	for _, cur := range currencies {
 		currMap[cur.GameVendorId] = cur.Value
