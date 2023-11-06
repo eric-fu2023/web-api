@@ -1,6 +1,7 @@
 package model
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,11 +16,17 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+var txRelated = []any{&ploutos.UserSum{}, &ploutos.UserSumC{}, "user_sums",
+	&ploutos.Transaction{}, &ploutos.DcTransaction{}, &ploutos.FbTransaction{}, &ploutos.SabaTransaction{},
+	&ploutos.TransactionC{}, &ploutos.DcTransactionC{}, &ploutos.FbTransactionC{}, &ploutos.SabaTransactionC{},
+	"transactions", "fb_transactions", "dc_transactions", "saba_transactions", "txConn",
+}
+
 var DB *gorm.DB
 var MongoDB *mongo.Database
 var IPDB *awdb.Reader
 
-func Database(primaryConn string, replicaConn string) {
+func Database(primaryConn string, txConn string) {
 	getLogLevel := func() logger.LogLevel {
 		if os.Getenv("ENV") == "local" {
 			return logger.Info
@@ -36,13 +43,9 @@ func Database(primaryConn string, replicaConn string) {
 	db, err := gorm.Open(postgres.Open(primaryConn), &gorm.Config{
 		Logger: newLogger,
 	})
-	db.Use(dbresolver.Register(dbresolver.Config{ // for other models and tables, use primary db for both reads and writes
-		Sources:  []gorm.Dialector{postgres.Open(primaryConn)},
-		Replicas: []gorm.Dialector{postgres.Open(primaryConn)},
-	}).Register(dbresolver.Config{ // for `matches` and `news`, use replica for reads and primary for writes
-		Sources:  []gorm.Dialector{postgres.Open(primaryConn)},
-		Replicas: []gorm.Dialector{postgres.Open(replicaConn)},
-	}).
+	db.Use(dbresolver.Register(dbresolver.Config{
+		Sources: []gorm.Dialector{postgres.Open(txConn)},
+	}, txRelated...).
 		SetMaxOpenConns(75).
 		SetMaxIdleConns(25).
 		SetConnMaxLifetime(time.Hour))

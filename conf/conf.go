@@ -28,12 +28,7 @@ func Init() {
 
 	util.BuildLogger(os.Getenv("LOG_LEVEL"))
 
-	// 连接数据库
-	replicaConn := os.Getenv("POSTGRES_DSN")
-	if os.Getenv("MYSQL_REPLICA_DSN") != "" {
-		replicaConn = os.Getenv("MYSQL_REPLICA_DSN")
-	}
-	model.Database(os.Getenv("POSTGRES_DSN"), replicaConn)
+	model.Database(os.Getenv("POSTGRES_DSN"), os.Getenv("POSTGRES_TX_DSN"))
 	cache.Redis()
 	cache.RedisSession()
 	cache.RedisShare()
