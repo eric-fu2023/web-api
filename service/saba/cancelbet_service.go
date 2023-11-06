@@ -65,7 +65,7 @@ func CancelBetCallback(c *gin.Context, req callback.CancelBetRequest) (res any, 
 			return
 		}
 	}
-	_, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["saba"], req.Message.UserId)
+	_, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["saba"], req.Message.UserId)
 	if err != nil {
 		return
 	}

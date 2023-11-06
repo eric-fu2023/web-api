@@ -8,6 +8,8 @@ import (
 	"firebase.google.com/go/v4/messaging"
 	"fmt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"gorm.io/plugin/dbresolver"
 	"os"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -53,12 +55,12 @@ type CallbackInterface interface {
 	IsAdjustment() bool
 }
 
-func GetUserAndSum(gameVendor int64, externalUserId string) (gameVendorUser ploutos.GameVendorUser, balance int64, remainingWager int64, maxWithdrawable int64, err error) {
+func GetUserAndSum(tx *gorm.DB, gameVendor int64, externalUserId string) (gameVendorUser ploutos.GameVendorUser, balance int64, remainingWager int64, maxWithdrawable int64, err error) {
 	gameVendorUser, err = GetGameVendorUser(gameVendor, externalUserId)
 	if err != nil {
 		return
 	}
-	balance, remainingWager, maxWithdrawable, err = GetSums(gameVendorUser)
+	balance, remainingWager, maxWithdrawable, err = GetSums(tx, gameVendorUser)
 	if err != nil {
 		return
 	}
@@ -70,9 +72,9 @@ func GetGameVendorUser(vendor int64, userId string) (gpu ploutos.GameVendorUser,
 	return
 }
 
-func GetSums(gpu ploutos.GameVendorUser) (balance int64, remainingWager int64, maxWithdrawable int64, err error) {
+func GetSums(tx *gorm.DB, gpu ploutos.GameVendorUser) (balance int64, remainingWager int64, maxWithdrawable int64, err error) {
 	var userSum ploutos.UserSum
-	err = model.DB.Where(`user_id`, gpu.UserId).First(&userSum).Error
+	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, gpu.UserId).First(&userSum).Error
 	if err != nil {
 		return
 	}
@@ -83,7 +85,12 @@ func GetSums(gpu ploutos.GameVendorUser) (balance int64, remainingWager int64, m
 }
 
 func ProcessTransaction(obj CallbackInterface) (err error) {
-	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(obj.GetGameVendorId(), obj.GetExternalUserId())
+	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin()
+	if tx.Error != nil {
+		err = tx.Error
+		return
+	}
+	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(tx, obj.GetGameVendorId(), obj.GetExternalUserId())
 	if err != nil {
 		return
 	}
@@ -106,11 +113,6 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 			RemainingWager:  newRemainingWager,
 			MaxWithdrawable: newWithdrawable,
 		},
-	}
-	tx := model.DB.Begin()
-	if tx.Error != nil {
-		err = tx.Error
-		return
 	}
 	rows := tx.Select(`balance`, `remaining_wager`, `max_withdrawable`).Where(`user_id`, gpu.UserId).Updates(userSum).RowsAffected
 	if rows == 0 {

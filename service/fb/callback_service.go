@@ -90,7 +90,7 @@ const (
 )
 
 func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.BaseResponse, err error) {
-	gpu, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["fb"], req.MerchantUserId)
+	gpu, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["fb"], req.MerchantUserId)
 	if err != nil {
 		return
 	}

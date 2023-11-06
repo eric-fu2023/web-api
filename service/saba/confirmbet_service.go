@@ -75,7 +75,7 @@ func ConfirmBetCallback(c *gin.Context, req callback.ConfirmBetRequest) (res any
 	if err != nil {
 		return
 	}
-	_, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["saba"], req.Message.UserId)
+	_, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["saba"], req.Message.UserId)
 	if err != nil {
 		return
 	}

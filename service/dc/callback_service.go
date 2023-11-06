@@ -48,7 +48,7 @@ func (c *Callback) IsAdjustment() bool {
 }
 
 func SuccessResponse(c *gin.Context, brandUid string) (res callback.BaseResponse, err error) {
-	gpu, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["dc"], brandUid)
+	gpu, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["dc"], brandUid)
 	if err != nil {
 		return
 	}
@@ -73,7 +73,7 @@ func CheckDuplicate(c *gin.Context, scope func(*gorm.DB) *gorm.DB, brandUid stri
 }
 
 func DuplicatedTxResponse(c *gin.Context, brandUid string) (res callback.BaseResponse, err error) {
-	gpu, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["dc"], brandUid)
+	gpu, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["dc"], brandUid)
 	if err != nil {
 		return
 	}

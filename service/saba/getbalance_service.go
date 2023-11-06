@@ -5,11 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"time"
 	"web-api/conf/consts"
+	"web-api/model"
 	"web-api/service/common"
 )
 
 func GetBalanceCallback(c *gin.Context, req callback.GetBalanceRequest) (res any, err error) {
-	gpu, balance, _, _, err := common.GetUserAndSum(consts.GameVendor["saba"], req.Message.UserId)
+	gpu, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["saba"], req.Message.UserId)
 	if err != nil {
 		return
 	}

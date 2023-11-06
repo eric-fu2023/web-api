@@ -54,7 +54,7 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 	}
 	tokenHash := md5.Sum([]byte(tokenString))
 
-	gpu, _, _, _, err := common.GetUserAndSum(consts.GameVendor["dc"], user.Username)
+	gpu, _, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["dc"], user.Username)
 	if err != nil {
 		var currency ploutos.CurrencyGameVendor
 		err = model.DB.Where(`game_vendor_id`, consts.GameVendor["dc"]).Where(`currency_id`, user.CurrencyId).First(&currency).Error
