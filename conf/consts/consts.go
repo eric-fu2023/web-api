@@ -387,4 +387,7 @@ const (
 	Notification_Type_Kyc               = "kyc"
 	Notification_Type_Bet_Placement     = "bet_transaction"
 	Notification_Type_Cash_Transaction  = "cash_transaction"
+
+	DefaultBrand = 1001
+	DefaultAgent = 1000001
 )

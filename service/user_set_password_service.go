@@ -1,6 +1,7 @@
 package service
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -69,11 +70,13 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 type UserFinishSetupService struct {
 	Username   string `form:"username" json:"username" binding:"required,username"`
 	Password   string `form:"password" json:"password" binding:"required,password"`
+	Code       string `form:"code" json:"code"`
 	CurrencyId int64  `form:"currency_id" json:"currency_id" binding:"required,numeric"`
 }
 
 func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 	service.Username = strings.ToLower(service.Username)
+	service.Code = strings.ToUpper(service.Code)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
@@ -94,6 +97,18 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 	user.Username = service.Username
 	user.Password = string(bytes)
 	user.CurrencyId = service.CurrencyId
+	user.BrandId = consts.DefaultBrand
+	user.AgentId = consts.DefaultAgent
+
+	if service.Code != "" {
+		var agent ploutos.Agent
+		if err = model.DB.Where(`code`, service.Code).First(&agent).Error; err == nil {
+			user.BrandId = agent.BrandId
+			user.AgentId = agent.ID
+		} else {
+			return serializer.ParamErr(c, service, i18n.T("invalid_agent"), nil)
+		}
+	}
 
 	err = CreateUser(user)
 	if err != nil && errors.Is(err, ErrEmptyCurrencyId) {

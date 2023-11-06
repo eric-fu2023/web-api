@@ -49,6 +49,8 @@ type UserInfo struct {
 	SetupRequired      bool     `json:"setup_required"`
 	KycRequired        bool     `json:"kyc_required"`
 	HasSetSecondaryPwd bool     `json:"has_set_secondary_pwd"`
+	Brand              int64    `json:"brand"`
+	Agent              int64    `json:"agent"`
 	UserSum            *UserSum `json:"sum,omitempty"`
 	Kyc                *Kyc     `json:"kyc,omitempty"`
 }
@@ -67,6 +69,8 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		Signature:          UserSignature(user.ID),
 		FollowingCount:     user.FollowingCount,
 		HasSetSecondaryPwd: len(user.SecondaryPassword) > 0,
+		Brand:              user.BrandId,
+		Agent:              user.AgentId,
 	}
 	if user.Username == "" {
 		u.SetupRequired = true
