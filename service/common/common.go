@@ -259,7 +259,7 @@ func SendCashNotificationWithoutCurrencyId(userId int64, notificationType string
 func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSumC) {
 	go func() {
 		conn := websocket.Connection{}
-		conn.Connect(os.Getenv("WS_NOTIFY_URL"), os.Getenv("WS_NOTIFY_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
+		conn.Connect(os.Getenv("WS_NOTIFICATION_URL"), os.Getenv("WS_NOTIFICATION_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
 			func(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
 				select {
 				case <-ctx.Done():
