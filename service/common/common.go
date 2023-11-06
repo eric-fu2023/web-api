@@ -11,7 +11,6 @@ import (
 	"gorm.io/gorm/clause"
 	"gorm.io/plugin/dbresolver"
 	"os"
-	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -146,7 +145,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	}
 	tx.Commit()
 
-	SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
+	//SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
 	SendUserSumSocketMsg(gpu.UserId, userSum.UserSumC)
 
 	return
