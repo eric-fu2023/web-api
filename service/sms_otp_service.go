@@ -47,7 +47,7 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 
 	otpSent := cache.RedisSessionClient.Get(context.TODO(), "otp:"+service.CountryCode+service.Mobile)
 	if otpSent.Val() != "" {
-		return serializer.ParamErr(c, service, i18n.T("Sms_wait"), nil)
+		return serializer.Err(c, service, serializer.CodeSMSSent, i18n.T("Sms_wait"), nil)
 	}
 
 	var otp string
@@ -83,7 +83,7 @@ func (service *SmsOtpService) GetUsernameSMS(c *gin.Context, username string) se
 
 	otpSent := cache.RedisSessionClient.Get(context.TODO(), "otp:"+username)
 	if otpSent.Val() != "" {
-		return serializer.ParamErr(c, service, i18n.T("Sms_wait"), nil)
+		return serializer.Err(c, service, serializer.CodeSMSSent, i18n.T("Sms_wait"), nil)
 	}
 
 	var otp string

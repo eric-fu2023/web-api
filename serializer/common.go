@@ -34,6 +34,7 @@ const (
 	CodeEncryptError     = 50002
 	CodeParamErr         = 40001
 	CodeExistingUsername = 40002
+	CodeSMSSent          = 40003
 	CodeNoStream         = 100
 )
 
