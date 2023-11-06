@@ -1,12 +1,11 @@
 package cashin
 
 import (
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
-
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // check api response
@@ -61,7 +60,7 @@ func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.Cash
 	if err != nil {
 		return
 	}
-	_, err = model.UserSum{}.UpdateUserSumWithDB(txDB,
+	userSum, err := model.UserSum{}.UpdateUserSumWithDB(txDB,
 		newCashOrderState.UserId,
 		newCashOrderState.EffectiveCashInAmount,
 		newCashOrderState.WagerChange,
@@ -75,5 +74,6 @@ func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.Cash
 	updatedCashOrder = newCashOrderState
 
 	common.SendCashNotificationWithoutCurrencyId(newCashOrderState.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_DEPOSIT_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_SUCCESS, newCashOrderState.AppliedCashInAmount)
+	common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSumC)
 	return
 }

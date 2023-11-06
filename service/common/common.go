@@ -2,14 +2,18 @@ package common
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"context"
 	"encoding/json"
 	"errors"
 	"firebase.google.com/go/v4/messaging"
 	"fmt"
 	"gorm.io/gorm"
+	"os"
 	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/serializer"
 	"web-api/util"
+	"web-api/websocket"
 )
 
 const NOTIFICATION_PLACE_BET_TITLE = "Bet placed successfully!"
@@ -141,6 +145,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	tx.Commit()
 
 	SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
+	SendUserSumSocketMsg(gpu.UserId, userSum.UserSumC)
 
 	return
 }
@@ -248,5 +253,28 @@ func SendCashNotificationWithoutCurrencyId(userId int64, notificationType string
 			return
 		}
 		SendCashNotification(userId, notificationType, title, text, amount, user.CurrencyId)
+	}()
+}
+
+func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSumC) {
+	go func() {
+		conn := websocket.Connection{}
+		conn.Connect(os.Getenv("WS_NOTIFY_URL"), os.Getenv("WS_NOTIFY_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
+			func(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					msg := websocket.BalanceUpdateMessage{
+						Room:            serializer.UserSignature(userId),
+						Event:           "balance_change",
+						Balance:         float64(userSum.Balance) / 100,
+						RemainingWager:  float64(userSum.RemainingWager) / 100,
+						MaxWithdrawable: float64(userSum.MaxWithdrawable) / 100,
+					}
+					msg.Send(conn)
+				}
+			},
+		})
 	}()
 }
