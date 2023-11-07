@@ -8,8 +8,11 @@ import (
 func Config(c *gin.Context) {
 	var service service.AppConfigService
 	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.Get(c)
+		res, e := service.Get(c)
 		c.JSON(200, res)
+		if e != nil {
+			c.Abort()
+		}
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
@@ -18,8 +21,11 @@ func Config(c *gin.Context) {
 func AppUpdate(c *gin.Context) {
 	var service service.AppUpdateService
 	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.Get(c)
+		res, e := service.Get(c)
 		c.JSON(200, res)
+		if e != nil {
+			c.Abort()
+		}
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
@@ -28,8 +34,11 @@ func AppUpdate(c *gin.Context) {
 func Announcements(c *gin.Context) {
 	var service service.AnnouncementsService
 	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.Get(c)
+		res, e := service.Get(c)
 		c.JSON(200, res)
+		if e != nil {
+			c.Abort()
+		}
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
