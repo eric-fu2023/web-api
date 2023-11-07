@@ -91,10 +91,12 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	}
 	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(tx, obj.GetGameVendorId(), obj.GetExternalUserId())
 	if err != nil {
+		tx.Rollback()
 		return
 	}
 	obj.NewCallback(gpu.UserId)
 	if !obj.ShouldProceed() {
+		tx.Rollback()
 		return
 	}
 	newBalance := balance + obj.GetAmount()
