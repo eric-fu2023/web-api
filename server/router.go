@@ -103,6 +103,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("/login_otp", api.UserLoginOtp)
 		v1.POST("/login_password", api.UserLoginPassword)
 		v1.POST("/password", middleware.CheckAuth(), api.UserSetPassword)
+		v1.GET("/otp-check", api.VerifyOtp)
 
 		v1.GET("/config", middleware.Cache(10*time.Minute), api.Config)
 		v1.GET("/app_update", middleware.Cache(1*time.Minute), api.AppUpdate)

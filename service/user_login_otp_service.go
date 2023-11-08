@@ -19,12 +19,22 @@ import (
 )
 
 type UserOtpVerificationService struct {
-	Otp string `form:"otp" json:"otp" binding:"required"`
+	Otp         string `form:"otp" json:"otp" binding:"required"`
+	CountryCode string `form:"country_code" json:"country_code"`
+	Mobile      string `form:"mobile" json:"mobile"`
 }
 
 func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	user := c.MustGet("user").(model.User)
+	var user model.User
+	u, exists := c.Get("user")
+	if !exists {
+		if err := model.DB.Where(`country_code`, s.CountryCode).Where(`mobile`, s.Mobile).First(&user).Error; err != nil {
+			return serializer.ParamErr(c, s, i18n.T("account_invalid"), err)
+		}
+	} else {
+		user = u.(model.User)
+	}
 
 	key := "otp:" + user.Email
 	otp := cache.RedisSessionClient.Get(context.TODO(), key)
