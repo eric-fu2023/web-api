@@ -4,6 +4,7 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/plugin/dbresolver"
 )
 
 type (
@@ -19,7 +20,7 @@ func (UserSum) GetByUserIDWithLockWithDB(userID int64, tx *gorm.DB) (sum UserSum
 
 func (UserSum) UpdateUserSumWithDB(txDB *gorm.DB, userID, amount, wagerChange, withdrawableChange, transactionType int64, cashOrderID string) (sum UserSum, err error) {
 	err = txDB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id", userID).First(&sum).Error
+		err = tx.Clauses(dbresolver.Use("txConn")).Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id", userID).First(&sum).Error
 		if err != nil {
 			return
 		}

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/plugin/dbresolver"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
@@ -20,7 +21,7 @@ func RevertCashOutOrder(c *gin.Context, orderNumber string, notes, remark string
 		err = errors.New("wrong status")
 		return
 	}
-	err = txDB.Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
+	err = txDB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", orderNumber).
 			Where("status in ?", append(models.CashOrderStatusCollectionNonTerminal, models.CashOrderStatusFailed)).
 			First(&newCashOrderState).Error

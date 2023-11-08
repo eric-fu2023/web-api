@@ -3,6 +3,7 @@ package cashout
 import (
 	"errors"
 	"fmt"
+	"gorm.io/plugin/dbresolver"
 	"time"
 	"web-api/cache"
 	"web-api/model"
@@ -58,7 +59,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, user.ID), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()
 	// check withdrawable
-	err = model.DB.Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
+	err = model.DB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		var userSum model.UserSum
 		userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB.Debug().WithContext(c))
 		if err != nil {

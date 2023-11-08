@@ -1,6 +1,7 @@
 package cashout
 
 import (
+	"gorm.io/plugin/dbresolver"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
@@ -12,7 +13,7 @@ import (
 )
 
 func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, remark string, txDB *gorm.DB) (updatedCashOrder model.CashOrder, err error) {
-	err = txDB.Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
+	err = txDB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("id", orderNumber).
 			Where("status in ?", append(models.CashOrderStatusCollectionNonTerminal, models.CashOrderStatusSuccess)).
