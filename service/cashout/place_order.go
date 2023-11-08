@@ -41,7 +41,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		return
 	}
 	var accountBinding model.UserAccountBinding
-	err = model.DB.Where("user_id", user.ID).Where("id", s.AccountBindingID).First(&accountBinding).Error
+	err = model.DB.Where("user_id", user.ID).Where("is_active").Where("id", s.AccountBindingID).First(&accountBinding).Error
 	if err != nil {
 		return
 	}
@@ -59,9 +59,9 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, user.ID), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()
 	// check withdrawable
-	err = model.DB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
+	err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		var userSum model.UserSum
-		userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB.Debug().WithContext(c))
+		userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, tx)
 		if err != nil {
 			return
 		}

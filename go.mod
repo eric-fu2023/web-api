@@ -3,6 +3,7 @@ module web-api
 go 1.20
 
 require (
+	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20231018035118-bc61fa14f821
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20231106072009-55ac7fcd7526
 	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231103084449-c0d0b113377f
@@ -43,7 +44,6 @@ require (
 )
 
 require (
-	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5 // indirect
 	cloud.google.com/go v0.110.0 // indirect
 	cloud.google.com/go/compute v1.18.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
