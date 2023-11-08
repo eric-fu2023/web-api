@@ -9,6 +9,7 @@ import (
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/service/aj_captcha"
 	"web-api/util"
 )
 
@@ -38,6 +39,7 @@ func Init() {
 	cache.RedisLock()
 	cache.RedisRecentGames()
 	model.SetupMongo(os.Getenv("MONGO_URI"))
+	aj_captcha.Init()
 
 	util.InitFbFactory()
 	util.InitSabaFactory()
