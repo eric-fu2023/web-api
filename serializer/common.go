@@ -35,6 +35,7 @@ const (
 	CodeParamErr         = 40001
 	CodeExistingUsername = 40002
 	CodeSMSSent          = 40003
+	CodeCaptchaInvalid   = 40004
 	CodeNoStream         = 100
 )
 

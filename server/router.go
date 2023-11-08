@@ -79,6 +79,11 @@ func NewRouter() *gin.Engine {
 	// middlewares order can't be changed
 	r.Use(middleware.Cors())
 	r.GET("/ts", api.Ts)
+	captcha := r.Group("/captcha")
+	{
+		captcha.POST("/get", api.CaptchaGet)
+		captcha.POST("/check", api.CaptchaCheck)
+	}
 
 	r.Use(middleware.EncryptPayload())
 	r.Use(middleware.CheckSignature())

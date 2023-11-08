@@ -33,7 +33,7 @@ require (
 	golang.org/x/crypto v0.14.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
 	golang.org/x/sys v0.13.0
-	golang.org/x/text v0.13.0
+	golang.org/x/text v0.14.0
 	google.golang.org/api v0.114.0
 	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/yaml.v2 v2.4.0
@@ -43,6 +43,7 @@ require (
 )
 
 require (
+	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5 // indirect
 	cloud.google.com/go v0.110.0 // indirect
 	cloud.google.com/go/compute v1.18.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -66,6 +67,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -103,6 +105,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
+	golang.org/x/image v0.14.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
