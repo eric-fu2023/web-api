@@ -112,7 +112,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/vendors", middleware.Cache(1*time.Minute), api.VendorList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)
 		v1.GET("/streamer", middleware.Cache(1*time.Minute), api.Streamer)
-		v1.GET("/topup-methods", middleware.Cache(1*time.Minute), api.TopupMethodList)
+		v1.GET("/topup-methods", middleware.CheckAuth(), api.TopupMethodList)
 		v1.GET("/withdraw-methods", middleware.Cache(1*time.Minute), api.WithdrawMethodList)
 		v1.GET("/avatars", middleware.Cache(1*time.Minute), api.AvatarList)
 		v1.POST("/share", api.ShareCreate)
