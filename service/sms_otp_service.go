@@ -27,6 +27,7 @@ var (
 type SmsOtpService struct {
 	CountryCode string `form:"country_code" json:"country_code" binding:"required,startswith=+"`
 	Mobile      string `form:"mobile" json:"mobile" binding:"required,number"`
+	CheckUser   bool   `form:"check_user" json:"check_user"`
 	//common.Captcha
 }
 
@@ -40,6 +41,13 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 
 	if service.Mobile[:1] == "0" {
 		service.Mobile = service.Mobile[1:]
+	}
+
+	if service.CheckUser {
+		exists := service.checkExisting(service.CountryCode, service.Mobile)
+		if !exists {
+			return serializer.ParamErr(c, service, i18n.T("account_invalid"), nil)
+		}
 	}
 
 	err := service.verifyMobileNumber()
@@ -183,4 +191,13 @@ func (service *SmsOtpService) verifyMobileNumber() error {
 	}
 
 	return nil
+}
+
+func (service *SmsOtpService) checkExisting(countryCode, mobile string) bool {
+	var user model.User
+	row := model.DB.Where(`country_code`, countryCode).Where(`mobile`, mobile).First(&user).RowsAffected
+	if row > 0 {
+		return true
+	}
+	return false
 }

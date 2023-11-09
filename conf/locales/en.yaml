@@ -93,7 +93,7 @@ D组赛区: "Group D"
 第: ": "
 排名: "Rank"
 
-account_invalid: "Account is not valid."
+account_invalid: "User does not exist."
 logout_success: "You are successfully logged out."
 token_generation_error: "An error occurred during token generation."
 token_update_error: "An error occurred during token update."
