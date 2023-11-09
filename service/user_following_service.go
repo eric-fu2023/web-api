@@ -89,6 +89,7 @@ func (service *UserFollowingService) Add(c *gin.Context) (r serializer.Response,
 		return
 	}
 	r.Msg = "Success"
+	service.updateFollowingFollowerCount(user.ID, service.StreamerId)
 	return
 }
 
@@ -104,5 +105,21 @@ func (service *UserFollowingService) Remove(c *gin.Context) (r serializer.Respon
 		return
 	}
 	r.Msg = "Success"
+	service.updateFollowingFollowerCount(user.ID, service.StreamerId)
 	return
+}
+
+func (service *UserFollowingService) updateFollowingFollowerCount(userId, streamerId int64) {
+	go func() {
+		var count int64
+		if err := model.DB.Model(ploutos.UserFollowing{}).Where(`user_id`, userId).Count(&count).Error; err == nil {
+			model.DB.Model(ploutos.User{}).Where(`id`, userId).Update(`following_count`, count)
+		}
+	}()
+	go func() {
+		var count int64
+		if err := model.DB.Model(ploutos.UserFollowing{}).Where(`streamer_id`, streamerId).Count(&count).Error; err == nil {
+			model.DB.Model(ploutos.User{}).Where(`id`, streamerId).Update(`followers`, count)
+		}
+	}()
 }
