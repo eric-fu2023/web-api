@@ -36,6 +36,7 @@ var (
 		"fb":   1,
 		"saba": 2,
 		"dc":   3,
+		"taya": 4,
 	}
 	WebSocketMessageType = map[string]int64{
 		"text":       1,

@@ -41,6 +41,7 @@ func Init() {
 	model.SetupMongo(os.Getenv("MONGO_URI"))
 	aj_captcha.Init()
 
+	util.InitTayaFactory()
 	util.InitFbFactory()
 	util.InitSabaFactory()
 	util.InitDcFactory()

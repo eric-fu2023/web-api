@@ -22,6 +22,7 @@ import (
 var (
 	ErrEmptyCurrencyId           = errors.New("empty currency id")
 	GameVendorUserRegisterStruct = map[string]common.UserRegisterInterface{
+		"taya": &fb.UserRegister{},
 		"fb":   &fb.UserRegister{},
 		"saba": &saba.UserRegister{},
 		"dc":   &dc.UserRegister{},

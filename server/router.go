@@ -9,6 +9,7 @@ import (
 	api_finpay "web-api/api/finpay"
 	internal_api "web-api/api/internalapi"
 	saba_api "web-api/api/saba"
+	taya_api "web-api/api/taya"
 	"web-api/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,19 @@ func NewRouter() *gin.Engine {
 
 	r.Use(middleware.CorrelationID())
 	r.Use(middleware.ErrorLogStatus())
+
+	if os.Getenv("GAME_TAYA_EXPOSE_CALLBACKS") == "true" {
+		fbCallback := r.Group("/taya/fb/callback")
+		{
+			fbCallback.POST("/health", taya_api.CallbackHealth)
+			fbCallback.POST("/balance", taya_api.CallbackBalance)
+			fbCallback.POST("/order_pay", taya_api.CallbackOrderPay)
+			fbCallback.POST("/check_order_pay", taya_api.CallbackCheckOrderPay)
+			fbCallback.POST("/sync_transaction", taya_api.CallbackSyncTransaction)
+			fbCallback.POST("/sync_orders", taya_api.CallbackSyncOrders)
+			fbCallback.POST("/sync_cashout", taya_api.CallbackSyncCashout)
+		}
+	}
 
 	if os.Getenv("GAME_FB_EXPOSE_CALLBACKS") == "true" {
 		fbCallback := r.Group("/fb/callback")
@@ -168,6 +182,11 @@ func NewRouter() *gin.Engine {
 				user.GET("/withdraw-accounts", api.WthdrawAccountsList)
 
 				user.GET("/otp-check", api.VerifyOtp)
+
+				taya := user.Group("/taya")
+				{
+					taya.GET("/token", taya_api.GetToken)
+				}
 
 				fb := user.Group("/fb")
 				{

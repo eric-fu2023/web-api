@@ -7,9 +7,19 @@ import (
 	"os"
 )
 
+var TayaFactory fb.FB
 var FBFactory fb.FB
 var SabaFactory saba.Saba
 var DCFactory dc.Dc
+
+func InitTayaFactory() {
+	TayaFactory = fb.FB{
+		BaseUrl:           os.Getenv("GAME_TAYA_BASE_URL"),
+		MerchantId:        os.Getenv("GAME_TAYA_MERCHANT_ID"),
+		MerchantApiSecret: os.Getenv("GAME_TAYA_MERCHANT_API_SECRET"),
+		IsSandbox:         true,
+	}
+}
 
 func InitFbFactory() {
 	FBFactory = fb.FB{

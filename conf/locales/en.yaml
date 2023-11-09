@@ -456,6 +456,7 @@ empty_currency_id: "Please choose a currency."
 setup_finished: "You had completed the initial setup."
 finish_setup: "Please finish the account setup first."
 
+taya_create_user_failed: "Creating Taya user can't be completed."
 fb_create_user_failed: "Creating FB user can't be completed."
 saba_create_user_failed: "Creating Saba user can't be completed."
 dc_create_user_failed: "Creating game user can't be completed."
