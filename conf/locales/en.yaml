@@ -507,3 +507,5 @@ json_type_mismatch: "Json type mismatch"
 kyc_name_mismatch: "Name should match KYC"
 invalid_agent: "The referral code is invalid."
 "invalid_captcha": "Captcha is invalid."
+
+otp_limit_reached: "The daily OTP limit has been reached."

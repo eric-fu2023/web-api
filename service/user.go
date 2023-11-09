@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 	"os"
 	"strings"
 	"time"
@@ -26,49 +28,58 @@ var (
 	}
 )
 
-func CreateUser(user model.User) error {
+func CreateUser(user model.User) (err error) {
 	var currencies []ploutos.CurrencyGameVendor
-	err := model.DB.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
+	err = model.DB.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
 	if err != nil {
 		return ErrEmptyCurrencyId
 	}
 
-	tx := model.DB.Begin()
-	err = tx.Save(&user).Error
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = tx.Save(&user).Error
+		if err != nil {
+			return
+		}
 
-	userSum := ploutos.UserSum{
-		UserSumC: ploutos.UserSumC{
-			UserId: user.ID,
-		},
-	}
-	err = tx.Create(&userSum).Error
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+		userSum := ploutos.UserSum{
+			UserSumC: ploutos.UserSumC{
+				UserId: user.ID,
+			},
+		}
+		tx2 := model.DB.Clauses(dbresolver.Use("txConn")).Begin()
+		err = tx2.Error
+		if err != nil {
+			return
+		}
+		err = tx2.Create(&userSum).Error
+		if err != nil {
+			tx2.Rollback()
+			return
+		}
 
-	userCounter := ploutos.UserCounter{
-		UserCounterC: ploutos.UserCounterC{
-			UserId: user.ID,
-		},
-	}
-	err = tx.Create(&userCounter).Error
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+		userCounter := ploutos.UserCounter{
+			UserCounterC: ploutos.UserCounterC{
+				UserId: user.ID,
+			},
+		}
+		err = tx.Create(&userCounter).Error
+		if err != nil {
+			tx2.Rollback()
+			return
+		}
 
-	err = tx.Model(ploutos.User{}).Where(`id`, user.ID).Update(`setup_completed_at`, time.Now()).Error
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+		err = tx.Model(ploutos.User{}).Where(`id`, user.ID).Update(`setup_completed_at`, time.Now()).Error
+		if err != nil {
+			tx2.Rollback()
+			return
+		}
 
-	tx.Commit()
+		tx2.Commit()
+		return
+	})
+	if err != nil {
+		return
+	}
 
 	currMap := make(map[int64]string)
 	for _, cur := range currencies {
@@ -88,7 +99,7 @@ func CreateUser(user model.User) error {
 		}
 	}
 
-	return nil
+	return
 }
 
 type MeService struct {
