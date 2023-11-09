@@ -18,7 +18,7 @@ type CasheMethodListService struct {
 func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
-	user, _ := u.(model.User)
+	user, loggedIn := u.(model.User)
 	deviceInfo, _ := util.GetDeviceInfo(c)
 	var list []model.CashMethod
 	list, err = model.CashMethod{}.List(c, s.WithdrawOnly, s.TopupOnly, deviceInfo.Platform)
@@ -33,9 +33,9 @@ func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 			return
 		}
-		minAmount := consts.TopupMinimum / 100
-		if firstTime {
-			minAmount = consts.FirstTopupMinimum / 100
+		minAmount := consts.FirstTopupMinimum / 100
+		if !firstTime && loggedIn {
+			minAmount = consts.TopupMinimum / 100
 		}
 		r.Data = util.MapSlice(list, serializer.BuildCashMethodWrapper(minAmount, 30000))
 	} else {
