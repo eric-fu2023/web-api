@@ -13,6 +13,7 @@ var DCFactory dc.Dc
 
 func InitFbFactory() {
 	FBFactory = fb.FB{
+		BaseUrl:           os.Getenv("GAME_FB_BASE_URL"),
 		MerchantId:        os.Getenv("GAME_FB_MERCHANT_ID"),
 		MerchantApiSecret: os.Getenv("GAME_FB_MERCHANT_API_SECRET"),
 		IsSandbox:         true,
@@ -21,6 +22,7 @@ func InitFbFactory() {
 
 func InitSabaFactory() {
 	SabaFactory = saba.Saba{
+		BaseUrl:    os.Getenv("GAME_SABA_BASE_URL"),
 		VendorId:   os.Getenv("GAME_SABA_VENDOR_ID"),
 		OperatorId: os.Getenv("GAME_SABA_OPERATOR_ID"),
 		IsSandbox:  true,
@@ -29,6 +31,7 @@ func InitSabaFactory() {
 
 func InitDcFactory() {
 	DCFactory = dc.Dc{
+		BaseUrl:   os.Getenv("GAME_DC_BASE_URL"),
 		BrandId:   os.Getenv("GAME_DC_BRAND_ID"),
 		ApiKey:    os.Getenv("GAME_DC_API_KEY"),
 		IsSandbox: true,
