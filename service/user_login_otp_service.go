@@ -67,17 +67,13 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
 	var user model.User
-	errStr := ""
 	key := "otp:"
 	if service.Email != "" {
 		key += service.Email
-		errStr = i18n.T("Email_invalid")
 	} else if service.CountryCode != "" && service.Mobile != "" {
 		key += service.CountryCode + service.Mobile
-		errStr = i18n.T("Mobile_invalid")
 	} else if service.Username != "" {
 		key += service.Username
-		errStr = i18n.T("Username_invalid")
 	} else {
 		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
 	}
@@ -86,7 +82,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 			otp := cache.RedisSessionClient.Get(context.TODO(), key)
 			if otp.Val() != service.Otp {
 				go service.logFailedLogin(c)
-				return serializer.ParamErr(c, service, errStr, nil)
+				return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 			}
 		}
 	}
