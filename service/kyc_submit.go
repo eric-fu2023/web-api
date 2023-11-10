@@ -73,7 +73,8 @@ func (service *SubmitKycService) SubmitKyc(c *gin.Context) serializer.Response {
 
 	u, _ := c.Get("user")
 	user := u.(model.User)
-	go service.verifyDocuments(c, user, kyc.ID)
+	contextCopy := c.Copy()
+	go service.verifyDocuments(contextCopy, user, kyc.ID)
 	common.SendNotification(user.ID, consts.Notification_Type_Kyc, i18n.T("notification_kyc_pending_title"), i18n.T("notification_kyc_pending"))
 
 	return serializer.Response{
