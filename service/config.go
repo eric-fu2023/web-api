@@ -44,7 +44,7 @@ func (service *AnnouncementsService) Get(c *gin.Context) (r serializer.Response,
 	var announcements []ploutos.Announcement
 	brand := c.MustGet(`_brand`).(int)
 	agent := c.MustGet(`_agent`).(int)
-	err = model.DB.Scopes(model.ByBrandAgentAndPlatform(int64(brand), int64(agent), service.Platform.Platform), model.ByStatus, model.Sort).Find(&announcements).Error
+	err = model.DB.Scopes(model.ByBrandAgentAndPlatform(int64(brand), int64(agent), service.Platform.Platform), model.ByMaintenance, model.ByStatus, model.Sort).Find(&announcements).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return

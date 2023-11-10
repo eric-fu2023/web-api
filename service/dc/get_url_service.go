@@ -140,7 +140,7 @@ func (service *FunPlayService) FunPlay(c *gin.Context) (res serializer.Response,
 func getGameCode(gameId string, brand int64, platform int64) (code int64, err error) {
 	var sgb ploutos.SubGameBrand
 	err = model.DB.Model(ploutos.SubGameBrand{}).
-		Scopes(model.ByGameIdsBrandAndIsFeatured([]string{gameId}, brand, false), model.ByPlatformAndStatusOfSubAndVendor(platform), model.ByMaintenance).
+		Scopes(model.ByGameIdsBrandAndIsFeatured([]string{gameId}, brand, false), model.ByPlatformAndStatusOfSubAndVendor(platform), model.ByGameVendorMaintenance).
 		First(&sgb).Error
 	if err != nil {
 		return

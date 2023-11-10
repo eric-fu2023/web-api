@@ -178,6 +178,12 @@ func ByPlatformAndStatusOfSubAndVendor(platform int64) func(db *gorm.DB) *gorm.D
 
 func ByMaintenance(db *gorm.DB) *gorm.DB {
 	now := time.Now()
+	db.Where(`start_time IS NULL OR start_time = '0001-01-01' OR ? NOT BETWEEN start_time AND end_time`, now)
+	return db
+}
+
+func ByGameVendorMaintenance(db *gorm.DB) *gorm.DB {
+	now := time.Now()
 	db.Where(`gvb.start_time IS NULL OR gvb.start_time = '0001-01-01' OR ? NOT BETWEEN gvb.start_time AND gvb.end_time`, now).
 		Where(`sub_game_brand.start_time IS NULL OR sub_game_brand.start_time = '0001-01-01' OR ? NOT BETWEEN sub_game_brand.start_time AND sub_game_brand.end_time`, now)
 	return db
