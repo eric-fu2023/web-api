@@ -24,7 +24,7 @@ func (service *UserDeleteService) Delete(c *gin.Context) serializer.Response {
 		otp = cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.CountryCode+user.Mobile)
 	}
 	if otp.Val() != service.Otp {
-		return serializer.ParamErr(c, service, i18n.T("otp_invalid"), nil)
+		return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 	}
 
 	if rows := model.DB.Model(model.User{}).Where(`id`, user.ID).Update(`status`, 2).RowsAffected; rows < 1 {
