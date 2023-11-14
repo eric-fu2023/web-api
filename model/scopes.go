@@ -176,9 +176,9 @@ func ByPlatformAndStatusOfSubAndVendor(platform int64) func(db *gorm.DB) *gorm.D
 	}
 }
 
-func ByMaintenance(db *gorm.DB) *gorm.DB {
+func ByTimeRange(db *gorm.DB) *gorm.DB {
 	now := time.Now()
-	db.Where(`start_time IS NULL OR start_time = '0001-01-01' OR ? NOT BETWEEN start_time AND end_time`, now)
+	db.Where(`start_time IS NULL OR start_time = '0001-01-01' OR ? BETWEEN start_time AND end_time`, now)
 	return db
 }
 
