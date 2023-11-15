@@ -104,9 +104,9 @@ func DuplicatedTxResponse(c *gin.Context, brandUid string) (res callback.BaseRes
 }
 
 func CheckToken(brandUid string, token string) (res callback.BaseResponse, err error) {
-	redisKey := fmt.Sprintf(`hacksaw_token:%s`, token)
+	redisKey := fmt.Sprintf(`hacksaw_token:%s:%s`, brandUid, token)
 	r := cache.RedisSessionClient.Get(context.TODO(), redisKey)
-	if r.Err() == redis.Nil || r.Val() != brandUid {
+	if r.Err() == redis.Nil {
 		res = TokenErrorResponse()
 		err = errors.New("token invalid")
 		return

@@ -65,7 +65,14 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 	tokenString := fmt.Sprintf(`%d_%d`, user.ID, time.Now().UnixNano())
 	tokenHash := md5.Sum([]byte(tokenString))
 	token := hex.EncodeToString(tokenHash[:])
-	cache.RedisSessionClient.Set(context.TODO(), fmt.Sprintf(`hacksaw_token:%s`, token), gpu.ExternalUserId, 2*time.Hour)
+	ctx := context.TODO()
+	iter := cache.RedisSessionClient.Scan(ctx, 0, fmt.Sprintf(`hacksaw_token:%s:*`, gpu.ExternalUserId), 0).Iterator()
+	var keys []string
+	for iter.Next(ctx) {
+		keys = append(keys, iter.Val())
+	}
+	cache.RedisSessionClient.Unlink(ctx, keys...)
+	cache.RedisSessionClient.Set(ctx, fmt.Sprintf(`hacksaw_token:%s:%s`, gpu.ExternalUserId, token), nil, 2*time.Hour)
 
 	client := util.DCFactory.NewClient()
 	lang := c.MustGet("_language").(string)
