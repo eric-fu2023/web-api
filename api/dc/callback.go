@@ -11,8 +11,8 @@ import (
 func CallbackLogin(c *gin.Context) {
 	var req callback.LoginRequest
 	if err := c.ShouldBind(&req); err == nil {
-		if res, err := dc.SuccessResponse(c, req.BrandUid); err != nil {
-			c.JSON(200, ErrorResponse(c, req, err))
+		if res, err := dc.SuccessResponseWithTokenCheck(c, req.BrandUid, req.Token); err != nil {
+			c.JSON(200, ErrorResponse(c, req, res.Code, err))
 		} else {
 			c.JSON(200, res)
 		}
@@ -25,7 +25,7 @@ func CallbackWager(c *gin.Context) {
 	var req callback.WagerRequest
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := dc.WagerCallback(c, req); err != nil {
-			c.JSON(200, ErrorResponse(c, req, err))
+			c.JSON(200, ErrorResponse(c, req, res.Code, err))
 		} else {
 			c.JSON(200, res)
 		}
@@ -38,7 +38,7 @@ func CallbackCancelWager(c *gin.Context) {
 	var req callback.CancelWagerRequest
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := dc.CancelWagerCallback(c, req); err != nil {
-			c.JSON(200, ErrorResponse(c, req, err))
+			c.JSON(200, ErrorResponse(c, req, res.Code, err))
 		} else {
 			c.JSON(200, res)
 		}
@@ -51,7 +51,7 @@ func CallbackAppendWager(c *gin.Context) {
 	var req callback.AppendWagerRequest
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := dc.AppendWagerCallback(c, req); err != nil {
-			c.JSON(200, ErrorResponse(c, req, err))
+			c.JSON(200, ErrorResponse(c, req, res.Code, err))
 		} else {
 			c.JSON(200, res)
 		}
@@ -64,7 +64,7 @@ func CallbackEndWager(c *gin.Context) {
 	var req callback.EndWagerRequest
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := dc.EndWagerCallback(c, req); err != nil {
-			c.JSON(200, ErrorResponse(c, req, err))
+			c.JSON(200, ErrorResponse(c, req, res.Code, err))
 		} else {
 			c.JSON(200, res)
 		}
@@ -77,7 +77,7 @@ func CallbackFreeSpinResult(c *gin.Context) {
 	var req callback.FreeSpinResultRequest
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := dc.FreeSpinResultCallback(c, req); err != nil {
-			c.JSON(200, ErrorResponse(c, req, err))
+			c.JSON(200, ErrorResponse(c, req, res.Code, err))
 		} else {
 			c.JSON(200, res)
 		}
@@ -90,7 +90,7 @@ func CallbackPromoPayout(c *gin.Context) {
 	var req callback.PromoPayoutRequest
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := dc.PromoPayoutCallback(c, req); err != nil {
-			c.JSON(200, ErrorResponse(c, req, err))
+			c.JSON(200, ErrorResponse(c, req, res.Code, err))
 		} else {
 			c.JSON(200, res)
 		}
@@ -99,9 +99,13 @@ func CallbackPromoPayout(c *gin.Context) {
 	}
 }
 
-func ErrorResponse(c *gin.Context, req any, err error) (res callback.BaseResponse) {
+func ErrorResponse(c *gin.Context, req any, code int64, err error) (res callback.BaseResponse) {
+	var codeNumber int64 = 1001
+	if code > 1000 {
+		codeNumber = code
+	}
 	res = callback.BaseResponse{
-		Code: 1001,
+		Code: codeNumber,
 		Msg:  err.Error(),
 	}
 	util.Log().Error(res.Msg, c.Request.URL, c.Request.Header, util.MarshalService(req))

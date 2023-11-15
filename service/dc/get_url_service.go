@@ -46,14 +46,6 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 		return
 	}
 
-	tokenString := c.MustGet("_token_string").(string)
-	sess := cache.RedisSessionClient.Get(context.TODO(), user.GetRedisSessionKey())
-	if sess.Val() != tokenString {
-		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), nil)
-		return
-	}
-	tokenHash := md5.Sum([]byte(tokenString))
-
 	gpu, _, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["dc"], user.Username)
 	if err != nil {
 		var currency ploutos.CurrencyGameVendor
@@ -70,13 +62,18 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 		}
 	}
 
+	tokenString := fmt.Sprintf(`%d_%d`, user.ID, time.Now().UnixNano())
+	tokenHash := md5.Sum([]byte(tokenString))
+	token := hex.EncodeToString(tokenHash[:])
+	cache.RedisSessionClient.Set(context.TODO(), fmt.Sprintf(`hacksaw_token:%s`, token), gpu.ExternalUserId, 2*time.Hour)
+
 	client := util.DCFactory.NewClient()
 	lang := c.MustGet("_language").(string)
 	if lang == "zh" {
 		lang = "zh_hans"
 	}
 	cc := strings.ToUpper(c.MustGet("_country_code").(string))
-	r, err := client.LoginGame(user.Username, hex.EncodeToString(tokenHash[:]), gameCode, gpu.ExternalCurrency, lang, consts.PlatformIdToDcPlatformId[service.Platform.Platform], cc, "", &service.Fullscreen)
+	r, err := client.LoginGame(user.Username, token, gameCode, gpu.ExternalCurrency, lang, consts.PlatformIdToDcPlatformId[service.Platform.Platform], cc, "", &service.Fullscreen)
 	if err != nil {
 		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return

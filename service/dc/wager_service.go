@@ -30,6 +30,10 @@ func (c *Wager) GetExternalUserId() string {
 
 func WagerCallback(c *gin.Context, req callback.WagerRequest) (res callback.BaseResponse, err error) {
 	go common.LogGameCallbackRequest("wager", req)
+	res, err = CheckToken(req.BrandUid, req.Token)
+	if res.Code != 0 || err != nil {
+		return
+	}
 	res, err = CheckDuplicate(c, model.ByDcRoundAndWager(req.RoundId, req.WagerId), req.BrandUid)
 	if res.Code != 0 || err != nil {
 		return
