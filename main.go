@@ -44,6 +44,9 @@ func main() {
 		}()
 
 		c := cron.New(cron.WithSeconds())
+		c.AddFunc("0 */5 * * * *", func() {
+			task.RefreshPaymentOrder()
+		})
 		c.Start()
 		select {}
 	} else {
