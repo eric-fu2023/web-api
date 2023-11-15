@@ -4,6 +4,9 @@
 .idea
 .env
 go.sum
+go.work
+go.work.sum
 web-api
 *.exe
 *.exe~
+google-sa-key*

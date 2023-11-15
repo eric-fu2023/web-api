@@ -1,8 +1,10 @@
 package service
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
-	"time"
+	"github.com/go-redis/redis/v8"
+	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util/i18n"
@@ -17,11 +19,16 @@ func (service *UserDeleteService) Delete(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	if err := model.DB.Where(`sms_otp = ? AND sms_otp_expired_at > ?`, service.Otp, time.Now().Format("2006-01-02 15:04:05")).Or(`email_otp = ? AND email_otp_expired_at > ?`, service.Otp, time.Now().Format("2006-01-02 15:04:05")).First(&user).Error; err != nil {
-		return serializer.ParamErr(i18n.T("验证码错误"), err)
+	otp := cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.Email)
+	if otp.Err() == redis.Nil {
+		otp = cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.CountryCode+user.Mobile)
 	}
-	if rows := model.DB.Delete(&user).RowsAffected; rows < 1 {
-		return serializer.ParamErr(i18n.T("失败"), nil)
+	if otp.Val() != service.Otp {
+		return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
+	}
+
+	if rows := model.DB.Model(model.User{}).Where(`id`, user.ID).Update(`status`, 2).RowsAffected; rows < 1 {
+		return serializer.DBErr(c, service, i18n.T("failed"), nil)
 	}
 	return serializer.Response{
 		Msg: i18n.T("success"),

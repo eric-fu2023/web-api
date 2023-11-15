@@ -3,10 +3,10 @@ package middleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -33,57 +33,64 @@ func (a AuthClaims) Valid() (err error) {
 	return
 }
 
-// AuthRequired 需要登录
-func AuthRequired() gin.HandlerFunc {
+func (a AuthClaims) GetRedisSessionKey() string {
+	return fmt.Sprintf(`session:%d`, a.UserId)
+}
+
+func AuthRequired(getUser bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		i18n := c.MustGet("i18n").(i18n.I18n)
-		const BEARER_SCHEMA = "Bearer"
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(401, serializer.Response{
-				Code:  serializer.CodeCheckLogin,
-				Msg:   i18n.T("Token无效"),
-				Error: "no Authorization header",
-			})
-			c.Abort()
-			return
-		}
-		tokenString := strings.TrimSpace(authHeader[len(BEARER_SCHEMA):])
-		token, err := jwt.ParseWithClaims(tokenString, &AuthClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(os.Getenv("SELF_JWT_HMAV_SECRET")), nil
-		})
+		err := doAuth(c, getUser)
 		if err != nil {
 			c.JSON(401, serializer.Response{
 				Code:  serializer.CodeCheckLogin,
-				Msg:   i18n.T("Token无效"),
+				Msg:   i18n.T("operation_not_allowed"),
 				Error: err.Error(),
 			})
 			c.Abort()
 			return
 		}
-		a := token.Claims.(*AuthClaims)
+		c.Next()
+	}
+}
 
-		otp := cache.RedisSessionClient.Get(context.TODO(), strconv.Itoa(a.UserId))
-		if otp.Val() != tokenString {
-			c.JSON(401, serializer.Response{
-				Code: serializer.CodeCheckLogin,
-				Msg:  i18n.T("Token无效"),
-			})
-			c.Abort()
-			return
-		}
+func CheckAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		doAuth(c, true)
+		c.Next()
+	}
+}
 
+func doAuth(c *gin.Context, getUser bool) (err error) {
+	const BEARER_SCHEMA = "Bearer"
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		err = errors.New("no Authorization header")
+		return
+	}
+	tokenString := strings.TrimSpace(authHeader[len(BEARER_SCHEMA):])
+	c.Set("_token_string", tokenString)
+	token, err := jwt.ParseWithClaims(tokenString, &AuthClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SELF_JWT_HMAV_SECRET")), nil
+	})
+	if err != nil {
+		return
+	}
+	a := token.Claims.(*AuthClaims)
+	sess := cache.RedisSessionClient.Get(context.TODO(), a.GetRedisSessionKey())
+	if sess.Val() != tokenString {
+		err = errors.New("invalid token")
+		return
+	}
+	go func() {
+		cache.RedisSessionClient.Expire(context.TODO(), a.GetRedisSessionKey(), 20*time.Minute)
+	}()
+	if getUser {
 		var user model.User
-		if err := model.DB.Where(`id`, a.UserId).First(&user).Error; err != nil {
-			c.JSON(401, serializer.Response{
-				Code:  serializer.CodeCheckLogin,
-				Msg:   i18n.T("账号错误"),
-				Error: err.Error(),
-			})
-			c.Abort()
+		if err = model.DB.Where(`id`, a.UserId).First(&user).Error; err != nil {
 			return
 		}
 		c.Set("user", user)
-		c.Next()
 	}
+	return
 }

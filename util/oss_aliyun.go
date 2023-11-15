@@ -29,12 +29,14 @@ const AliyunOssAvatar = "AVATAR"
 const AliyunOssCoverImage = "COVER_IMAGE"
 const AliyunOssRoomImage = "ROOM_IMAGE"
 const AliyunOssGallery = "GALLERY"
+const AliyunOssKyc = "KYC"
 
 var AliyunOssFolder = map[string]string{
 	AliyunOssAvatar:     "avatar",
 	AliyunOssCoverImage: "cover_image",
 	AliyunOssRoomImage:  "room_image",
 	AliyunOssGallery:    "gallery",
+	AliyunOssKyc:        "kyc",
 }
 
 func (a *AliyunOssStruct) getFileName(aliyunOssFolder string, userId int64, extension string) (fileName string, err error) {
@@ -88,6 +90,8 @@ func (a *AliyunOssStruct) UploadFile(aliyunOssFolder string, userId int64, file 
 		return
 	}
 
+	path = "/" + path
+
 	return
 }
 
@@ -110,18 +114,21 @@ func InitAliyunOSS() (aliyunOss AliyunOssStruct, err error) {
 		fmt.Println("ALIYUN_OSS_BASE_PATH is empty")
 	}
 
-	// 创建OSSClient实例。
 	client, err := oss.New(aliyunOss.Info.Endpoint, aliyunOss.Info.AccessKeyId, aliyunOss.Info.AccessKeySecret)
 	if err != nil {
 		return
 	}
 	aliyunOss.Client = client
 
-	// 获取存储空间。
 	bucket, err := client.Bucket(aliyunOss.Info.BucketName)
 	if err != nil {
 		return
 	}
 	aliyunOss.Bucket = bucket
 	return
+}
+
+func BuildAliyunOSSUrl(path string) string {
+	bucketUrl := os.Getenv("ALIYUN_OSS_BUCKET_URL")
+	return bucketUrl + path
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	random "crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -12,7 +13,6 @@ import (
 	"time"
 )
 
-// RandStringRunes 返回随机字符串
 func RandStringRunes(n int) string {
 	var letterRunes = []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -38,4 +38,17 @@ func AesEncrypt(str []byte) string {
 	mode := cipher.NewCFBEncrypter(block, iv)
 	mode.XORKeyStream(ciphertext[aes.BlockSize:], str)
 	return base64.RawStdEncoding.EncodeToString(ciphertext)
+}
+
+func MapSlice[T any, M any](a []T, f func(T) M) []M {
+	n := make([]M, len(a))
+	for i, e := range a {
+		n[i] = f(e)
+	}
+	return n
+}
+
+func JSON(jsonObj any) string {
+	bytes, _ := json.Marshal(jsonObj)
+	return string(bytes)
 }

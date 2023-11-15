@@ -1,10 +1,11 @@
 package middleware
 
 import (
+	"fmt"
 	cache "github.com/chenyahui/gin-cache"
 	"github.com/gin-gonic/gin"
-	ca "web-api/cache"
 	"time"
+	ca "web-api/cache"
 )
 
 func Cache(duration time.Duration) gin.HandlerFunc {
@@ -13,11 +14,17 @@ func Cache(duration time.Duration) gin.HandlerFunc {
 		if v, exists := c.Get("_tz_abbr"); exists {
 			prefix += "tz" + v.(string)
 		}
-		if v, exists := c.Get("_app_type"); exists {
-			prefix += v.(string)
+		if v, exists := c.Get("_brand"); exists {
+			if vv, ok := v.(int); ok {
+				prefix += fmt.Sprintf(`%d`, vv)
+			}
+		}
+		if v, exists := c.Get("_agent"); exists {
+			if vv, ok := v.(int); ok {
+				prefix += fmt.Sprintf(`_%d`, vv)
+			}
 		}
 		prefix += c.MustGet("_language").(string)
 		cache.CacheByRequestURI(ca.RedisStore, duration, cache.WithPrefixKey(prefix), cache.IgnoreQueryOrder())(c)
-		c.Next()
 	}
 }

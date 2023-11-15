@@ -7,8 +7,8 @@ import (
 	validator "gopkg.in/go-playground/validator.v8"
 	"time"
 	"web-api/conf"
-	"web-api/model"
 	"web-api/serializer"
+	"web-api/util/i18n"
 )
 
 func Ping(c *gin.Context) {
@@ -31,29 +31,32 @@ func Ts(c *gin.Context) {
 	})
 }
 
-func Me(c *gin.Context) {
-	u, _ := c.Get("user")
-	user := u.(model.User)
+func Heartbeat(c *gin.Context) {
 	c.JSON(200, serializer.Response{
 		Code: 0,
-		Data: serializer.BuildUserInfo(c, user),
 	})
 }
 
-func ErrorResponse(err error) serializer.Response {
+func ErrorResponse(c *gin.Context, service any, err error) serializer.Response {
+	t, exists := c.Get("i18n")
+	if !exists {
+		return serializer.ParamErr(c, service, "", err)
+	}
+	i18n := t.(i18n.I18n)
 	if ve, ok := err.(validator.ValidationErrors); ok {
 		for _, e := range ve {
 			field := conf.T(fmt.Sprintf("Field.%s", e.Field))
 			tag := conf.T(fmt.Sprintf("Tag.Valid.%s", e.Tag))
 			return serializer.ParamErr(
+				c, service,
 				fmt.Sprintf("%s%s", field, tag),
 				err,
 			)
 		}
 	}
 	if _, ok := err.(*json.UnmarshalTypeError); ok {
-		return serializer.ParamErr("JSON类型不匹配", err)
+		return serializer.ParamErr(c, service, i18n.T("json_type_mismatch"), err)
 	}
 
-	return serializer.ParamErr("参数错误", err)
+	return serializer.ParamErr(c, service, i18n.T("parameter_error"), err)
 }

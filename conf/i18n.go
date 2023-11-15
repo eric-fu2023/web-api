@@ -7,10 +7,8 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// Dictinary 字典
 var Dictinary *map[interface{}]interface{}
 
-// LoadLocales 读取国际化文件
 func LoadLocales(path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -28,12 +26,10 @@ func LoadLocales(path string) error {
 	return nil
 }
 
-// T 翻译
 func T(key string) string {
 	dic := *Dictinary
 	keys := strings.Split(key, ".")
 	for index, path := range keys {
-		// 如果到达了最后一层，寻找目标翻译
 		if len(keys) == (index + 1) {
 			for k, v := range dic {
 				if k, ok := k.(string); ok {
@@ -46,7 +42,6 @@ func T(key string) string {
 			}
 			return path
 		}
-		// 如果还有下一层，继续寻找
 		for k, v := range dic {
 			if ks, ok := k.(string); ok {
 				if ks == path {

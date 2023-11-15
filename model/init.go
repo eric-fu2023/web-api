@@ -1,12 +1,12 @@
 package model
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/driver/postgres"
 	"gorm.io/plugin/dbresolver"
-	"log"
 	"os"
 	"time"
 	"web-api/util"
@@ -16,34 +16,37 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// DB 数据库链接单例
+var txRelated = []any{&ploutos.UserSum{}, &ploutos.UserSumC{}, "user_sums",
+	&ploutos.Transaction{}, &ploutos.DcTransaction{}, &ploutos.FbTransaction{}, &ploutos.SabaTransaction{},
+	&ploutos.TransactionC{}, &ploutos.DcTransactionC{}, &ploutos.FbTransactionC{}, &ploutos.SabaTransactionC{},
+	&ploutos.CashOrder{}, &ploutos.CashOrderC{}, &CashOrder{}, "cash_orders",
+	"transactions", "fb_transactions", "dc_transactions", "saba_transactions", "txConn",
+}
+
 var DB *gorm.DB
 var MongoDB *mongo.Database
 var IPDB *awdb.Reader
 
-// Database 在中间件中初始化postgres链接
-func Database(primaryConn string, replicaConn string) {
-	// 初始化GORM日志配置
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-		logger.Config{
-			SlowThreshold:             2 * time.Second, // Slow SQL threshold
-			LogLevel:                  logger.Warn,     // Log level(这里记得根据需求改一下)
-			IgnoreRecordNotFoundError: true,            // Ignore ErrRecordNotFound error for logger
-			Colorful:                  false,           // Disable color
-		},
-	)
+func Database(primaryConn string, txConn string) {
+	getLogLevel := func() logger.LogLevel {
+		if os.Getenv("ENV") == "local" {
+			return logger.Info
+		}
+		return logger.Warn
+	}
+	newLogger := NewCustomLogger(os.Stdout, logger.Config{
+		SlowThreshold:             2 * time.Second, // Slow SQL threshold
+		LogLevel:                  getLogLevel(),   // Log level
+		IgnoreRecordNotFoundError: true,            // Ignore ErrRecordNotFound error for logger
+		Colorful:                  false,           // Disable color
+	})
 
 	db, err := gorm.Open(postgres.Open(primaryConn), &gorm.Config{
 		Logger: newLogger,
 	})
-	db.Use(dbresolver.Register(dbresolver.Config{ // for other models and tables, use primary db for both reads and writes
-		Sources:  []gorm.Dialector{postgres.Open(primaryConn)},
-		Replicas: []gorm.Dialector{postgres.Open(primaryConn)},
-	}).Register(dbresolver.Config{ // for `matches` and `news`, use replica for reads and primary for writes
-		Sources:  []gorm.Dialector{postgres.Open(primaryConn)},
-		Replicas: []gorm.Dialector{postgres.Open(replicaConn)},
-	}).
+	db.Use(dbresolver.Register(dbresolver.Config{
+		Sources: []gorm.Dialector{postgres.Open(txConn)},
+	}, txRelated...).
 		SetMaxOpenConns(75).
 		SetMaxIdleConns(25).
 		SetConnMaxLifetime(time.Hour))

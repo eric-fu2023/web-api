@@ -35,7 +35,7 @@ func Ip() gin.HandlerFunc {
 			var ccc []string
 			model.DB.Table("ips").Where(`status = 1`).Where(`type = 1`).Select("name").Find(&cc)
 			for _, a := range cc {
-				ccc = append(ccc, a["ip"].(string))
+				ccc = append(ccc, a["name"].(string))
 			}
 			ipWhitelist = map[string]interface{}{
 				"expiry": now.Add(5 * time.Minute),
@@ -47,7 +47,7 @@ func Ip() gin.HandlerFunc {
 			var ccc []string
 			model.DB.Table("ips").Where(`status = 1`).Where(`type = 0`).Select("name").Find(&cc)
 			for _, a := range cc {
-				ccc = append(ccc, a["ip"].(string))
+				ccc = append(ccc, a["name"].(string))
 			}
 			ipBlacklist = map[string]interface{}{
 				"expiry": now.Add(5 * time.Minute),

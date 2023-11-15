@@ -1,39 +1,29 @@
 package model
 
 import (
-	"github.com/golang-jwt/jwt/v4"
-	"gorm.io/gorm"
+	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// User 用户模型
 type User struct {
-	Base
-	BrandAgent
-	CountryCode    string
-	Mobile         string
-	Email          string
-	Username       string
-	Password       string
-	Status         int64
-	Role           int64
-	Avatar         string
-	Bio            string
-	FollowingCount int64
-	DeletedAt      gorm.DeletedAt
+	ploutos.UserC
+	KycCheckRequired bool             `gorm:"-"`
+	UserSum          *ploutos.UserSum `gorm:"foreignKey:UserId;references:ID"`
+	Kyc              *Kyc             `gorm:"foreignKey:UserId;references:ID"`
 }
 
 const (
-	// PassWordCost 密码加密难度
-	PassWordCost = 4
-	// Active 激活用户
-	Active string = "active"
-	// Inactive 未激活用户
-	Inactive string = "inactive"
-	// Suspend 被封禁用户
-	Suspend string = "suspend"
+	PassWordCost        = 4
+	Active       string = "active"
+	Inactive     string = "inactive"
+	Suspend      string = "suspend"
 )
 
 func (user *User) GenToken() (tokenString string, err error) {
@@ -50,4 +40,15 @@ func (user *User) GenToken() (tokenString string, err error) {
 
 	tokenString, err = token.SignedString([]byte(os.Getenv("SELF_JWT_HMAV_SECRET")))
 	return
+}
+
+func (user *User) GetRedisSessionKey() string {
+	return fmt.Sprintf(`session:%d`, user.ID)
+}
+
+func (user *User) VerifySecondaryPassword(secondaryPassword string) (err error) {
+	if secondaryPassword == "" {
+		return errors.New("empty password")
+	}
+	return bcrypt.CompareHashAndPassword([]byte(user.SecondaryPassword), []byte(secondaryPassword))
 }

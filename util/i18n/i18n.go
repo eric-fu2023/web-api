@@ -10,8 +10,8 @@ import (
 )
 
 type I18n struct {
-	Language	string
-	Dictionary	*map[interface{}]interface{}
+	Language   string
+	Dictionary *map[interface{}]interface{}
 }
 
 func (i18n *I18n) LoadLanguages(locale string) error {
@@ -36,7 +36,6 @@ func (i18n *I18n) T(key string) string {
 	dic := *i18n.Dictionary
 	keys := strings.Split(key, ".")
 	for index, path := range keys {
-		// 如果到达了最后一层，寻找目标翻译
 		if len(keys) == (index + 1) {
 			for k, v := range dic {
 				if k, ok := k.(string); ok {
@@ -49,7 +48,6 @@ func (i18n *I18n) T(key string) string {
 			}
 			return path
 		}
-		// 如果还有下一层，继续寻找
 		for k, v := range dic {
 			if ks, ok := k.(string); ok {
 				if ks == path {
@@ -72,17 +70,17 @@ func (i18n *I18n) FormatCurrencyAndValue(i int64) (r string) {
 		if i < 10000 {
 			r = p.Sprintf("%d欧", i)
 		} else if i < 100000000 {
-			r = p.Sprintf("%d万欧", i / 10000)
+			r = p.Sprintf("%d万欧", i/10000)
 		} else {
-			r = p.Sprintf("%d亿 %d万欧", i / 100000000, (i - (i / 100000000) * 100000000) / 10000)
+			r = p.Sprintf("%d亿 %d万欧", i/100000000, (i-(i/100000000)*100000000)/10000)
 		}
 	} else {
 		if i < 1000 {
 			r = p.Sprintf("%d€", i)
 		} else if i < 1000000 {
-			r = p.Sprintf("%dK€", i / 1000)
+			r = p.Sprintf("%dK€", i/1000)
 		} else {
-			r = p.Sprintf("%dM€", i / 1000000)
+			r = p.Sprintf("%dM€", i/1000000)
 		}
 	}
 	return

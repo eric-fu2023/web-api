@@ -23,16 +23,27 @@ func CheckSignature() gin.HandlerFunc {
 			return
 		}
 		var keys []string
-		for k, _ := range c.Request.URL.Query() {
-			keys = append(keys, k)
+		if c.Request.Method == "GET" {
+			for k, _ := range c.Request.URL.Query() {
+				keys = append(keys, k)
+			}
+		} else {
+			form, e := c.MultipartForm()
+			if e == nil {
+				for k, _ := range form.Value {
+					keys = append(keys, k)
+				}
+			}
 		}
 		sort.Strings(keys)
 		var str string
-		if c.Request.Method == "GET" {
-			for _, k := range keys {
+		for _, k := range keys {
+			if c.Request.Method == "GET" {
 				for _, a := range c.Request.URL.Query()[k] {
 					str += a
 				}
+			} else {
+				str += c.PostForm(k)
 			}
 		}
 		str += timestamp + os.Getenv("SIGNATURE_SALT")
@@ -42,8 +53,8 @@ func CheckSignature() gin.HandlerFunc {
 			if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
 				c.JSON(200, map[string]string{
 					"error": "Signature invalid",
-					"str": str,
-					"hash": h,
+					"str":   str,
+					"hash":  h,
 				})
 			}
 			c.Abort()

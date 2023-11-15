@@ -8,16 +8,16 @@ import (
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
-	"web-api/util/i18n"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+	"web-api/util/i18n"
 )
 
 func SendSms(c *gin.Context, countryCode string, mobile string, otp string) (err error) {
-	if countryCode == "+86" { // for china
-		//msg := `【欧场】尊敬的用户，您的验证码：` + otp + `，如非本人操作，请忽略本短信`
+	if countryCode == "+86" {
+		//msg := `Your OTP ` + otp
 		//url := `http://www.weiwebs.cn/msg/HttpSendSM?account=` + os.Getenv("CN_SMS_ACCOUNT") + `&pswd=` + os.Getenv("CN_SMS_PSWD") + `&mobile=` + mobile + `&msg=` + msg
 		//var res *http.Response
 		//var r []byte
@@ -33,7 +33,7 @@ func SendSms(c *gin.Context, countryCode string, mobile string, otp string) (err
 		data.Set("SpCode", os.Getenv("CN_SMS_SPCODE"))
 		data.Set("LoginName", os.Getenv("CN_SMS_LOGINNAME"))
 		data.Set("Password", os.Getenv("CN_SMS_PASSWORD"))
-		data.Set("MessageContent", fmt.Sprintf(`您的验证码是 %s，5分钟有效，请尽快验证`, otp))
+		data.Set("MessageContent", fmt.Sprintf(`Your OTP is %s，please use it within 5 minutes.`, otp))
 		data.Set("UserNumber", mobile)
 		encoded := data.Encode()
 
@@ -69,9 +69,9 @@ func SendSms(c *gin.Context, countryCode string, mobile string, otp string) (err
 		} else {
 			i18n := c.MustGet("i18n").(i18n.I18n)
 			m := map[string]interface{}{
-				"from": os.Getenv("BULKSMS_FROM"),
-				"to": countryCode + mobile,
-				"body": fmt.Sprintf(i18n.T("Your_request_otp"), otp),
+				"from":     os.Getenv("BULKSMS_FROM"),
+				"to":       countryCode + mobile,
+				"body":     fmt.Sprintf(i18n.T("Your_request_otp"), otp),
 				"encoding": "UNICODE",
 			}
 			var str []byte
@@ -86,7 +86,7 @@ func SendSms(c *gin.Context, countryCode string, mobile string, otp string) (err
 				return
 			}
 			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", "Basic " + os.Getenv("BULKSMS_AUTH"))
+			req.Header.Set("Authorization", "Basic "+os.Getenv("BULKSMS_AUTH"))
 			client := &http.Client{}
 			_, err = client.Do(req)
 			if err != nil {
