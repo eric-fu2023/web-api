@@ -19,6 +19,7 @@ func RefreshPaymentOrder() {
 	err := model.DB.
 		Where("status", models.CashOrderStatusPending).
 		Where("order_type", 1).
+		Where("NOT is_manual_operation").
 		Where("created_at < ?", time.Now().Add(-30*time.Minute)).
 		Find(&orders).Error
 	if err != nil {
@@ -36,7 +37,7 @@ func RefreshPaymentOrder() {
 			err = model.DB.Model(&t).Updates(map[string]any{
 				"status":     models.CashOrderStatusFailed,
 				"notes":      string(serializedData),
-				"updated_by": specialUpdatedBy,
+				"manual_closed_by": specialUpdatedBy,
 			}).Error
 
 			if err == nil {
@@ -57,7 +58,7 @@ func RefreshPaymentOrder() {
 			err = model.DB.Debug().Model(&t).Updates(map[string]any{
 				"status":     models.CashOrderStatusFailed,
 				"notes":   string(serializedData),
-				"updated_by": specialUpdatedBy,
+				"manual_closed_by": specialUpdatedBy,
 			}).Error
 			if err == nil {
 				fmt.Println("failed order", t.ID)
