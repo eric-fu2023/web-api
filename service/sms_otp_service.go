@@ -5,7 +5,6 @@ import (
 	"blgit.rfdev.tech/zhibo/utilities"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"
 	"os"
@@ -142,9 +141,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	if !isWithinLimit {
 		return errReachedOtpLimit
 	}
-
-	fmt.Println("M360Shortcode:", os.Getenv("M360_SHORTCODE_MASK"))
-
+	
 	smsManager := utilities.SmsManager{
 		HuanXunTemplate: "",
 		BulkSmsTemplate: i18n.T("Your_request_otp"),
