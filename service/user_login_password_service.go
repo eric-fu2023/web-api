@@ -36,7 +36,7 @@ type UserLoginPasswordService struct {
 
 func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Response {
 	service.Email = strings.ToLower(service.Email)
-	service.Username = strings.ToLower(service.Username)
+	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
