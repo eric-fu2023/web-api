@@ -1,4 +1,4 @@
-package taya
+package model
 
 import ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
