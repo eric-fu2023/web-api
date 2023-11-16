@@ -6,7 +6,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20231109064501-77c97fb01cea
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20231115080708-a5b3999c00c6
-	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231103084449-c0d0b113377f
+	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231116032605-1b3293eb761d
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20231103020509-7b1120038f17
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
@@ -31,9 +31,9 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.711
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.711
 	go.mongodb.org/mongo-driver v1.11.2
-	golang.org/x/crypto v0.14.0
+	golang.org/x/crypto v0.15.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
-	golang.org/x/sys v0.13.0
+	golang.org/x/sys v0.14.0
 	golang.org/x/text v0.14.0
 	google.golang.org/api v0.114.0
 	gopkg.in/go-playground/validator.v8 v8.18.2

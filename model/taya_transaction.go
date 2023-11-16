@@ -1,9 +1,9 @@
-package taya
+package model
 
 import ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 type TayaTransaction struct {
-	ploutos.FbTransactionC
+	ploutos.FbTransaction
 }
 
 func (TayaTransaction) TableName() string {

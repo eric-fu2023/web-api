@@ -1,11 +1,11 @@
 package model
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 )
 
-type Match models.MatchC
+type Match ploutos.Match
 
 func MatchWithDetails(db *gorm.DB) *gorm.DB {
 	return db.Preload(`Competition`).

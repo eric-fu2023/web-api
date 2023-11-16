@@ -5,12 +5,12 @@ import (
 	"errors"
 	"web-api/conf/consts"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 )
 
 type UserAccountBinding struct {
-	models.UserAccountBindingC
+	ploutos.UserAccountBinding
 	CashMethod *CashMethod
 }
 

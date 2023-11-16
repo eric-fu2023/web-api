@@ -1,7 +1,7 @@
 package service
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -242,7 +242,7 @@ func (service *SubmitKycService) buildKyc(c *gin.Context) model.Kyc {
 	user := u.(model.User)
 
 	return model.Kyc{
-		KycC: models.KycC{
+		Kyc: ploutos.Kyc{
 			UserId:           user.ID,
 			FirstName:        service.FirstName,
 			MiddleName:       service.MiddleName,
@@ -261,7 +261,7 @@ func (service *SubmitKycService) buildKyc(c *gin.Context) model.Kyc {
 }
 
 func (service *SubmitKycService) buildKycDocument(kycId int64, url string) model.KycDocument {
-	return model.KycDocument{KycDocumentC: models.KycDocumentC{
+	return model.KycDocument{KycDocument: ploutos.KycDocument{
 		KycId: kycId,
 		Url:   url,
 	}}

@@ -1,7 +1,7 @@
 package service
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"errors"
 	"fmt"
@@ -205,7 +205,7 @@ func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user
 	}
 
 	event := model.AuthEvent{
-		AuthEventC: models.AuthEventC{
+		AuthEvent: ploutos.AuthEvent{
 			UserId:      user.ID,
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["successful"],
@@ -236,7 +236,7 @@ func (service *UserLoginPasswordService) logFailedLogin(c *gin.Context, user mod
 	}
 
 	event := model.AuthEvent{
-		AuthEventC: models.AuthEventC{
+		AuthEvent: ploutos.AuthEvent{
 			UserId:      user.ID,
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["failed"],

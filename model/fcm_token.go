@@ -9,7 +9,7 @@ import (
 )
 
 type FcmToken struct {
-	ploutos.FcmTokenC
+	ploutos.FcmToken
 }
 
 func GetFcmTokenStrings(userIds []int64) ([]string, error) {
@@ -42,7 +42,7 @@ func UpsertFcmToken(c *gin.Context, userId int64, Uuid, fcmToken string) error {
 	}
 
 	ft := FcmToken{
-		FcmTokenC: ploutos.FcmTokenC{
+		FcmToken: ploutos.FcmToken{
 			UserId: userId,
 			Uuid:   Uuid,
 			Token:  fcmToken,

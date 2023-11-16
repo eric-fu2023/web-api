@@ -29,7 +29,7 @@ var TransferTypeCalculateWager = map[string]int64{
 
 type Callback struct {
 	Request     callback.OrderPayRequest
-	Transaction TayaTransaction
+	Transaction model.TayaTransaction
 }
 
 func (c *Callback) NewCallback(userId int64) {
@@ -70,7 +70,7 @@ func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
 }
 
 func (c *Callback) GetBetAmount() (amount int64, exists bool) {
-	e := model.DB.Model(TayaTransaction{}).Select(`amount`).
+	e := model.DB.Model(model.TayaTransaction{}).Select(`amount`).
 		Where(`business_id`, c.Transaction.BusinessId).
 		Where(`transfer_type`, `BET`).Order(`id`).First(&amount).Error
 	if e == nil {
@@ -122,7 +122,7 @@ func OrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callbac
 
 func CheckOrderPayCallback(c *gin.Context, req callback.OrderPayRequest) (res callback.BaseResponse, err error) {
 	go common.LogGameCallbackRequest("check_order_pay", req)
-	var tx TayaTransaction
+	var tx model.TayaTransaction
 	rows := model.DB.Where(`transaction_id`, req.TransactionId).First(&tx).RowsAffected
 	if rows == 1 {
 		res = callback.BaseResponse{

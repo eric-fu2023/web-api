@@ -22,7 +22,7 @@ type Settle struct {
 }
 
 func (c *Settle) NewCallback(userId int64) {
-	var existingTx models.SabaTransactionC
+	var existingTx models.SabaTransaction
 	rows := model.DB.Where(`ref_id`, c.Request.RefId).Where(`status != ''`).First(&existingTx).RowsAffected
 	if rows != 0 {
 		c.Transaction = existingTx

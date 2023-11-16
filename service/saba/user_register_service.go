@@ -24,13 +24,11 @@ func (c *UserRegister) CreateUser(user model.User, currency string) (err error) 
 		return
 	}
 	gpu := ploutos.GameVendorUser{
-		ploutos.GameVendorUserC{
-			GameVendorId:     consts.GameVendor["saba"],
-			UserId:           user.ID,
-			ExternalUserId:   user.Username,
-			ExternalCurrency: currency,
-			ExternalId:       res,
-		},
+		GameVendorId:     consts.GameVendor["saba"],
+		UserId:           user.ID,
+		ExternalUserId:   user.Username,
+		ExternalCurrency: currency,
+		ExternalId:       res,
 	}
 	err = model.DB.Save(&gpu).Error
 	if err != nil {

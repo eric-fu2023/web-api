@@ -1,7 +1,7 @@
 package service
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"blgit.rfdev.tech/zhibo/utilities"
 	"context"
 	"errors"
@@ -160,7 +160,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	}
 
 	event := model.OtpEvent{
-		OtpEventC: models.OtpEventC{
+		OtpEvent: ploutos.OtpEvent{
 			CountryCode: service.CountryCode,
 			Mobile:      service.Mobile,
 			Otp:         otp,

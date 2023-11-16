@@ -5,23 +5,23 @@ import (
 	"errors"
 	"time"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type CashOrder struct {
-	models.CashOrderC
+	ploutos.CashOrder
 }
 
 func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, account, ip string) CashOrder {
 	return CashOrder{
-		models.CashOrderC{
-			ID:                  models.GenerateCashInOrderNo(),
+		ploutos.CashOrder{
+			ID:                  ploutos.GenerateCashInOrderNo(),
 			UserId:              userID,
 			CashMethodId:        CashMethodId,
 			OrderType:           1,
-			Status:              models.CashOrderStatusFailed,
+			Status:              ploutos.CashOrderStatusFailed,
 			AppliedCashInAmount: amount,
 			BalanceBefore:       balanceBefore,
 			WagerChange:         wagerChange,
@@ -39,8 +39,8 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account,
 	}
 
 	return CashOrder{
-		models.CashOrderC{
-			ID:                   models.GenerateCashOutOrderNo(),
+		ploutos.CashOrder{
+			ID:                   ploutos.GenerateCashOutOrderNo(),
 			UserId:               userID,
 			CashMethodId:         CashMethodId,
 			OrderType:            -1,
@@ -89,7 +89,7 @@ func (CashOrder) List(userID int64, topupOnly, withdrawOnly bool, startTime, end
 
 func (CashOrder) IsFirstTime(c context.Context, userID int64) (bool, error) {
 	var firstTime bool = false
-	err := DB.WithContext(c).Where("user_id", userID).Where("order_type > 0").Where("status", models.CashOrderStatusSuccess).First(&CashOrder{}).Error
+	err := DB.WithContext(c).Where("user_id", userID).Where("order_type > 0").Where("status", ploutos.CashOrderStatusSuccess).First(&CashOrder{}).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			firstTime = true

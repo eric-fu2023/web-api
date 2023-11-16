@@ -16,11 +16,10 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var txRelated = []any{&ploutos.UserSum{}, &ploutos.UserSumC{}, "user_sums",
-	&ploutos.Transaction{}, &ploutos.DcTransaction{}, &ploutos.FbTransaction{}, &ploutos.SabaTransaction{},
-	&ploutos.TransactionC{}, &ploutos.DcTransactionC{}, &ploutos.FbTransactionC{}, &ploutos.SabaTransactionC{},
-	&ploutos.CashOrder{}, &ploutos.CashOrderC{}, &CashOrder{}, "cash_orders",
-	"transactions", "fb_transactions", "dc_transactions", "saba_transactions", "txConn",
+var txRelated = []any{&ploutos.UserSum{}, "user_sums",
+	&ploutos.Transaction{}, &ploutos.DcTransaction{}, &ploutos.FbTransaction{}, &TayaTransaction{}, &ploutos.SabaTransaction{},
+	&ploutos.CashOrder{}, &CashOrder{}, "cash_orders",
+	"transactions", "fb_transactions", "taya_transactions", "dc_transactions", "saba_transactions", "txConn",
 }
 
 var DB *gorm.DB
