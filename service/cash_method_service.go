@@ -16,6 +16,8 @@ type CasheMethodListService struct {
 }
 
 func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err error) {
+	defer serializer.HouseClean(c, err, &r)
+
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user, loggedIn := u.(model.User)

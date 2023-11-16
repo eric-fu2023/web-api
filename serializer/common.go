@@ -123,3 +123,10 @@ func UserSignature(userId int64) string {
 	signatureHash := md5.Sum([]byte(fmt.Sprintf("%d%s", userId, os.Getenv("USER_SIGNATURE_SALT"))))
 	return hex.EncodeToString(signatureHash[:])
 }
+
+func HouseClean(c *gin.Context, err error, res *Response) {
+	if res.Code != 0 || res.Data != nil {
+		return
+	}
+	*res = Err(c, "", CodeGeneralError, "", err)
+}
