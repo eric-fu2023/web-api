@@ -21,6 +21,7 @@ type CashOrderService struct {
 }
 
 func (s CashOrderService) List(c *gin.Context) (r serializer.Response, err error) {
+	defer serializer.HouseClean(c, err, &r)
 	u, _ := c.Get("user")
 	user := u.(model.User)
 	loc := c.MustGet("_tz").(*time.Location)

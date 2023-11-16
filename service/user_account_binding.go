@@ -36,10 +36,12 @@ type AddWithdrawAccountService struct {
 	AccountName string `form:"account_name" json:"account_name" binding:"required"`
 }
 
-func (s AddWithdrawAccountService) Do(c *gin.Context) (serializer.Response, error) {
+func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, err error) {
+	defer serializer.HouseClean(c, err, &r)
+
 	user := c.MustGet("user").(model.User)
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	r, err := VerifyKycWithName(c, user.ID, s.AccountName)
+	r, err = VerifyKycWithName(c, user.ID, s.AccountName)
 	if err != nil {
 		return r, err
 	}
@@ -64,7 +66,8 @@ type DeleteWithdrawAccountService struct {
 	AccountBindingID json.Number `form:"account_binding_id" json:"account_binding_id" binding:"required"`
 }
 
-func (s DeleteWithdrawAccountService) Do(c *gin.Context) (serializer.Response, error) {
+func (s DeleteWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, err error) {
+	defer serializer.HouseClean(c, err, &r)
 	user := c.MustGet("user").(model.User)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
@@ -77,7 +80,7 @@ func (s DeleteWithdrawAccountService) Do(c *gin.Context) (serializer.Response, e
 			IsActive: true,
 		},
 	}
-	err := accountBinding.Remove()
+	err = accountBinding.Remove()
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
 	}
