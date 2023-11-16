@@ -166,7 +166,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 			Otp:         otp,
 			Provider:    utilities.SmsProviderName[res.Provider],
 			DateTime:    time.Now().Format(time.DateTime),
-			BrandId:     c.GetInt64("_brand"),
+			BrandId:     int64(c.GetInt("_brand")),
 		},
 	}
 	if err := model.LogOtpEvent(event); err != nil {
