@@ -60,3 +60,9 @@ func ErrorResponse(c *gin.Context, service any, err error) serializer.Response {
 
 	return serializer.ParamErr(c, service, i18n.T("parameter_error"), err)
 }
+
+func ErrorResponseWithMsg(c *gin.Context, service any, err error, msg string) serializer.Response {
+	res := ErrorResponse(c, service, err)
+	res.Msg = msg
+	return res
+}

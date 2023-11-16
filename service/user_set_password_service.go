@@ -75,7 +75,7 @@ type UserFinishSetupService struct {
 }
 
 func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
-	service.Username = strings.ToLower(service.Username)
+	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 	service.Code = strings.ToUpper(service.Code)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
@@ -129,7 +129,7 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 }
 
 type UserCheckUsernameService struct {
-	Username string `form:"username" json:"username" binding:"required,excludesall=' '"`
+	Username string `form:"username" json:"username" binding:"required,username"`
 }
 
 func (service *UserCheckUsernameService) Check(c *gin.Context) serializer.Response {

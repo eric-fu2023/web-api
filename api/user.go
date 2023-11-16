@@ -3,8 +3,10 @@ package api
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/go-redis/redis/v8"
 	"time"
 	"web-api/cache"
@@ -119,6 +121,9 @@ func UserFinishSetup(c *gin.Context) {
 		res := service.Set(c)
 		c.JSON(200, res)
 	} else {
+		if validationErrorWithMsg(c, service, err) {
+			return
+		}
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
@@ -129,6 +134,9 @@ func UserCheckUsername(c *gin.Context) {
 		res := service.Check(c)
 		c.JSON(200, res)
 	} else {
+		if validationErrorWithMsg(c, service, err) {
+			return
+		}
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
@@ -201,4 +209,19 @@ func UserCounters(c *gin.Context) {
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
+}
+
+func validationErrorWithMsg(c *gin.Context, service any, err error) (exists bool) {
+	var ve validator.ValidationErrors
+	if errors.As(err, &ve) {
+		i18n := c.MustGet("i18n").(i18n.I18n)
+		for _, fe := range ve {
+			if fe.Field() == "Username" {
+				c.JSON(400, ErrorResponseWithMsg(c, service, err, i18n.T("validation_username")))
+				exists = true
+				return
+			}
+		}
+	}
+	return
 }

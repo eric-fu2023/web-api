@@ -510,3 +510,5 @@ invalid_agent: "The referral code is invalid."
 "invalid_captcha": "Captcha is invalid."
 
 otp_limit_reached: "The daily OTP limit has been reached."
+
+validation_username: "Username must be 6-12 characters long lowercase letters or numbers."
