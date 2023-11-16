@@ -9,7 +9,7 @@ type UserTag struct {
 	Name string `json:"name"`
 }
 
-func BuildUserTag(a ploutos.UserTagC) (b UserTag) {
+func BuildUserTag(a ploutos.UserTag) (b UserTag) {
 	b = UserTag{
 		Id:   a.ID,
 		Name: a.Name,

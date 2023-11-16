@@ -17,7 +17,7 @@ import (
 )
 
 type Callback struct {
-	Transaction ploutos.DcTransactionC
+	Transaction ploutos.DcTransaction
 }
 
 func (c *Callback) GetGameVendorId() int64 {
@@ -41,7 +41,7 @@ func (c *Callback) GetWagerMultiplier() (int64, bool) {
 }
 
 func (c *Callback) GetBetAmount() (amount int64, exists bool) {
-	e := model.DB.Model(ploutos.DcTransactionC{}).Select(`amount`).
+	e := model.DB.Model(ploutos.DcTransaction{}).Select(`amount`).
 		Where(`round_id`, c.Transaction.RoundId).Where(`bet_type`, 1).Order(`id`).First(&amount).Error
 	if e == nil {
 		exists = true
@@ -79,8 +79,8 @@ func SuccessResponseWithTokenCheck(c *gin.Context, brandUid string, token string
 }
 
 func CheckDuplicate(c *gin.Context, scope func(*gorm.DB) *gorm.DB, brandUid string) (res callback.BaseResponse, err error) {
-	var dcTx ploutos.DcTransactionC
-	rows := model.DB.Model(ploutos.DcTransactionC{}).Scopes(scope).First(&dcTx).RowsAffected
+	var dcTx ploutos.DcTransaction
+	rows := model.DB.Model(ploutos.DcTransaction{}).Scopes(scope).First(&dcTx).RowsAffected
 	if rows > 0 {
 		res, err = DuplicatedTxResponse(c, brandUid)
 	}

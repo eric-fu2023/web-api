@@ -1,13 +1,13 @@
 package model
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type KycDocument struct {
-	models.KycDocumentC
+	ploutos.KycDocument
 }
 
 func GetKycDocumentsWithLock(tx *gorm.DB, kycId int64) ([]KycDocument, error) {

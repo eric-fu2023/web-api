@@ -18,7 +18,7 @@ type ConfirmBet struct {
 
 func (c *ConfirmBet) NewCallback(userId int64) {
 	for _, txn := range c.Request.Message.Txns {
-		var existingTx models.SabaTransactionC
+		var existingTx models.SabaTransaction
 		rows := model.DB.Where(`ref_id`, txn.RefId).First(&existingTx).RowsAffected
 		if rows == 0 {
 			continue

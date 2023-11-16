@@ -30,7 +30,7 @@ var FbTransferTypeCalculateWager = map[string]int64{
 
 type Callback struct {
 	Request     callback.OrderPayRequest
-	Transaction ploutos.FbTransactionC
+	Transaction ploutos.FbTransaction
 }
 
 func (c *Callback) NewCallback(userId int64) {
@@ -71,7 +71,7 @@ func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
 }
 
 func (c *Callback) GetBetAmount() (amount int64, exists bool) {
-	e := model.DB.Model(ploutos.FbTransactionC{}).Select(`amount`).
+	e := model.DB.Model(ploutos.FbTransaction{}).Select(`amount`).
 		Where(`business_id`, c.Transaction.BusinessId).
 		Where(`transfer_type`, `BET`).Order(`id`).First(&amount).Error
 	if e == nil {

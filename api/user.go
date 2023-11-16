@@ -1,7 +1,7 @@
 package api
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -49,7 +49,7 @@ func UserLogout(c *gin.Context) {
 
 	// Add logout log
 	event := model.AuthEvent{
-		AuthEventC: models.AuthEventC{
+		AuthEvent: ploutos.AuthEvent{
 			UserId:   user.ID,
 			Username: user.Username,
 			Type:     consts.AuthEventType["logout"],

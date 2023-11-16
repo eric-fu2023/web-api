@@ -1,7 +1,7 @@
 package model
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,12 +11,12 @@ import (
 )
 
 type AuthEvent struct {
-	models.AuthEventC
+	ploutos.AuthEvent
 }
 
 func LogAuthEvent(event AuthEvent) error {
 	coll := MongoDB.Collection(event.CollectionName())
-	if _, err := coll.InsertOne(context.TODO(), event.AuthEventC); err != nil {
+	if _, err := coll.InsertOne(context.TODO(), event.AuthEvent); err != nil {
 		return err
 	}
 	return nil
@@ -62,13 +62,13 @@ func GetLatestAuthEvents(userId int64, limit int) ([]AuthEvent, error) {
 
 	var events []AuthEvent
 	for cursor.Next(context.Background()) {
-		curDoc := &models.AuthEventC{}
+		curDoc := &ploutos.AuthEvent{}
 		err = cursor.Decode(curDoc)
 		if err != nil {
 			util.Log().Error("Decode err", err)
 			return nil, err
 		}
-		events = append(events, AuthEvent{AuthEventC: *curDoc})
+		events = append(events, AuthEvent{AuthEvent: *curDoc})
 	}
 
 	return events, nil

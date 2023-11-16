@@ -13,7 +13,7 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 )
@@ -97,7 +97,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	}
 	if rows := q.Scopes(model.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 { // new user
 		user = model.User{
-			UserC: models.UserC{
+			User: ploutos.User{
 				Email:          service.Email,
 				CountryCode:    service.CountryCode,
 				Mobile:         service.Mobile,
@@ -128,7 +128,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 
 	loginTime := time.Now()
 	update := model.User{
-		UserC: models.UserC{
+		User: ploutos.User{
 			LastLoginIp:   c.ClientIP(),
 			LastLoginTime: loginTime,
 		},
@@ -157,7 +157,7 @@ func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user mode
 	}
 
 	event := model.AuthEvent{
-		AuthEventC: models.AuthEventC{
+		AuthEvent: ploutos.AuthEvent{
 			UserId:      user.ID,
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["successful"],
@@ -188,7 +188,7 @@ func (service *UserLoginOtpService) logFailedLogin(c *gin.Context) {
 	}
 
 	event := model.AuthEvent{
-		AuthEventC: models.AuthEventC{
+		AuthEvent: ploutos.AuthEvent{
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["failed"],
 			DateTime:    time.Now().Format(time.DateTime),
