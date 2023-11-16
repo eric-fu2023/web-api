@@ -11,7 +11,7 @@ import (
 )
 
 var orderType = map[int64][]int64{
-	1: {ploutos.GAME_FB, ploutos.GAME_SABA},
+	1: {ploutos.GAME_FB, ploutos.GAME_SABA, ploutos.GAME_TAYA},
 	2: {ploutos.GAME_HACKSAW},
 }
 
