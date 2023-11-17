@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -37,8 +38,7 @@ type AddWithdrawAccountService struct {
 }
 
 func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, err error) {
-	defer serializer.HouseClean(c, err, &r)
-
+	i18n := c.MustGet("i18n").(i18n.I18n)
 	user := c.MustGet("user").(model.User)
 	r, err = VerifyKycWithName(c, user.ID, s.AccountName)
 	if err != nil {
@@ -56,6 +56,11 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	}
 	err = accountBinding.AddToDb()
 	if err != nil {
+		if errors.Is(err,model.ErrAccountLimitExceeded) {
+			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("withdraw_account_limit_exceeded"), err)
+			return
+		}
+		r = serializer.Err(c, s, serializer.CodeGeneralError, "", err)
 		return
 	}
 	return
@@ -66,7 +71,6 @@ type DeleteWithdrawAccountService struct {
 }
 
 func (s DeleteWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, err error) {
-	defer serializer.HouseClean(c, err, &r)
 	user := c.MustGet("user").(model.User)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 

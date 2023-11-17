@@ -124,14 +124,15 @@ func UserSignature(userId int64) string {
 	return hex.EncodeToString(signatureHash[:])
 }
 
-func HouseClean(c *gin.Context, err error, res *Response) {
-	if res.Code != 0 || res.Data != nil || res.Msg != "" {
-		return
-	}
-	i18n := c.MustGet("i18n").(i18n.I18n)
+// func HouseClean(c *gin.Context, err error, res *Response) {
+// 	if res.Code != 0 || res.Data != nil || res.Msg != "" {
+// 		return
+// 	}
+// 	i18n := c.MustGet("i18n").(i18n.I18n)
 
-	if err == nil {
-		*res = Response{Msg: i18n.T("success")}
-	}
-	*res = Err(c, "", CodeGeneralError, "", err)
-}
+// 	if err == nil {
+// 		*res = Response{Msg: i18n.T("success")}
+// 		return
+// 	}
+// 	*res = Err(c, "", CodeGeneralError, "", err)
+// }

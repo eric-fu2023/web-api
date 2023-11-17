@@ -9,6 +9,10 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	ErrAccountLimitExceeded = errors.New("withdraw_account_limit_exceeded")
+)
+
 type UserAccountBinding struct {
 	ploutos.UserAccountBinding
 	CashMethod *CashMethod
@@ -27,7 +31,7 @@ func (b *UserAccountBinding) AddToDb() (err error) {
 			return
 		}
 		if num >= consts.WithdrawMethodLimit {
-			return errors.New("limit exceeded")
+			return ErrAccountLimitExceeded
 		}
 		err = tx.Create(b).Error
 		return
