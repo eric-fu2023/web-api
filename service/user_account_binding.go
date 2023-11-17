@@ -40,10 +40,9 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	defer serializer.HouseClean(c, err, &r)
 
 	user := c.MustGet("user").(model.User)
-	i18n := c.MustGet("i18n").(i18n.I18n)
 	r, err = VerifyKycWithName(c, user.ID, s.AccountName)
 	if err != nil {
-		return r, err
+		return
 	}
 
 	accountBinding := model.UserAccountBinding{
@@ -57,9 +56,9 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	}
 	err = accountBinding.AddToDb()
 	if err != nil {
-		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
+		return
 	}
-	return serializer.Response{Msg: i18n.T("success")}, nil
+	return
 }
 
 type DeleteWithdrawAccountService struct {

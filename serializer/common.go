@@ -125,7 +125,7 @@ func UserSignature(userId int64) string {
 }
 
 func HouseClean(c *gin.Context, err error, res *Response) {
-	if res.Code != 0 || res.Data != nil {
+	if res.Code != 0 || res.Data != nil || res.Msg != "" {
 		return
 	}
 	i18n := c.MustGet("i18n").(i18n.I18n)
