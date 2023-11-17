@@ -64,6 +64,10 @@ func ByStatus(db *gorm.DB) *gorm.DB {
 	return db.Where(`status`, 1)
 }
 
+func BySuccess(db *gorm.DB) *gorm.DB {
+	return db.Where(`status`, 2)
+}
+
 func ByUserId(userId int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Where(`user_id`, userId).Limit(1)

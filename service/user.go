@@ -117,7 +117,7 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 			}
 		}
 		var kyc model.Kyc
-		if e := model.DB.Where(`user_id`, user.ID).Order(`id DESC`).First(&kyc).Error; e == nil {
+		if rows := model.DB.Scopes(model.ByUserId(user.ID), model.BySuccess).Order(`id DESC`).Find(&kyc).RowsAffected; rows > 0 {
 			user.Kyc = &kyc
 		}
 	}
