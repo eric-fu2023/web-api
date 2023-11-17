@@ -6,7 +6,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20231109064501-77c97fb01cea
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20231115080708-a5b3999c00c6
-	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231116083827-c5e081da0744
+	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231117064046-3857e035e63b
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20231103020509-7b1120038f17
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
@@ -81,7 +81,8 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgx/v5 v5.3.1 // indirect
+	github.com/jackc/pgx/v5 v5.5.0 // indirect
+	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jellydator/ttlcache/v2 v2.11.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -90,6 +91,7 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
