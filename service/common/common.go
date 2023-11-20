@@ -25,6 +25,7 @@ const NOTIFICATION_WITHDRAWAL_SUCCESS_TITLE = "Withdrawal Transaction Successful
 const NOTIFICATION_WITHDRAWAL_SUCCESS = "Your withdrawal transaction with the amount of %.2f %s has been successful."
 const NOTIFICATION_WITHDRAWAL_FAILED_TITLE = "Withdrawal Transaction Failed"
 const NOTIFICATION_WITHDRAWAL_FAILED = "Your withdrawal transaction with the amount of %.2f %s was unsuccessful. Please try again later or contact our customer support for more information."
+var ErrInsuffientBalance = errors.New("insufficient balance or invalid transaction")
 
 type Platform struct {
 	Platform int64 `form:"platform" json:"platform" binding:"required"`
@@ -115,7 +116,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	}
 	rows := tx.Select(`balance`, `remaining_wager`, `max_withdrawable`).Where(`user_id`, gpu.UserId).Updates(userSum).RowsAffected
 	if rows == 0 {
-		err = errors.New("insufficient balance or invalid transaction")
+		err = ErrInsuffientBalance
 		tx.Rollback()
 		return
 	}

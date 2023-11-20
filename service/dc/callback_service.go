@@ -1,19 +1,21 @@
 package dc
 
 import (
-	"blgit.rfdev.tech/taya/game-service/dc/callback"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
-	"gorm.io/gorm"
 	"time"
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+	"web-api/util"
+
+	"blgit.rfdev.tech/taya/game-service/dc/callback"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
+	"gorm.io/gorm"
 )
 
 type Callback struct {
@@ -69,12 +71,18 @@ func SuccessResponse(c *gin.Context, brandUid string) (res callback.BaseResponse
 	return
 }
 
-func SuccessResponseWithTokenCheck(c *gin.Context, brandUid string, token string) (res callback.BaseResponse, err error) {
-	res, err = CheckToken(brandUid, token)
+func SuccessResponseWithTokenCheck(c *gin.Context, req callback.LoginRequest) (res callback.BaseResponse, err error) {
+	cl := util.DCFactory.NewClient()
+	err = cl.VerifySign(req)
+	if err != nil {
+		res = SignErrorResponse()
+		return
+	}
+	res, err = CheckToken(req.BrandUid, req.Token)
 	if res.Code != 0 || err != nil {
 		return
 	}
-	res, err = SuccessResponse(c, brandUid)
+	res, err = SuccessResponse(c, req.BrandUid)
 	return
 }
 
@@ -87,6 +95,15 @@ func CheckDuplicate(c *gin.Context, scope func(*gorm.DB) *gorm.DB, brandUid stri
 	return
 }
 
+func CheckRound(c *gin.Context, roundId string, brandUid string) (res callback.BaseResponse, err error) {
+	var dcTx ploutos.DcTransaction
+	rows := model.DB.Model(ploutos.DcTransaction{}).Where("round_id", roundId).First(&dcTx).RowsAffected
+	if rows == 0 {
+		res, err = MissingRoundResponse(c, brandUid)
+	}
+	return
+}
+
 func DuplicatedTxResponse(c *gin.Context, brandUid string) (res callback.BaseResponse, err error) {
 	gpu, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["dc"], brandUid)
 	if err != nil {
@@ -94,6 +111,38 @@ func DuplicatedTxResponse(c *gin.Context, brandUid string) (res callback.BaseRes
 	}
 	res = callback.BaseResponse{
 		Code: 5043,
+		Data: callback.CommonResponse{
+			BrandUid: gpu.ExternalUserId,
+			Currency: gpu.ExternalCurrency,
+			Balance:  float64(balance) / 100,
+		},
+	}
+	return
+}
+
+func MissingRoundResponse(c *gin.Context, brandUid string) (res callback.BaseResponse, err error) {
+	gpu, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["dc"], brandUid)
+	if err != nil {
+		return
+	}
+	res = callback.BaseResponse{
+		Code: 5042,
+		Data: callback.CommonResponse{
+			BrandUid: gpu.ExternalUserId,
+			Currency: gpu.ExternalCurrency,
+			Balance:  float64(balance) / 100,
+		},
+	}
+	return
+}
+
+func InsufficientBalanceResponse(c *gin.Context, brandUid string) (res callback.BaseResponse, err error) {
+	gpu, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["dc"], brandUid)
+	if err != nil {
+		return
+	}
+	res = callback.BaseResponse{
+		Code: 5003,
 		Data: callback.CommonResponse{
 			BrandUid: gpu.ExternalUserId,
 			Currency: gpu.ExternalCurrency,
@@ -120,6 +169,13 @@ func CheckToken(brandUid string, token string) (res callback.BaseResponse, err e
 func TokenErrorResponse() (res callback.BaseResponse) {
 	res = callback.BaseResponse{
 		Code: 5009,
+	}
+	return
+}
+
+func SignErrorResponse() (res callback.BaseResponse) {
+	res = callback.BaseResponse{
+		Code: 5000,
 	}
 	return
 }

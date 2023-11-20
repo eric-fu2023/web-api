@@ -1,10 +1,12 @@
 package dc
 
 import (
+	"web-api/service/common"
+	"web-api/util"
+
 	"blgit.rfdev.tech/taya/game-service/dc/callback"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
-	"web-api/service/common"
 )
 
 type PromoPayout struct {
@@ -34,6 +36,13 @@ func (c *PromoPayout) GetBetAmount() (amount int64, exists bool) {
 func PromoPayoutCallback(c *gin.Context, req callback.PromoPayoutRequest) (res callback.BaseResponse, err error) {
 	go common.LogGameCallbackRequest("promo_payout", req)
 
+	cl := util.DCFactory.NewClient()
+	err = cl.VerifySign(req)
+	if err != nil {
+		res = SignErrorResponse()
+		return
+	}
+	
 	a := PromoPayout{Request: req}
 	err = common.ProcessTransaction(&a)
 	if err != nil {

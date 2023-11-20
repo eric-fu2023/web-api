@@ -1,11 +1,14 @@
 package dc
 
 import (
+	"errors"
+	"web-api/model"
+	"web-api/service/common"
+	"web-api/util"
+
 	"blgit.rfdev.tech/taya/game-service/dc/callback"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
-	"web-api/model"
-	"web-api/service/common"
 )
 
 type Wager struct {
@@ -30,6 +33,12 @@ func (c *Wager) GetExternalUserId() string {
 
 func WagerCallback(c *gin.Context, req callback.WagerRequest) (res callback.BaseResponse, err error) {
 	go common.LogGameCallbackRequest("wager", req)
+	cl := util.DCFactory.NewClient()
+	err = cl.VerifySign(req)
+	if err != nil {
+		res = SignErrorResponse()
+		return
+	}
 	res, err = CheckToken(req.BrandUid, req.Token)
 	if res.Code != 0 || err != nil {
 		return
@@ -42,6 +51,10 @@ func WagerCallback(c *gin.Context, req callback.WagerRequest) (res callback.Base
 	a := Wager{Request: req}
 	err = common.ProcessTransaction(&a)
 	if err != nil {
+		if errors.Is(err, common.ErrInsuffientBalance) {
+			res, err = InsufficientBalanceResponse(c, req.BrandUid)
+			return
+		}
 		return
 	}
 	res, err = SuccessResponse(c, req.BrandUid)

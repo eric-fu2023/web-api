@@ -11,7 +11,7 @@ import (
 func CallbackLogin(c *gin.Context) {
 	var req callback.LoginRequest
 	if err := c.ShouldBind(&req); err == nil {
-		if res, err := dc.SuccessResponseWithTokenCheck(c, req.BrandUid, req.Token); err != nil {
+		if res, err := dc.SuccessResponseWithTokenCheck(c, req); err != nil {
 			c.JSON(200, ErrorResponse(c, req, res.Code, err))
 		} else {
 			c.JSON(200, res)

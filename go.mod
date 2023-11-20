@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
-	blgit.rfdev.tech/taya/game-service v0.0.0-20231109064501-77c97fb01cea
+	blgit.rfdev.tech/taya/game-service v0.0.0-20231120074849-3bb5cda1b254
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20231115080708-a5b3999c00c6
 	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231117064046-3857e035e63b
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20231103020509-7b1120038f17

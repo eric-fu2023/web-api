@@ -1,11 +1,13 @@
 package dc
 
 import (
+	"web-api/model"
+	"web-api/service/common"
+	"web-api/util"
+
 	"blgit.rfdev.tech/taya/game-service/dc/callback"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
-	"web-api/model"
-	"web-api/service/common"
 )
 
 type EndWager struct {
@@ -30,6 +32,19 @@ func (c *EndWager) GetExternalUserId() string {
 
 func EndWagerCallback(c *gin.Context, req callback.EndWagerRequest) (res callback.BaseResponse, err error) {
 	go common.LogGameCallbackRequest("end_wager", req)
+
+	cl := util.DCFactory.NewClient()
+	err = cl.VerifySign(req)
+	if err != nil {
+		res = SignErrorResponse()
+		return
+	}
+
+	res, err = CheckRound(c, req.RoundId, req.BrandUid)
+	if res.Code != 0 || err != nil {
+		return
+	}
+
 	res, err = CheckDuplicate(c, model.ByDcRoundAndWager(req.RoundId, req.WagerId), req.BrandUid)
 	if res.Code != 0 || err != nil {
 		return

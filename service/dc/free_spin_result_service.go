@@ -1,11 +1,13 @@
 package dc
 
 import (
+	"web-api/model"
+	"web-api/service/common"
+	"web-api/util"
+
 	"blgit.rfdev.tech/taya/game-service/dc/callback"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
-	"web-api/model"
-	"web-api/service/common"
 )
 
 type FreeSpinResult struct {
@@ -34,6 +36,14 @@ func (c *FreeSpinResult) GetBetAmount() (amount int64, exists bool) {
 
 func FreeSpinResultCallback(c *gin.Context, req callback.FreeSpinResultRequest) (res callback.BaseResponse, err error) {
 	go common.LogGameCallbackRequest("free_spin_result", req)
+
+	cl := util.DCFactory.NewClient()
+	err = cl.VerifySign(req)
+	if err != nil {
+		res = SignErrorResponse()
+		return
+	}
+	
 	res, err = CheckDuplicate(c, model.ByDcRoundAndWager(req.RoundId, req.WagerId), req.BrandUid)
 	if res.Code != 0 || err != nil {
 		return
