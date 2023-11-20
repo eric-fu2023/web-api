@@ -119,7 +119,7 @@ func CheckToken(brandUid string, token string) (res callback.BaseResponse, err e
 
 func TokenErrorResponse() (res callback.BaseResponse) {
 	res = callback.BaseResponse{
-		Code: 5013,
+		Code: 5009,
 	}
 	return
 }
