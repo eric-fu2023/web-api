@@ -15,6 +15,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/service/shufti"
 	"web-api/util"
 	"web-api/util/i18n"
 )
@@ -269,7 +270,7 @@ func (service *SubmitKycService) buildKycDocument(kycId int64, url string) model
 
 func (service *SubmitKycService) verifyDocuments(c *gin.Context, user model.User, kycId int64) {
 	var images [][]byte
-	shufti := util.Shufti{
+	shufti := shufti.Shufti{
 		ClientId:  os.Getenv("SHUFTI_CLIENT_ID"),
 		SecretKey: os.Getenv("SHUFTI_SECRET_KEY"),
 	}

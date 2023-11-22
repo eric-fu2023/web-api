@@ -1,4 +1,4 @@
-package util
+package shufti
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -13,6 +13,7 @@ import (
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/util"
 )
 
 type Shufti struct {
@@ -128,6 +129,6 @@ func logKycEvent(ctx context.Context, id int64, now time.Time, reference, event,
 	}
 	err := model.LogKycEvent(kycEvent)
 	if err != nil {
-		GetLoggerEntry(ctx).Errorf("LogKycEvent error: %s", err.Error())
+		util.GetLoggerEntry(ctx).Errorf("LogKycEvent error: %s", err.Error())
 	}
 }
