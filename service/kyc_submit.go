@@ -285,7 +285,7 @@ func (service *SubmitKycService) verifyDocuments(c *gin.Context, user model.User
 		util.GetLoggerEntry(c).Errorf("Document verification cannot proceed: images error")
 		return
 	}
-	isAccepted, reason, err := shufti.VerifyDocument(kycId, service.FirstName, service.MiddleName, service.LastName, service.Birthday, strconv.Itoa(service.Nationality), images[0], images[1])
+	isAccepted, reason, err := shufti.VerifyDocument(c, kycId, service.FirstName, service.MiddleName, service.LastName, service.Birthday, strconv.Itoa(service.Nationality), images[0], images[1])
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("Shufti document verification error: %s", err.Error())
 		return
@@ -295,14 +295,14 @@ func (service *SubmitKycService) verifyDocuments(c *gin.Context, user model.User
 	if isAccepted {
 		err = model.AcceptKyc(kycId)
 		if err != nil {
-			util.GetLoggerEntry(c).Errorf("Update kyc status error: %s", err.Error())
+			util.GetLoggerEntry(c).Errorf("AcceptKyc error: %s", err.Error())
 			return
 		}
 		common.SendNotification(user.ID, consts.Notification_Type_Kyc, i18n.T("notification_kyc_approved_title"), i18n.T("notification_kyc_approved"))
 	} else {
 		err = model.RejectKycWithReason(kycId, reason)
 		if err != nil {
-			util.GetLoggerEntry(c).Errorf("Update kyc status error: %s", err.Error())
+			util.GetLoggerEntry(c).Errorf("RejectKycWithReason error: %s", err.Error())
 			return
 		}
 		common.SendNotification(user.ID, consts.Notification_Type_Kyc, i18n.T("notification_kyc_rejected_title"), i18n.T("notification_kyc_rejected"))
