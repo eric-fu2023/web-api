@@ -60,30 +60,28 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 	}
 
 	var otpResp serializer.Response
-	if !strings.Contains(user.Username, "testkya") { // to be deleted when go live
-		isAccountLocked, err := service.checkAccountLock(user)
-		if err != nil {
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_password_lock"), nil)
-		}
-		if isAccountLocked {
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Password_lock_wait"), nil)
-		}
-
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(service.Password)); err != nil {
-			return service.handlePasswordMismatch(c, user)
-		}
-
-		otpResp, err = service.sendOtp(c, user)
-		if errors.Is(err, errNoEmailOrMobile) {
-			return serializer.ParamErr(c, service, i18n.T("User_needs_email_or_mobile"), nil)
-		} else if err != nil {
-			return serializer.GeneralErr(c, err)
-		} else if otpResp.Code != 0 {
-			return otpResp
-		}
-
-		go service.logSuccessfulLogin(c, user)
+	isAccountLocked, err := service.checkAccountLock(user)
+	if err != nil {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_password_lock"), nil)
 	}
+	if isAccountLocked {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Password_lock_wait"), nil)
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(service.Password)); err != nil {
+		return service.handlePasswordMismatch(c, user)
+	}
+
+	otpResp, err = service.sendOtp(c, user)
+	if errors.Is(err, errNoEmailOrMobile) {
+		return serializer.ParamErr(c, service, i18n.T("User_needs_email_or_mobile"), nil)
+	} else if err != nil {
+		return serializer.GeneralErr(c, err)
+	} else if otpResp.Code != 0 {
+		return otpResp
+	}
+
+	go service.logSuccessfulLogin(c, user)
 
 	// Return masked email and mobile
 	respData := map[string]interface{}{}
