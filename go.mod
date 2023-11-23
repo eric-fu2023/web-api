@@ -1,6 +1,8 @@
 module web-api
 
-go 1.20
+go 1.21
+
+toolchain go1.21.1
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
