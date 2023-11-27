@@ -47,6 +47,9 @@ func main() {
 		c.AddFunc("0 */5 * * * *", func() {
 			task.RefreshPaymentOrder()
 		})
+		c.AddFunc("10 */1 * * * *", func() {
+			task.CalculateSortFactor()
+		})
 		c.Start()
 		select {}
 	} else {
