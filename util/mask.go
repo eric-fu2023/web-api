@@ -1,11 +1,9 @@
 package util
 
 import (
+	"os"
+	"strconv"
 	"strings"
-)
-
-const (
-	mobileMaskVisibleLength = 2
 )
 
 // MaskEmail masks every character of the email
@@ -31,10 +29,11 @@ func MaskEmail(email string) string {
 
 // MaskMobile masks the front of the mobile number,
 // leaving the back digits visible
-// Eg. 9123456789 -> ********89
+// Eg. 9123456789 -> *******789
 func MaskMobile(mobile string) string {
-	if len(mobile) < mobileMaskVisibleLength {
+	maskLength, _ := strconv.Atoi(os.Getenv("MOBILE_MASK_VISIBLE_LENGTH"))
+	if len(mobile) < maskLength {
 		return mobile
 	}
-	return strings.Repeat("*", len(mobile)-mobileMaskVisibleLength) + mobile[len(mobile)-mobileMaskVisibleLength:]
+	return strings.Repeat("*", len(mobile)-maskLength) + mobile[len(mobile)-maskLength:]
 }
