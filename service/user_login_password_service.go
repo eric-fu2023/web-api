@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -72,31 +73,41 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 		return service.handlePasswordMismatch(c, user)
 	}
 
-	otpResp, err = service.sendOtp(c, user)
-	if errors.Is(err, errNoEmailOrMobile) {
-		return serializer.ParamErr(c, service, i18n.T("User_needs_email_or_mobile"), nil)
-	} else if err != nil {
-		return serializer.GeneralErr(c, err)
-	} else if otpResp.Code != 0 {
-		return otpResp
-	}
-
-	go service.logSuccessfulLogin(c, user)
-
-	// Return masked email and mobile
 	respData := map[string]interface{}{}
-	if service.Email != "" || user.Email != "" {
-		respData["email"] = util.MaskEmail(user.Email)
-	} else if (service.CountryCode != "" && service.Mobile != "") || (user.CountryCode != "" && user.Mobile != "") {
-		respData["country_code"] = user.CountryCode
-		respData["mobile"] = util.MaskMobile(user.Mobile)
-	}
-
-	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
-		if otpRespData, ok := otpResp.Data.(serializer.SendOtp); ok {
-			respData["otp"] = otpRespData.Otp
+	if os.Getenv("PASSWORD_LOGIN_REQUIRES_OTP") == "true" {
+		otpResp, err = service.sendOtp(c, user)
+		if errors.Is(err, errNoEmailOrMobile) {
+			return serializer.ParamErr(c, service, i18n.T("User_needs_email_or_mobile"), nil)
+		} else if err != nil {
+			return serializer.GeneralErr(c, err)
+		} else if otpResp.Code != 0 {
+			return otpResp
 		}
+
+		// Return masked email and mobile
+		if service.Email != "" || user.Email != "" {
+			respData["email"] = util.MaskEmail(user.Email)
+		} else if (service.CountryCode != "" && service.Mobile != "") || (user.CountryCode != "" && user.Mobile != "") {
+			respData["country_code"] = user.CountryCode
+			respData["mobile"] = util.MaskMobile(user.Mobile)
+		}
+
+		if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
+			if otpRespData, ok := otpResp.Data.(serializer.SendOtp); ok {
+				respData["otp"] = otpRespData.Otp
+			}
+		}
+	} else {
+		tokenString, err := user.GenToken()
+		if err != nil {
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
+		}
+		if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
+			cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, time.Duration(timeout)*time.Minute)
+		}
+		respData["token"] = tokenString
 	}
+	go service.logSuccessfulLogin(c, user)
 
 	return serializer.Response{
 		Msg:  i18n.T("success"),

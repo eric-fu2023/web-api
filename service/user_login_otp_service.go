@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -124,7 +125,9 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	if err != nil {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
 	}
-	cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, 20*time.Minute)
+	if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
+		cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, time.Duration(timeout)*time.Minute)
+	}
 
 	loginTime := time.Now()
 	update := model.User{
