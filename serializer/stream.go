@@ -66,8 +66,8 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 		b.Streamer = &m
 	}
 	if a.CurrentView == 0 {
-		min := 10
-		b.CurrentView = int64(rand.Intn(100) + min)
+		min := 100
+		b.CurrentView = int64(rand.Intn(50) + min)
 	}
 	return
 }
