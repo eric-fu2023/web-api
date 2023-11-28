@@ -1,7 +1,7 @@
 package model
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/plugin/dbresolver"
@@ -9,7 +9,7 @@ import (
 
 type (
 	UserSum struct {
-		models.UserSumC
+		ploutos.UserSum
 	}
 )
 
@@ -25,7 +25,7 @@ func (UserSum) UpdateUserSumWithDB(txDB *gorm.DB, userID, amount, wagerChange, w
 			return
 		}
 		transaction := Transaction{
-			models.TransactionC{
+			ploutos.Transaction{
 				UserId:          userID,
 				Amount:          amount,
 				BalanceBefore:   sum.Balance,

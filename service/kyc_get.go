@@ -1,7 +1,7 @@
 package service
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -20,7 +20,7 @@ func (service *GetKycService) GetKyc(c *gin.Context) serializer.Response {
 	user := u.(model.User)
 
 	kyc := model.Kyc{
-		KycC: models.KycC{
+		Kyc: ploutos.Kyc{
 			UserId: user.ID,
 		},
 	}
@@ -36,7 +36,7 @@ func (service *GetKycService) GetKyc(c *gin.Context) serializer.Response {
 
 	var kycDocs []model.KycDocument
 	kycDocCond := model.KycDocument{
-		KycDocumentC: models.KycDocumentC{
+		KycDocument: ploutos.KycDocument{
 			KycId: kyc.ID,
 		},
 	}

@@ -97,7 +97,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		}
 		totalOut, payoutCount := CalTxDetails(txns)
 		var msg string
-		reviewRequired, msg = rule.OK(amount, payoutCount+1, totalOut+amount, nil)
+		reviewRequired, msg = rule.OK(amount, payoutCount+1, totalOut+amount, user.GetTagIDList())
 
 		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance, accountBinding.AccountNumber, msg, reviewRequired, accountBinding.AccountName, c.ClientIP())
 		err = tx.Create(&cashOrder).Error

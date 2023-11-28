@@ -9,7 +9,7 @@ import (
 type Streamer struct {
 	ploutos.User
 	IsLive   bool
-	UserTags []ploutos.UserTagC `gorm:"many2many:user_tag_conns;foreignKey:ID;joinForeignKey:UserId;References:ID;joinReferences:UserTagId"`
+	UserTags []ploutos.UserTag `gorm:"many2many:user_tag_conns;foreignKey:ID;joinForeignKey:UserId;References:ID;joinReferences:UserTagId"`
 }
 
 func StreamerWithLiveStream(db *gorm.DB) *gorm.DB {

@@ -43,6 +43,7 @@ func VerifyKycWithName(c *gin.Context, userID int64, name string) (r serializer.
 		return
 	}
 	if !kyc.NameMatch(name) {
+		err = errors.New("name mismatch")
 		r = serializer.Err(c, nil, serializer.CodeGeneralError, i18n.T("kyc_name_mismatch"), err)
 		return 
 	}

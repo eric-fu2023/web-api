@@ -5,13 +5,13 @@ import (
 	"web-api/conf/consts"
 	"web-api/util"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type Kyc struct {
-	models.KycC
+	ploutos.Kyc
 }
 
 func GetKycWithLock(tx *gorm.DB, userId int64) (Kyc, error) {

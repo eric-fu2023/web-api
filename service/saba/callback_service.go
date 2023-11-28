@@ -8,7 +8,7 @@ import (
 )
 
 type Callback struct {
-	Transaction models.SabaTransactionC
+	Transaction models.SabaTransaction
 }
 
 func (c *Callback) GetGameVendorId() int64 {
@@ -40,7 +40,7 @@ func (c *Callback) GetWagerMultiplier() (int64, bool) {
 }
 
 func (c *Callback) GetBetAmount() (amount int64, exists bool) {
-	e := model.DB.Model(models.SabaTransactionC{}).Select(`actual_amount`).
+	e := model.DB.Model(models.SabaTransaction{}).Select(`actual_amount`).
 		Where(`ref_id`, c.Transaction.RefId).Order(`id`).First(&amount).Error
 	if e == nil {
 		exists = true

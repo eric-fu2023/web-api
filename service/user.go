@@ -43,9 +43,7 @@ func CreateUser(user model.User) (err error) {
 		}
 
 		userSum := ploutos.UserSum{
-			UserSumC: ploutos.UserSumC{
-				UserId: user.ID,
-			},
+			UserId: user.ID,
 		}
 		tx2 := model.DB.Clauses(dbresolver.Use("txConn")).Begin()
 		err = tx2.Error
@@ -59,9 +57,7 @@ func CreateUser(user model.User) (err error) {
 		}
 
 		userCounter := ploutos.UserCounter{
-			UserCounterC: ploutos.UserCounterC{
-				UserId: user.ID,
-			},
+			UserId: user.ID,
 		}
 		err = tx.Create(&userCounter).Error
 		if err != nil {
@@ -121,7 +117,7 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 			}
 		}
 		var kyc model.Kyc
-		if e := model.DB.Where(`user_id`, user.ID).Order(`id DESC`).First(&kyc).Error; e == nil {
+		if rows := model.DB.Scopes(model.ByUserId(user.ID), model.BySuccess).Order(`id DESC`).Find(&kyc).RowsAffected; rows > 0 {
 			user.Kyc = &kyc
 		}
 	}

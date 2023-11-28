@@ -25,6 +25,7 @@ const NOTIFICATION_WITHDRAWAL_SUCCESS_TITLE = "Withdrawal Transaction Successful
 const NOTIFICATION_WITHDRAWAL_SUCCESS = "Your withdrawal transaction with the amount of %.2f %s has been successful."
 const NOTIFICATION_WITHDRAWAL_FAILED_TITLE = "Withdrawal Transaction Failed"
 const NOTIFICATION_WITHDRAWAL_FAILED = "Your withdrawal transaction with the amount of %.2f %s was unsuccessful. Please try again later or contact our customer support for more information."
+var ErrInsuffientBalance = errors.New("insufficient balance or invalid transaction")
 
 type Platform struct {
 	Platform int64 `form:"platform" json:"platform" binding:"required"`
@@ -109,15 +110,13 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 		newWithdrawable = w
 	}
 	userSum := ploutos.UserSum{
-		ploutos.UserSumC{
-			Balance:         newBalance,
-			RemainingWager:  newRemainingWager,
-			MaxWithdrawable: newWithdrawable,
-		},
+		Balance:         newBalance,
+		RemainingWager:  newRemainingWager,
+		MaxWithdrawable: newWithdrawable,
 	}
 	rows := tx.Select(`balance`, `remaining_wager`, `max_withdrawable`).Where(`user_id`, gpu.UserId).Updates(userSum).RowsAffected
 	if rows == 0 {
-		err = errors.New("insufficient balance or invalid transaction")
+		err = ErrInsuffientBalance
 		tx.Rollback()
 		return
 	}
@@ -127,18 +126,16 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 		return
 	}
 	transaction := ploutos.Transaction{
-		ploutos.TransactionC{
-			UserId:               gpu.UserId,
-			Amount:               obj.GetAmount(),
-			BalanceBefore:        balance,
-			BalanceAfter:         newBalance,
-			ForeignTransactionId: obj.GetGameTransactionId(),
-			TransactionType:      obj.GetGameVendorId(),
-			Wager:                userSum.RemainingWager - remainingWager,
-			WagerBefore:          remainingWager,
-			WagerAfter:           userSum.RemainingWager,
-			IsAdjustment:         obj.IsAdjustment(),
-		},
+		UserId:               gpu.UserId,
+		Amount:               obj.GetAmount(),
+		BalanceBefore:        balance,
+		BalanceAfter:         newBalance,
+		ForeignTransactionId: obj.GetGameTransactionId(),
+		TransactionType:      obj.GetGameVendorId(),
+		Wager:                userSum.RemainingWager - remainingWager,
+		WagerBefore:          remainingWager,
+		WagerAfter:           userSum.RemainingWager,
+		IsAdjustment:         obj.IsAdjustment(),
 	}
 	err = tx.Save(&transaction).Error
 	if err != nil {
@@ -148,7 +145,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	tx.Commit()
 
 	//SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
-	SendUserSumSocketMsg(gpu.UserId, userSum.UserSumC)
+	SendUserSumSocketMsg(gpu.UserId, userSum)
 
 	return
 }
@@ -198,7 +195,10 @@ func abs(x int64) int64 {
 
 func SendNotification(userId int64, notificationType string, title string, text string) { // add to notification list and push
 	go func() {
-		notification := ploutos.NewUserNotification(userId, text)
+		notification := ploutos.UserNotification{
+			UserId: userId,
+			Text:   text,
+		}
 		if err := notification.Send(model.DB); err != nil {
 			util.Log().Error("notification creation error: ", err.Error())
 			return
@@ -259,7 +259,7 @@ func SendCashNotificationWithoutCurrencyId(userId int64, notificationType string
 	}()
 }
 
-func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSumC) {
+func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum) {
 	go func() {
 		conn := websocket.Connection{}
 		conn.Connect(os.Getenv("WS_NOTIFICATION_URL"), os.Getenv("WS_NOTIFICATION_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){

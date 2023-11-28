@@ -3,12 +3,12 @@ package model
 import (
 	"time"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
 type Transaction struct {
-	models.TransactionC
+	ploutos.Transaction
 }
 
 func (Transaction) ListTxRecord(c *gin.Context, userID int64, timeFrom, timeTo *time.Time) (r []Transaction, err error) {

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -83,7 +84,9 @@ func doAuth(c *gin.Context, getUser bool) (err error) {
 		return
 	}
 	go func() {
-		cache.RedisSessionClient.Expire(context.TODO(), a.GetRedisSessionKey(), 20*time.Minute)
+		if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
+			cache.RedisSessionClient.Expire(context.TODO(), a.GetRedisSessionKey(), time.Duration(timeout)*time.Minute)
+		}
 	}()
 	if getUser {
 		var user model.User

@@ -26,7 +26,7 @@ func ByBrandAgentPlatformAndKey(brand int64, agent int64, platform int64, key st
 
 func CategoryTypeWithCategories(db *gorm.DB) *gorm.DB {
 	return db.Preload(`Categories`, func(db *gorm.DB) *gorm.DB {
-		return db.Scopes(Sort)
+		return db.Scopes(SortAsc)
 	})
 }
 
@@ -48,7 +48,11 @@ func ByBrandAgentAndPlatform(brand int64, agent int64, platform int64) func(db *
 	}
 }
 
-func Sort(db *gorm.DB) *gorm.DB {
+func SortAsc(db *gorm.DB) *gorm.DB {
+	return db.Order(`sort`)
+}
+
+func SortDesc(db *gorm.DB) *gorm.DB {
 	return db.Order(`sort DESC`)
 }
 
@@ -62,6 +66,10 @@ func SortById(db *gorm.DB) *gorm.DB {
 
 func ByStatus(db *gorm.DB) *gorm.DB {
 	return db.Where(`status`, 1)
+}
+
+func BySuccess(db *gorm.DB) *gorm.DB {
+	return db.Where(`status`, 2)
 }
 
 func ByUserId(userId int64) func(db *gorm.DB) *gorm.DB {
@@ -140,6 +148,13 @@ func ByDcRoundAndWager(roundId string, wagerId string) func(db *gorm.DB) *gorm.D
 func ByDcRoundWagerAndWagerType(roundId string, wagerId string) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		db.Scopes(ByDcRoundAndWager(roundId, wagerId)).Where(`wager_type != 0`)
+		return db
+	}
+}
+
+func ByDcPromotionAndTrans(promotionId string, transId string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		db.Where(`promotion_id`, promotionId).Where(`trans_id`, transId)
 		return db
 	}
 }

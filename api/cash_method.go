@@ -10,20 +10,14 @@ func TopupMethodList(c *gin.Context) {
 	var service = service.CasheMethodListService{
 		TopupOnly: true,
 	}
-	res, e := service.List(c)
+	res, _ := service.List(c)
 	c.JSON(200, res)
-	if e != nil {
-		c.Abort()
-	}
 }
 
 func WithdrawMethodList(c *gin.Context) {
 	var service = service.CasheMethodListService{
 		WithdrawOnly: true,
 	}
-	res, e := service.List(c)
+	res, _ := service.List(c)
 	c.JSON(200, res)
-	if e != nil {
-		c.Abort()
-	}
 }

@@ -35,6 +35,7 @@ func main() {
 
 	if runTask {
 		go task.ProcessFbSyncTransaction()
+		go task.ProcessTayaSyncTransaction()
 		go task.ProcessSabaSettle()
 		go func() {
 			websocketTask.Functions = []func(*websocket.Connection, context.Context, context.CancelFunc){ // modules to be run when connected
@@ -46,6 +47,9 @@ func main() {
 		c := cron.New(cron.WithSeconds())
 		c.AddFunc("0 */5 * * * *", func() {
 			task.RefreshPaymentOrder()
+		})
+		c.AddFunc("10 */1 * * * *", func() {
+			task.CalculateSortFactor()
 		})
 		c.Start()
 		select {}

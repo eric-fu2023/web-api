@@ -123,3 +123,16 @@ func UserSignature(userId int64) string {
 	signatureHash := md5.Sum([]byte(fmt.Sprintf("%d%s", userId, os.Getenv("USER_SIGNATURE_SALT"))))
 	return hex.EncodeToString(signatureHash[:])
 }
+
+// func HouseClean(c *gin.Context, err error, res *Response) {
+// 	if res.Code != 0 || res.Data != nil || res.Msg != "" {
+// 		return
+// 	}
+// 	i18n := c.MustGet("i18n").(i18n.I18n)
+
+// 	if err == nil {
+// 		*res = Response{Msg: i18n.T("success")}
+// 		return
+// 	}
+// 	*res = Err(c, "", CodeGeneralError, "", err)
+// }

@@ -1,11 +1,13 @@
 package dc
 
 import (
+	"web-api/model"
+	"web-api/service/common"
+	"web-api/util"
+
 	"blgit.rfdev.tech/taya/game-service/dc/callback"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
-	"web-api/model"
-	"web-api/service/common"
 )
 
 type CancelWager struct {
@@ -18,7 +20,7 @@ func (c *CancelWager) NewCallback(userId int64) {
 	copier.Copy(&c.Transaction, &c.Request)
 	c.Transaction.UserId = userId
 	c.Transaction.ExternalUserId = c.Request.BrandUid
-	if amount, exists := c.Callback.GetBetAmount(); exists {
+	if amount, exists := c.GetBetAmount(); exists {
 		c.WagerExists = exists
 		c.Transaction.Amount = amount
 	}
@@ -42,6 +44,19 @@ func (c *CancelWager) ShouldProceed() bool {
 
 func CancelWagerCallback(c *gin.Context, req callback.CancelWagerRequest) (res callback.BaseResponse, err error) {
 	go common.LogGameCallbackRequest("cancel_wager", req)
+
+	cl := util.DCFactory.NewClient()
+	err = cl.VerifySign(req)
+	if err != nil {
+		res = SignErrorResponse()
+		return
+	}
+
+	res, err = CheckRound(c, req.RoundId, req.WagerId, req.BrandUid)
+	if res.Code != 0 || err != nil {
+		return
+	}
+
 	res, err = CheckDuplicate(c, model.ByDcRoundWagerAndWagerType(req.RoundId, req.WagerId), req.BrandUid)
 	if res.Code != 0 || err != nil {
 		return

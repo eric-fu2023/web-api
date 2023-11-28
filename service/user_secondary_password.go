@@ -30,7 +30,7 @@ func (service *UserSecondaryPasswordService) SetSecondaryPassword(c *gin.Context
 
 	if user.Password != "" {
 		if e := bcrypt.CompareHashAndPassword([]byte(user.SecondaryPassword), []byte(service.SecondaryPassword)); e == nil {
-			return serializer.ParamErr(c, service, i18n.T("same_password"), nil)
+			return serializer.ParamErr(c, service, i18n.T("same_pin"), nil)
 		}
 	}
 
@@ -48,7 +48,7 @@ func (service *UserSecondaryPasswordService) SetSecondaryPassword(c *gin.Context
 	}
 
 	if err = model.DB.Model(&user).Update(`secondary_password`, string(bytes)).Error; err != nil {
-		return serializer.DBErr(c, service, i18n.T("password_update_failed"), err)
+		return serializer.DBErr(c, service, i18n.T("pin_update_failed"), err)
 	}
 
 	common.SendNotification(user.ID, consts.Notification_Type_Pin_Reset, i18n.T("notification_pin_reset_title"), i18n.T("notification_pin_reset"))

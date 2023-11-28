@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -13,7 +14,7 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 )
@@ -62,7 +63,7 @@ type UserLoginOtpService struct {
 
 func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	service.Email = strings.ToLower(service.Email)
-	service.Username = strings.ToLower(service.Username)
+	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
@@ -97,7 +98,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	}
 	if rows := q.Scopes(model.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 { // new user
 		user = model.User{
-			UserC: models.UserC{
+			User: ploutos.User{
 				Email:          service.Email,
 				CountryCode:    service.CountryCode,
 				Mobile:         service.Mobile,
@@ -124,11 +125,13 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	if err != nil {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
 	}
-	cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, 20*time.Minute)
+	if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
+		cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, time.Duration(timeout)*time.Minute)
+	}
 
 	loginTime := time.Now()
 	update := model.User{
-		UserC: models.UserC{
+		User: ploutos.User{
 			LastLoginIp:   c.ClientIP(),
 			LastLoginTime: loginTime,
 		},
@@ -157,7 +160,7 @@ func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user mode
 	}
 
 	event := model.AuthEvent{
-		AuthEventC: models.AuthEventC{
+		AuthEvent: ploutos.AuthEvent{
 			UserId:      user.ID,
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["successful"],
@@ -188,7 +191,7 @@ func (service *UserLoginOtpService) logFailedLogin(c *gin.Context) {
 	}
 
 	event := model.AuthEvent{
-		AuthEventC: models.AuthEventC{
+		AuthEvent: ploutos.AuthEvent{
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["failed"],
 			DateTime:    time.Now().Format(time.DateTime),

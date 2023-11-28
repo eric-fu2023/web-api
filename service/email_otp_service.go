@@ -1,7 +1,7 @@
 package service
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"blgit.rfdev.tech/zhibo/utilities"
 	"context"
 	"fmt"
@@ -101,12 +101,12 @@ func (service *EmailOtpService) sendEmail(c *gin.Context, otp string) error {
 	}
 
 	event := model.OtpEvent{
-		OtpEventC: models.OtpEventC{
+		OtpEvent: ploutos.OtpEvent{
 			Email:    service.Email,
 			Otp:      otp,
 			Provider: utilities.MailGunName,
 			DateTime: time.Now().Format(time.DateTime),
-			BrandId:  c.GetInt64("_brand"),
+			BrandId:  int64(c.GetInt("_brand")),
 		},
 	}
 	if err := model.LogOtpEvent(event); err != nil {

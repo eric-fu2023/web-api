@@ -2,12 +2,13 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,16 +37,16 @@ type AddWithdrawAccountService struct {
 	AccountName string `form:"account_name" json:"account_name" binding:"required"`
 }
 
-func (s AddWithdrawAccountService) Do(c *gin.Context) (serializer.Response, error) {
-	user := c.MustGet("user").(model.User)
+func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	r, err := VerifyKycWithName(c, user.ID, s.AccountName)
+	user := c.MustGet("user").(model.User)
+	r, err = VerifyKycWithName(c, user.ID, s.AccountName)
 	if err != nil {
-		return r, err
+		return
 	}
 
 	accountBinding := model.UserAccountBinding{
-		UserAccountBindingC: models.UserAccountBindingC{
+		UserAccountBinding: ploutos.UserAccountBinding{
 			UserID:        user.ID,
 			CashMethodID:  s.MethodID,
 			AccountName:   s.AccountName,
@@ -55,29 +56,34 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (serializer.Response, erro
 	}
 	err = accountBinding.AddToDb()
 	if err != nil {
-		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
+		if errors.Is(err,model.ErrAccountLimitExceeded) {
+			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("withdraw_account_limit_exceeded"), err)
+			return
+		}
+		r = serializer.Err(c, s, serializer.CodeGeneralError, "", err)
+		return
 	}
-	return serializer.Response{Msg: i18n.T("success")}, nil
+	return
 }
 
 type DeleteWithdrawAccountService struct {
 	AccountBindingID json.Number `form:"account_binding_id" json:"account_binding_id" binding:"required"`
 }
 
-func (s DeleteWithdrawAccountService) Do(c *gin.Context) (serializer.Response, error) {
+func (s DeleteWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, err error) {
 	user := c.MustGet("user").(model.User)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
 	accID, _ := s.AccountBindingID.Int64()
 
 	accountBinding := model.UserAccountBinding{
-		UserAccountBindingC: models.UserAccountBindingC{
-			BASE:     models.BASE{ID: accID},
+		UserAccountBinding: ploutos.UserAccountBinding{
+			BASE:     ploutos.BASE{ID: accID},
 			UserID:   user.ID,
 			IsActive: true,
 		},
 	}
-	err := accountBinding.Remove()
+	err = accountBinding.Remove()
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
 	}

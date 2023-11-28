@@ -1,13 +1,14 @@
 package service
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -36,7 +37,7 @@ type UserLoginPasswordService struct {
 
 func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Response {
 	service.Email = strings.ToLower(service.Email)
-	service.Username = strings.ToLower(service.Username)
+	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
@@ -60,19 +61,20 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 	}
 
 	var otpResp serializer.Response
-	if !strings.Contains(user.Username, "testkya") { // to be deleted when go live
-		isAccountLocked, err := service.checkAccountLock(user)
-		if err != nil {
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_password_lock"), nil)
-		}
-		if isAccountLocked {
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Password_lock_wait"), nil)
-		}
+	isAccountLocked, err := service.checkAccountLock(user)
+	if err != nil {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_password_lock"), nil)
+	}
+	if isAccountLocked {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Password_lock_wait"), nil)
+	}
 
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(service.Password)); err != nil {
-			return service.handlePasswordMismatch(c, user)
-		}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(service.Password)); err != nil {
+		return service.handlePasswordMismatch(c, user)
+	}
 
+	respData := map[string]interface{}{}
+	if os.Getenv("PASSWORD_LOGIN_REQUIRES_OTP") == "true" {
 		otpResp, err = service.sendOtp(c, user)
 		if errors.Is(err, errNoEmailOrMobile) {
 			return serializer.ParamErr(c, service, i18n.T("User_needs_email_or_mobile"), nil)
@@ -82,23 +84,30 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 			return otpResp
 		}
 
-		go service.logSuccessfulLogin(c, user)
-	}
-
-	// Return masked email and mobile
-	respData := map[string]interface{}{}
-	if service.Email != "" || user.Email != "" {
-		respData["email"] = util.MaskEmail(user.Email)
-	} else if (service.CountryCode != "" && service.Mobile != "") || (user.CountryCode != "" && user.Mobile != "") {
-		respData["country_code"] = user.CountryCode
-		respData["mobile"] = util.MaskMobile(user.Mobile)
-	}
-
-	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
-		if otpRespData, ok := otpResp.Data.(serializer.SendOtp); ok {
-			respData["otp"] = otpRespData.Otp
+		// Return masked email and mobile
+		if service.Email != "" || user.Email != "" {
+			respData["email"] = util.MaskEmail(user.Email)
+		} else if (service.CountryCode != "" && service.Mobile != "") || (user.CountryCode != "" && user.Mobile != "") {
+			respData["country_code"] = user.CountryCode
+			respData["mobile"] = util.MaskMobile(user.Mobile)
 		}
+
+		if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
+			if otpRespData, ok := otpResp.Data.(serializer.SendOtp); ok {
+				respData["otp"] = otpRespData.Otp
+			}
+		}
+	} else {
+		tokenString, err := user.GenToken()
+		if err != nil {
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
+		}
+		if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
+			cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, time.Duration(timeout)*time.Minute)
+		}
+		respData["token"] = tokenString
 	}
+	go service.logSuccessfulLogin(c, user)
 
 	return serializer.Response{
 		Msg:  i18n.T("success"),
@@ -205,7 +214,7 @@ func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user
 	}
 
 	event := model.AuthEvent{
-		AuthEventC: models.AuthEventC{
+		AuthEvent: ploutos.AuthEvent{
 			UserId:      user.ID,
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["successful"],
@@ -236,7 +245,7 @@ func (service *UserLoginPasswordService) logFailedLogin(c *gin.Context, user mod
 	}
 
 	event := model.AuthEvent{
-		AuthEventC: models.AuthEventC{
+		AuthEvent: ploutos.AuthEvent{
 			UserId:      user.ID,
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["failed"],

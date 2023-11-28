@@ -1,14 +1,13 @@
 package model
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
 type CashMethod struct {
-	models.CashMethodC
+	ploutos.CashMethod
 }
-
 
 func (CashMethod) GetByID(c *gin.Context, id int64) (item CashMethod, err error) {
 	err = DB.First(&item, id).Error

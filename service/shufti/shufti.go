@@ -1,7 +1,9 @@
-package util
+package shufti
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -10,6 +12,8 @@ import (
 	"strings"
 	"time"
 	"web-api/conf/consts"
+	"web-api/model"
+	"web-api/util"
 )
 
 type Shufti struct {
@@ -17,8 +21,9 @@ type Shufti struct {
 	SecretKey string
 }
 
-func (s *Shufti) VerifyDocument(id int64, firstName, middleName, lastName, dob, nationality string, document, face []byte) (isAccepted bool, reason string, err error) {
-	reference := fmt.Sprintf(`%d-%d`, id, time.Now().Unix())
+func (s *Shufti) VerifyDocument(ctx context.Context, id int64, firstName, middleName, lastName, dob, nationality string, document, face []byte) (isAccepted bool, reason string, err error) {
+	now := time.Now()
+	reference := fmt.Sprintf(`%d-%d`, id, now.Unix())
 	documentBase64 := base64Encode(document)
 	faceBase64 := base64Encode(face)
 
@@ -73,8 +78,11 @@ func (s *Shufti) VerifyDocument(id int64, firstName, middleName, lastName, dob, 
 	if err != nil {
 		return
 	}
+
+	event := ""
 	if v, exists := j["event"]; exists {
 		if vv, ok := v.(string); ok {
+			event = vv
 			if strings.Contains(vv, "accepted") {
 				isAccepted = true
 			} else {
@@ -86,6 +94,8 @@ func (s *Shufti) VerifyDocument(id int64, firstName, middleName, lastName, dob, 
 			}
 		}
 	}
+
+	go logKycEvent(ctx, id, now, reference, event, string(body), res.StatusCode)
 	return
 }
 
@@ -104,4 +114,21 @@ func base64Encode(image []byte) string {
 	}
 	base64Encoded += toBase64(image)
 	return base64Encoded
+}
+
+func logKycEvent(ctx context.Context, id int64, now time.Time, reference, event, responseBody string, httpCode int) {
+	kycEvent := model.KycEvent{
+		KycEvent: ploutos.KycEvent{
+			KycId:        id,
+			DateTime:     now.Format(time.DateTime),
+			Reference:    reference,
+			Event:        event,
+			HttpCode:     httpCode,
+			ResponseBody: responseBody,
+		},
+	}
+	err := model.LogKycEvent(kycEvent)
+	if err != nil {
+		util.GetLoggerEntry(ctx).Errorf("LogKycEvent error: %s", err.Error())
+	}
 }

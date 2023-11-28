@@ -47,7 +47,7 @@ func RevertCashOutOrder(c *gin.Context, orderNumber string, notes, remark string
 			newCashOrderState.ID)
 
 		common.SendCashNotificationWithoutCurrencyId(updatedCashOrder.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_WITHDRAWAL_FAILED_TITLE, common.NOTIFICATION_WITHDRAWAL_FAILED, updatedCashOrder.AppliedCashInAmount)
-		common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSumC)
+		common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum)
 		return
 	})
 

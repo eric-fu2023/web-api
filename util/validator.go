@@ -38,8 +38,7 @@ func PasswordValidation(fl validator.FieldLevel) bool {
 	hasLowercase := false
 	hasNumber := false
 	hasSpecialChar := false
-	hasConsecutive := false
-	var prevChar int32
+	hasSpace := false
 	for _, char := range str {
 		if 'A' <= char && char <= 'Z' {
 			hasUppercase = true
@@ -49,14 +48,12 @@ func PasswordValidation(fl validator.FieldLevel) bool {
 			hasNumber = true
 		} else if specialCharacter(char) {
 			hasSpecialChar = true
+		} else if char == ' ' {
+			hasSpace = true
 		}
-		if prevChar == char {
-			hasConsecutive = true
-		}
-		prevChar = char
 	}
 
-	return hasUppercase && hasLowercase && hasNumber && hasSpecialChar && !hasConsecutive
+	return hasUppercase && hasLowercase && hasNumber && hasSpecialChar && !hasSpace
 }
 
 func specialCharacter(char rune) bool {

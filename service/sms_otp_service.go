@@ -1,11 +1,10 @@
 package service
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"blgit.rfdev.tech/zhibo/utilities"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"
 	"os"
@@ -142,9 +141,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	if !isWithinLimit {
 		return errReachedOtpLimit
 	}
-
-	fmt.Println("M360Shortcode:", os.Getenv("M360_SHORTCODE_MASK"))
-
+	
 	smsManager := utilities.SmsManager{
 		HuanXunTemplate: "",
 		BulkSmsTemplate: i18n.T("Your_request_otp"),
@@ -160,13 +157,13 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	}
 
 	event := model.OtpEvent{
-		OtpEventC: models.OtpEventC{
+		OtpEvent: ploutos.OtpEvent{
 			CountryCode: service.CountryCode,
 			Mobile:      service.Mobile,
 			Otp:         otp,
 			Provider:    utilities.SmsProviderName[res.Provider],
 			DateTime:    time.Now().Format(time.DateTime),
-			BrandId:     c.GetInt64("_brand"),
+			BrandId:     int64(c.GetInt("_brand")),
 		},
 	}
 	if err := model.LogOtpEvent(event); err != nil {

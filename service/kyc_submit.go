@@ -1,7 +1,7 @@
 package service
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -15,6 +15,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/service/shufti"
 	"web-api/util"
 	"web-api/util/i18n"
 )
@@ -242,7 +243,7 @@ func (service *SubmitKycService) buildKyc(c *gin.Context) model.Kyc {
 	user := u.(model.User)
 
 	return model.Kyc{
-		KycC: models.KycC{
+		Kyc: ploutos.Kyc{
 			UserId:           user.ID,
 			FirstName:        service.FirstName,
 			MiddleName:       service.MiddleName,
@@ -261,7 +262,7 @@ func (service *SubmitKycService) buildKyc(c *gin.Context) model.Kyc {
 }
 
 func (service *SubmitKycService) buildKycDocument(kycId int64, url string) model.KycDocument {
-	return model.KycDocument{KycDocumentC: models.KycDocumentC{
+	return model.KycDocument{KycDocument: ploutos.KycDocument{
 		KycId: kycId,
 		Url:   url,
 	}}
@@ -269,7 +270,7 @@ func (service *SubmitKycService) buildKycDocument(kycId int64, url string) model
 
 func (service *SubmitKycService) verifyDocuments(c *gin.Context, user model.User, kycId int64) {
 	var images [][]byte
-	shufti := util.Shufti{
+	shufti := shufti.Shufti{
 		ClientId:  os.Getenv("SHUFTI_CLIENT_ID"),
 		SecretKey: os.Getenv("SHUFTI_SECRET_KEY"),
 	}
@@ -285,7 +286,7 @@ func (service *SubmitKycService) verifyDocuments(c *gin.Context, user model.User
 		util.GetLoggerEntry(c).Errorf("Document verification cannot proceed: images error")
 		return
 	}
-	isAccepted, reason, err := shufti.VerifyDocument(kycId, service.FirstName, service.MiddleName, service.LastName, service.Birthday, strconv.Itoa(service.Nationality), images[0], images[1])
+	isAccepted, reason, err := shufti.VerifyDocument(c, kycId, service.FirstName, service.MiddleName, service.LastName, service.Birthday, strconv.Itoa(service.Nationality), images[0], images[1])
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("Shufti document verification error: %s", err.Error())
 		return
@@ -295,14 +296,14 @@ func (service *SubmitKycService) verifyDocuments(c *gin.Context, user model.User
 	if isAccepted {
 		err = model.AcceptKyc(kycId)
 		if err != nil {
-			util.GetLoggerEntry(c).Errorf("Update kyc status error: %s", err.Error())
+			util.GetLoggerEntry(c).Errorf("AcceptKyc error: %s", err.Error())
 			return
 		}
 		common.SendNotification(user.ID, consts.Notification_Type_Kyc, i18n.T("notification_kyc_approved_title"), i18n.T("notification_kyc_approved"))
 	} else {
 		err = model.RejectKycWithReason(kycId, reason)
 		if err != nil {
-			util.GetLoggerEntry(c).Errorf("Update kyc status error: %s", err.Error())
+			util.GetLoggerEntry(c).Errorf("RejectKycWithReason error: %s", err.Error())
 			return
 		}
 		common.SendNotification(user.ID, consts.Notification_Type_Kyc, i18n.T("notification_kyc_rejected_title"), i18n.T("notification_kyc_rejected"))

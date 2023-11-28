@@ -1,12 +1,12 @@
 package model
 
-import models "blgit.rfdev.tech/taya/ploutos-object"
+import ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
-type CashOutRule struct{
-	models.CashOutRuleC
+type CashOutRule struct {
+	ploutos.CashOutRule
 }
 
 func (CashOutRule) Get(vipLevel int64) (rule CashOutRule, err error) {
-	err = DB.Order("vip_level desc").First(&rule).Error
+	err = DB.Order("vip_level desc").Where("is_active").First(&rule).Error
 	return
 }
