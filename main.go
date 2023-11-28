@@ -35,6 +35,7 @@ func main() {
 
 	if runTask {
 		go task.ProcessFbSyncTransaction()
+		go task.ProcessTayaSyncTransaction()
 		go task.ProcessSabaSettle()
 		go func() {
 			websocketTask.Functions = []func(*websocket.Connection, context.Context, context.CancelFunc){ // modules to be run when connected
