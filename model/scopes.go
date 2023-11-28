@@ -26,7 +26,7 @@ func ByBrandAgentPlatformAndKey(brand int64, agent int64, platform int64, key st
 
 func CategoryTypeWithCategories(db *gorm.DB) *gorm.DB {
 	return db.Preload(`Categories`, func(db *gorm.DB) *gorm.DB {
-		return db.Scopes(Sort)
+		return db.Scopes(SortAsc)
 	})
 }
 
@@ -48,7 +48,11 @@ func ByBrandAgentAndPlatform(brand int64, agent int64, platform int64) func(db *
 	}
 }
 
-func Sort(db *gorm.DB) *gorm.DB {
+func SortAsc(db *gorm.DB) *gorm.DB {
+	return db.Order(`sort`)
+}
+
+func SortDesc(db *gorm.DB) *gorm.DB {
 	return db.Order(`sort DESC`)
 }
 
