@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"math/rand"
 	"web-api/model"
 )
 
@@ -63,6 +64,10 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 			IsLive: true,
 		})
 		b.Streamer = &m
+	}
+	if a.CurrentView == 0 {
+		min := 10
+		b.CurrentView = int64(rand.Intn(100) + min)
 	}
 	return
 }
