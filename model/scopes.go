@@ -148,6 +148,13 @@ func ByDcRoundWagerAndWagerType(roundId string, wagerId string) func(db *gorm.DB
 	}
 }
 
+func ByDcPromotionAndTrans(promotionId string, transId string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		db.Where(`promotion_id`, promotionId).Where(`trans_id`, transId)
+		return db
+	}
+}
+
 func ByGameIdsBrandAndIsFeatured(gameIds []string, brandId int64, isFeatured bool) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		db.Where(`sub_game_brand.brand_id = ? OR sub_game_brand.brand_id = 0`, brandId)

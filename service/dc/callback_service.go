@@ -95,9 +95,13 @@ func CheckDuplicate(c *gin.Context, scope func(*gorm.DB) *gorm.DB, brandUid stri
 	return
 }
 
-func CheckRound(c *gin.Context, roundId string, brandUid string) (res callback.BaseResponse, err error) {
+func CheckRound(c *gin.Context, roundId string, wagerId string, brandUid string) (res callback.BaseResponse, err error) {
 	var dcTx ploutos.DcTransaction
-	rows := model.DB.Model(ploutos.DcTransaction{}).Where("round_id", roundId).First(&dcTx).RowsAffected
+	q := model.DB.Model(ploutos.DcTransaction{}).Where("round_id", roundId)
+	if wagerId != "" {
+		q = q.Where(`wager_id`, wagerId)
+	}
+	rows := q.First(&dcTx).RowsAffected
 	if rows == 0 {
 		res, err = MissingRoundResponse(c, brandUid)
 	}
@@ -168,7 +172,7 @@ func CheckToken(brandUid string, token string) (res callback.BaseResponse, err e
 
 func TokenErrorResponse() (res callback.BaseResponse) {
 	res = callback.BaseResponse{
-		Code: 5009,
+		Code: 5013,
 	}
 	return
 }

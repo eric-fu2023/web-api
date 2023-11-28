@@ -1,6 +1,7 @@
 package dc
 
 import (
+	"web-api/model"
 	"web-api/service/common"
 	"web-api/util"
 
@@ -42,7 +43,12 @@ func PromoPayoutCallback(c *gin.Context, req callback.PromoPayoutRequest) (res c
 		res = SignErrorResponse()
 		return
 	}
-	
+
+	res, err = CheckDuplicate(c, model.ByDcPromotionAndTrans(req.PromotionId, req.TransId), req.BrandUid)
+	if res.Code != 0 || err != nil {
+		return
+	}
+
 	a := PromoPayout{Request: req}
 	err = common.ProcessTransaction(&a)
 	if err != nil {

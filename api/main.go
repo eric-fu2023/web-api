@@ -40,7 +40,7 @@ func Heartbeat(c *gin.Context) {
 func ErrorResponse(c *gin.Context, service any, err error) serializer.Response {
 	t, exists := c.Get("i18n")
 	if !exists {
-		return serializer.ParamErr(c, service, "", err)
+		return serializer.Err(c, service, serializer.CodeParamErr, "", err)
 	}
 	i18n := t.(i18n.I18n)
 	if ve, ok := err.(validator.ValidationErrors); ok {

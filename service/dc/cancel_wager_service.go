@@ -20,7 +20,7 @@ func (c *CancelWager) NewCallback(userId int64) {
 	copier.Copy(&c.Transaction, &c.Request)
 	c.Transaction.UserId = userId
 	c.Transaction.ExternalUserId = c.Request.BrandUid
-	if amount, exists := c.Callback.GetBetAmount(); exists {
+	if amount, exists := c.GetBetAmount(); exists {
 		c.WagerExists = exists
 		c.Transaction.Amount = amount
 	}
@@ -52,7 +52,7 @@ func CancelWagerCallback(c *gin.Context, req callback.CancelWagerRequest) (res c
 		return
 	}
 
-	res, err = CheckRound(c, req.RoundId, req.BrandUid)
+	res, err = CheckRound(c, req.RoundId, req.WagerId, req.BrandUid)
 	if res.Code != 0 || err != nil {
 		return
 	}

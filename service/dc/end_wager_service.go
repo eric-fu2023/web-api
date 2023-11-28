@@ -40,7 +40,7 @@ func EndWagerCallback(c *gin.Context, req callback.EndWagerRequest) (res callbac
 		return
 	}
 
-	res, err = CheckRound(c, req.RoundId, req.BrandUid)
+	res, err = CheckRound(c, req.RoundId, "", req.BrandUid)
 	if res.Code != 0 || err != nil {
 		return
 	}
