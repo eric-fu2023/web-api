@@ -15,6 +15,7 @@ import (
 	"web-api/service/common"
 	"web-api/service/fb"
 	"web-api/service/saba"
+	"web-api/service/taya"
 	"web-api/util/i18n"
 )
 
@@ -86,6 +87,12 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("setup_finished"), nil)
 	}
 
+	if user.Role == 1 {
+		if strings.HasSuffix(service.Username, "test") {
+			return serializer.ParamErr(c, service, i18n.T("username_suffix_test"), nil)
+		}
+	}
+
 	var existing model.User
 	if r := model.DB.Unscoped().Where(`username`, service.Username).Limit(1).Find(&existing).RowsAffected; r != 0 {
 		return serializer.Err(c, service, serializer.CodeExistingUsername, i18n.T("existing_username"), nil)
@@ -117,6 +124,8 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("fb_create_user_failed"), err)
 	} else if err != nil && errors.Is(err, saba.ErrOthers) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("saba_create_user_failed"), err)
+	} else if err != nil && errors.Is(err, taya.ErrOthers) {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("taya_create_user_failed"), err)
 	} else if err != nil {
 		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 	}
