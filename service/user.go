@@ -17,12 +17,13 @@ import (
 	"web-api/service/dc"
 	"web-api/service/fb"
 	"web-api/service/saba"
+	"web-api/service/taya"
 )
 
 var (
 	ErrEmptyCurrencyId           = errors.New("empty currency id")
 	GameVendorUserRegisterStruct = map[string]common.UserRegisterInterface{
-		"taya": &fb.UserRegister{},
+		"taya": &taya.UserRegister{},
 		"fb":   &fb.UserRegister{},
 		"saba": &saba.UserRegister{},
 		"dc":   &dc.UserRegister{},
