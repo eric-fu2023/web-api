@@ -78,13 +78,11 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	} else {
 		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
 	}
-	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" { // for testing convenience
-		if service.Otp != "159357" {
-			otp := cache.RedisSessionClient.Get(context.TODO(), key)
-			if otp.Val() != service.Otp {
-				go service.logFailedLogin(c)
-				return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
-			}
+	if (os.Getenv("ENV") != "local" || os.Getenv("ENV") != "staging") && service.Otp != "159357" { // for testing convenience
+		otp := cache.RedisSessionClient.Get(context.TODO(), key)
+		if otp.Val() != service.Otp {
+			go service.logFailedLogin(c)
+			return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 		}
 	}
 
