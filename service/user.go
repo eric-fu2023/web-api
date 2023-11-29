@@ -72,29 +72,30 @@ func CreateUser(user model.User) (err error) {
 			return
 		}
 
+		currMap := make(map[int64]string)
+		for _, cur := range currencies {
+			currMap[cur.GameVendorId] = cur.Value
+		}
+
+		games := strings.Split(os.Getenv("GAMES_REGISTERED_FOR_NEW_USER"), ",")
+		for _, g := range games {
+			currency, exists := currMap[consts.GameVendor[g]]
+			if !exists {
+				return ErrEmptyCurrencyId
+			}
+			game := GameVendorUserRegisterStruct[g]
+			err = game.CreateUser(user, currency)
+			if err != nil && !errors.Is(err, game.VendorRegisterError()) { // if create vendor user failed, can proceed safely. when user first enter the game, it will retry
+				tx2.Rollback()
+				return fmt.Errorf("%w: %w", game.OthersError(), err)
+			}
+		}
+
 		tx2.Commit()
 		return
 	})
 	if err != nil {
 		return
-	}
-
-	currMap := make(map[int64]string)
-	for _, cur := range currencies {
-		currMap[cur.GameVendorId] = cur.Value
-	}
-
-	games := strings.Split(os.Getenv("GAMES_REGISTERED_FOR_NEW_USER"), ",")
-	for _, g := range games {
-		currency, exists := currMap[consts.GameVendor[g]]
-		if !exists {
-			return ErrEmptyCurrencyId
-		}
-		game := GameVendorUserRegisterStruct[g]
-		err = game.CreateUser(user, currency)
-		if err != nil && !errors.Is(err, game.VendorRegisterError()) { // if create vendor user failed, can proceed safely. when user first enter the game, it will retry
-			return fmt.Errorf("%w: %w", game.OthersError(), err)
-		}
 	}
 
 	return
