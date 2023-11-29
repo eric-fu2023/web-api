@@ -86,6 +86,12 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 				return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 			}
 		}
+	} else {
+		otp := cache.RedisSessionClient.Get(context.TODO(), key)
+		if otp.Val() != service.Otp {
+			go service.logFailedLogin(c)
+			return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
+		}
 	}
 
 	q := model.DB
