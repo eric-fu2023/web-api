@@ -2,7 +2,6 @@ package util
 
 import (
 	"github.com/go-playground/validator/v10"
-	"strings"
 )
 
 func UsernameValidation(fl validator.FieldLevel) bool {
@@ -12,9 +11,9 @@ func UsernameValidation(fl validator.FieldLevel) bool {
 		return false
 	}
 
-	if strings.HasSuffix(str, "test") {
-		return false
-	}
+	//if strings.HasSuffix(str, "test") {
+	//	return false
+	//}
 
 	hasRestricted := false
 	for _, char := range str {
