@@ -24,7 +24,7 @@ func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Respons
 	verified := cashOrder.VerifyManualCashOut()
 	if !verified {
 		err = errors.New("invalid cashout order")
-		r = serializer.Err(c, nil, serializer.CodeGeneralError, "err_insufficient_withdrawable", err)
+		r = serializer.Err(c, nil, serializer.CodeGeneralError, "err_invalid_order", err)
 		return
 	}
 

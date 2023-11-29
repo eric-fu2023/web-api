@@ -6,10 +6,17 @@ import (
 	"time"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 const (
 	BonusOperatorRatio int64 = iota
+	Bddd
+)
+
+const (
+	AdditionalRuleOperator int64 = iota
+	Accc
 )
 
 // rule regulating bonus
@@ -22,7 +29,7 @@ type BonusResult struct {
 	Err    error
 }
 
-// rule regulating order
+// rule regulating order/user
 type BonusRule struct {
 	MinDeposit         int64
 	BonusOperator      int64 // tiered, percentage,
@@ -30,7 +37,16 @@ type BonusRule struct {
 	WagerMultiplier    int64 // may not be here
 	ClaimLimit         int64 // may not be here
 	VipLevel           int64
+	ValidBefore        time.Time
+	ValidAfter         time.Time
 	RegistrationBefore time.Time
+	RegistrationAfter  time.Time
+	AdditionalRule     json.RawMessage
+}
+
+type additionalRule struct {
+	operator int64
+	params   json.RawMessage
 }
 
 type BonusHandler func(amount int64) *BonusResult
@@ -40,6 +56,45 @@ func (r BonusRule) ProcessMinDeposit() BonusHandler {
 		if amount < r.MinDeposit {
 			return &BonusResult{
 				Err: ErrLessThanMin,
+			}
+		} else {
+			return &BonusResult{
+				Amount: amount,
+			}
+		}
+	}
+}
+
+func (r BonusRule) ProcessRegistrationTime(c *gin.Context) BonusHandler {
+	user := c.MustGet("user").(User)
+
+	return func(amount int64) *BonusResult {
+		if user.SetupCompletedAt.Before(r.RegistrationBefore) {
+			return &BonusResult{
+				Err: ErrRegistrationTime,
+			}
+		} else if user.SetupCompletedAt.After(r.RegistrationAfter) {
+			return &BonusResult{
+				Err: ErrRegistrationTime,
+			}
+		} else {
+			return &BonusResult{
+				Amount: amount,
+			}
+		}
+	}
+}
+
+func (r BonusRule) ProcessTime() BonusHandler {
+	now := time.Now()
+	return func(amount int64) *BonusResult {
+		if now.Before(r.ValidBefore) {
+			return &BonusResult{
+				Err: ErrNow,
+			}
+		} else if now.After(r.ValidAfter) {
+			return &BonusResult{
+				Err: ErrNow,
 			}
 		} else {
 			return &BonusResult{
@@ -87,9 +142,11 @@ func (r BonusRule) VipHandler() BonusHandler {
 }
 
 var (
-	ErrLessThanMin     = errors.New("less_than_min_deposit")
-	ErrInvalidOperator = errors.New("invalid_operator")
-	ErrVip             = errors.New("vip_level_violation")
+	ErrLessThanMin      = errors.New("less_than_min_deposit")
+	ErrInvalidOperator  = errors.New("invalid_operator")
+	ErrVip              = errors.New("vip_level_violation")
+	ErrNow              = errors.New("not_valid_now")
+	ErrRegistrationTime = errors.New("not_valid_registration_time")
 )
 
 func (r *BonusResult) Bind(h BonusHandler) *BonusResult {
@@ -99,6 +156,6 @@ func (r *BonusResult) Bind(h BonusHandler) *BonusResult {
 	return h(r.Amount)
 }
 
-func (r *BonusResult) Handle(rule BonusRule) *BonusResult {
+func (r *BonusResult) Handle(c *gin.Context, rule BonusRule) *BonusResult {
 	return r.Bind(rule.ProcessMinDeposit())
 }
