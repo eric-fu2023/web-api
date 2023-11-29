@@ -84,10 +84,10 @@ func CreateUser(user model.User) (err error) {
 				return ErrEmptyCurrencyId
 			}
 			game := GameVendorUserRegisterStruct[g]
-			err = game.CreateUser(user, currency)
-			if err != nil && !errors.Is(err, game.VendorRegisterError()) { // if create vendor user failed, can proceed safely. when user first enter the game, it will retry
+			e := game.CreateUser(user, currency)
+			if e != nil && !errors.Is(e, game.VendorRegisterError()) { // if create vendor user failed, can proceed safely. when user first enter the game, it will retry
 				tx2.Rollback()
-				return fmt.Errorf("%w: %w", game.OthersError(), err)
+				return fmt.Errorf("%w: %w", game.OthersError(), e)
 			}
 		}
 
