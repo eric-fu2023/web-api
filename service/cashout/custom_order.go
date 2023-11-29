@@ -20,6 +20,14 @@ type CustomOrderService struct {
 
 func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err error) {
 	amount := cashOrder.AppliedCashOutAmount
+
+	verified := cashOrder.VerifyManualCashOut()
+	if !verified {
+		err = errors.New("invalid cashout order")
+		r = serializer.Err(c, nil, serializer.CodeGeneralError, "err_insufficient_withdrawable", err)
+		return
+	}
+
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, cashOrder.UserId), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()
 	// check withdrawable
@@ -77,4 +85,8 @@ func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Respons
 		return
 	}
 	return
+}
+
+func (s CustomOrderService) VerifyManualCashOut() bool {
+	return s.RequireReview && s.ReviewStatus == 1 && s.ApproveStatus == 1
 }
