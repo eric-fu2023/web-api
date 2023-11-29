@@ -17,6 +17,7 @@ func Init() {
 	os.Setenv("TZ", "Etc/GMT")
 
 	godotenv.Load()
+	InitCfg()
 
 	if os.Getenv("CHAT_WELCOME_NAMES") != "" {
 		arr := strings.Split(os.Getenv("CHAT_WELCOME_NAMES"), "|")
