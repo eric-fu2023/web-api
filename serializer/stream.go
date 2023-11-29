@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"math/rand"
 	"web-api/model"
 )
 
@@ -35,7 +34,7 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 		StreamerId:           a.StreamerId,
 		MatchId:              a.MatchId,
 		Status:               a.Status,
-		CurrentView:          markupNumber() + a.CurrentView*9,
+		CurrentView:          markupNumber(a.ID) + a.CurrentView*9,
 		Title:                a.Title,
 		ScheduleTimeTS:       a.ScheduleTime.Unix(),
 		OnlineAtTs:           a.OnlineAt.Unix(),
@@ -68,6 +67,7 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 	return
 }
 
-func markupNumber() int64 {
-	return int64(rand.Intn(50) + 100)
+func markupNumber(i int64) int64 {
+	r := (i % 2) + 1
+	return i * r
 }
