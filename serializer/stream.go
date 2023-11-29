@@ -35,7 +35,7 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 		StreamerId:           a.StreamerId,
 		MatchId:              a.MatchId,
 		Status:               a.Status,
-		CurrentView:          a.CurrentView * 9,
+		CurrentView:          markupNumber() + a.CurrentView*9,
 		Title:                a.Title,
 		ScheduleTimeTS:       a.ScheduleTime.Unix(),
 		OnlineAtTs:           a.OnlineAt.Unix(),
@@ -65,9 +65,9 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 		})
 		b.Streamer = &m
 	}
-	if a.CurrentView == 0 {
-		min := 100
-		b.CurrentView = int64(rand.Intn(50) + min)
-	}
 	return
+}
+
+func markupNumber() int64 {
+	return int64(rand.Intn(50) + 100)
 }
