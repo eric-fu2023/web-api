@@ -12,6 +12,7 @@ require (
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20231103020509-7b1120038f17
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
+	github.com/caarlos0/env/v10 v10.0.0
 	github.com/chenyahui/gin-cache v1.7.1
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/pprof v1.4.0

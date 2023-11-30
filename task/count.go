@@ -13,7 +13,7 @@ func CalculateSortFactor() {
 		return
 	}
 	for _, stream := range streams {
-		total := stream.CurrentView + stream.Streamer.Followers
+		total := stream.Streamer.SortFactor + stream.CurrentView + stream.Streamer.Followers
 		if total == stream.SortFactor {
 			continue
 		}

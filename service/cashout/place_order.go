@@ -3,12 +3,14 @@ package cashout
 import (
 	"errors"
 	"fmt"
-	"gorm.io/plugin/dbresolver"
 	"time"
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/util"
 	"web-api/util/i18n"
+
+	"gorm.io/plugin/dbresolver"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
@@ -48,6 +50,8 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 
 	switch accountBinding.CashMethodID {
 	case 3:
+		// verify cash method
+		// err = VerifyCashMethod(c,accountBinding.CashMethodID)
 	default:
 		err = errors.New("unsupported method")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
@@ -151,3 +155,32 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 // update to pending
 // if success update to success
 // else update to failed or rejected
+
+func VerifyCashMethod(c *gin.Context, id, amount int64) (err error) {
+	cashM, err := model.CashMethod{}.GetByID(c, id)
+	if err != nil {
+		return err
+	}
+	if amount > cashM.MaxOneTimePayout || amount < cashM.MinOneTimePayout {
+		return ErrCashMethodNotAvailable
+	}
+
+	orderList := []model.CashOrder{}
+	err = model.DB.Where("cash_method_id", id).Where("order_type", -1).Where("created_at > ?").Find(&orderList).Error
+	if err != nil {
+		return err
+	}
+
+	total := util.Reduce(orderList, func(amount int64, order model.CashOrder) int64 {
+		return amount + order.AppliedCashOutAmount
+	}, amount)
+	if total > cashM.DailyMaxPayout {
+		return ErrCashMethodNotAvailable
+	}
+
+	return nil
+}
+
+var (
+	ErrCashMethodNotAvailable = errors.New("cash method limit exceeded")
+)

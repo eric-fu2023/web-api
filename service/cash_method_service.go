@@ -1,7 +1,7 @@
 package service
 
 import (
-	"web-api/conf/consts"
+	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -34,11 +34,11 @@ func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 			return
 		}
-		minAmount := consts.FirstTopupMinimum / 100
+		minAmount := conf.GetCfg().FirstTopupMinimum / 100
 		if !firstTime && loggedIn {
-			minAmount = consts.TopupMinimum / 100
+			minAmount = conf.GetCfg().TopupMinimum / 100
 		}
-		r.Data = util.MapSlice(list, serializer.BuildCashMethodWrapper(minAmount, 30000))
+		r.Data = util.MapSlice(list, serializer.BuildCashMethodWrapper(minAmount, conf.GetCfg().TopupMax))
 	} else {
 		r.Data = util.MapSlice(list, serializer.BuildCashMethod)
 	}
