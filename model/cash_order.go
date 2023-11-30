@@ -34,8 +34,12 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 
 func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account, remark string, reviewRequired bool, accountName, ip string) CashOrder {
 	var orderStatus int64 = 1
+	var approveStatus int64
+	var reviewStatus int64
 	if reviewRequired {
 		orderStatus = 4
+		approveStatus = 1
+		reviewStatus = 1
 	}
 
 	return CashOrder{
@@ -51,6 +55,8 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account,
 			Remark:               remark,
 			RequireReview:        reviewRequired,
 			AccountName:          accountName,
+			ApproveStatus:        approveStatus,
+			ReviewStatus:         reviewStatus,
 			//Notes:, update later
 			Ip: ip,
 		},
