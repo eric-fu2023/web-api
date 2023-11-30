@@ -31,7 +31,7 @@ func BuildCashMethod(a model.CashMethod) CashMethod {
 	return CashMethod{
 		ID:          a.ID,
 		Name:        a.Name,
-		IconURL:     a.IconURL,
+		IconURL:     Url(a.IconURL),
 		MethodType:  methodType,
 		BaseURL:     a.BaseURL,
 		CallbackURL: a.CallbackURL,
