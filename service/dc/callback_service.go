@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 	"web-api/cache"
 	"web-api/conf/consts"
@@ -14,7 +15,6 @@ import (
 	"blgit.rfdev.tech/taya/game-service/dc/callback"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -157,10 +157,26 @@ func InsufficientBalanceResponse(c *gin.Context, brandUid string) (res callback.
 }
 
 func CheckToken(brandUid string, token string) (res callback.BaseResponse, err error) {
-	redisKey := fmt.Sprintf(`hacksaw_token:%s:%s`, brandUid, token)
-	r := cache.RedisSessionClient.Get(context.TODO(), redisKey)
-	if r.Err() == redis.Nil {
-		res = TokenErrorResponse()
+	redisKey := fmt.Sprintf(`hacksaw_token:*:%s`, token)
+	ctx := context.TODO()
+	iter := cache.RedisSessionClient.Scan(ctx, 0, redisKey, 0).Iterator()
+	var n int64
+	var notOwnToken bool
+	for iter.Next(ctx) {
+		n++
+		redisKey = iter.Val()
+		str := strings.Split(iter.Val(), ":")
+		if str[1] != brandUid {
+			notOwnToken = true
+			break
+		}
+	}
+	if n == 0 {
+		res = NonExistenceTokenErrorResponse()
+		err = errors.New("token invalid")
+		return
+	} else if notOwnToken {
+		res = NotOwnTokenErrorResponse()
 		err = errors.New("token invalid")
 		return
 	}
@@ -170,9 +186,16 @@ func CheckToken(brandUid string, token string) (res callback.BaseResponse, err e
 	return
 }
 
-func TokenErrorResponse() (res callback.BaseResponse) {
+func NotOwnTokenErrorResponse() (res callback.BaseResponse) {
 	res = callback.BaseResponse{
 		Code: 5013,
+	}
+	return
+}
+
+func NonExistenceTokenErrorResponse() (res callback.BaseResponse) {
+	res = callback.BaseResponse{
+		Code: 5009,
 	}
 	return
 }
