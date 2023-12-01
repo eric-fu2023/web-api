@@ -40,10 +40,10 @@ type AddWithdrawAccountService struct {
 func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	user := c.MustGet("user").(model.User)
-	r, err = VerifyKycWithName(c, user.ID, s.AccountName)
-	if err != nil {
-		return
-	}
+	// r, err = VerifyKycWithName(c, user.ID, s.AccountName)
+	// if err != nil {
+	// 	return
+	// }
 
 	accountBinding := model.UserAccountBinding{
 		UserAccountBinding: ploutos.UserAccountBinding{
