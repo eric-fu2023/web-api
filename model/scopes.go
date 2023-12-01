@@ -100,7 +100,7 @@ func ByOrderListConditions(userId int64, gameType []int64, isParlay bool, isSett
 		if isSettled {
 			db.Where(`status`, 5)
 		} else {
-			db.Where(`status != ?`, 5)
+			db.Where(`status != ?`, 5).Where(`status != ?`, 2) // 5: settled, 2: rejected
 		}
 		if !start.IsZero() && !end.IsZero() {
 			db.Where(`bet_time >= ?`, start).Where(`bet_time <= ?`, end)
