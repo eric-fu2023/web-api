@@ -7,7 +7,7 @@ toolchain go1.21.1
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20231129042026-6bca56e39033
-	blgit.rfdev.tech/taya/payment-service v0.0.0-20231115080708-a5b3999c00c6
+	blgit.rfdev.tech/taya/payment-service v0.0.0-20231201064220-dbf022fb0174
 	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20231122084519-ede33ee9004c
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20231103020509-7b1120038f17
 	firebase.google.com/go/v4 v4.12.1
@@ -66,7 +66,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-resty/resty/v2 v2.7.0 // indirect
+	github.com/go-resty/resty/v2 v2.10.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
@@ -113,7 +113,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/image v0.14.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/time v0.3.0 // indirect

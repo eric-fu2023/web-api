@@ -29,23 +29,25 @@ func RefreshPaymentOrder() {
 	cl := finpay.FinpayClient{}
 	for _, t := range orders {
 		data, err := cl.DefaultPaymentQuery(context.Background(), t.ID)
+		serializedData, _ := json.Marshal(data)
 		if err != nil {
 			fmt.Println(err)
-		}
-		serializedData, _ := json.Marshal(data)
-		if errors.Is(err, finpay.ErrorOrderNotFound) {
-			err = model.DB.Model(&t).Updates(map[string]any{
-				"status":     models.CashOrderStatusFailed,
-				"notes":      string(serializedData),
-				"manual_closed_by": specialUpdatedBy,
-			}).Error
+			if errors.Is(err, finpay.ErrorOrderNotFound) {
+				err = model.DB.Model(&t).Updates(map[string]any{
+					"status":           models.CashOrderStatusFailed,
+					"notes":            string(serializedData),
+					"manual_closed_by": specialUpdatedBy,
+				}).Error
 
-			if err == nil {
-				fmt.Println("failed order", t.ID)
-			} else {
-				fmt.Println("failed order err", err)
+				if err == nil {
+					fmt.Println("failed order", t.ID)
+				} else {
+					fmt.Println("failed order err", err)
+				}
 			}
+			continue
 		}
+
 		if data.PaymentOrderStatus == "COMPLETED" {
 			fmt.Println("completed order, ", t.ID)
 			// _, err = cashout.ManualCloseCashOutTxn(context.Background(), t.ID, specialUpdatedBy, string(serializedData))
@@ -56,8 +58,8 @@ func RefreshPaymentOrder() {
 			// }
 		} else if data.PaymentOrderStatus == "FAILED" || data.PaymentOrderStatus == "CLOSED" {
 			err = model.DB.Debug().Model(&t).Updates(map[string]any{
-				"status":     models.CashOrderStatusFailed,
-				"notes":   string(serializedData),
+				"status":           models.CashOrderStatusFailed,
+				"notes":            string(serializedData),
 				"manual_closed_by": specialUpdatedBy,
 			}).Error
 			if err == nil {
