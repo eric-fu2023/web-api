@@ -10,6 +10,7 @@ import (
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 	"strconv"
+	"time"
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -155,6 +156,7 @@ func SyncOrdersCallback(c *gin.Context, req callback.SyncOrdersRequest) (res cal
 	go common.LogGameCallbackRequest("sync_orders", req)
 	go func(c *gin.Context, req callback.SyncOrdersRequest) {
 		coll := model.MongoDB.Collection(MONGODB_FB_CALLBACK_SYNC_ORDERS)
+		req.CreatedAt = time.Now().Unix()
 		_, e := coll.InsertOne(context.TODO(), req)
 		if e != nil {
 			util.Log().Error("mongodb error", e)
