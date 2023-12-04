@@ -156,7 +156,7 @@ func SyncOrdersCallback(c *gin.Context, req callback.SyncOrdersRequest) (res cal
 	go common.LogGameCallbackRequest("sync_orders", req)
 	go func(c *gin.Context, req callback.SyncOrdersRequest) {
 		coll := model.MongoDB.Collection(MONGODB_FB_CALLBACK_SYNC_ORDERS)
-		req.CreatedAt = time.Now().Unix()
+		req.CreatedAt = time.Now().UnixMilli()
 		_, e := coll.InsertOne(context.TODO(), req)
 		if e != nil {
 			util.Log().Error("mongodb error", e)
