@@ -31,7 +31,7 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 		user = u.(model.User)
 	} else {
 		if err := model.DB.Where(`country_code`, service.CountryCode).Where(`mobile`, service.Mobile).First(&user).Error; err != nil {
-			return serializer.ParamErr(c, service, i18n.T("Mobile_invalid"), err)
+			return serializer.ParamErr(c, service, i18n.T("Mobile_password_invalid"), err)
 		}
 	}
 

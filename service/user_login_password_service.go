@@ -46,13 +46,13 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 	errStr := ""
 	if service.Username != "" {
 		q = q.Where(`username`, service.Username)
-		errStr = i18n.T("Username_invalid")
+		errStr = i18n.T("Username_password_invalid")
 	} else if service.Email != "" {
 		q = q.Where(`email`, service.Email)
-		errStr = i18n.T("Email_invalid")
+		errStr = i18n.T("Email_password_invalid")
 	} else if service.CountryCode != "" && service.Mobile != "" {
 		q = q.Where(`country_code`, service.CountryCode).Where(`mobile`, service.Mobile)
-		errStr = i18n.T("Mobile_invalid")
+		errStr = i18n.T("Mobile_password_invalid")
 	} else {
 		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
 	}
