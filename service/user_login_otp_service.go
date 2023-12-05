@@ -65,6 +65,10 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	service.Email = strings.ToLower(service.Email)
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 
+	if len(service.Mobile) > 0 && service.Mobile[:1] == "0" {
+		service.Mobile = service.Mobile[1:]
+	}
+
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
 	var user model.User
