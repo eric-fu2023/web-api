@@ -18,7 +18,13 @@ func (cw customWriter) Write(b []byte) (int, error) {
 
 func EncryptPayload() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.GetHeader("Signature") == os.Getenv("SUPER_SIGNATURE") {
+		signature := c.GetHeader("Signature")
+		timestamp := c.GetHeader("Timestamp")
+		if signature == os.Getenv("SUPER_SIGNATURE") {
+			return
+		}
+		if signature == "" || timestamp == "" {
+			c.Abort()
 			return
 		}
 		cw := &customWriter{buf: &bytes.Buffer{}, ResponseWriter: c.Writer}
