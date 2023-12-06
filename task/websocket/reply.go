@@ -9,6 +9,7 @@ import (
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/serializer"
 	"web-api/util"
 	"web-api/websocket"
 )
@@ -58,6 +59,7 @@ func welcomeToRoom(conn *websocket.Connection, message string) {
 						UserId:    consts.ChatSystemId,
 						UserType:  consts.ChatUserType["system"],
 						Nickname:  consts.ChatSystem["names"][0],
+						Avatar:    serializer.Url("/img/user/system/Taya_system_profile.jpg"),
 						Type:      consts.WebSocketMessageType["text"],
 					}
 					msg.Send(conn)
