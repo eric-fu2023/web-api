@@ -43,13 +43,23 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
-	switch s.MethodID {
-	case 1, 8:
-	default:
-		err = errors.New("unsupported method")
-		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+
+	method, err := model.CashMethod{}.GetByID(c, s.MethodID)
+	if err != nil {
 		return
 	}
+	err = processCashInMethod(method)
+	if err != nil {
+		return
+	}
+
+	// switch s.MethodID {
+	// case 1, 8:
+	// default:
+	// 	err = errors.New("unsupported method")
+	// 	r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+	// 	return
+	// }
 
 	// check kyc
 	// create cash order
@@ -77,26 +87,15 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		return
 	}
 	var transactionID string
-	switch s.MethodID {
+	switch method.Gateway {
 	default:
 		err = errors.New("unsupported method")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
-	case 1:
+	case "finpay":
+		config := method.GetFinpayConfig()
 		var data finpay.PaymentOrderRespData
-		data, err = finpay.FinpayClient{}.PlaceDefaultGcashOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID)
-		if err != nil {
-			_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data))
-			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-			return
-		}
-		transactionID = data.PaymentOrderNo
-		r.Data = serializer.BuildPaymentOrder(data)
-		cashOrder.TransactionId = &transactionID
-		cashOrder.Status = models.CashOrderStatusPending
-	case 8:
-		var data finpay.PaymentOrderRespData
-		data, err = finpay.FinpayClient{}.PlaceDefaultMayaOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID)
+		data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, config.Type)
 		if err != nil {
 			_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data))
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
@@ -150,4 +149,11 @@ func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64) (r s
 	}
 
 	return
+}
+
+func processCashInMethod(m model.CashMethod) (err error) {
+	if m.MethodType < 0 {
+		return errors.New("cash method not permitted")
+	}
+	return nil
 }

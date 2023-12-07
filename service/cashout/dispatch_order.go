@@ -12,12 +12,19 @@ import (
 
 func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, methodID int64) (updatedCashOrder model.CashOrder, err error) {
 	updatedCashOrder = cashOrder
-	switch methodID {
-	default:
-		err = errors.New("cash method id not supported")
-	case 3:
+	method, err := model.CashMethod{}.GetByID(c, methodID)
+	if err != nil {
+		return
+	}
+	err = processCashOutMethod(method)
+	if err != nil {
+		return
+	}
+	switch method.Gateway {
+	case "finpay":
+		config := method.GetFinpayConfig()
 		var data finpay.TransferOrderResponse
-		data, err = finpay.FinpayClient{}.DefaultGcashCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, updatedCashOrder.Account, updatedCashOrder.AccountName)
+		data, err = finpay.FinpayClient{}.DefaultCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, updatedCashOrder.Account, updatedCashOrder.AccountName, config.IfCode, config.BankName, config.Type)
 		if data.IsSuccess() {
 			updatedCashOrder.Status = models.CashOrderStatusTransferring
 			updatedCashOrder.TransactionId = &data.TransferId
@@ -37,4 +44,11 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, methodID int64) (u
 		}
 	}
 	return
+}
+
+func processCashOutMethod(m model.CashMethod) (err error) {
+	if m.MethodType > 0 {
+		return errors.New("cash method not permitted")
+	}
+	return nil
 }
