@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -44,6 +45,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	// if err != nil {
 	// 	return
 	// }
+	s.AccountNo = strings.TrimLeft(s.AccountNo, "+")
 
 	accountBinding := model.UserAccountBinding{
 		UserAccountBinding: ploutos.UserAccountBinding{
@@ -56,7 +58,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	}
 	err = accountBinding.AddToDb()
 	if err != nil {
-		if errors.Is(err,model.ErrAccountLimitExceeded) {
+		if errors.Is(err, model.ErrAccountLimitExceeded) {
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("withdraw_account_limit_exceeded"), err)
 			return
 		}
