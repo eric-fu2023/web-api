@@ -48,16 +48,15 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		return
 	}
 
-	switch accountBinding.CashMethodID {
-	case 3:
-		// verify cash method
-		// err = VerifyCashMethod(c,accountBinding.CashMethodID)
-	default:
-		err = errors.New("unsupported method")
-		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+	method, err := model.CashMethod{}.GetByID(c, accountBinding.CashMethodID)
+	if err != nil {
 		return
 	}
-
+	err = processCashOutMethod(method)
+	if err != nil {
+		return
+	}
+	
 	var reviewRequired bool = false
 	var cashOrder model.CashOrder
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, user.ID), redsync.WithExpiry(5*time.Second))
