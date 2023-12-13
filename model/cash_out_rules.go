@@ -7,6 +7,6 @@ type CashOutRule struct {
 }
 
 func (CashOutRule) Get(vipLevel int64) (rule CashOutRule, err error) {
-	err = DB.Order("vip_level desc").Where("is_active").First(&rule).Error
+	err = DB.Order("vip_level desc").Where("vip_level <= ?", vipLevel).Where("is_active").First(&rule).Error
 	return
 }
