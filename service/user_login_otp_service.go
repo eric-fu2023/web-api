@@ -92,13 +92,9 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	}
 
 	deviceInfo, err := util.GetDeviceInfo(c)
-	if err != nil && errors.Is(err, util.ErrDeviceInfoEmpty) {
-		return serializer.ParamErr(c, service, i18n.T("missing_device_uuid"), err)
-	} else if err != nil {
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("GetDeviceInfo error: %s", err.Error())
 		return serializer.ParamErr(c, service, i18n.T("invalid_device_info"), err)
-	}
-	if deviceInfo.Uuid == "" {
-		return serializer.ParamErr(c, service, i18n.T("missing_device_uuid"), nil)
 	}
 
 	q := model.DB
@@ -136,29 +132,16 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		setupRequired = true
 	}
 
-	tokenString, err := user.GenToken()
-	if err != nil {
+	tokenString, err := service.processUserLogin(c, user)
+	if err != nil && errors.Is(err, ErrTokenGeneration) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
+	} else if err != nil && errors.Is(err, util.ErrInvalidDeviceInfo) {
+		util.GetLoggerEntry(c).Errorf("processUserLogin error: %s", err.Error())
+		return serializer.ParamErr(c, service, i18n.T("invalid_device_info"), err)
+	} else if err != nil {
+		util.GetLoggerEntry(c).Errorf("processUserLogin error: %s", err.Error())
+		return serializer.GeneralErr(c, err)
 	}
-	if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
-		cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, time.Duration(timeout)*time.Minute)
-	}
-
-	loginTime := time.Now()
-	update := model.User{
-		User: ploutos.User{
-			LastLoginIp:         c.ClientIP(),
-			LastLoginDeviceUuid: deviceInfo.Uuid,
-			LastLoginTime:       loginTime,
-		},
-	}
-	if err = model.DB.Model(&user).
-		Select("last_login_ip", "last_login_time", "last_login_device_uuid").
-		Updates(update).Error; err != nil {
-		util.GetLoggerEntry(c).Errorf("Update last login ip and time error: %s", err.Error())
-	}
-
-	go service.logSuccessfulLogin(c, user, loginTime)
 
 	return serializer.Response{
 		Data: map[string]interface{}{
@@ -166,6 +149,26 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 			"setup_required": setupRequired,
 		},
 	}
+}
+
+func (service *UserLoginOtpService) processUserLogin(c *gin.Context, user model.User) (string, error) {
+	tokenString, err := user.GenToken()
+	if err != nil {
+		return "", ErrTokenGeneration
+	}
+	if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
+		cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, time.Duration(timeout)*time.Minute)
+	}
+
+	loginTime := time.Now()
+	err = user.UpdateLoginInfo(c, loginTime)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("UpdateLoginInfo error: %s", err.Error())
+		return "", err
+	}
+
+	go service.logSuccessfulLogin(c, user, loginTime)
+	return tokenString, nil
 }
 
 func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time) {

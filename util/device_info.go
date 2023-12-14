@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	ErrDeviceInfoEmpty = errors.New("device info is empty")
+	ErrDeviceInfoEmpty   = errors.New("device info is empty")
+	ErrInvalidDeviceInfo = errors.New("invalid device info")
 )
 
 type DeviceInfo struct {

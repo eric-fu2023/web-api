@@ -30,6 +30,10 @@ var (
 	}
 )
 
+var (
+	ErrTokenGeneration = errors.New("token generation error")
+)
+
 func CreateUser(user model.User) (err error) {
 	var currencies []ploutos.CurrencyGameVendor
 	err = model.DB.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error

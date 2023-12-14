@@ -98,16 +98,19 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 			}
 		}
 	} else {
-		tokenString, err := user.GenToken()
-		if err != nil {
+		tokenString, err := service.processUserLogin(c, user)
+		if err != nil && errors.Is(err, ErrTokenGeneration) {
 			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
+		} else if err != nil && errors.Is(err, util.ErrInvalidDeviceInfo) {
+			util.GetLoggerEntry(c).Errorf("processUserLogin error: %s", err.Error())
+			return serializer.ParamErr(c, service, i18n.T("invalid_device_info"), err)
+		} else if err != nil {
+			util.GetLoggerEntry(c).Errorf("processUserLogin error: %s", err.Error())
+			return serializer.GeneralErr(c, err)
 		}
-		if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
-			cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, time.Duration(timeout)*time.Minute)
-		}
+
 		respData["token"] = tokenString
 	}
-	go service.logSuccessfulLogin(c, user)
 
 	return serializer.Response{
 		Msg:  i18n.T("success"),
@@ -206,7 +209,28 @@ func (service *UserLoginPasswordService) sendOtp(c *gin.Context, user model.User
 
 	return resp, nil
 }
-func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user model.User) {
+
+func (service *UserLoginPasswordService) processUserLogin(c *gin.Context, user model.User) (string, error) {
+	tokenString, err := user.GenToken()
+	if err != nil {
+		return "", ErrTokenGeneration
+	}
+	if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
+		cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, time.Duration(timeout)*time.Minute)
+	}
+
+	loginTime := time.Now()
+	err = user.UpdateLoginInfo(c, loginTime)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("UpdateLoginInfo error: %s", err.Error())
+		return "", err
+	}
+
+	go service.logSuccessfulLogin(c, user, loginTime)
+	return tokenString, nil
+}
+
+func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time) {
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		// Just log error if failed
@@ -218,7 +242,7 @@ func (service *UserLoginPasswordService) logSuccessfulLogin(c *gin.Context, user
 			UserId:      user.ID,
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["successful"],
-			DateTime:    time.Now().Format(time.DateTime),
+			DateTime:    loginTime.Format(time.DateTime),
 			LoginMethod: consts.AuthEventLoginMethod["password"],
 			Email:       service.Email,
 			CountryCode: service.CountryCode,

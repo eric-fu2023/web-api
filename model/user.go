@@ -1,15 +1,16 @@
 package model
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 	"os"
 	"strconv"
 	"time"
-
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/golang-jwt/jwt/v4"
-	"golang.org/x/crypto/bcrypt"
+	"web-api/util"
 )
 
 type User struct {
@@ -51,4 +52,28 @@ func (user *User) VerifySecondaryPassword(secondaryPassword string) (err error) 
 		return errors.New("empty password")
 	}
 	return bcrypt.CompareHashAndPassword([]byte(user.SecondaryPassword), []byte(secondaryPassword))
+}
+
+func (user *User) UpdateLoginInfo(c *gin.Context, loginTime time.Time) error {
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("GetDeviceInfo error: %s", err.Error())
+		return util.ErrInvalidDeviceInfo
+	}
+
+	update := User{
+		User: ploutos.User{
+			BASE:                ploutos.BASE{ID: user.ID},
+			LastLoginIp:         c.ClientIP(),
+			LastLoginTime:       loginTime,
+			LastLoginDeviceUuid: deviceInfo.Uuid, // Not updated if empty
+		},
+	}
+
+	if err = DB.Updates(update).Error; err != nil {
+		util.GetLoggerEntry(c).Errorf("Update last login info error: %s", err.Error())
+		return err
+	}
+
+	return nil
 }
