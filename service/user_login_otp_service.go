@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"os"
 	"strconv"
@@ -90,6 +91,16 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		}
 	}
 
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil && errors.Is(err, util.ErrDeviceInfoEmpty) {
+		return serializer.ParamErr(c, service, i18n.T("missing_device_uuid"), err)
+	} else if err != nil {
+		return serializer.ParamErr(c, service, i18n.T("invalid_device_info"), err)
+	}
+	if deviceInfo.Uuid == "" {
+		return serializer.ParamErr(c, service, i18n.T("missing_device_uuid"), nil)
+	}
+
 	q := model.DB
 	if service.Email != "" {
 		q = q.Where(`email`, service.Email)
@@ -98,15 +109,17 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	} else if service.Username != "" {
 		q = q.Where(`username = ?`, service.Username)
 	}
-	if rows := q.Scopes(model.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 { // new user
+	if rows := q.Scopes(model.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 {
+		// new user
 		user = model.User{
 			User: ploutos.User{
-				Email:          service.Email,
-				CountryCode:    service.CountryCode,
-				Mobile:         service.Mobile,
-				Status:         1,
-				Role:           1, // default role user
-				RegistrationIp: c.ClientIP(),
+				Email:                  service.Email,
+				CountryCode:            service.CountryCode,
+				Mobile:                 service.Mobile,
+				Status:                 1,
+				Role:                   1, // default role user
+				RegistrationIp:         c.ClientIP(),
+				RegistrationDeviceUuid: deviceInfo.Uuid,
 			},
 		}
 		user.BrandId = int64(c.MustGet("_brand").(int))
@@ -134,12 +147,13 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	loginTime := time.Now()
 	update := model.User{
 		User: ploutos.User{
-			LastLoginIp:   c.ClientIP(),
-			LastLoginTime: loginTime,
+			LastLoginIp:         c.ClientIP(),
+			LastLoginDeviceUuid: deviceInfo.Uuid,
+			LastLoginTime:       loginTime,
 		},
 	}
 	if err = model.DB.Model(&user).
-		Select("last_login_ip", "last_login_time").
+		Select("last_login_ip", "last_login_time", "last_login_device_uuid").
 		Updates(update).Error; err != nil {
 		util.GetLoggerEntry(c).Errorf("Update last login ip and time error: %s", err.Error())
 	}
