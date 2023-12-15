@@ -8,6 +8,8 @@ type Config struct {
 	FirstTopupMinimum int64 `env:"FIRST_TOPUP_MINIMUM"`
 	TopupMinimum      int64 `env:"TOPUP_MINIMUM"`
 	TopupMax          int64 `env:"TOPUP_MAX"`
+	WithdrawMin       int64 `env:"WITHDRAW_MIN"`
+	WithdrawMax       int64 `env:"WITHDRAW_MAX"`
 }
 
 var cfg Config
