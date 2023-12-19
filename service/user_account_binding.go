@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -28,7 +29,9 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 	}
 
 	return serializer.Response{
-		Data: util.MapSlice(list, serializer.BuildUserAccountBinding),
+		Data: util.MapSlice(list, func(a model.UserAccountBinding) serializer.UserAccountBinding {
+			return serializer.BuildUserAccountBinding(a, conf.GetCfg().WithdrawMin/100, conf.GetCfg().WithdrawMax/100)
+		}),
 	}, nil
 }
 

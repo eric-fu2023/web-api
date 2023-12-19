@@ -38,9 +38,9 @@ func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err
 		if !firstTime && loggedIn {
 			minAmount = conf.GetCfg().TopupMinimum / 100
 		}
-		r.Data = util.MapSlice(list, serializer.BuildCashMethodWrapper(minAmount, conf.GetCfg().TopupMax))
+		r.Data = util.MapSlice(list, serializer.BuildCashMethodWrapper(minAmount, conf.GetCfg().TopupMax/100))
 	} else {
-		r.Data = util.MapSlice(list, serializer.BuildCashMethod)
+		r.Data = util.MapSlice(list, serializer.BuildCashMethodWrapper(conf.GetCfg().WithdrawMin/100, conf.GetCfg().WithdrawMax/100))
 	}
 	return
 }

@@ -25,6 +25,7 @@ const NOTIFICATION_WITHDRAWAL_SUCCESS_TITLE = "Withdrawal Transaction Successful
 const NOTIFICATION_WITHDRAWAL_SUCCESS = "Your withdrawal transaction with the amount of %.2f %s has been successful."
 const NOTIFICATION_WITHDRAWAL_FAILED_TITLE = "Withdrawal Transaction Failed"
 const NOTIFICATION_WITHDRAWAL_FAILED = "Your withdrawal transaction with the amount of %.2f %s was unsuccessful. Please try again later or contact our customer support for more information."
+
 var ErrInsuffientBalance = errors.New("insufficient balance or invalid transaction")
 
 type Platform struct {
@@ -88,6 +89,11 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin()
 	if tx.Error != nil {
 		err = tx.Error
+		return
+	}
+	err = tx.Exec(`set transaction isolation level repeatable read`).Error
+	if err != nil {
+		tx.Rollback()
 		return
 	}
 	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(tx, obj.GetGameVendorId(), obj.GetExternalUserId())
