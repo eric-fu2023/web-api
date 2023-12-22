@@ -51,6 +51,7 @@ type UserFavouriteService struct {
 	GameId  int64 `form:"game_id" json:"game_id" binding:"required"`
 	Type    int64 `form:"type" json:"type" binding:"required"`
 	SportId int64 `form:"sport_id" json:"sport_id"`
+	Ref     int64 `form:"ref" json:"ref"`
 }
 
 func (service *UserFavouriteService) Add(c *gin.Context) (r serializer.Response, err error) {
@@ -63,6 +64,7 @@ func (service *UserFavouriteService) Add(c *gin.Context) (r serializer.Response,
 	favourite.GameId = service.GameId
 	favourite.Type = service.Type
 	favourite.SportId = service.SportId
+	favourite.Ref = service.Ref
 	if rows := model.DB.Scopes(model.UserFavouriteByUserIdTypeGameIdAndSportId(user.ID, service.Type, service.GameId, service.SportId)).First(&favourite).RowsAffected; rows != 0 {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("favourite_already_added"), err)
 		return
