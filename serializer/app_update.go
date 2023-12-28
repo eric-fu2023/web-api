@@ -9,6 +9,7 @@ type AppUpdate struct {
 	IsForce       bool   `json:"is_force"`
 	Version       string `json:"version"`
 	VersionSerial int64  `json:"version_serial"`
+	Remark        string `json:"remark,omitempty"`
 }
 
 func BuildAppUpdate(a model.AppUpdate) (b AppUpdate) {
@@ -17,6 +18,7 @@ func BuildAppUpdate(a model.AppUpdate) (b AppUpdate) {
 		IsForce:       a.IsForce,
 		Version:       a.Version,
 		VersionSerial: a.VersionSerial,
+		Remark:        a.Remark,
 	}
 	return
 }
