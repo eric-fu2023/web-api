@@ -54,9 +54,17 @@ func JSON(jsonObj any) string {
 }
 
 func Reduce[T, M any](s []T, f func(M, T) M, initValue M) M {
-    acc := initValue
-    for _, v := range s {
-        acc = f(acc, v)
-    }
-    return acc
+	acc := initValue
+	for _, v := range s {
+		acc = f(acc, v)
+	}
+	return acc
+}
+
+func MoneyFloat(i int64) float64 {
+	return float64(i) / 100
+}
+
+func MoneyInt(f float64) int64 {
+	return int64(f * 100)
 }

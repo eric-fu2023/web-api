@@ -3,6 +3,7 @@ package common
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"firebase.google.com/go/v4/messaging"
@@ -86,16 +87,12 @@ func GetSums(tx *gorm.DB, gpu ploutos.GameVendorUser) (balance int64, remainingW
 }
 
 func ProcessTransaction(obj CallbackInterface) (err error) {
-	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin()
+	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 	if tx.Error != nil {
 		err = tx.Error
 		return
 	}
-	err = tx.Exec(`set transaction isolation level repeatable read`).Error
-	if err != nil {
-		tx.Rollback()
-		return
-	}
+
 	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(tx, obj.GetGameVendorId(), obj.GetExternalUserId())
 	if err != nil {
 		tx.Rollback()

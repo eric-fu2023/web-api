@@ -183,6 +183,10 @@ func NewRouter() *gin.Engine {
 
 				user.GET("/otp-check", api.VerifyOtp)
 
+				user.POST("/transfer_to", api.TransferTo)
+				user.POST("/transfer_from", api.TransferFrom)
+				user.POST("/transfer_back", api.TransferBack)
+
 				taya := user.Group("/taya")
 				{
 					taya.GET("/token", taya_api.GetToken)
