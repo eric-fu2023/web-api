@@ -141,12 +141,10 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	if !isWithinLimit {
 		return errReachedOtpLimit
 	}
-	
+
 	smsManager := utilities.SmsManager{
-		HuanXunTemplate: "",
-		BulkSmsTemplate: i18n.T("Your_request_otp"),
-		AwsSnsTemplate:  i18n.T("Your_request_otp"),
 		M360Template:    i18n.T("m360_otp_content"),
+		DefaultTemplate: i18n.T("Your_request_otp"),
 	}
 	res, err := smsManager.Send(service.CountryCode, service.Mobile, otp)
 	if err != nil {
