@@ -56,7 +56,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	if err != nil {
 		return
 	}
-	
+
 	var reviewRequired bool = false
 	var cashOrder model.CashOrder
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, user.ID), redsync.WithExpiry(5*time.Second))
@@ -139,6 +139,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	}
 	r.Data = serializer.BuildWithdrawOrder(cashOrder)
 	if reviewRequired {
+		notifyBackendWithdraw(cashOrder.ID)
 		return
 	}
 	cashOrder, err = DispatchOrder(c, cashOrder, accountBinding.CashMethodID)
