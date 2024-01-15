@@ -21,6 +21,7 @@ require (
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redsync/redsync/v4 v4.9.4
+	github.com/go-resty/resty/v2 v2.10.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.1
 	github.com/gorilla/websocket v1.5.0
@@ -66,7 +67,6 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-resty/resty/v2 v2.10.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
