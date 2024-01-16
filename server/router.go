@@ -187,6 +187,8 @@ func NewRouter() *gin.Engine {
 				user.POST("/transfer_from", api.TransferFrom)
 				user.POST("/transfer_back", api.TransferBack)
 
+				user.POST("/feedback", api.FeedbackAdd)
+
 				taya := user.Group("/taya")
 				{
 					taya.GET("/token", taya_api.GetToken)

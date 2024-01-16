@@ -30,6 +30,7 @@ const AliyunOssCoverImage = "COVER_IMAGE"
 const AliyunOssRoomImage = "ROOM_IMAGE"
 const AliyunOssGallery = "GALLERY"
 const AliyunOssKyc = "KYC"
+const AliyunOssFeedback = "FEEDBACK"
 
 var AliyunOssFolder = map[string]string{
 	AliyunOssAvatar:     "avatar",
@@ -37,6 +38,7 @@ var AliyunOssFolder = map[string]string{
 	AliyunOssRoomImage:  "room_image",
 	AliyunOssGallery:    "gallery",
 	AliyunOssKyc:        "kyc",
+	AliyunOssFeedback:   "feedback",
 }
 
 func (a *AliyunOssStruct) getFileName(aliyunOssFolder string, userId int64, extension string) (fileName string, err error) {

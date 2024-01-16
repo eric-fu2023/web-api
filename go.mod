@@ -8,7 +8,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240103071340-b1165d51e0cb
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20231221020145-1ff91bdff03b
-	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20240103071228-e54de2916de4
+	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20240116033043-dc20cedf875a
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240110073802-37a3a3685522
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
@@ -88,7 +88,7 @@ require (
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgtype v1.14.0 // indirect
+	github.com/jackc/pgtype v1.14.1 // indirect
 	github.com/jackc/pgx/v5 v5.5.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jellydator/ttlcache/v2 v2.11.1 // indirect

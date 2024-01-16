@@ -476,6 +476,7 @@ kyc_rejected_reason_suffix: ", please contact our support for more details or yo
 
 file_type_not_allowed: "File type %s is not allowed."
 file_size_exceeded: "File size should not exceed %s."
+file_upload_error: "File could not be uploaded."
 
 err_insufficient_withdrawable: "Insufficient withdrawable amount"
 
