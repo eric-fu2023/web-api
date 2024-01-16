@@ -8,11 +8,12 @@ import (
 
 func BrandAgent() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.GetHeader("Brand") == "" || c.GetHeader("Agent") == "" {
+		//if c.GetHeader("Brand") == "" || c.GetHeader("Agent") == "" {
+		if c.GetHeader("Brand") == "" {
 			c.JSON(400, serializer.Response{
 				Code:  serializer.CodeParamErr,
 				Msg:   "Invalid headers",
-				Error: `'Brand' and 'Agent' headers cannot be empty`,
+				Error: `'Brand' header cannot be empty`,
 			})
 			c.Abort()
 			return
@@ -27,18 +28,18 @@ func BrandAgent() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		agent, err := strconv.Atoi(c.GetHeader("Agent"))
-		if err != nil {
-			c.JSON(400, serializer.Response{
-				Code:  serializer.CodeParamErr,
-				Msg:   "Invalid headers",
-				Error: err.Error(),
-			})
-			c.Abort()
-			return
-		}
+		//agent, err := strconv.Atoi(c.GetHeader("Agent"))
+		//if err != nil {
+		//	c.JSON(400, serializer.Response{
+		//		Code:  serializer.CodeParamErr,
+		//		Msg:   "Invalid headers",
+		//		Error: err.Error(),
+		//	})
+		//	c.Abort()
+		//	return
+		//}
 		c.Set("_brand", brand)
-		c.Set("_agent", agent)
+		//c.Set("_agent", agent)
 		c.Next()
 	}
 }

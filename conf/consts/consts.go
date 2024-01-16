@@ -381,7 +381,7 @@ const (
 	// FirstTopupMinimum      int64  = 10_00 //1000_00
 	// TopupMinimum           int64  = 5_00  //500_00
 	// TopupMax               int64  = 30000_00
-	WithdrawMethodLimit           = 5
+	WithdrawMethodLimit = 5
 
 	Notification_Type_User_Registration = "user_registration"
 	Notification_Type_Password_Reset    = "password_reset"
@@ -390,6 +390,6 @@ const (
 	Notification_Type_Bet_Placement     = "bet_transaction"
 	Notification_Type_Cash_Transaction  = "cash_transaction"
 
-	DefaultBrand = 1001
-	DefaultAgent = 1000001
+	//DefaultBrand = 1001
+	//DefaultAgent = 1000001
 )

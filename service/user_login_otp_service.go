@@ -118,8 +118,8 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 				RegistrationDeviceUuid: deviceInfo.Uuid,
 			},
 		}
-		user.BrandId = int64(c.MustGet("_brand").(int))
-		user.AgentId = int64(c.MustGet("_agent").(int))
+		//user.BrandId = int64(c.MustGet("_brand").(int))
+		//user.AgentId = int64(c.MustGet("_agent").(int))
 		genNickname(&user)
 		err := model.DB.Create(&user).Error
 		if err != nil {
@@ -221,9 +221,9 @@ func (service *UserLoginOtpService) logFailedLogin(c *gin.Context) {
 			Mobile:      service.Mobile,
 			Ip:          c.ClientIP(),
 			Platform:    deviceInfo.Platform,
-			BrandId:     int64(c.MustGet("_brand").(int)),
-			AgentId:     int64(c.MustGet("_agent").(int)),
-			Uuid:        deviceInfo.Uuid,
+			//BrandId:     int64(c.MustGet("_brand").(int)),
+			//AgentId:     int64(c.MustGet("_agent").(int)),
+			Uuid: deviceInfo.Uuid,
 		},
 	}
 

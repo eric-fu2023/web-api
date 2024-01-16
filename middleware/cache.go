@@ -19,11 +19,11 @@ func Cache(duration time.Duration) gin.HandlerFunc {
 				prefix += fmt.Sprintf(`%d`, vv)
 			}
 		}
-		if v, exists := c.Get("_agent"); exists {
-			if vv, ok := v.(int); ok {
-				prefix += fmt.Sprintf(`_%d`, vv)
-			}
-		}
+		//if v, exists := c.Get("_agent"); exists {
+		//	if vv, ok := v.(int); ok {
+		//		prefix += fmt.Sprintf(`_%d`, vv)
+		//	}
+		//}
 		prefix += c.MustGet("_language").(string)
 		cache.CacheByRequestURI(ca.RedisStore, duration, cache.WithPrefixKey(prefix), cache.IgnoreQueryOrder())(c)
 	}
