@@ -7,6 +7,7 @@ import (
 	dc_api "web-api/api/dc"
 	fb_api "web-api/api/fb"
 	api_finpay "web-api/api/finpay"
+	imsb_api "web-api/api/imsb"
 	internal_api "web-api/api/internalapi"
 	saba_api "web-api/api/saba"
 	taya_api "web-api/api/taya"
@@ -73,6 +74,13 @@ func NewRouter() *gin.Engine {
 			dcCallback.POST("/endWager", dc_api.CallbackEndWager)
 			dcCallback.POST("/freeSpinResult", dc_api.CallbackFreeSpinResult)
 			dcCallback.POST("/promoPayout", dc_api.CallbackPromoPayout)
+		}
+	}
+
+	if os.Getenv("GAME_IMSB_EXPOSE_CALLBACKS") == "true" {
+		imsbCallback := r.Group("/imsb")
+		{
+			imsbCallback.GET("/ValidateToken", imsb_api.ValidateToken)
 		}
 	}
 
@@ -202,6 +210,11 @@ func NewRouter() *gin.Engine {
 				dc := user.Group("/dc")
 				{
 					dc.GET("/get_url", dc_api.GetUrl)
+				}
+
+				imsb := user.Group("/imsb")
+				{
+					imsb.GET("/token", imsb_api.GetToken)
 				}
 
 				kyc := user.Group("/kyc")
