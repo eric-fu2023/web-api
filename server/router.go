@@ -81,6 +81,8 @@ func NewRouter() *gin.Engine {
 		imsbCallback := r.Group("/imsb")
 		{
 			imsbCallback.GET("/ValidateToken", imsb_api.ValidateToken)
+			imsbCallback.GET("/GetBalance", imsb_api.GetBalance)
+			imsbCallback.GET("/GetApproval", imsb_api.GetBalance)
 		}
 	}
 

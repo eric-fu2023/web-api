@@ -3,6 +3,7 @@ package imsb
 import (
 	"blgit.rfdev.tech/taya/game-service/imsb/callback"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -54,9 +55,10 @@ func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err e
 		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
+	b64Token := base64.StdEncoding.EncodeToString([]byte(token))
 
 	res = serializer.Response{
-		Data: token,
+		Data: b64Token,
 	}
 	return
 }
@@ -66,7 +68,11 @@ type ValidateTokenService struct {
 }
 
 func (service *ValidateTokenService) Validate(c *gin.Context) (res callback.ValidateToken, err error) {
-	uidStr, err := util.AesDecrypt(service.Token)
+	token, err := base64.StdEncoding.DecodeString(service.Token)
+	if err != nil {
+		return
+	}
+	uidStr, err := util.AesDecrypt(string(token))
 	if err != nil {
 		return
 	}
@@ -94,6 +100,5 @@ func (service *ValidateTokenService) Validate(c *gin.Context) (res callback.Vali
 		Currency:   gpu.ExternalCurrency,
 		IpAddress:  user.LastLoginIp,
 	}
-	fmt.Println(res)
 	return
 }
