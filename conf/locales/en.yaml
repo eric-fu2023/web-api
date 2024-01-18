@@ -111,10 +111,16 @@ Error_password_lock: "An error occurred in verifying your account for password l
 Both_cannot_be_empty: "Both mobile and username cannot be empty."
 Error_token_generation: "An error occurred in token generation."
 Error_token_refreshing: "An error occurred in token refreshing."
-Your_request_otp: "Your requested OTP is %s."
-m360_otp_content: "%s - OTP for Taya. Valid for 2 mins. Do not share it with anyone. RefCode: #{REFCODE}#{PIN}"
 Otp_email_subject: "Your requested OTP"
 Otp_html_email: "<html><body><p>Hello!</p><p>You're getting this email because you have requested for a One Time Passcode (OTP). Your OTP is:</p><p><h2>%s</h2></p></body></html>"
+
+"Your_request_otp":
+  "1001": "Your requested OTP is %s."
+  "1002": "Please key in the verification code in 2 minutes for batace: %s"
+
+"m360_otp_content":
+  "1001": "%s - OTP for Taya. Valid for 2 mins. Do not share it with anyone. RefCode: #{REFCODE}#{PIN}"
+  "1002": "Please key in the verification code in 2 minutes for batace: %s. RefCode: #{REFCODE}#{PIN}"
 
 Email_wait: "Email has been sent. Please wait for a while and retry."
 Otp_fail: "OTP failed."
