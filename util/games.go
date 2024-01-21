@@ -4,6 +4,7 @@ import (
 	"blgit.rfdev.tech/taya/game-service/common"
 	"blgit.rfdev.tech/taya/game-service/dc"
 	"blgit.rfdev.tech/taya/game-service/fb"
+	"blgit.rfdev.tech/taya/game-service/imsb"
 	"blgit.rfdev.tech/taya/game-service/saba"
 	"os"
 	"web-api/conf/consts"
@@ -14,6 +15,7 @@ var (
 	FBFactory   fb.FB
 	SabaFactory saba.Saba
 	DCFactory   dc.Dc
+	IMFactory   imsb.IM
 )
 var VendorIdToGameClient = make(map[int64]common.TransferWalletInterface)
 
@@ -52,5 +54,13 @@ func InitDcFactory() {
 		BrandId:   os.Getenv("GAME_DC_BRAND_ID"),
 		ApiKey:    os.Getenv("GAME_DC_API_KEY"),
 		IsSandbox: true,
+	}
+}
+
+func InitImFactory() {
+	IMFactory = imsb.IM{
+		BaseUrl:        os.Getenv("GAME_IMSB_BASE_URL"),
+		AccessCode:     os.Getenv("GAME_IMSB_ACCESS_CODE"),
+		CommonWalletIv: os.Getenv("GAME_IMSB_COMMON_WALLET_IV"),
 	}
 }
