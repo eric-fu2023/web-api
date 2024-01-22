@@ -18,7 +18,7 @@ func GetBalance(c *gin.Context) {
 			c.String(200, ErrorResponse(c, req, e))
 			return
 		}
-		res, e := imsb.GetBalanceCallback(c, decrypted, req.DateSent)
+		res, e := imsb.GetBalanceCallback(c, decrypted, req)
 		if e != nil {
 			c.String(200, ErrorResponse(c, req, e))
 			return
