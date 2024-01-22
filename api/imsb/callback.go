@@ -3,6 +3,7 @@ package imsb_api
 import (
 	"blgit.rfdev.tech/taya/game-service/imsb/callback"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"strings"
 	"web-api/service/imsb"
@@ -29,8 +30,49 @@ func GetBalance(c *gin.Context) {
 	}
 }
 
+func DeductBalance(c *gin.Context) {
+	var req callback.EncryptedRequest
+	if err := c.ShouldBind(&req); err == nil {
+		var decrypted callback.DeductBalanceRequest
+		e := DecryptRequest(req, &decrypted)
+		if e != nil {
+			c.String(200, ErrorResponse(c, req, e))
+			return
+		}
+		res, e := imsb.DeductBalanceCallback(c, decrypted, req)
+		if e != nil {
+			c.String(200, ErrorResponse(c, req, e))
+			return
+		}
+		c.String(200, EncryptResponse(res))
+	} else {
+		c.String(200, ErrorResponse(c, req, err))
+	}
+}
+
+func UpdateBalance(c *gin.Context) {
+	var req callback.EncryptedRequest
+	if err := c.ShouldBind(&req); err == nil {
+		var decrypted callback.UpdateBalanceRequest
+		e := DecryptRequest(req, &decrypted)
+		if e != nil {
+			c.String(200, ErrorResponse(c, req, e))
+			return
+		}
+		res, e := imsb.UpdateBalanceCallback(c, decrypted, req)
+		if e != nil {
+			c.String(200, ErrorResponse(c, req, e))
+			return
+		}
+		c.String(200, EncryptResponse(res))
+	} else {
+		c.String(200, ErrorResponse(c, req, err))
+	}
+}
+
 func DecryptRequest(req callback.EncryptedRequest, obj any) error {
 	req.BalancePackage = strings.Replace(req.BalancePackage, " ", "+", -1)
+	fmt.Println(req.BalancePackage)
 	client := util.IMFactory.NewClient()
 	decrypted, err := client.Decrypt(req.BalancePackage)
 	if err != nil {
