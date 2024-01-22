@@ -9,6 +9,7 @@ import (
 	api_finpay "web-api/api/finpay"
 	imsb_api "web-api/api/imsb"
 	internal_api "web-api/api/internalapi"
+	"web-api/api/mock"
 	saba_api "web-api/api/saba"
 	taya_api "web-api/api/taya"
 	"web-api/middleware"
@@ -230,6 +231,23 @@ func NewRouter() *gin.Engine {
 					cash.POST("/top-up-orders", api.TopUpOrder)
 					cash.POST("/withdraw-orders", api.WithdrawOrder)
 					cash.GET("/orders", api.ListCashOrder)
+				}
+
+				promotion := user.Group("/promotion")
+				{
+					promotion.GET("/list", mock.MockPromotonList)
+					promotion.GET("/details", mock.MockPromotonDetail)
+					promotion.POST("/claim", mock.MockVoucher)
+				}
+
+				voucher := user.Group("/voucher")
+				{
+					// voucher.POST("/claim")
+					voucher.GET("/list", mock.MockVoucherList)
+					// voucher.GET("/details")
+					voucher.POST("/applicables", mock.MockVoucherList) // may not do
+					voucher.POST("/pre-binding", mock.MockOK) // fb
+					voucher.POST("/post-binding", mock.MockOK) // 
 				}
 			}
 

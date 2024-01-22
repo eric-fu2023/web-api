@@ -42,6 +42,10 @@ type BonusRule struct {
 	RegistrationBefore time.Time
 	RegistrationAfter  time.Time
 	AdditionalRule     json.RawMessage
+	BonusTemplateID    int64
+	BrandID            int64
+
+	ImageUrl string
 }
 
 type additionalRule struct {
