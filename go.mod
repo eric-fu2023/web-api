@@ -9,7 +9,7 @@ require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240122062707-366d463ab3d4
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20231221020145-1ff91bdff03b
 	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20240122091816-fb30b73773c1
-	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240118070119-1aa12e719a01
+	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240122104744-be3ce8954229
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/caarlos0/env/v10 v10.0.0
@@ -27,7 +27,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/joho/godotenv v1.3.0
-	github.com/mailgun/mailgun-go/v4 v4.10.0
+	github.com/mailgun/mailgun-go/v4 v4.12.0
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.3.1
@@ -63,7 +63,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-chi/chi/v5 v5.0.10 // indirect
+	github.com/go-chi/chi/v5 v5.0.11 // indirect
 	github.com/go-logr/logr v1.3.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
