@@ -16,6 +16,7 @@ import (
 	"web-api/service/common"
 	"web-api/service/dc"
 	"web-api/service/fb"
+	"web-api/service/imsb"
 	"web-api/service/saba"
 	"web-api/service/taya"
 )
@@ -27,6 +28,7 @@ var (
 		"fb":   &fb.UserRegister{},
 		"saba": &saba.UserRegister{},
 		"dc":   &dc.UserRegister{},
+		"imsb": &imsb.UserRegister{},
 	}
 )
 
@@ -80,11 +82,11 @@ func CreateUser(user model.User) (err error) {
 		for _, cur := range currencies {
 			currMap[cur.GameVendorId] = cur.Value
 		}
-
 		games := strings.Split(os.Getenv("GAMES_REGISTERED_FOR_NEW_USER"), ",")
 		for _, g := range games {
 			currency, exists := currMap[consts.GameVendor[g]]
 			if !exists {
+				tx2.Rollback()
 				return ErrEmptyCurrencyId
 			}
 			game := GameVendorUserRegisterStruct[g]
@@ -98,9 +100,6 @@ func CreateUser(user model.User) (err error) {
 		tx2.Commit()
 		return
 	})
-	if err != nil {
-		return
-	}
 
 	return
 }
