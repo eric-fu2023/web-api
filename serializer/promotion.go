@@ -21,11 +21,13 @@ type PromotionDetail struct {
 	Image                  string            `json:"image"`
 	StartAt                time.Time         `json:"start_at"`
 	EndAt                  time.Time         `json:"end_at"`
+	ResetAt                time.Time         `json:"reset_at"`
 	Type                   int64             `json:"type"`
 	RewardType             int64             `json:"reward_type"`
 	RewardDistributionType int64             `json:"reward_distribution_type"`
 	PromotionProgress      PromotionProgress `json:"promotion_progress"`
 	Reward                 int64             `json:"reward"`
+	IsEligible             bool              `json:"is_eligible"`
 }
 
 type PromotionProgress struct {

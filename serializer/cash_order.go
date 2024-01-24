@@ -18,11 +18,12 @@ type TopupOrder struct {
 }
 
 func BuildPaymentOrder(p finpay.PaymentOrderRespData) TopupOrder {
+	d := p.GetUrl()
 	return TopupOrder{
 		TopupOrderNo:     p.PaymentOrderNo,
 		TopupOrderStatus: p.PaymentOrderStatus,
 		OrderNumber:      p.MerchantOrderNo,
-		TopupData:        p.PaymentData,
+		TopupData:        &d,
 		TopupDataType:    p.PaymentDataType,
 		RedirectUrl:      os.Getenv("FINPAY_REDIRECT_URL"),
 	}

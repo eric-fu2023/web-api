@@ -34,10 +34,12 @@ var PromotionDetailMock = PromotionDetail{
 	Image:                  "xxx",
 	StartAt:                time.Now().Add(-24 * time.Hour),
 	EndAt:                  time.Now().Add(24 * time.Hour),
+	ResetAt:                time.Now().Add(12 * time.Hour),
 	Type:                   1,
 	RewardType:             1,
 	RewardDistributionType: 1,
 	Reward:                 100,
+	IsEligible:             true,
 	PromotionProgress: PromotionProgress{
 		Progress: 200,
 		Tiers: []PromotionTier{
