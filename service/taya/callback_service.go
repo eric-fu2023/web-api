@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 	"strconv"
 	"time"
 	"web-api/cache"
@@ -71,7 +72,7 @@ func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
 }
 
 func (c *Callback) GetBetAmount() (amount int64, exists bool) {
-	e := model.DB.Model(model.TayaTransaction{}).Select(`amount`).
+	e := model.DB.Clauses(dbresolver.Use("txConn")).Model(model.TayaTransaction{}).Select(`amount`).
 		Where(`business_id`, c.Transaction.BusinessId).
 		Where(`transfer_type`, `BET`).Order(`id`).First(&amount).Error
 	if e == nil {

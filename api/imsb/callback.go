@@ -33,7 +33,7 @@ func GetBalance(c *gin.Context) {
 func DeductBalance(c *gin.Context) {
 	var req callback.EncryptedRequest
 	if err := c.ShouldBind(&req); err == nil {
-		var decrypted callback.DeductBalanceRequest
+		var decrypted callback.WagerDetail
 		e := DecryptRequest(req, &decrypted)
 		if e != nil {
 			c.String(200, ErrorResponse(c, req, e))

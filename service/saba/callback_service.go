@@ -3,6 +3,7 @@ package saba
 import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 	"web-api/conf/consts"
 	"web-api/model"
 )
@@ -40,7 +41,7 @@ func (c *Callback) GetWagerMultiplier() (int64, bool) {
 }
 
 func (c *Callback) GetBetAmount() (amount int64, exists bool) {
-	e := model.DB.Model(models.SabaTransaction{}).Select(`actual_amount`).
+	e := model.DB.Clauses(dbresolver.Use("txConn")).Model(models.SabaTransaction{}).Select(`actual_amount`).
 		Where(`ref_id`, c.Transaction.RefId).Order(`id`).First(&amount).Error
 	if e == nil {
 		exists = true

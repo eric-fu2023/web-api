@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -18,12 +19,13 @@ import (
 )
 
 type Callback struct {
-	Request     callback.DeductBalanceRequest
+	Request     callback.WagerDetail
 	Transaction ploutos.ImTransaction
 }
 
 func (c *Callback) NewCallback(userId int64) {
 	c.Transaction.UserId = userId
+	c.Transaction.ActionId = c.Request.ActionId
 	c.Transaction.ExternalUserId = c.Request.MemberCode
 	c.Transaction.WagerNo = c.Request.WagerNo
 	c.Transaction.TransactionAmount = int64(c.Request.TransactionAmount * 100)
@@ -58,8 +60,9 @@ func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
 }
 
 func (c *Callback) GetBetAmount() (amount int64, exists bool) {
-	e := model.DB.Model(ploutos.ImTransaction{}).Select(`transaction_amount`).
-		Where(`wager_no`, c.Transaction.WagerNo).Order(`id`).First(&amount).Error
+	e := model.DB.Clauses(dbresolver.Use("txConn")).Model(ploutos.ImTransaction{}).Select(`transaction_amount`).
+		Where(`wager_no`, c.Transaction.WagerNo).Where(`action_id`, 0).Order(`id`).First(&amount).Error
+	fmt.Println(e)
 	if e == nil {
 		exists = true
 	}
@@ -86,7 +89,7 @@ func GetBalanceCallback(c *gin.Context, req callback.GetBalanceRequest, enc call
 	return
 }
 
-func DeductBalanceCallback(c *gin.Context, req callback.DeductBalanceRequest, enc callback.EncryptedRequest) (res callback.CommonWalletBaseResponse, err error) {
+func DeductBalanceCallback(c *gin.Context, req callback.WagerDetail, enc callback.EncryptedRequest) (res callback.CommonWalletBaseResponse, err error) {
 	go common.LogGameCallbackRequest("DeductBalance", req)
 	_, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["imsb"], req.MemberCode)
 	if err != nil {
