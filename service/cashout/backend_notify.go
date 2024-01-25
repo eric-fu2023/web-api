@@ -9,7 +9,7 @@ import (
 
 func notifyBackendWithdraw(id string) (err error) {
 	_, err = resty.New().R().SetBody(map[string]any{
-		"name": "Cash Order To Approve",
+		"name": "cash_order_to_approve",
 		"data": map[string]any{
 			"id": id,
 		},
