@@ -1,9 +1,11 @@
 package model
 
 import (
-	"gorm.io/gorm"
+	"fmt"
 	"strconv"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Base struct {
@@ -39,5 +41,11 @@ func Sharded(model ShardTable, addAs bool) func(db *gorm.DB) *gorm.DB {
 func Paginate(page int, limit int) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Limit(limit).Offset(limit * (page - 1))
+	}
+}
+
+func Ongoing(now time.Time, startField, endField string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(fmt.Sprintf("%s < ? and %s > ", startField, endField), now)
 	}
 }
