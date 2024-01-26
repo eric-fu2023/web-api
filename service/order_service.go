@@ -61,8 +61,8 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
-	err = model.DB.Model(ploutos.BetReport{}).
-		Scopes(model.ByOrderListConditions(user.ID, orderType[service.Type], statuses, service.IsParlay, service.IsSettled, start, end), model.ByBetTimeSort, model.Paginate(service.Page.Page, service.Page.Limit)).
+	err = model.DB.Preload(`Voucher`).
+		Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, orderType[service.Type], statuses, service.IsParlay, service.IsSettled, start, end), model.ByBetTimeSort, model.Paginate(service.Page.Page, service.Page.Limit)).
 		Find(&list).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
