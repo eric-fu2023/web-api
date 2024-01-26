@@ -105,3 +105,20 @@ func (CashOrder) IsFirstTime(c context.Context, userID int64) (bool, error) {
 	}
 	return firstTime, nil
 }
+
+func FirstTopup(c context.Context, userID int64) (CashOrder, error) {
+	var order CashOrder
+	err := DB.WithContext(c).Where("user_id", userID).Where("order_type > 0").
+		Where("status", ploutos.CashOrderStatusSuccess).Order("created_at asc").First(&order).Error
+	return order, err
+}
+
+func ScopedTopupExceptAllTimeFirst(c context.Context, userID int64, start, end time.Time) (list []CashOrder, err error) {
+	err = DB.WithContext(c).Where("user_id", userID).Where("order_type > 0").
+		Where("status", ploutos.CashOrderStatusSuccess).
+		Where("created_at > ?", start).Where("created_at < ?", end).
+		Where("id != (?)", DB.WithContext(c).Model(&CashOrder{}).Select("id").Where("user_id", userID).Where("order_type > 0").
+			Where("status", ploutos.CashOrderStatusSuccess).Order("created_at asc").Limit(1)).
+		Order("created_at asc").Find(&list).Error
+	return
+}
