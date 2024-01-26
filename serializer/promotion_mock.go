@@ -1,6 +1,10 @@
 package serializer
 
-import "time"
+import (
+	"time"
+
+	models "blgit.rfdev.tech/taya/ploutos-object"
+)
 
 var PromotionMock = []PromotionCover{
 	{
@@ -8,8 +12,8 @@ var PromotionMock = []PromotionCover{
 		Name:                   "First D B",
 		Description:            "Deposit now",
 		Image:                  "xxx",
-		StartAt:                time.Now(),
-		EndAt:                  time.Now().Add(24 * time.Hour),
+		StartAt:                time.Now().Unix(),
+		EndAt:                  time.Now().Add(24 * time.Hour).Unix(),
 		Type:                   1,
 		RewardType:             1,
 		RewardDistributionType: 1,
@@ -19,8 +23,8 @@ var PromotionMock = []PromotionCover{
 		Name:                   "First D B",
 		Description:            "Deposit now",
 		Image:                  "xxx",
-		StartAt:                time.Now().Add(-24 * time.Hour),
-		EndAt:                  time.Now(),
+		StartAt:                time.Now().Add(-24 * time.Hour).Unix(),
+		EndAt:                  time.Now().Unix(),
 		Type:                   1,
 		RewardType:             1,
 		RewardDistributionType: 1,
@@ -32,30 +36,32 @@ var PromotionDetailMock = PromotionDetail{
 	Name:                   "First D B",
 	Description:            "Deposit now",
 	Image:                  "xxx",
-	StartAt:                time.Now().Add(-24 * time.Hour),
-	EndAt:                  time.Now().Add(24 * time.Hour),
-	ResetAt:                time.Now().Add(12 * time.Hour),
+	StartAt:                time.Now().Add(-24 * time.Hour).Unix(),
+	EndAt:                  time.Now().Add(24 * time.Hour).Unix(),
+	ResetAt:                time.Now().Add(12 * time.Hour).Unix(),
 	Type:                   1,
 	RewardType:             1,
 	RewardDistributionType: 1,
 	Reward:                 100,
-	IsEligible:             true,
 	PromotionProgress: PromotionProgress{
 		Progress: 200,
-		Tiers: []PromotionTier{
+		Tiers: []RewardTier{
 			{
 				Min:    0,
 				Max:    100,
+				Type:   string(models.Fixed),
 				Reward: 100,
 			},
 			{
 				Min:    100,
 				Max:    200,
+				Type:   string(models.Fixed),
 				Reward: 200,
 			},
 			{
 				Min:    200,
 				Max:    -1,
+				Type:   string(models.Fixed),
 				Reward: 300,
 			},
 		},
