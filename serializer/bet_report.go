@@ -2,6 +2,7 @@ package serializer
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"strconv"
 )
@@ -18,6 +19,7 @@ type BetReport struct {
 	Won        *float64 `json:"won,omitempty"`
 	Bets       []Bet    `json:"bets,omitempty"`
 	Game       *Game    `json:"game,omitempty"`
+	Voucher    *Voucher `json:"voucher,omitempty"`
 }
 
 func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
@@ -47,6 +49,11 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 	if a.Game != nil {
 		t := BuildGame(c, *a.Game)
 		b.Game = &t
+	}
+	fmt.Println(a.Voucher)
+	if a.Voucher.ID != 0 {
+		t := BuildVoucher(a.Voucher)
+		b.Voucher = &t
 	}
 	return
 }
