@@ -11,11 +11,11 @@ var VoucherMock = Voucher{
 	EndAt:       time.Now().Add(24 * time.Hour).Unix(),
 	Type:        1,
 	Amount:      100,
-	IsUsed:      true,
+	Status:      1,
 }
 
 var VoucherMock2 = Voucher{
-	ID:          1,
+	ID:          2,
 	Name:        "$100 v",
 	Description: "earned",
 	Image:       "xxx",
@@ -23,5 +23,5 @@ var VoucherMock2 = Voucher{
 	EndAt:       time.Now().Unix(),
 	Type:        1,
 	Amount:      100,
-	IsUsed:      false,
+	Status:      2,
 }

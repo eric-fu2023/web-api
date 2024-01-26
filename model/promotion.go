@@ -16,7 +16,7 @@ func PromotionList(c context.Context, brandID int, now time.Time) (list []Promot
 	return
 }
 
-func PromotionGetActive(c context.Context, promotionID int64, now time.Time) (p Promotion, err error) {
+func PromotionGetActive(c context.Context, brandID int, promotionID int64, now time.Time) (p Promotion, err error) {
 	err = DB.WithContext(c).Where("id", promotionID).Scopes(Ongoing(now, "start_at", "end_at")).First(&p).Error
 	return
 }

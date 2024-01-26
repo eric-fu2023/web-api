@@ -10,7 +10,10 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 func RandStringRunes(n int) string {
@@ -92,4 +95,16 @@ func MoneyFloat(i int64) float64 {
 
 func MoneyInt(f float64) int64 {
 	return int64(f * 100)
+}
+
+func IsGormNotFound(err error) bool {
+	return errors.Is(err, gorm.ErrRecordNotFound)
+}
+
+func TextReplace(original string, placeholders map[string]string) string {
+	for key, value := range placeholders {
+		placeholder := "${" + key + "}"
+		original = strings.Replace(original, placeholder, value, -1)
+	}
+	return original
 }

@@ -1,7 +1,7 @@
 package serializer
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"web-api/model"
 )
 
 type Voucher struct {
@@ -13,10 +13,10 @@ type Voucher struct {
 	StartAt     int64   `json:"start_at"`
 	EndAt       int64   `json:"end_at"`
 	Amount      float64 `json:"amount"`
-	IsUsed      bool    `json:"is_used"`
+	Status      int     `json:"is_used"`
 }
 
-func BuildVoucher(a ploutos.Voucher) (b Voucher) {
+func BuildVoucher(a model.Voucher) (b Voucher) {
 	b = Voucher{
 		ID:          a.ID,
 		Name:        a.Name,
@@ -26,6 +26,24 @@ func BuildVoucher(a ploutos.Voucher) (b Voucher) {
 		StartAt:     a.StartAt.Unix(),
 		EndAt:       a.EndAt.Unix(),
 		Amount:      float64(a.Amount) / 100,
+		Status:      a.Status,
+	}
+	return
+}
+
+func BuildVoucherFromTemplate(a model.VoucherTemplate, amount int64) (b Voucher) {
+	displayAmount := amount / 100
+	name := model.AmountReplace(a.Name, displayAmount)
+	b = Voucher{
+		ID:          a.ID,
+		Name:        name,
+		Description: a.Description,
+		Image:       Url(a.Image),
+		Type:        a.Type,
+		StartAt:     a.StartAt.Unix(),
+		EndAt:       a.EndAt.Unix(),
+		Amount:      0,
+		Status:      0,
 	}
 	return
 }

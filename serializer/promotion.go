@@ -69,7 +69,7 @@ func BuildPromotionCover(p model.Promotion) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(eligible bool, progress, reward float64, p model.Promotion, s model.PromotionSession) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, p model.Promotion, s model.PromotionSession, v Voucher) PromotionDetail {
 	return PromotionDetail{
 		ID:                     p.ID,
 		Name:                   p.Name,
@@ -82,13 +82,14 @@ func BuildPromotionDetail(eligible bool, progress, reward float64, p model.Promo
 		RewardType:             p.RewardType,
 		RewardDistributionType: p.RewardDistributionType,
 		PromotionProgress:      BuildPromotionProgress(progress, p.GetRewardDetails()),
-		Reward:                 reward,
+		Reward:                 float64(reward) / 100,
+		Voucher:                v,
 	}
 }
 
-func BuildPromotionProgress(progress float64, rewards models.RewardDetails) PromotionProgress {
+func BuildPromotionProgress(progress int64, rewards models.RewardDetails) PromotionProgress {
 	return PromotionProgress{
-		Progress: progress,
+		Progress: float64(progress) / 100,
 		Tiers:    util.MapSlice(rewards.Rewards, buildPromotionTier),
 	}
 }
@@ -106,10 +107,10 @@ func buildPromotionTier(rewardTier models.TierdReward) RewardTier {
 		}
 	}
 	p := RewardTier{
-		Min:    min,
-		Max:    max,
+		Min:    min / 100,
+		Max:    max / 100,
 		Type:   string(rewardTier.Rewards[0].Type),
-		Reward: rewardTier.Rewards[0].Value,
+		Reward: float64(rewardTier.Rewards[0].Value) / 100,
 	}
 	return p
 }
