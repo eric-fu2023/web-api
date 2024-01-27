@@ -23,6 +23,7 @@ type TopUpOrderService struct {
 }
 
 func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, err error) {
+	brand := c.MustGet(`_brand`).(int)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
@@ -44,7 +45,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		return
 	}
 
-	method, err := model.CashMethod{}.GetByID(c, s.MethodID)
+	method, err := model.CashMethod{}.GetByID(c, s.MethodID, brand)
 	if err != nil {
 		return
 	}

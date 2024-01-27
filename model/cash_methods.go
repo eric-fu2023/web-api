@@ -9,8 +9,8 @@ type CashMethod struct {
 	ploutos.CashMethod
 }
 
-func (CashMethod) GetByID(c *gin.Context, id int64) (item CashMethod, err error) {
-	err = DB.First(&item, id).Error
+func (CashMethod) GetByID(c *gin.Context, id int64, brandID int) (item CashMethod, err error) {
+	err = DB.Where("brand_id", brandID).Where("id", id).First(&item, id).Error
 	return
 }
 
