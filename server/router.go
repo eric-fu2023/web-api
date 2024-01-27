@@ -10,8 +10,10 @@ import (
 	imsb_api "web-api/api/imsb"
 	internal_api "web-api/api/internalapi"
 	"web-api/api/mock"
+	promotion_api "web-api/api/promotion"
 	saba_api "web-api/api/saba"
 	taya_api "web-api/api/taya"
+
 	"web-api/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -240,19 +242,19 @@ func NewRouter() *gin.Engine {
 
 				promotion := user.Group("/promotion")
 				{
-					promotion.GET("/list", mock.MockPromotonList)
-					promotion.GET("/details", mock.MockPromotonDetail)
-					promotion.POST("/claim", mock.MockVoucher)
+					promotion.GET("/list", promotion_api.GetCoverList)
+					promotion.GET("/details", promotion_api.GetDetail)
+					promotion.POST("/claim", promotion_api.PromotionClaim)
 				}
 
 				voucher := user.Group("/voucher")
 				{
 					// voucher.POST("/claim")
-					voucher.GET("/list", mock.MockVoucherList)
+					voucher.GET("/list", promotion_api.VoucherList)
 					// voucher.GET("/details")
-					voucher.POST("/applicables", mock.MockVoucherList) // may not do
-					voucher.POST("/pre-binding", mock.MockOK)          // fb
-					voucher.POST("/post-binding", mock.MockOK)         //
+					voucher.POST("/applicables", promotion_api.VoucherApplicable) // may not do
+					voucher.POST("/pre-binding", promotion_api.VoucherPreBinding) // fb
+					voucher.POST("/post-binding", mock.MockOK)                    //
 				}
 			}
 

@@ -8,7 +8,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240124011202-6a7e66600a21
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240122102503-1ccde3fd03eb
-	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20240126114149-71772ce4bb7a
+	blgit.rfdev.tech/taya/ploutos-object v0.0.12-0.20240127034436-e5b28ff56c91
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240122104744-be3ce8954229
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible

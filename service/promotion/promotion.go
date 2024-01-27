@@ -40,8 +40,8 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
-	tz := time.FixedZone("local", int(promotion.Timezone))
-	now = now.In(tz)
+	// tz := time.FixedZone("local", int(promotion.Timezone))
+	// now = now.In(tz)
 	session, err := model.PromotionSessionGetActive(c, p.ID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)

@@ -46,6 +46,6 @@ func Paginate(page int, limit int) func(db *gorm.DB) *gorm.DB {
 
 func Ongoing(now time.Time, startField, endField string) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Where(fmt.Sprintf("%s < ? and %s > ", startField, endField), now)
+		return db.Where(fmt.Sprintf("%s < ? and %s > ?", startField, endField), now, now)
 	}
 }

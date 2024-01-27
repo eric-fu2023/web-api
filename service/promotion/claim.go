@@ -8,6 +8,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
 )
@@ -21,7 +22,6 @@ type PromotionClaim struct {
 }
 
 func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error) {
-
 	now := time.Now()
 	brand := c.MustGet(`_brand`).(int)
 	user := c.MustGet("user").(model.User)
@@ -30,8 +30,8 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
-	tz := time.FixedZone("local", int(promotion.Timezone))
-	now = now.In(tz)
+	// tz := time.FixedZone("local", int(promotion.Timezone))
+	// now = now.In(tz)
 	session, err := model.PromotionSessionGetActive(c, p.ID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -41,7 +41,7 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		progress    int64
 		reward      int64
 		claimStatus serializer.ClaimStatus
-		template    model.VoucherTemplate
+		template    models.VoucherTemplate
 	)
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userPromotionSessionClaimKey, user.ID, session.ID), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()

@@ -2,6 +2,7 @@ package promotion
 
 import (
 	"context"
+	"fmt"
 	"time"
 	"web-api/model"
 	"web-api/serializer"
@@ -10,7 +11,7 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 )
 
-func ProgressByType(c context.Context, p model.Promotion, s model.PromotionSession, userID int64, now time.Time) (progress int64) {
+func ProgressByType(c context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
 	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
 		order, err := model.FirstTopup(c, userID)
@@ -42,7 +43,7 @@ func ProgressByType(c context.Context, p model.Promotion, s model.PromotionSessi
 	return
 }
 
-func ClaimStatusByType(c context.Context, p model.Promotion, s model.PromotionSession, userID int64, now time.Time) (claim serializer.ClaimStatus) {
+func ClaimStatusByType(c context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (claim serializer.ClaimStatus) {
 	claim.ClaimStart = s.ClaimStart.Unix()
 	claim.ClaimEnd = s.ClaimEnd.Unix()
 	switch p.Type {
@@ -65,7 +66,7 @@ func ClaimStatusByType(c context.Context, p model.Promotion, s model.PromotionSe
 	return
 }
 
-func ClaimVoucherByType(c context.Context, p model.Promotion, s model.PromotionSession, v model.VoucherTemplate, rewardAmount, userID int64, now time.Time) (voucher model.Voucher, err error) {
+func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, rewardAmount, userID int64, now time.Time) (voucher models.Voucher, err error) {
 	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, now)
 	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB:
@@ -77,7 +78,7 @@ func ClaimVoucherByType(c context.Context, p model.Promotion, s model.PromotionS
 	return
 }
 
-func CraftVoucherByType(c context.Context, p model.Promotion, s model.PromotionSession, v model.VoucherTemplate, rewardAmount, userID int64, now time.Time) (voucher model.Voucher) {
+func CraftVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, rewardAmount, userID int64, now time.Time) (voucher models.Voucher) {
 	endAt := earlier(v.EndAt, now.Add(time.Duration(v.ExpiryValue)*time.Second))
 	status := models.VoucherStatusReady
 	isUsable := false
@@ -88,29 +89,73 @@ func CraftVoucherByType(c context.Context, p model.Promotion, s model.PromotionS
 		isUsable = true
 	}
 
-	voucher = model.Voucher{
-		Voucher: models.Voucher{
-			UserID:            userID,
-			Status:            status,
-			StartAt:           now,
-			EndAt:             endAt,
-			VoucherTemplateID: v.ID,
-			BrandID:           p.BrandID,
-			Amount:            rewardAmount,
-			// TransactionDetails
-			Name:               model.AmountReplace(v.Name, rewardAmount),
-			Description:        v.Description,
-			Type:               v.Type,
-			PromotionID:        p.ID,
-			UsageDetails:       v.UsageDetails,
-			Image:              v.Image,
-			WagerMultiplier:    v.WagerMultiplier,
-			PromotionSessionID: s.ID,
-			IsUsable:           isUsable,
-			// ReferenceType
-			// ReferenceID
-			// TransactionID
-		}}
+	voucher = models.Voucher{
+
+		UserID:            userID,
+		Status:            status,
+		StartAt:           now,
+		EndAt:             endAt,
+		VoucherTemplateID: v.ID,
+		BrandID:           p.BrandID,
+		Amount:            rewardAmount,
+		// TransactionDetails
+		Name:               model.AmountReplace(v.Name, rewardAmount),
+		Description:        v.Description,
+		PromotionType:      v.PromotionType,
+		PromotionID:        p.ID,
+		UsageDetails:       v.UsageDetails,
+		Image:              v.Image,
+		WagerMultiplier:    v.WagerMultiplier,
+		PromotionSessionID: s.ID,
+		IsUsable:           isUsable,
+		// ReferenceType
+		// ReferenceID
+		// TransactionID
+	}
+	return
+}
+
+func ValidateVoucherUsageByType(v models.Voucher, matchType int, odds float64, betAmount int64) (ret bool) {
+	ret = false
+	switch v.PromotionType {
+	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
+		if matchType != MatchTypeNotStarted {
+			return
+		}
+		if !ValidateUsageDetailsByType(v, matchType, odds, betAmount) {
+			return
+		}
+		ret = true
+	}
+	return
+}
+
+func ValidateUsageDetailsByType(v models.Voucher, matchType int, odds float64, betAmount int64) (ret bool) {
+	ret = false
+	switch v.PromotionType {
+	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
+		u := v.GetUsageDetails()
+		ret = false
+		// for _, c := range u.MatchType {
+		// 	if !c.Condition(fmt.Sprintf("%d", matchType), "number") {
+		// 		return
+		// 	}
+		// }
+		for _, c := range u.Odds {
+			if !c.Condition(fmt.Sprintf("%f", odds), "number") {
+				return
+			}
+		}
+		// for _, c := range u.BetAmount {
+		// 	if !c.Condition(fmt.Sprintf("%d", betAmount), "number") {
+		// 		return
+		// 	}
+		// }
+		if betAmount < v.Amount {
+			return
+		}
+		ret = true
+	}
 	return
 }
 

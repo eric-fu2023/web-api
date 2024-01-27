@@ -2,7 +2,6 @@ package serializer
 
 import (
 	"strconv"
-	"web-api/model"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
@@ -55,7 +54,7 @@ type RewardTier struct {
 	Reward float64 `json:"reward"`
 }
 
-func BuildPromotionCover(p model.Promotion) PromotionCover {
+func BuildPromotionCover(p models.Promotion) PromotionCover {
 	return PromotionCover{
 		ID:                     p.ID,
 		Name:                   p.Name,
@@ -69,7 +68,7 @@ func BuildPromotionCover(p model.Promotion) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(progress, reward int64, p model.Promotion, s model.PromotionSession, v Voucher) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, p models.Promotion, s models.PromotionSession, v Voucher) PromotionDetail {
 	return PromotionDetail{
 		ID:                     p.ID,
 		Name:                   p.Name,
