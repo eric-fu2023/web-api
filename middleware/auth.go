@@ -93,6 +93,11 @@ func doAuth(c *gin.Context, getUser bool) (err error) {
 		if err = model.DB.Where(`id`, a.UserId).First(&user).Error; err != nil {
 			return
 		}
+		brand := c.MustGet(`_brand`).(int)
+		if user.BrandId != int64(brand) {
+			err = errors.New("user brand mismatch")
+			return 
+		}
 		c.Set("user", user)
 	}
 	return
