@@ -16,13 +16,14 @@ type CasheMethodListService struct {
 }
 
 func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err error) {
+	brand := c.MustGet(`_brand`).(int)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user, loggedIn := u.(model.User)
 	deviceInfo, _ := util.GetDeviceInfo(c)
 	var list []model.CashMethod
-	list, err = model.CashMethod{}.List(c, s.WithdrawOnly, s.TopupOnly, deviceInfo.Platform)
+	list, err = model.CashMethod{}.List(c, s.WithdrawOnly, s.TopupOnly, deviceInfo.Platform, brand)
 	if err != nil {
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return

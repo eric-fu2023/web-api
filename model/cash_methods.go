@@ -14,9 +14,9 @@ func (CashMethod) GetByID(c *gin.Context, id int64) (item CashMethod, err error)
 	return
 }
 
-func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform string) (list []CashMethod, err error) {
+func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform string, brandID int) (list []CashMethod, err error) {
 	var t []CashMethod
-	q := DB.Debug().Where("is_active")
+	q := DB.Debug().Where("is_active").Where("brand_id", brandID)
 	if withdrawOnly {
 		q = q.Where("method_type < 0")
 	}

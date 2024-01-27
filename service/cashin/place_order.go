@@ -95,11 +95,21 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	case "finpay":
 		config := method.GetFinpayConfig()
 		var data finpay.PaymentOrderRespData
-		data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, config.Type)
-		if err != nil {
-			_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data))
-			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-			return
+		switch config.Type {
+		default:
+			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, config.Type)
+			if err != nil {
+				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data))
+				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+				return
+			}
+		case "COIN_PAL":
+			data, err = finpay.FinpayClient{}.PlaceDefaultCoinPalOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID)
+			if err != nil {
+				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data))
+				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+				return
+			}
 		}
 		transactionID = data.PaymentOrderNo
 		r.Data = serializer.BuildPaymentOrder(data)
