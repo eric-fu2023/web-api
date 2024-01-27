@@ -52,7 +52,7 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "Already Claimed", err)
 		return
 	}
-	if time.Unix(claimStatus.ClaimEnd, 0).Before(now) || time.Unix(claimStatus.ClaimStart, 0).Before(now) {
+	if time.Unix(claimStatus.ClaimEnd, 0).Before(now) || time.Unix(claimStatus.ClaimStart, 0).After(now) {
 		err = errors.New("unavailable_for_now")
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "Unavailable for now", err)
 		return

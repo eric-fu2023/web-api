@@ -20,6 +20,8 @@ var txRelated = []any{&ploutos.UserSum{}, "user_sums",
 	&ploutos.Transaction{}, &ploutos.DcTransaction{}, &ploutos.FbTransaction{}, &TayaTransaction{}, &ploutos.SabaTransaction{},
 	&ploutos.CashOrder{}, &CashOrder{}, "cash_orders",
 	"transactions", "fb_transactions", "taya_transactions", "dc_transactions", "saba_transactions", "txConn",
+	ploutos.Promotion{}, ploutos.PromotionSession{}, ploutos.Voucher{}, ploutos.VoucherTemplate{},
+	"promotions","promotion_sessions","vouchers","voucher_templates",
 }
 
 var DB *gorm.DB
