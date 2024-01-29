@@ -49,7 +49,7 @@ func VoucherList(c *gin.Context) {
 
 func VoucherApplicable(c *gin.Context) {
 	var service promotion.VoucherApplicable
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindJSON(&service); err == nil {
 		res, _ := service.Handle(c)
 		c.JSON(200, res)
 	} else {
@@ -59,7 +59,7 @@ func VoucherApplicable(c *gin.Context) {
 
 func VoucherPreBinding(c *gin.Context) {
 	var service promotion.VoucherPreBinding
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindJSON(&service); err == nil {
 		res, _ := service.Handle(c)
 		c.JSON(200, res)
 	} else {
