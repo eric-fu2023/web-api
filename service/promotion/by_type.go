@@ -100,11 +100,11 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 				BalanceBefore:         sum.Balance - rewardAmount,
 				WagerChange:           voucher.WagerMultiplier * rewardAmount,
 			}
-			err = model.DB.Create(&dummyOrder).Error
+			err = tx.Create(&dummyOrder).Error
 			if err != nil {
 				return err
 			}
-			err = model.DB.Create(&voucher).Error
+			err = tx.Create(&voucher).Error
 			if err != nil {
 				return err
 			}
