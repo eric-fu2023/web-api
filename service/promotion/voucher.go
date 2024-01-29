@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 	"web-api/cache"
 	"web-api/model"
@@ -49,7 +50,7 @@ type FBTransactionDetail struct {
 	OddsFormat  int     `json:"oddsFormat"`
 	Odds        float64 `json:"odds"`
 	MarketID    int64   `json:"marketId"`
-	Stake       int64   `json:"stake"`
+	Stake       float64 `json:"stake"`
 	SportID     int     `json:"sportId"`
 	MatchStatus int     `json:"matchStatus"`
 	IsOutright  bool    `json:"isOutright"`
@@ -76,7 +77,7 @@ func (v VoucherApplicable) Handle(c *gin.Context) (r serializer.Response, err er
 		d := v.GetFBTransactionDetail()
 		matchType = d.MatchStatus
 		odds = d.Odds
-		betAmount = d.Stake
+		betAmount = int64(math.Round(d.Stake * 100))
 		oddsFormat = d.OddsFormat
 	}
 
@@ -125,7 +126,7 @@ func (v VoucherPreBinding) Handle(c *gin.Context) (r serializer.Response, err er
 		d := v.GetFBTransactionDetail()
 		matchType = d.MatchStatus
 		odds = d.Odds
-		betAmount = d.Stake
+		betAmount = int64(math.Round(d.Stake * 100))
 		oddsFormat = d.OddsFormat
 	}
 	err = model.DB.WithContext(c).Transaction(func(tx *gorm.DB) error {
