@@ -66,9 +66,10 @@ func (v VoucherApplicable) Handle(c *gin.Context) (r serializer.Response, err er
 	// brand := c.MustGet(`_brand`).(int)
 	user := c.MustGet("user").(model.User)
 	var (
-		matchType int
-		odds      float64
-		betAmount int64
+		matchType  int
+		odds       float64
+		betAmount  int64
+		oddsFormat int
 	)
 	switch v.Type {
 	case "fb":
@@ -76,6 +77,7 @@ func (v VoucherApplicable) Handle(c *gin.Context) (r serializer.Response, err er
 		matchType = d.MatchStatus
 		odds = d.Odds
 		betAmount = d.Stake
+		oddsFormat = d.OddsFormat
 	}
 
 	list, err := model.VoucherListUsableByUserFilter(c, user.ID, "valid", now)
@@ -86,7 +88,7 @@ func (v VoucherApplicable) Handle(c *gin.Context) (r serializer.Response, err er
 
 	ret := []models.Voucher{}
 	for _, voucher := range list {
-		if ValidateVoucherUsageByType(voucher, matchType, odds, betAmount) {
+		if ValidateVoucherUsageByType(voucher, oddsFormat, matchType, odds, betAmount) {
 			ret = append(ret, voucher)
 		}
 	}
@@ -113,9 +115,10 @@ func (v VoucherPreBinding) Handle(c *gin.Context) (r serializer.Response, err er
 	mutex.Lock()
 	defer mutex.Unlock()
 	var (
-		matchType int
-		odds      float64
-		betAmount int64
+		matchType  int
+		odds       float64
+		betAmount  int64
+		oddsFormat int
 	)
 	switch v.Type {
 	case "fb":
@@ -123,13 +126,14 @@ func (v VoucherPreBinding) Handle(c *gin.Context) (r serializer.Response, err er
 		matchType = d.MatchStatus
 		odds = d.Odds
 		betAmount = d.Stake
+		oddsFormat = d.OddsFormat
 	}
 	err = model.DB.WithContext(c).Transaction(func(tx *gorm.DB) error {
 		voucher, err := model.VoucherActiveGetByIDUserWithDB(c, user.ID, v.VoucherID, now, tx)
 		if err != nil {
 			return err
 		}
-		if !ValidateVoucherUsageByType(voucher, matchType, odds, betAmount) {
+		if !ValidateVoucherUsageByType(voucher, oddsFormat, matchType, odds, betAmount) {
 			err = errors.New("invalid_use")
 			r = serializer.Err(c, v, serializer.CodeGeneralError, "Invalid use of voucher", err)
 			return err

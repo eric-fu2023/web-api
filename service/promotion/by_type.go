@@ -134,11 +134,14 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	return
 }
 
-func ValidateVoucherUsageByType(v models.Voucher, matchType int, odds float64, betAmount int64) (ret bool) {
+func ValidateVoucherUsageByType(v models.Voucher, oddsFormat, matchType int, odds float64, betAmount int64) (ret bool) {
 	ret = false
 	switch v.PromotionType {
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		if matchType != MatchTypeNotStarted {
+			return
+		}
+		if oddsFormat != OddsFormatEU {
 			return
 		}
 		if !ValidateUsageDetailsByType(v, matchType, odds, betAmount) {

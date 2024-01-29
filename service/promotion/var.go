@@ -11,4 +11,7 @@ const (
 	MatchTypeAbandoned    = 7
 	MatchTypeSuspended    = 8
 	MatchTypeCoverageLost = 9
+
+	OddsFormatEU = 1
+	OddsFormatHK = 2
 )
