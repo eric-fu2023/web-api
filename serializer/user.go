@@ -35,24 +35,26 @@ func BuildUser(user model.User) User {
 }
 
 type UserInfo struct {
-	ID                 int64    `json:"id"`
-	CountryCode        string   `json:"country_code,omitempty"`
-	Mobile             string   `json:"mobile,omitempty"`
-	Username           string   `json:"username,omitempty"`
-	Email              string   `json:"email,omitempty"`
-	Nickname           string   `json:"nickname"`
-	Avatar             string   `json:"avatar"`
-	Bio                string   `json:"bio"`
-	CurrencyId         int64    `json:"currency_id"`
-	Signature          string   `json:"signature,omitempty"`
-	FollowingCount     int64    `json:"following_count"`
-	SetupRequired      bool     `json:"setup_required"`
-	KycRequired        bool     `json:"kyc_required"`
-	HasSetSecondaryPwd bool     `json:"has_set_secondary_pwd"`
-	Brand              int64    `json:"brand"`
-	Agent              int64    `json:"agent"`
-	UserSum            *UserSum `json:"sum,omitempty"`
-	Kyc                *Kyc     `json:"kyc,omitempty"`
+	ID                                int64    `json:"id"`
+	CountryCode                       string   `json:"country_code,omitempty"`
+	Mobile                            string   `json:"mobile,omitempty"`
+	Username                          string   `json:"username,omitempty"`
+	Email                             string   `json:"email,omitempty"`
+	Nickname                          string   `json:"nickname"`
+	Avatar                            string   `json:"avatar"`
+	Bio                               string   `json:"bio"`
+	CurrencyId                        int64    `json:"currency_id"`
+	Signature                         string   `json:"signature,omitempty"`
+	FollowingCount                    int64    `json:"following_count"`
+	SetupRequired                     bool     `json:"setup_required"`
+	KycRequired                       bool     `json:"kyc_required"`
+	HasSetSecondaryPwd                bool     `json:"has_set_secondary_pwd"`
+	Brand                             int64    `json:"brand"`
+	Agent                             int64    `json:"agent"`
+	UserSum                           *UserSum `json:"sum,omitempty"`
+	Kyc                               *Kyc     `json:"kyc,omitempty"`
+	HasCompletedFirstAppLoginTutorial bool     `json:"has_completed_first_app_login_tutorial"`
+	HasClaimedFirstAppLoginReward     bool     `json:"has_claimed_first_app_login_reward"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
@@ -87,6 +89,13 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 			u.KycRequired = true
 		}
 	}
+
+	hasCompletedAchievement := map[int64]bool{}
+	for _, a := range user.Achievements {
+		hasCompletedAchievement[a.AchievementId] = true
+	}
+	u.HasCompletedFirstAppLoginTutorial = hasCompletedAchievement[model.UserAchievementIdFirstAppLoginTutorial]
+	u.HasClaimedFirstAppLoginReward = hasCompletedAchievement[model.UserAchievementIdFirstAppLoginReward]
 
 	return u
 }

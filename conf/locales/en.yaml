@@ -526,3 +526,5 @@ validation_username: "Username must be 6-12 characters long lowercase letters or
 withdraw_account_limit_exceeded: "Maximum number of withdraw accounts limit exceeded"
 
 insufficient_balance: "Insufficient balance."
+
+achievement_not_whitelisted: "This achievement cannot be completed through this method."

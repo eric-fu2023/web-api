@@ -115,6 +115,16 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 	if e := model.DB.Where(`user_id`, user.ID).First(&userSum).Error; e == nil {
 		user.UserSum = &userSum
 	}
+
+	uaCond := model.GetUserAchievementCond{AchievementIds: []int64{
+		model.UserAchievementIdFirstAppLoginTutorial,
+		model.UserAchievementIdFirstAppLoginReward,
+	}}
+	userAchievements, err := model.GetUserAchievements(user.ID, uaCond)
+	if err == nil {
+		user.Achievements = userAchievements
+	}
+
 	if service.WithKyc {
 		if value, err := GetCachedConfig(c, consts.ConfigKeyTopupKycCheck); err == nil {
 			if value == "true" {

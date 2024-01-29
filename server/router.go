@@ -256,6 +256,11 @@ func NewRouter() *gin.Engine {
 					voucher.POST("/pre-binding", promotion_api.VoucherPreBinding) // fb
 					voucher.POST("/post-binding", mock.MockOK)                    //
 				}
+
+				achievement := user.Group("/achievement")
+				{
+					achievement.POST("/complete", api.AchievementComplete)
+				}
 			}
 
 		}
