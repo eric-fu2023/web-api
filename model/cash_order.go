@@ -21,7 +21,7 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 			UserId:              userID,
 			CashMethodId:        CashMethodId,
 			OrderType:           1,
-			Status:              ploutos.CashOrderStatusFailed,
+			Status:              ploutos.CashOrderStatusPending,
 			AppliedCashInAmount: amount,
 			BalanceBefore:       balanceBefore,
 			WagerChange:         wagerChange,
