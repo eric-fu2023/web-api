@@ -149,8 +149,8 @@ func NewRouter() *gin.Engine {
 		v1.GET("/games", middleware.Cache(1*time.Minute), api.GameList)
 		v1.GET("/room_chat/history", api.RoomChatHistory)
 
-		v1.GET("/promotion/list", middleware.CheckAuth(), mock.MockPromotonList)
-		v1.GET("/promotion/details", middleware.CheckAuth(), mock.MockPromotonDetail)
+		v1.GET("/promotion/list", middleware.CheckAuth(), promotion_api.GetCoverList)
+		v1.GET("/promotion/details", middleware.CheckAuth(), promotion_api.GetDetail)
 
 		saba := v1.Group("/saba")
 		{
