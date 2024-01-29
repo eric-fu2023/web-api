@@ -39,7 +39,7 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 	now := time.Now()
 	brand := c.MustGet(`_brand`).(int)
 	u, loggedIn := c.Get("user")
-	user := u.(model.User)
+	user, _ := u.(model.User)
 	deviceInfo, _ := util.GetDeviceInfo(c)
 	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
 	if err != nil {
