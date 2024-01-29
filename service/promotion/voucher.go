@@ -29,13 +29,16 @@ func (v VoucherList) Handle(c *gin.Context) (r serializer.Response, err error) {
 	now := time.Now()
 	// brand := c.MustGet(`_brand`).(int)
 	user := c.MustGet("user").(model.User)
+	deviceInfo, _ := util.GetDeviceInfo(c)
 
 	list, err := model.VoucherListUsableByUserFilter(c, user.ID, v.Filter, now)
 	if err != nil {
 		r = serializer.Err(c, v, serializer.CodeGeneralError, "", err)
 		return
 	}
-	r.Data = util.MapSlice(list, serializer.BuildVoucher)
+	r.Data = util.MapSlice(list, func(a models.Voucher) serializer.Voucher {
+		return serializer.BuildVoucher(a, deviceInfo.Platform)
+	})
 	return
 }
 
@@ -64,6 +67,8 @@ func (v VoucherApplicable) GetFBTransactionDetail() (ret FBTransactionDetail) {
 
 func (v VoucherApplicable) Handle(c *gin.Context) (r serializer.Response, err error) {
 	now := time.Now()
+	deviceInfo, _ := util.GetDeviceInfo(c)
+
 	// brand := c.MustGet(`_brand`).(int)
 	user := c.MustGet("user").(model.User)
 	var (
@@ -93,7 +98,9 @@ func (v VoucherApplicable) Handle(c *gin.Context) (r serializer.Response, err er
 			ret = append(ret, voucher)
 		}
 	}
-	r.Data = util.MapSlice(ret, serializer.BuildVoucher)
+	r.Data = util.MapSlice(ret, func(a models.Voucher) serializer.Voucher {
+		return serializer.BuildVoucher(a, deviceInfo.Platform)
+	})
 	return
 }
 

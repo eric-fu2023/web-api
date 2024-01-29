@@ -68,13 +68,13 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 		v, err := model.VoucherGetByUserSession(c, user.ID, session.ID)
 		if err != nil {
 		} else {
-			voucherView = serializer.BuildVoucher(v)
+			voucherView = serializer.BuildVoucher(v, deviceInfo.Platform)
 		}
 	} else {
 		v, err := model.VoucherTemplateGetByPromotion(c, p.ID)
 		if err != nil {
 		} else {
-			voucherView = serializer.BuildVoucherFromTemplate(v, reward)
+			voucherView = serializer.BuildVoucherFromTemplate(v, reward, deviceInfo.Platform)
 		}
 	}
 

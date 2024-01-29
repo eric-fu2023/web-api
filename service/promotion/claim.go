@@ -7,6 +7,7 @@ import (
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
@@ -25,6 +26,8 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 	now := time.Now()
 	brand := c.MustGet(`_brand`).(int)
 	user := c.MustGet("user").(model.User)
+	deviceInfo, _ := util.GetDeviceInfo(c)
+
 	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -69,6 +72,6 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
-	r.Data = serializer.BuildVoucher(voucher)
+	r.Data = serializer.BuildVoucher(voucher, deviceInfo.Platform)
 	return
 }

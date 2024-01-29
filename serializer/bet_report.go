@@ -1,10 +1,12 @@
 package serializer
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"strconv"
+	"web-api/util"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 type BetReport struct {
@@ -23,6 +25,7 @@ type BetReport struct {
 }
 
 func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
+	deviceInfo, _ := util.GetDeviceInfo(c)
 	b = BetReport{
 		OrderId:    a.OrderId,
 		Ts:         a.BetTime.Unix(),
@@ -52,7 +55,7 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 	}
 	fmt.Println(a.Voucher)
 	if a.Voucher.ID != 0 {
-		t := BuildVoucher(a.Voucher)
+		t := BuildVoucher(a.Voucher, deviceInfo.Platform)
 		b.Voucher = &t
 	}
 	return
