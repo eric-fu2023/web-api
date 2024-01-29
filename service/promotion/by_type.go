@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 )
@@ -73,14 +75,31 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB:
 		//add money and insert voucher
+		// add cash order
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
-			_, err := model.UserSum{}.UpdateUserSumWithDB(tx,
+			sum, err := model.UserSum{}.UpdateUserSumWithDB(tx,
 				userID,
 				rewardAmount,
 				voucher.WagerMultiplier*rewardAmount,
 				0,
 				20001,
 				"")
+			if err != nil {
+				return err
+			}
+			dummyOrder := models.CashOrder{
+				ID:                    uuid.NewString(),
+				UserId:                userID,
+				OrderType:             2,
+				Status:                models.CashOrderStatusSuccess,
+				Notes:                 "",
+				AppliedCashInAmount:   rewardAmount,
+				ActualCashInAmount:    rewardAmount,
+				EffectiveCashInAmount: rewardAmount,
+				BalanceBefore:         sum.Balance - rewardAmount,
+				WagerChange:           voucher.WagerMultiplier * rewardAmount,
+			}
+			err = model.DB.Create(&dummyOrder).Error
 			if err != nil {
 				return err
 			}

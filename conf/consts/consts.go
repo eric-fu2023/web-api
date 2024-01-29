@@ -8,6 +8,12 @@ const (
 )
 
 var (
+	OrderTypeMap = map[int64]string{
+		-1: OrderTypeWithdraw,
+		1:  OrderTypeTopup,
+		2:  OrderTypeDepositBonus,
+		3:  OrderTypeBetInsurance,
+	}
 	Platform = map[string]int64{
 		"pc":      1,
 		"h5":      2,
@@ -378,6 +384,8 @@ const (
 	StdTimeFormat                 = "2006-01-02 15:04:05"
 	OrderTypeTopup                = "top-up"
 	OrderTypeWithdraw             = "withdraw"
+	OrderTypeDepositBonus         = "deposit bonus"
+	OrderTypeBetInsurance         = "bet insurance"
 	ConfigKeyTopupKycCheck string = "kyc_check_required"
 	// FirstTopupMinimum      int64  = 10_00 //1000_00
 	// TopupMinimum           int64  = 5_00  //500_00
