@@ -48,7 +48,7 @@ type PromotionProgress struct {
 }
 
 type RewardTier struct {
-	Min    float64 `json:"min,omitempty"`
+	Min    float64 `json:"min"`
 	Max    float64 `json:"max"`
 	Type   string  `json:"type"`
 	Reward float64 `json:"reward"`

@@ -9,6 +9,8 @@ import (
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 func ProgressByType(c context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
@@ -71,6 +73,23 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB:
 		//add money and insert voucher
+		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
+			_, err := model.UserSum{}.UpdateUserSumWithDB(tx,
+				userID,
+				rewardAmount,
+				voucher.WagerMultiplier*rewardAmount,
+				0,
+				20001,
+				"")
+			if err != nil {
+				return err
+			}
+			err = model.DB.Create(&voucher).Error
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		//insert voucher only
 		err = model.DB.Create(&voucher).Error
