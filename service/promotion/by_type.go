@@ -51,8 +51,8 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 	claim.ClaimEnd = s.ClaimEnd.Unix()
 	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
-		_, err := model.VoucherGetByUserSession(c, userID, s.ID)
-		if err == nil {
+		v, err := model.VoucherGetByUserSession(c, userID, s.ID)
+		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		} else {
 			order, err := model.FirstTopup(c, userID)
@@ -61,8 +61,8 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 			}
 		}
 	default:
-		_, err := model.VoucherGetByUserSession(c, userID, s.ID)
-		if err == nil {
+		v, err := model.VoucherGetByUserSession(c, userID, s.ID)
+		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		}
 	}
@@ -72,26 +72,28 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, rewardAmount, userID int64, now time.Time) (voucher models.Voucher, err error) {
 	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, now)
 	switch p.Type {
-	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB:
+	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB:
 		//add money and insert voucher
 		// add cash order
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
+			txType := promotionTxTypeMapping[p.Type]
 			sum, err := model.UserSum{}.UpdateUserSumWithDB(tx,
 				userID,
 				rewardAmount,
 				voucher.WagerMultiplier*rewardAmount,
 				0,
-				20001,
+				txType,
 				"")
 			if err != nil {
 				return err
 			}
+			orderType := promotionOrderTypeMapping[p.Type]
 			dummyOrder := models.CashOrder{
 				ID:                    uuid.NewString(),
 				UserId:                userID,
-				OrderType:             2,
+				OrderType:             orderType,
 				Status:                models.CashOrderStatusSuccess,
-				Notes:                 "",
+				Notes:                 "dummy",
 				AppliedCashInAmount:   rewardAmount,
 				ActualCashInAmount:    rewardAmount,
 				EffectiveCashInAmount: rewardAmount,
@@ -120,7 +122,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	status := models.VoucherStatusReady
 	isUsable := false
 	switch p.Type {
-	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB:
+	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB:
 		status = models.VoucherStatusRedeemed
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		isUsable = true
