@@ -48,6 +48,10 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	// if err != nil {
 	// 	return
 	// }
+	_, err = model.CashMethod{}.GetByID(c, s.MethodID, int(user.BrandId))
+	if err != nil {
+		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
+	}
 	s.AccountNo = strings.TrimLeft(s.AccountNo, "+")
 
 	accountBinding := model.UserAccountBinding{
