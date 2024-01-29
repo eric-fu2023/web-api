@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"encoding/json"
 	"strconv"
 	"web-api/util"
 
@@ -8,21 +9,21 @@ import (
 )
 
 type PromotionCover struct {
-	ID                     int64  `json:"id"`
-	Name                   string `json:"name"`
-	Description            string `json:"description"`
-	Image                  string `json:"image"`
-	StartAt                int64  `json:"start_at"`
-	EndAt                  int64  `json:"end_at"`
-	Type                   int64  `json:"type"`
-	RewardType             int64  `json:"reward_type"`
-	RewardDistributionType int64  `json:"reward_distribution_type"`
+	ID                     int64           `json:"id"`
+	Name                   string          `json:"name"`
+	Description            json.RawMessage `json:"description"`
+	Image                  string          `json:"image"`
+	StartAt                int64           `json:"start_at"`
+	EndAt                  int64           `json:"end_at"`
+	Type                   int64           `json:"type"`
+	RewardType             int64           `json:"reward_type"`
+	RewardDistributionType int64           `json:"reward_distribution_type"`
 }
 
 type PromotionDetail struct {
 	ID                     int64             `json:"id"`
 	Name                   string            `json:"name"`
-	Description            string            `json:"description"`
+	Description            json.RawMessage   `json:"description"`
 	Image                  string            `json:"image"`
 	StartAt                int64             `json:"start_at"`
 	EndAt                  int64             `json:"end_at"`
@@ -54,12 +55,19 @@ type RewardTier struct {
 	Reward float64 `json:"reward"`
 }
 
-func BuildPromotionCover(p models.Promotion) PromotionCover {
+func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
+	raw := json.RawMessage(p.Image)
+	m := make(map[string]string)
+	json.Unmarshal(raw, &m)
+	image := m[platform]
+	if len(image) == 0 {
+		image = m["h5"]
+	}
 	return PromotionCover{
 		ID:                     p.ID,
 		Name:                   p.Name,
-		Description:            p.Description,
-		Image:                  p.Image,
+		Description:            json.RawMessage(p.Description),
+		Image:                  image,
 		StartAt:                p.StartAt.Unix(),
 		EndAt:                  p.EndAt.Unix(),
 		Type:                   p.Type,
@@ -68,12 +76,19 @@ func BuildPromotionCover(p models.Promotion) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(progress, reward int64, p models.Promotion, s models.PromotionSession, v Voucher) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, v Voucher) PromotionDetail {
+	raw := json.RawMessage(p.Image)
+	m := make(map[string]string)
+	json.Unmarshal(raw, &m)
+	image := m[platform]
+	if len(image) == 0 {
+		image = m["h5"]
+	}
 	return PromotionDetail{
 		ID:                     p.ID,
 		Name:                   p.Name,
-		Description:            p.Description,
-		Image:                  p.Image,
+		Description:            json.RawMessage(p.Description),
+		Image:                  image,
 		StartAt:                p.StartAt.Unix(),
 		EndAt:                  p.EndAt.Unix(),
 		ResetAt:                s.EndAt.Unix(),

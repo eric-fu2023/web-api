@@ -15,7 +15,7 @@ type Voucher struct {
 	StartAt     int64   `json:"start_at"`
 	EndAt       int64   `json:"end_at"`
 	Amount      float64 `json:"amount"`
-	Status      int     `json:"is_used"`
+	Status      int     `json:"status"`
 }
 
 func BuildVoucher(a models.Voucher) (b Voucher) {

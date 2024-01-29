@@ -10,7 +10,6 @@ var PromotionMock = []PromotionCover{
 	{
 		ID:                     1,
 		Name:                   "First D B",
-		Description:            "Deposit now",
 		Image:                  "xxx",
 		StartAt:                time.Now().Unix(),
 		EndAt:                  time.Now().Add(24 * time.Hour).Unix(),
@@ -21,7 +20,6 @@ var PromotionMock = []PromotionCover{
 	{
 		ID:                     1,
 		Name:                   "First D B",
-		Description:            "Deposit now",
 		Image:                  "xxx",
 		StartAt:                time.Now().Add(-24 * time.Hour).Unix(),
 		EndAt:                  time.Now().Unix(),
@@ -34,7 +32,6 @@ var PromotionMock = []PromotionCover{
 var PromotionDetailMock = PromotionDetail{
 	ID:                     1,
 	Name:                   "First D B",
-	Description:            "Deposit now",
 	Image:                  "xxx",
 	StartAt:                time.Now().Add(-24 * time.Hour).Unix(),
 	EndAt:                  time.Now().Add(24 * time.Hour).Unix(),

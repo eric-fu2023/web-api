@@ -6,6 +6,7 @@ import (
 	"web-api/serializer"
 	"web-api/util"
 
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,6 +16,8 @@ type PromotionList struct {
 func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error) {
 	now := time.Now()
 	brand := c.MustGet(`_brand`).(int)
+	deviceInfo, _ := util.GetDeviceInfo(c)
+
 	// u, loggedIn := c.Get("user")
 	// user := u.(model.User)
 	list, err := model.PromotionList(c, brand, now)
@@ -22,7 +25,9 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
-	r.Data = util.MapSlice(list, serializer.BuildPromotionCover)
+	r.Data = util.MapSlice(list, func(input models.Promotion) serializer.PromotionCover {
+		return serializer.BuildPromotionCover(input, deviceInfo.Platform)
+	})
 	return
 }
 
@@ -35,6 +40,7 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 	brand := c.MustGet(`_brand`).(int)
 	u, loggedIn := c.Get("user")
 	user := u.(model.User)
+	deviceInfo, _ := util.GetDeviceInfo(c)
 	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -72,6 +78,6 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 		}
 	}
 
-	r.Data = serializer.BuildPromotionDetail(progress, reward, promotion, session, voucherView)
+	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, session, voucherView)
 	return
 }
