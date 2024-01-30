@@ -162,17 +162,21 @@ func NewRouter() *gin.Engine {
 			dc.GET("/fun_play", middleware.CheckAuth(), dc_api.FunPlay)
 		}
 
-		auth := v1.Group("")
-		auth.Use(middleware.AuthRequired(true))
+		auth := v1.Group("/user")
 		{
-			user := auth.Group("/user")
+			userWithoutBrand := auth.Group("")
+			userWithoutBrand.Use(middleware.AuthRequired(true, false))
 			{
-				user.GET("/me", api.Me)
-				user.DELETE("/me", api.UserDelete)
-				user.DELETE("/logout", api.UserLogout)
-				user.POST("/finish_setup", api.UserFinishSetup)
-				user.GET("/check_username", api.UserCheckUsername)
-				user.POST("/check_password", api.UserCheckPassword)
+				userWithoutBrand.GET("/me", api.Me)
+				userWithoutBrand.DELETE("/me", api.UserDelete)
+				userWithoutBrand.DELETE("/logout", api.UserLogout)
+				userWithoutBrand.POST("/finish_setup", api.UserFinishSetup)
+				userWithoutBrand.GET("/check_username", api.UserCheckUsername)
+				userWithoutBrand.POST("/check_password", api.UserCheckPassword)
+			}
+			user := auth.Group("")
+			user.Use(middleware.AuthRequired(true, true))
+			{
 				user.POST("/nickname", api.NicknameUpdate)
 				user.POST("/profile_pic", api.ProfilePicUpload)
 				user.GET("/notifications", api.UserNotificationList)
@@ -262,9 +266,8 @@ func NewRouter() *gin.Engine {
 					achievement.POST("/complete", api.AchievementComplete)
 				}
 			}
-
 		}
-		v1.GET("/user/heartbeat", middleware.AuthRequired(false), api.Heartbeat)
+		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)
 	}
 
 	return r
