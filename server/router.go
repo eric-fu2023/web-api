@@ -173,6 +173,8 @@ func NewRouter() *gin.Engine {
 				userWithoutBrand.POST("/finish_setup", api.UserFinishSetup)
 				userWithoutBrand.GET("/check_username", api.UserCheckUsername)
 				userWithoutBrand.POST("/check_password", api.UserCheckPassword)
+				userWithoutBrand.GET("/silenced", api.Silenced)
+				userWithoutBrand.GET("/followings", api.UserFollowingList)
 			}
 			user := auth.Group("")
 			user.Use(middleware.AuthRequired(true, true))
@@ -181,12 +183,10 @@ func NewRouter() *gin.Engine {
 				user.POST("/profile_pic", api.ProfilePicUpload)
 				user.GET("/notifications", api.UserNotificationList)
 				user.PUT("/notification/mark_read", api.UserNotificationMarkRead)
-				user.GET("/silenced", api.Silenced)
 				user.GET("/counters", api.UserCounters)
 				user.PUT("/fcm_token", api.FcmTokenUpdate)
 
 				user.GET("/following_ids", api.UserFollowingIdList)
-				user.GET("/followings", api.UserFollowingList)
 				user.POST("/follow", api.UserFollowingAdd)
 				user.DELETE("/follow", api.UserFollowingRemove)
 
