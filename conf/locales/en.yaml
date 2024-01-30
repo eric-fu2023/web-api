@@ -528,3 +528,6 @@ withdraw_account_limit_exceeded: "Maximum number of withdraw accounts limit exce
 insufficient_balance: "Insufficient balance."
 
 achievement_not_whitelisted: "This achievement cannot be completed through this method."
+
+transaction_invalid: "Transaction is invalid."
+voucher_invalid: "Voucher is invalid."

@@ -229,6 +229,7 @@ func NewRouter() *gin.Engine {
 				imsb := user.Group("/imsb")
 				{
 					imsb.GET("/token", imsb_api.GetToken)
+					imsb.POST("/apply_voucher", imsb_api.ApplyVoucher)
 				}
 
 				kyc := user.Group("/kyc")

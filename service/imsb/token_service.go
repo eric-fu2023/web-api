@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 	"strconv"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -100,5 +101,54 @@ func (service *ValidateTokenService) Validate(c *gin.Context) (res callback.Vali
 		Currency:   gpu.ExternalCurrency,
 		IpAddress:  user.LastLoginIp,
 	}
+	return
+}
+
+type ApplyVoucherService struct {
+	WagerNo   string `form:"wager_no" json:"wager_no" binding:"required"`
+	VoucherId int64  `form:"voucher_id" json:"voucher_id" binding:"required"`
+}
+
+func (service *ApplyVoucherService) Apply(c *gin.Context) (res serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	u, _ := c.Get("user")
+	user := u.(model.User)
+
+	var transaction ploutos.ImTransaction
+	err = model.DB.Where(`action_id`, 1003).Where(`wager_no`, service.WagerNo).Where(`user_id`, user.ID).First(&transaction).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			res = serializer.ParamErr(c, service, i18n.T("transaction_invalid"), err)
+			return
+		}
+		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+
+	var voucher ploutos.Voucher
+	err = model.DB.Where(`id`, service.VoucherId).Where(`user_id`, user.ID).Where(`brand_id`, user.BrandId).First(&voucher).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			res = serializer.ParamErr(c, service, i18n.T("voucher_invalid"), err)
+			return
+		}
+		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+
+	imVoucher := ploutos.ImVoucher{
+		WagerNo:   service.WagerNo,
+		VoucherId: service.VoucherId,
+	}
+	err = model.DB.Clauses(dbresolver.Use("txConn")).Create(&imVoucher).Error
+	if err != nil {
+		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+
+	res = serializer.Response{
+		Msg: i18n.T("success"),
+	}
+
 	return
 }

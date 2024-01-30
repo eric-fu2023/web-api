@@ -38,3 +38,13 @@ func ValidateToken(c *gin.Context) {
 		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }
+
+func ApplyVoucher(c *gin.Context) {
+	var service imsb.ApplyVoucherService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Apply(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
