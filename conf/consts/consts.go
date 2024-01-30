@@ -401,4 +401,9 @@ const (
 
 	//DefaultBrand = 1001
 	//DefaultAgent = 1000001
+
+	SmsOtpActionLogin                = "login"
+	SmsOtpActionDeleteUser           = "delete_user"
+	SmsOtpActionSetPassword          = "set_password"
+	SmsOtpActionSetSecondaryPassword = "set_secondary_password"
 )

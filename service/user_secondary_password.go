@@ -1,7 +1,7 @@
 package service
 
 import (
-	"context"
+	"errors"
 	"regexp"
 	"web-api/cache"
 	"web-api/conf/consts"
@@ -11,7 +11,6 @@ import (
 	"web-api/util/i18n"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,11 +33,16 @@ func (service *UserSecondaryPasswordService) SetSecondaryPassword(c *gin.Context
 		}
 	}
 
-	otp := cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.Email)
-	if otp.Err() == redis.Nil {
-		otp = cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.CountryCode+user.Mobile)
+	userKeys := []string{user.Email, user.CountryCode + user.Mobile}
+	otp, err := cache.GetOtpByUserKeys(c, consts.SmsOtpActionSetSecondaryPassword, userKeys)
+	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
+		return serializer.ParamErr(c, service, i18n.T("invalid_otp_action"), nil)
 	}
-	if otp.Val() != service.Otp {
+	if err != nil {
+		return serializer.GeneralErr(c, err)
+	}
+
+	if otp != service.Otp {
 		return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 	}
 

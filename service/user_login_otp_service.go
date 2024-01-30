@@ -17,13 +17,13 @@ import (
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 )
 
 type UserOtpVerificationService struct {
 	Otp         string `form:"otp" json:"otp" binding:"required"`
 	CountryCode string `form:"country_code" json:"country_code"`
 	Mobile      string `form:"mobile" json:"mobile"`
+	Action      string `form:"action" json:"action" binding:"required"`
 }
 
 func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
@@ -38,13 +38,16 @@ func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
 		user = u.(model.User)
 	}
 
-	key := "otp:" + user.Email
-	otp := cache.RedisSessionClient.Get(context.TODO(), key)
-	if otp.Err() == redis.Nil {
-		key = "otp:" + user.CountryCode + user.Mobile
-		otp = cache.RedisSessionClient.Get(context.TODO(), key)
+	userKeys := []string{user.Email, user.CountryCode + user.Mobile}
+	otp, err := cache.GetOtpByUserKeys(c, s.Action, userKeys)
+	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
+		return serializer.ParamErr(c, s, i18n.T("invalid_otp_action"), nil)
 	}
-	if otp.Val() != s.Otp {
+	if err != nil {
+		return serializer.GeneralErr(c, err)
+	}
+
+	if otp != s.Otp {
 		return serializer.Err(c, s, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 	}
 	// THINK: may not need this
@@ -73,19 +76,25 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
 	var user model.User
-	key := "otp:"
+	otpUserKey := ""
 	if service.Email != "" {
-		key += service.Email
+		otpUserKey = service.Email
 	} else if service.CountryCode != "" && service.Mobile != "" {
-		key += service.CountryCode + service.Mobile
+		otpUserKey = service.CountryCode + service.Mobile
 	} else if service.Username != "" {
-		key += service.Username
+		otpUserKey = service.Username
 	} else {
 		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
 	}
 	if !((os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging") && service.Otp == "159357") { // for testing convenience
-		otp := cache.RedisSessionClient.Get(context.TODO(), key)
-		if otp.Val() != service.Otp {
+		otp, err := cache.GetOtp(c, consts.SmsOtpActionLogin, otpUserKey)
+		if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
+			return serializer.ParamErr(c, service, i18n.T("invalid_otp_action"), nil)
+		}
+		if err != nil {
+			return serializer.GeneralErr(c, err)
+		}
+		if otp != service.Otp {
 			go service.logFailedLogin(c)
 			return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 		}

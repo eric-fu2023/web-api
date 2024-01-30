@@ -3,8 +3,8 @@ package service
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	smsutil "blgit.rfdev.tech/zhibo/utilities/sms"
-	"context"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"
 	"os"
@@ -21,12 +21,14 @@ import (
 var (
 	errIgnoreCountry   = errors.New("ignore country")
 	errReachedOtpLimit = errors.New("reached otp limit")
+	errOtpAlreadySent  = errors.New("otp has already been sent")
 )
 
 type SmsOtpService struct {
 	CountryCode string `form:"country_code" json:"country_code" binding:"required,startswith=+"`
 	Mobile      string `form:"mobile" json:"mobile" binding:"required,number"`
 	CheckUser   bool   `form:"check_user" json:"check_user"`
+	Action      string `form:"action" json:"action" binding:"required"`
 	//common.Captcha
 }
 
@@ -58,27 +60,20 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 		return serializer.ParamErr(c, service, i18n.T("invalid_mobile_number_format"), nil)
 	}
 
-	otpSent := cache.RedisSessionClient.Get(context.TODO(), "otp:"+service.CountryCode+service.Mobile)
-	if otpSent.Val() != "" {
+	otp, err := service.sendOtp(c, service.CountryCode+service.Mobile)
+	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
+		return serializer.ParamErr(c, service, i18n.T("invalid_otp_action"), nil)
+	}
+	if err != nil && errors.Is(err, errReachedOtpLimit) {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("otp_limit_reached"), err)
+	}
+	if err != nil && errors.Is(err, errOtpAlreadySent) {
 		return serializer.Err(c, service, serializer.CodeSMSSent, i18n.T("Sms_wait"), nil)
 	}
-
-	var otp string
-	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 6; i++ {
-		otp += strconv.Itoa(rand.Intn(9))
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("sendOtp error: %s", err.Error())
+		return serializer.GeneralErr(c, err)
 	}
-
-	if os.Getenv("ENV") == "production" || os.Getenv("SEND_SMS_IN_TEST") == "true" {
-		err := service.sendSMS(c, otp)
-		if errors.Is(err, errReachedOtpLimit) {
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("otp_limit_reached"), err)
-		}
-		if err != nil {
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Sms_fail"), err)
-		}
-	}
-	cache.RedisSessionClient.Set(context.TODO(), "otp:"+service.CountryCode+service.Mobile, otp, 2*time.Minute)
 
 	resp := serializer.SendOtp{}
 	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
@@ -94,27 +89,16 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 func (service *SmsOtpService) GetUsernameSMS(c *gin.Context, username string) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
-	otpSent := cache.RedisSessionClient.Get(context.TODO(), "otp:"+username)
-	if otpSent.Val() != "" {
+	otp, err := service.sendOtp(c, username)
+	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
+		return serializer.ParamErr(c, service, i18n.T("invalid_otp_action"), nil)
+	}
+	if err != nil && errors.Is(err, errReachedOtpLimit) {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("otp_limit_reached"), err)
+	}
+	if err != nil && errors.Is(err, errOtpAlreadySent) {
 		return serializer.Err(c, service, serializer.CodeSMSSent, i18n.T("Sms_wait"), nil)
 	}
-
-	var otp string
-	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 6; i++ {
-		otp += strconv.Itoa(rand.Intn(9))
-	}
-
-	if os.Getenv("ENV") == "production" || os.Getenv("SEND_SMS_IN_TEST") == "true" {
-		err := service.sendSMS(c, otp)
-		if errors.Is(err, errReachedOtpLimit) {
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("otp_limit_reached"), err)
-		}
-		if err != nil {
-			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Sms_fail"), err)
-		}
-	}
-	cache.RedisSessionClient.Set(context.TODO(), "otp:"+username, otp, 2*time.Minute)
 
 	resp := serializer.SendOtp{}
 	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
@@ -125,6 +109,40 @@ func (service *SmsOtpService) GetUsernameSMS(c *gin.Context, username string) se
 		Msg:  i18n.T("success"),
 		Data: resp,
 	}
+}
+
+func (service *SmsOtpService) sendOtp(c *gin.Context, otpUserKey string) (string, error) {
+	// Check if otp has been sent
+	otpSent, err := cache.GetOtp(c, service.Action, otpUserKey)
+	if err != nil {
+		return "", fmt.Errorf("GetOtp err: %w", err)
+	}
+	if otpSent != "" {
+		return "", errOtpAlreadySent
+	}
+
+	// Generate new otp
+	var otp string
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < 6; i++ {
+		otp += strconv.Itoa(rand.Intn(9))
+	}
+
+	// Send otp sms
+	if os.Getenv("ENV") == "production" || os.Getenv("SEND_SMS_IN_TEST") == "true" {
+		err = service.sendSMS(c, otp)
+		if err != nil {
+			return "", fmt.Errorf("sendSMS err: %w", err)
+		}
+	}
+
+	// Set new otp in cache
+	err = cache.SetOtp(c, service.Action, otpUserKey, otp)
+	if err != nil {
+		return "", fmt.Errorf("SetOtp err: %w", err)
+	}
+
+	return otp, nil
 }
 
 func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
@@ -140,6 +158,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 		return errReachedOtpLimit
 	}
 
+	// Send SMS
 	smsManager := smsutil.Manager{
 		Templates: util.BuildSmsTemplates(c),
 		Config:    smsutil.BuildDefaultConfig(),
@@ -152,6 +171,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 		return err
 	}
 
+	// Log OTP event
 	event := model.OtpEvent{
 		OtpEvent: ploutos.OtpEvent{
 			CountryCode: service.CountryCode,
