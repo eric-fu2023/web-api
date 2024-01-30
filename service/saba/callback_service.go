@@ -52,3 +52,8 @@ func (c *Callback) GetBetAmount() (amount int64, exists bool) {
 func (c *Callback) IsAdjustment() bool {
 	return false
 }
+
+func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExists bool) (err error) {
+	// Voucher application not done
+	return
+}

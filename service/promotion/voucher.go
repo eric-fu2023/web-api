@@ -21,6 +21,10 @@ const (
 	userVoucherBindingKey = "user_voucher_binding_lock:%d:%d"
 )
 
+var (
+	ErrVoucherUseInvalid = errors.New("invalid use of voucher")
+)
+
 type VoucherList struct {
 	Filter string `form:"filter" json:"filter"`
 }
@@ -142,7 +146,7 @@ func (v VoucherPreBinding) Handle(c *gin.Context) (r serializer.Response, err er
 			return err
 		}
 		if !ValidateVoucherUsageByType(voucher, oddsFormat, matchType, odds, betAmount) {
-			err = errors.New("invalid_use")
+			err = ErrVoucherUseInvalid
 			r = serializer.Err(c, v, serializer.CodeGeneralError, "Invalid use of voucher", err)
 			return err
 		}

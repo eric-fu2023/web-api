@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 	"strconv"
@@ -15,6 +17,7 @@ import (
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+	"web-api/service/promotion"
 	"web-api/util"
 )
 
@@ -83,6 +86,59 @@ func (c *Callback) GetBetAmount() (amount int64, exists bool) {
 
 func (c *Callback) IsAdjustment() bool {
 	return false
+}
+
+func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExists bool) (err error) {
+	if c.Transaction.RelatedId == "" {
+		return
+	}
+	if c.Transaction.TransferType != "WIN" || !betExists || betAmount <= c.Transaction.Amount {
+		return
+	}
+	err = model.DB.Clauses(dbresolver.Use("txConn")).Transaction(func(tx *gorm.DB) (err error) {
+		voucherId, err := strconv.ParseInt(c.Transaction.RelatedId, 10, 64)
+		ctx := context.TODO()
+		now := time.Now()
+		voucher, err := model.VoucherActiveGetByIDUserWithDB(ctx, userId, voucherId, now, tx)
+		if err != nil {
+			return
+		}
+
+		var order callback.SyncOrdersRequest
+		coll := model.MongoDB.Collection("taya_callback_sync_orders")
+		filter := bson.M{"id": c.Transaction.BusinessId}
+		opts := options.Find()
+		opts.SetLimit(1)
+		opts.SetSort(bson.D{{"timestamp", -1}})
+		cursor, err := coll.Find(ctx, filter, opts)
+		for cursor.Next(ctx) {
+			cursor.Decode(&order)
+		}
+		if len(order.BetList) != 1 { // single (not parlay) should only have one match in betList
+			return
+		}
+		floatOdd, err := strconv.ParseFloat(order.BetList[0].Odds, 64)
+		if err != nil {
+			return
+		}
+
+		if !promotion.ValidateVoucherUsageByType(voucher, int(order.BetList[0].OddsFormat), promotion.MatchTypeNotStarted, floatOdd, betAmount) {
+			err = promotion.ErrVoucherUseInvalid
+			return
+		}
+
+		rewardAmount := voucher.Amount
+		loss := betAmount - c.Transaction.Amount
+		if loss < rewardAmount {
+			rewardAmount = loss
+		}
+		err = promotion.CreateCashOrder(tx, voucher, voucher.PromotionType, userId, rewardAmount)
+		if err != nil {
+			return
+		}
+		return
+	})
+	return
 }
 
 const (

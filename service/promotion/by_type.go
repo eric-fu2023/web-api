@@ -76,31 +76,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		//add money and insert voucher
 		// add cash order
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
-			txType := promotionTxTypeMapping[p.Type]
-			sum, err := model.UserSum{}.UpdateUserSumWithDB(tx,
-				userID,
-				rewardAmount,
-				voucher.WagerMultiplier*rewardAmount,
-				0,
-				txType,
-				"")
-			if err != nil {
-				return err
-			}
-			orderType := promotionOrderTypeMapping[p.Type]
-			dummyOrder := models.CashOrder{
-				ID:                    uuid.NewString(),
-				UserId:                userID,
-				OrderType:             orderType,
-				Status:                models.CashOrderStatusSuccess,
-				Notes:                 "dummy",
-				AppliedCashInAmount:   rewardAmount,
-				ActualCashInAmount:    rewardAmount,
-				EffectiveCashInAmount: rewardAmount,
-				BalanceBefore:         sum.Balance - rewardAmount,
-				WagerChange:           voucher.WagerMultiplier * rewardAmount,
-			}
-			err = tx.Create(&dummyOrder).Error
+			err = CreateCashOrder(tx, voucher, p.Type, userID, rewardAmount)
 			if err != nil {
 				return err
 			}
@@ -115,6 +91,38 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		err = model.DB.Create(&voucher).Error
 	}
 	return
+}
+
+func CreateCashOrder(tx *gorm.DB, voucher models.Voucher, promoType, userId, rewardAmount int64) error {
+	txType := promotionTxTypeMapping[promoType]
+	sum, err := model.UserSum{}.UpdateUserSumWithDB(tx,
+		userId,
+		rewardAmount,
+		voucher.WagerMultiplier*rewardAmount,
+		0,
+		txType,
+		"")
+	if err != nil {
+		return err
+	}
+	orderType := promotionOrderTypeMapping[promoType]
+	dummyOrder := models.CashOrder{
+		ID:                    uuid.NewString(),
+		UserId:                userId,
+		OrderType:             orderType,
+		Status:                models.CashOrderStatusSuccess,
+		Notes:                 "dummy",
+		AppliedCashInAmount:   rewardAmount,
+		ActualCashInAmount:    rewardAmount,
+		EffectiveCashInAmount: rewardAmount,
+		BalanceBefore:         sum.Balance - rewardAmount,
+		WagerChange:           voucher.WagerMultiplier * rewardAmount,
+	}
+	err = tx.Create(&dummyOrder).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func CraftVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, rewardAmount, userID int64, now time.Time) (voucher models.Voucher) {
