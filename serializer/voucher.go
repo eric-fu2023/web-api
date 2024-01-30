@@ -8,15 +8,15 @@ import (
 )
 
 type Voucher struct {
-	ID          int64   `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Image       string  `json:"image"`
-	Type        int64   `json:"type"`
-	StartAt     int64   `json:"start_at"`
-	EndAt       int64   `json:"end_at"`
-	Amount      float64 `json:"amount"`
-	Status      int     `json:"status"`
+	ID          int64           `json:"id"`
+	Name        string          `json:"name"`
+	Description json.RawMessage `json:"description"`
+	Image       string          `json:"image"`
+	Type        int64           `json:"type"`
+	StartAt     int64           `json:"start_at"`
+	EndAt       int64           `json:"end_at"`
+	Amount      float64         `json:"amount"`
+	Status      int             `json:"status"`
 }
 
 func BuildVoucher(a models.Voucher, platform string) (b Voucher) {
@@ -30,7 +30,7 @@ func BuildVoucher(a models.Voucher, platform string) (b Voucher) {
 	b = Voucher{
 		ID:          a.ID,
 		Name:        a.Name,
-		Description: a.Description,
+		Description: json.RawMessage(a.Description),
 		Image:       Url(a.Image),
 		Type:        a.PromotionType,
 		StartAt:     a.StartAt.Unix(),
@@ -54,7 +54,7 @@ func BuildVoucherFromTemplate(a models.VoucherTemplate, amount int64, platform s
 	b = Voucher{
 		ID:          a.ID,
 		Name:        name,
-		Description: a.Description,
+		Description: json.RawMessage(a.Description),
 		Image:       Url(a.Image),
 		Type:        a.PromotionType,
 		StartAt:     a.StartAt.Unix(),
