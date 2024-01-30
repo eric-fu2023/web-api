@@ -2,6 +2,7 @@ package model
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"gorm.io/gorm"
 )
 
 const (
@@ -34,4 +35,12 @@ func CreateUserAchievement(userId int64, achievementId int64) error {
 		AchievementId: achievementId,
 	}}
 	return DB.Create(&ua).Error
+}
+
+func CreateUserAchievementWithDB(tx *gorm.DB, userId int64, achievementId int64) error {
+	ua := UserAchievement{ploutos.UserAchievement{
+		UserId:        userId,
+		AchievementId: achievementId,
+	}}
+	return tx.Create(&ua).Error
 }

@@ -64,7 +64,24 @@ type FBTransactionDetail struct {
 	IsParlay    bool    `json:"isParlay"`
 }
 
+type IMTransactionDetail struct {
+	Odds        float64 `json:"odds"`
+	Stake       float64 `json:"stake"`
+	MatchStatus int     `json:"matchStatus"`
+	IsParlay    bool    `json:"isParlay"`
+	MarketId    int     `json:"marketId"`
+	MatchId     int     `json:"matchId"`
+	OddsID      int     `json:"odds_id"`
+	OddsFormat  float64 `json:"oddsFormat"`
+	IsOutright  bool    `json:"isOutright"`
+}
+
 func (v VoucherApplicable) GetFBTransactionDetail() (ret FBTransactionDetail) {
+	_ = json.Unmarshal(v.TransactionDetail, &ret)
+	return
+}
+
+func (v VoucherApplicable) GetIMTransactionDetail() (ret IMTransactionDetail) {
 	_ = json.Unmarshal(v.TransactionDetail, &ret)
 	return
 }
@@ -80,6 +97,7 @@ func (v VoucherApplicable) Handle(c *gin.Context) (r serializer.Response, err er
 		odds       float64
 		betAmount  int64
 		oddsFormat int
+		isParlay   bool
 	)
 	switch v.Type {
 	case "fb":
@@ -88,6 +106,14 @@ func (v VoucherApplicable) Handle(c *gin.Context) (r serializer.Response, err er
 		odds = d.Odds
 		betAmount = int64(math.Round(d.Stake * 100))
 		oddsFormat = d.OddsFormat
+		isParlay = d.IsParlay
+	case "im":
+		d := v.GetIMTransactionDetail()
+		matchType = imMatchTypeMapping[d.MatchStatus]
+		odds = d.Odds
+		betAmount = int64(math.Round(d.Stake * 100))
+		isParlay = d.IsParlay
+		oddsFormat = OddsFormatEU
 	}
 
 	list, err := model.VoucherListUsableByUserFilter(c, user.ID, "valid", now)
@@ -98,7 +124,7 @@ func (v VoucherApplicable) Handle(c *gin.Context) (r serializer.Response, err er
 
 	ret := []models.Voucher{}
 	for _, voucher := range list {
-		if ValidateVoucherUsageByType(voucher, oddsFormat, matchType, odds, betAmount) {
+		if ValidateVoucherUsageByType(voucher, oddsFormat, matchType, odds, betAmount, isParlay) {
 			ret = append(ret, voucher)
 		}
 	}
@@ -119,6 +145,11 @@ func (v VoucherPreBinding) GetFBTransactionDetail() (ret FBTransactionDetail) {
 	return
 }
 
+func (v VoucherPreBinding) GetIMTransactionDetail() (ret IMTransactionDetail) {
+	_ = json.Unmarshal(v.TransactionDetail, &ret)
+	return
+}
+
 func (v VoucherPreBinding) Handle(c *gin.Context) (r serializer.Response, err error) {
 	now := time.Now()
 	// brand := c.MustGet(`_brand`).(int)
@@ -131,6 +162,7 @@ func (v VoucherPreBinding) Handle(c *gin.Context) (r serializer.Response, err er
 		odds       float64
 		betAmount  int64
 		oddsFormat int
+		isParlay   bool
 	)
 	switch v.Type {
 	case "fb":
@@ -139,13 +171,19 @@ func (v VoucherPreBinding) Handle(c *gin.Context) (r serializer.Response, err er
 		odds = d.Odds
 		betAmount = int64(math.Round(d.Stake * 100))
 		oddsFormat = d.OddsFormat
+	case "im":
+		d := v.GetIMTransactionDetail()
+		matchType = imMatchTypeMapping[d.MatchStatus]
+		odds = d.Odds
+		betAmount = int64(math.Round(d.Stake * 100))
+		oddsFormat = OddsFormatEU
 	}
 	err = model.DB.WithContext(c).Transaction(func(tx *gorm.DB) error {
 		voucher, err := model.VoucherActiveGetByIDUserWithDB(c, user.ID, v.VoucherID, now, tx)
 		if err != nil {
 			return err
 		}
-		if !ValidateVoucherUsageByType(voucher, oddsFormat, matchType, odds, betAmount) {
+		if !ValidateVoucherUsageByType(voucher, oddsFormat, matchType, odds, betAmount, isParlay) {
 			err = ErrVoucherUseInvalid
 			r = serializer.Err(c, v, serializer.CodeGeneralError, "Invalid use of voucher", err)
 			return err

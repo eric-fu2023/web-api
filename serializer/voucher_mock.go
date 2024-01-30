@@ -5,7 +5,7 @@ import "time"
 var VoucherMock = Voucher{
 	ID:          1,
 	Name:        "$100 v",
-	Description: "earned",
+	// Description: "earned",
 	Image:       "xxx",
 	StartAt:     time.Now().Unix(),
 	EndAt:       time.Now().Add(24 * time.Hour).Unix(),
@@ -17,7 +17,7 @@ var VoucherMock = Voucher{
 var VoucherMock2 = Voucher{
 	ID:          2,
 	Name:        "$100 v",
-	Description: "earned",
+	// Description: "earned",
 	Image:       "xxx",
 	StartAt:     time.Now().Add(-24 * time.Hour).Unix(),
 	EndAt:       time.Now().Unix(),

@@ -122,7 +122,7 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 			return
 		}
 
-		if !promotion.ValidateVoucherUsageByType(voucher, int(order.BetList[0].OddsFormat), promotion.MatchTypeNotStarted, floatOdd, betAmount) {
+		if !promotion.ValidateVoucherUsageByType(voucher, int(order.BetList[0].OddsFormat), promotion.MatchTypeNotStarted, floatOdd, betAmount,false) {
 			err = promotion.ErrVoucherUseInvalid
 			return
 		}

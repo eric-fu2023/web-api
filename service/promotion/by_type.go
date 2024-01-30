@@ -84,6 +84,12 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			if err != nil {
 				return err
 			}
+			if p.Type == models.PromotionTypeBeginnerB {
+				err = model.CreateUserAchievementWithDB(tx, userID, model.UserAchievementIdFirstAppLoginReward)
+				if err != nil {
+					return err
+				}
+			}
 			return nil
 		})
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
@@ -162,10 +168,13 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	return
 }
 
-func ValidateVoucherUsageByType(v models.Voucher, oddsFormat, matchType int, odds float64, betAmount int64) (ret bool) {
+func ValidateVoucherUsageByType(v models.Voucher, oddsFormat, matchType int, odds float64, betAmount int64, isParley bool) (ret bool) {
 	ret = false
 	switch v.PromotionType {
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
+		if isParley {
+			return
+		}
 		if matchType != MatchTypeNotStarted {
 			return
 		}

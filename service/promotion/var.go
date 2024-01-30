@@ -33,3 +33,8 @@ var promotionTxTypeMapping = map[int64]int64{
 	models.PromotionTypeReDepIns:    models.TransactionTypeBetIns,
 	models.PromotionTypeBeginnerB:   models.TransactionTypeBeginnerB,
 }
+
+var imMatchTypeMapping = map[int]int{
+	1: MatchTypeNotStarted,
+	2: MatchTypeNotStarted,
+}
