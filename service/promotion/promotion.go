@@ -78,6 +78,6 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 		}
 	}
 
-	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, session, voucherView)
+	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, session, voucherView, claimStatus)
 	return
 }
