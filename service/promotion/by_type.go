@@ -85,7 +85,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 				return err
 			}
 			if p.Type == models.PromotionTypeBeginnerB {
-				err = model.CreateUserAchievementWithDB(tx, userID, model.UserAchievementIdFirstAppLoginReward)
+				err = model.CreateUserAchievement(userID, model.UserAchievementIdFirstAppLoginReward)
 				if err != nil {
 					return err
 				}
