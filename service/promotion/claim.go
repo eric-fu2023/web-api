@@ -8,6 +8,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
+	"web-api/util/i18n"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,8 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 	brand := c.MustGet(`_brand`).(int)
 	user := c.MustGet("user").(model.User)
 	deviceInfo, _ := util.GetDeviceInfo(c)
+	i18n := c.MustGet("i18n").(i18n.I18n)
+
 
 	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
 	if err != nil {
@@ -66,6 +69,10 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
+	}
+	if reward == 0 {
+		err = errors.New("nothing_to_claim")
+		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("nothing_to_claim"), err)
 	}
 	voucher, err := ClaimVoucherByType(c, promotion, session, template, reward, user.ID, now)
 	if err != nil {
