@@ -76,7 +76,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, v Voucher) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, v Voucher, cl ClaimStatus) PromotionDetail {
 	raw := json.RawMessage(p.Image)
 	m := make(map[string]string)
 	json.Unmarshal(raw, &m)
@@ -95,6 +95,7 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		Type:                   p.Type,
 		RewardType:             p.RewardType,
 		RewardDistributionType: p.RewardDistributionType,
+		ClaimStatus:            cl,
 		PromotionProgress:      BuildPromotionProgress(progress, p.GetRewardDetails()),
 		Reward:                 float64(reward) / 100,
 		Voucher:                v,
