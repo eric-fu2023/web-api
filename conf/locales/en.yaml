@@ -531,3 +531,5 @@ achievement_not_whitelisted: "This achievement cannot be completed through this 
 
 transaction_invalid: "Transaction is invalid."
 voucher_invalid: "Voucher is invalid."
+
+invalid_account_format: "Account format is invalid."

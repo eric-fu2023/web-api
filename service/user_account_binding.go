@@ -56,7 +56,8 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	switch method.AccountType {
 	case "crypto_wallet_trc20":
 		if !strings.HasPrefix(s.AccountNo, "T") || len(s.AccountNo) != 34 {
-			return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
+			err = errors.New("wrong_format")
+			return serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("invalid_account_format"), err), err
 		}
 	}
 
