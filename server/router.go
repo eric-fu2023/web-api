@@ -7,9 +7,13 @@ import (
 	dc_api "web-api/api/dc"
 	fb_api "web-api/api/fb"
 	api_finpay "web-api/api/finpay"
+	imsb_api "web-api/api/imsb"
 	internal_api "web-api/api/internalapi"
+	"web-api/api/mock"
+	promotion_api "web-api/api/promotion"
 	saba_api "web-api/api/saba"
 	taya_api "web-api/api/taya"
+
 	"web-api/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -76,6 +80,17 @@ func NewRouter() *gin.Engine {
 		}
 	}
 
+	if os.Getenv("GAME_IMSB_EXPOSE_CALLBACKS") == "true" {
+		imsbCallback := r.Group("/imsb")
+		{
+			imsbCallback.GET("/ValidateToken", imsb_api.ValidateToken)
+			imsbCallback.GET("/GetBalance", imsb_api.GetBalance)
+			imsbCallback.GET("/GetApproval", imsb_api.GetBalance) // same as GetBalance
+			imsbCallback.POST("/DeductBalance", imsb_api.DeductBalance)
+			imsbCallback.POST("/UpdateBalance", imsb_api.UpdateBalance)
+		}
+	}
+
 	if os.Getenv("FINPAY_CALLBACK_ENABLED") == "true" {
 		fpCallback := r.Group("/callback/finpay")
 		fpCallback.POST("/payment-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayPaymentCallback)
@@ -134,6 +149,9 @@ func NewRouter() *gin.Engine {
 		v1.GET("/games", middleware.Cache(1*time.Minute), api.GameList)
 		v1.GET("/room_chat/history", api.RoomChatHistory)
 
+		v1.GET("/promotion/list", middleware.CheckAuth(), promotion_api.GetCoverList)
+		v1.GET("/promotion/details", middleware.CheckAuth(), promotion_api.GetDetail)
+
 		saba := v1.Group("/saba")
 		{
 			saba.GET("/get_url", middleware.CheckAuth(), saba_api.GetUrl)
@@ -144,27 +162,31 @@ func NewRouter() *gin.Engine {
 			dc.GET("/fun_play", middleware.CheckAuth(), dc_api.FunPlay)
 		}
 
-		auth := v1.Group("")
-		auth.Use(middleware.AuthRequired(true))
+		auth := v1.Group("/user")
 		{
-			user := auth.Group("/user")
+			userWithoutBrand := auth.Group("")
+			userWithoutBrand.Use(middleware.AuthRequired(true, false))
 			{
-				user.GET("/me", api.Me)
-				user.DELETE("/me", api.UserDelete)
-				user.DELETE("/logout", api.UserLogout)
-				user.POST("/finish_setup", api.UserFinishSetup)
-				user.GET("/check_username", api.UserCheckUsername)
-				user.POST("/check_password", api.UserCheckPassword)
+				userWithoutBrand.GET("/me", api.Me)
+				userWithoutBrand.DELETE("/me", api.UserDelete)
+				userWithoutBrand.DELETE("/logout", api.UserLogout)
+				userWithoutBrand.POST("/finish_setup", api.UserFinishSetup)
+				userWithoutBrand.GET("/check_username", api.UserCheckUsername)
+				userWithoutBrand.POST("/check_password", api.UserCheckPassword)
+				userWithoutBrand.GET("/silenced", api.Silenced)
+				userWithoutBrand.GET("/followings", api.UserFollowingList)
+			}
+			user := auth.Group("")
+			user.Use(middleware.AuthRequired(true, true))
+			{
 				user.POST("/nickname", api.NicknameUpdate)
 				user.POST("/profile_pic", api.ProfilePicUpload)
 				user.GET("/notifications", api.UserNotificationList)
 				user.PUT("/notification/mark_read", api.UserNotificationMarkRead)
-				user.GET("/silenced", api.Silenced)
 				user.GET("/counters", api.UserCounters)
 				user.PUT("/fcm_token", api.FcmTokenUpdate)
 
 				user.GET("/following_ids", api.UserFollowingIdList)
-				user.GET("/followings", api.UserFollowingList)
 				user.POST("/follow", api.UserFollowingAdd)
 				user.DELETE("/follow", api.UserFollowingRemove)
 
@@ -183,6 +205,12 @@ func NewRouter() *gin.Engine {
 
 				user.GET("/otp-check", api.VerifyOtp)
 
+				user.POST("/transfer_to", api.TransferTo)
+				user.POST("/transfer_from", api.TransferFrom)
+				user.POST("/transfer_back", api.TransferBack)
+
+				user.POST("/feedback", api.FeedbackAdd)
+
 				taya := user.Group("/taya")
 				{
 					taya.GET("/token", taya_api.GetToken)
@@ -198,6 +226,12 @@ func NewRouter() *gin.Engine {
 					dc.GET("/get_url", dc_api.GetUrl)
 				}
 
+				imsb := user.Group("/imsb")
+				{
+					imsb.GET("/token", imsb_api.GetToken)
+					imsb.POST("/apply_voucher", imsb_api.ApplyVoucher)
+				}
+
 				kyc := user.Group("/kyc")
 				{
 					kyc.GET("", api.GetKyc)
@@ -210,10 +244,31 @@ func NewRouter() *gin.Engine {
 					cash.POST("/withdraw-orders", api.WithdrawOrder)
 					cash.GET("/orders", api.ListCashOrder)
 				}
-			}
 
+				promotion := user.Group("/promotion")
+				{
+					promotion.GET("/list", promotion_api.GetCoverList)
+					promotion.GET("/details", promotion_api.GetDetail)
+					promotion.POST("/claim", promotion_api.PromotionClaim)
+				}
+
+				voucher := user.Group("/voucher")
+				{
+					// voucher.POST("/claim")
+					voucher.GET("/list", promotion_api.VoucherList)
+					// voucher.GET("/details")
+					voucher.POST("/applicables", promotion_api.VoucherApplicable) // may not do
+					voucher.POST("/pre-binding", promotion_api.VoucherPreBinding) // fb
+					voucher.POST("/post-binding", mock.MockOK)                    //
+				}
+
+				achievement := user.Group("/achievement")
+				{
+					achievement.POST("/complete", api.AchievementComplete)
+				}
+			}
 		}
-		v1.GET("/user/heartbeat", middleware.AuthRequired(false), api.Heartbeat)
+		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)
 	}
 
 	return r

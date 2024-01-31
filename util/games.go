@@ -1,16 +1,23 @@
 package util
 
 import (
+	"blgit.rfdev.tech/taya/game-service/common"
 	"blgit.rfdev.tech/taya/game-service/dc"
 	"blgit.rfdev.tech/taya/game-service/fb"
+	"blgit.rfdev.tech/taya/game-service/imsb"
 	"blgit.rfdev.tech/taya/game-service/saba"
 	"os"
+	"web-api/conf/consts"
 )
 
-var TayaFactory fb.FB
-var FBFactory fb.FB
-var SabaFactory saba.Saba
-var DCFactory dc.Dc
+var (
+	TayaFactory fb.FB
+	FBFactory   fb.FB
+	SabaFactory saba.Saba
+	DCFactory   dc.Dc
+	IMFactory   imsb.IM
+)
+var VendorIdToGameClient = make(map[int64]common.TransferWalletInterface)
 
 func InitTayaFactory() {
 	TayaFactory = fb.FB{
@@ -19,6 +26,7 @@ func InitTayaFactory() {
 		MerchantApiSecret: os.Getenv("GAME_TAYA_MERCHANT_API_SECRET"),
 		IsSandbox:         true,
 	}
+	VendorIdToGameClient[consts.GameVendor["taya"]] = TayaFactory
 }
 
 func InitFbFactory() {
@@ -28,6 +36,7 @@ func InitFbFactory() {
 		MerchantApiSecret: os.Getenv("GAME_FB_MERCHANT_API_SECRET"),
 		IsSandbox:         true,
 	}
+	VendorIdToGameClient[consts.GameVendor["fb"]] = FBFactory
 }
 
 func InitSabaFactory() {
@@ -45,5 +54,13 @@ func InitDcFactory() {
 		BrandId:   os.Getenv("GAME_DC_BRAND_ID"),
 		ApiKey:    os.Getenv("GAME_DC_API_KEY"),
 		IsSandbox: true,
+	}
+}
+
+func InitImFactory() {
+	IMFactory = imsb.IM{
+		BaseUrl:        os.Getenv("GAME_IMSB_BASE_URL"),
+		AccessCode:     os.Getenv("GAME_IMSB_ACCESS_CODE"),
+		CommonWalletIv: os.Getenv("GAME_IMSB_COMMON_WALLET_IV"),
 	}
 }

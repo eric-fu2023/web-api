@@ -1,9 +1,12 @@
 package serializer
 
 import (
+	"fmt"
+	"strconv"
+	"web-api/util"
+
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 type BetReport struct {
@@ -18,9 +21,11 @@ type BetReport struct {
 	Won        *float64 `json:"won,omitempty"`
 	Bets       []Bet    `json:"bets,omitempty"`
 	Game       *Game    `json:"game,omitempty"`
+	Voucher    *Voucher `json:"voucher,omitempty"`
 }
 
 func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
+	deviceInfo, _ := util.GetDeviceInfo(c)
 	b = BetReport{
 		OrderId:    a.OrderId,
 		Ts:         a.BetTime.Unix(),
@@ -47,6 +52,11 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 	if a.Game != nil {
 		t := BuildGame(c, *a.Game)
 		b.Game = &t
+	}
+	fmt.Println(a.Voucher)
+	if a.Voucher.ID != 0 {
+		t := BuildVoucher(a.Voucher, deviceInfo.Platform)
+		b.Voucher = &t
 	}
 	return
 }

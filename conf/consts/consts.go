@@ -8,6 +8,12 @@ const (
 )
 
 var (
+	OrderTypeMap = map[int64]string{
+		-1: OrderTypeWithdraw,
+		1:  OrderTypeTopup,
+		2:  OrderTypeDepositBonus,
+		3:  OrderTypeBetInsurance,
+	}
 	Platform = map[string]int64{
 		"pc":      1,
 		"h5":      2,
@@ -37,6 +43,7 @@ var (
 		"saba": 2,
 		"dc":   3,
 		"taya": 4,
+		"imsb": 5,
 	}
 	WebSocketMessageType = map[string]int64{
 		"text":       1,
@@ -377,11 +384,13 @@ const (
 	StdTimeFormat                 = "2006-01-02 15:04:05"
 	OrderTypeTopup                = "top-up"
 	OrderTypeWithdraw             = "withdraw"
+	OrderTypeDepositBonus         = "deposit bonus"
+	OrderTypeBetInsurance         = "bet insurance"
 	ConfigKeyTopupKycCheck string = "kyc_check_required"
 	// FirstTopupMinimum      int64  = 10_00 //1000_00
 	// TopupMinimum           int64  = 5_00  //500_00
 	// TopupMax               int64  = 30000_00
-	WithdrawMethodLimit           = 5
+	WithdrawMethodLimit = 5
 
 	Notification_Type_User_Registration = "user_registration"
 	Notification_Type_Password_Reset    = "password_reset"
@@ -390,6 +399,6 @@ const (
 	Notification_Type_Bet_Placement     = "bet_transaction"
 	Notification_Type_Cash_Transaction  = "cash_transaction"
 
-	DefaultBrand = 1001
-	DefaultAgent = 1000001
+	//DefaultBrand = 1001
+	//DefaultAgent = 1000001
 )

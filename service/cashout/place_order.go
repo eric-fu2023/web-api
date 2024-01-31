@@ -28,6 +28,8 @@ type WithdrawOrderService struct {
 }
 
 func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
+	brand := c.MustGet(`_brand`).(int)
+
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	amountDecimal := decimal.NewFromFloat(s.Amount).IntPart()
 	amount := amountDecimal * 100
@@ -48,7 +50,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		return
 	}
 
-	method, err := model.CashMethod{}.GetByID(c, accountBinding.CashMethodID)
+	method, err := model.CashMethod{}.GetByID(c, accountBinding.CashMethodID, brand)
 	if err != nil {
 		return
 	}
@@ -56,7 +58,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	if err != nil {
 		return
 	}
-	
+
 	var reviewRequired bool = false
 	var cashOrder model.CashOrder
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, user.ID), redsync.WithExpiry(5*time.Second))
@@ -139,6 +141,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	}
 	r.Data = serializer.BuildWithdrawOrder(cashOrder)
 	if reviewRequired {
+		notifyBackendWithdraw(cashOrder.ID)
 		return
 	}
 	cashOrder, err = DispatchOrder(c, cashOrder, accountBinding.CashMethodID)
@@ -156,7 +159,8 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 // else update to failed or rejected
 
 func VerifyCashMethod(c *gin.Context, id, amount int64) (err error) {
-	cashM, err := model.CashMethod{}.GetByID(c, id)
+	brand := c.MustGet(`_brand`).(int)
+	cashM, err := model.CashMethod{}.GetByID(c, id, brand)
 	if err != nil {
 		return err
 	}

@@ -2,7 +2,7 @@ package service
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"blgit.rfdev.tech/zhibo/utilities"
+	smsutil "blgit.rfdev.tech/zhibo/utilities/sms"
 	"context"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -128,8 +128,6 @@ func (service *SmsOtpService) GetUsernameSMS(c *gin.Context, username string) se
 }
 
 func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
-	i18n := c.MustGet("i18n").(i18n.I18n)
-
 	// Check and increase OTP limit
 	deviceInfo, _ := util.GetDeviceInfo(c)
 	ip := c.ClientIP()
@@ -141,12 +139,10 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	if !isWithinLimit {
 		return errReachedOtpLimit
 	}
-	
-	smsManager := utilities.SmsManager{
-		HuanXunTemplate: "",
-		BulkSmsTemplate: i18n.T("Your_request_otp"),
-		AwsSnsTemplate:  i18n.T("Your_request_otp"),
-		M360Template:    i18n.T("m360_otp_content"),
+
+	smsManager := smsutil.Manager{
+		Templates: util.BuildSmsTemplates(c),
+		Config:    smsutil.BuildDefaultConfig(),
 	}
 	res, err := smsManager.Send(service.CountryCode, service.Mobile, otp)
 	if err != nil {
@@ -161,7 +157,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 			CountryCode: service.CountryCode,
 			Mobile:      service.Mobile,
 			Otp:         otp,
-			Provider:    utilities.SmsProviderName[res.Provider],
+			Provider:    smsutil.SmsProviderName[res.Provider],
 			DateTime:    time.Now().Format(time.DateTime),
 			BrandId:     int64(c.GetInt("_brand")),
 		},

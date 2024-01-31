@@ -18,11 +18,12 @@ type TopupOrder struct {
 }
 
 func BuildPaymentOrder(p finpay.PaymentOrderRespData) TopupOrder {
+	d := p.GetUrl()
 	return TopupOrder{
 		TopupOrderNo:     p.PaymentOrderNo,
 		TopupOrderStatus: p.PaymentOrderStatus,
 		OrderNumber:      p.MerchantOrderNo,
-		TopupData:        p.PaymentData,
+		TopupData:        &d,
 		TopupDataType:    p.PaymentDataType,
 		RedirectUrl:      os.Getenv("FINPAY_REDIRECT_URL"),
 	}
@@ -59,11 +60,10 @@ type GenericCashOrder struct {
 func BuildGenericCashOrder(p model.CashOrder) GenericCashOrder {
 	amount := p.AppliedCashInAmount
 	effectiveAmount := p.EffectiveCashInAmount
-	orderType := consts.OrderTypeTopup
+	orderType := consts.OrderTypeMap[p.OrderType]
 	if p.OrderType < 0 {
 		amount = p.AppliedCashOutAmount
 		effectiveAmount = p.EffectiveCashOutAmount
-		orderType = consts.OrderTypeWithdraw
 	}
 
 	return GenericCashOrder{

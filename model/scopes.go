@@ -14,6 +14,16 @@ func GameVendorUserByVendorAndExternalUser(vendor int64, userId string) func(db 
 	}
 }
 
+func ByBrandPlatformAndKey(brand int64, platform int64, key string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		q := db.Scopes(ByBrandAndPlatform(brand, platform))
+		if key != "" {
+			q = q.Where(`key`, key)
+		}
+		return q
+	}
+}
+
 func ByBrandAgentPlatformAndKey(brand int64, agent int64, platform int64, key string) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		q := db.Scopes(ByBrandAgentAndPlatform(brand, agent, platform))
@@ -39,6 +49,12 @@ func UserFollowingsByUserId(userId int64) func(db *gorm.DB) *gorm.DB {
 func UserFollowingsByUserIdAndStreamerId(userId, streamerId int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Scopes(UserFollowingsByUserId(userId)).Where(`streamer_id`, streamerId)
+	}
+}
+
+func ByBrandAndPlatform(brand int64, platform int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(`brand_id = ? OR brand_id = 0`, brand).Where(`platform = ? OR platform = 0`, platform)
 	}
 }
 

@@ -101,18 +101,21 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 	user.Username = service.Username
 	user.Password = string(bytes)
 	user.CurrencyId = service.CurrencyId
-	user.BrandId = consts.DefaultBrand
-	user.AgentId = consts.DefaultAgent
-
-	if service.Code != "" {
-		var agent ploutos.Agent
-		if err = model.DB.Where(`code`, service.Code).First(&agent).Error; err == nil {
-			user.BrandId = agent.BrandId
-			user.AgentId = agent.ID
-		} else {
+	brandId := int64(c.MustGet("_brand").(int))
+	var agent ploutos.Agent
+	if service.Code == "" {
+		err = model.DB.Where(`brand_id`, brandId).Order(`id`).First(&agent).Error
+		if err != nil {
+			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		}
+	} else {
+		err = model.DB.Where(`code`, service.Code).First(&agent).Error
+		if err != nil {
 			return serializer.ParamErr(c, service, i18n.T("invalid_agent"), nil)
 		}
 	}
+	user.BrandId = agent.BrandId
+	user.AgentId = agent.ID
 
 	err = CreateUser(user)
 	if err != nil {

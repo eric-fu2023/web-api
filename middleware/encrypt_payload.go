@@ -31,7 +31,11 @@ func EncryptPayload() gin.HandlerFunc {
 		c.Writer = cw
 		c.Next()
 		if cw.buf != nil {
-			body := util.AesEncrypt(cw.buf.Bytes())
+			body, e := util.AesEncrypt(cw.buf.Bytes())
+			if e != nil {
+				c.Abort()
+				return
+			}
 			cw.buf = bytes.NewBuffer([]byte(body))
 			//cw.WriteHeader(c.Writer.Status())
 			cw.WriteString(body)

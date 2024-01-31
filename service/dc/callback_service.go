@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"gorm.io/plugin/dbresolver"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -43,7 +44,7 @@ func (c *Callback) GetWagerMultiplier() (int64, bool) {
 }
 
 func (c *Callback) GetBetAmount() (amount int64, exists bool) {
-	e := model.DB.Model(ploutos.DcTransaction{}).Select(`amount`).
+	e := model.DB.Clauses(dbresolver.Use("txConn")).Model(ploutos.DcTransaction{}).Select(`amount`).
 		Where(`round_id`, c.Transaction.RoundId).Where(`bet_type`, 1).Order(`id`).First(&amount).Error
 	if e == nil {
 		exists = true
@@ -53,6 +54,11 @@ func (c *Callback) GetBetAmount() (amount int64, exists bool) {
 
 func (c *Callback) IsAdjustment() bool {
 	return false
+}
+
+func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExists bool) (err error) {
+	// Voucher application not done
+	return
 }
 
 func SuccessResponse(c *gin.Context, brandUid string) (res callback.BaseResponse, err error) {

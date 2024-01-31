@@ -48,7 +48,18 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	// if err != nil {
 	// 	return
 	// }
+	method, err := model.CashMethod{}.GetByID(c, s.MethodID, int(user.BrandId))
+	if err != nil {
+		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
+	}
 	s.AccountNo = strings.TrimLeft(s.AccountNo, "+")
+	switch method.AccountType {
+	case "crypto_wallet_trc20":
+		if !strings.HasPrefix(s.AccountNo, "T") || len(s.AccountNo) != 34 {
+			err = errors.New("wrong_format")
+			return serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("invalid_account_format"), err), err
+		}
+	}
 
 	accountBinding := model.UserAccountBinding{
 		UserAccountBinding: ploutos.UserAccountBinding{

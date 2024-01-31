@@ -38,10 +38,10 @@ func (a AuthClaims) GetRedisSessionKey() string {
 	return fmt.Sprintf(`session:%d`, a.UserId)
 }
 
-func AuthRequired(getUser bool) gin.HandlerFunc {
+func AuthRequired(getUser bool, checkBrand bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		i18n := c.MustGet("i18n").(i18n.I18n)
-		err := doAuth(c, getUser)
+		err := doAuth(c, getUser, checkBrand)
 		if err != nil {
 			c.JSON(401, serializer.Response{
 				Code:  serializer.CodeCheckLogin,
@@ -57,12 +57,12 @@ func AuthRequired(getUser bool) gin.HandlerFunc {
 
 func CheckAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		doAuth(c, true)
+		doAuth(c, true, true)
 		c.Next()
 	}
 }
 
-func doAuth(c *gin.Context, getUser bool) (err error) {
+func doAuth(c *gin.Context, getUser bool, checkBrand bool) (err error) {
 	const BEARER_SCHEMA = "Bearer"
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
@@ -92,6 +92,13 @@ func doAuth(c *gin.Context, getUser bool) (err error) {
 		var user model.User
 		if err = model.DB.Where(`id`, a.UserId).First(&user).Error; err != nil {
 			return
+		}
+		if checkBrand {
+			brand := c.MustGet(`_brand`).(int)
+			if user.BrandId != int64(brand) {
+				err = errors.New("user brand mismatch")
+				return
+			}
 		}
 		c.Set("user", user)
 	}

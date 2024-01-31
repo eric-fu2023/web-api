@@ -3,6 +3,7 @@ package common
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"firebase.google.com/go/v4/messaging"
@@ -54,6 +55,7 @@ type CallbackInterface interface {
 	GetWagerMultiplier() (int64, bool)
 	GetBetAmount() (int64, bool)
 	IsAdjustment() bool
+	ApplyInsuranceVoucher(int64, int64, bool) error
 }
 
 func GetUserAndSum(tx *gorm.DB, gameVendor int64, externalUserId string) (gameVendorUser ploutos.GameVendorUser, balance int64, remainingWager int64, maxWithdrawable int64, err error) {
@@ -86,16 +88,12 @@ func GetSums(tx *gorm.DB, gpu ploutos.GameVendorUser) (balance int64, remainingW
 }
 
 func ProcessTransaction(obj CallbackInterface) (err error) {
-	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin()
+	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 	if tx.Error != nil {
 		err = tx.Error
 		return
 	}
-	err = tx.Exec(`set transaction isolation level repeatable read`).Error
-	if err != nil {
-		tx.Rollback()
-		return
-	}
+
 	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(tx, obj.GetGameVendorId(), obj.GetExternalUserId())
 	if err != nil {
 		tx.Rollback()
@@ -108,7 +106,8 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	}
 	newBalance := balance + obj.GetAmount()
 	newRemainingWager := remainingWager
-	if w, e := calWager(obj, remainingWager); e == nil {
+	betAmount, betExists, w, e := calWager(obj, remainingWager)
+	if e == nil {
 		newRemainingWager = w
 	}
 	newWithdrawable := maxWithdrawable
@@ -150,19 +149,21 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	}
 	tx.Commit()
 
+	obj.ApplyInsuranceVoucher(gpu.UserId, betAmount, betExists)
+
 	//SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
 	SendUserSumSocketMsg(gpu.UserId, userSum)
 
 	return
 }
 
-func calWager(obj CallbackInterface, originalWager int64) (newWager int64, err error) {
+func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betExists bool, newWager int64, err error) {
 	newWager = originalWager
 	multiplier, exists := obj.GetWagerMultiplier()
 	if !exists {
 		return
 	}
-	betAmount, exists := obj.GetBetAmount()
+	betAmount, betExists = obj.GetBetAmount()
 	if !exists {
 		return
 	}

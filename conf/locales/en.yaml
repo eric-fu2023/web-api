@@ -111,10 +111,16 @@ Error_password_lock: "An error occurred in verifying your account for password l
 Both_cannot_be_empty: "Both mobile and username cannot be empty."
 Error_token_generation: "An error occurred in token generation."
 Error_token_refreshing: "An error occurred in token refreshing."
-Your_request_otp: "Your requested OTP is %s."
-m360_otp_content: "%s - OTP for Taya. Valid for 2 mins. Do not share it with anyone. RefCode: #{REFCODE}#{PIN}"
 Otp_email_subject: "Your requested OTP"
 Otp_html_email: "<html><body><p>Hello!</p><p>You're getting this email because you have requested for a One Time Passcode (OTP). Your OTP is:</p><p><h2>%s</h2></p></body></html>"
+
+"Your_request_otp":
+  "1001": "Your requested OTP is %s."
+  "1002": "Please key in the verification code in 2 minutes for batace: %s"
+
+"m360_otp_content":
+  "1001": "%s - OTP for Taya. Valid for 2 mins. Do not share it with anyone. RefCode: #{REFCODE}#{PIN}"
+  "1002": "Please key in the verification code in 2 minutes for batace: %s. RefCode: #{REFCODE}#{PIN}"
 
 Email_wait: "Email has been sent. Please wait for a while and retry."
 Otp_fail: "OTP failed."
@@ -463,6 +469,7 @@ taya_create_user_failed: "Creating Taya user can't be completed."
 fb_create_user_failed: "Creating FB user can't be completed."
 saba_create_user_failed: "Creating Saba user can't be completed."
 dc_create_user_failed: "Creating game user can't be completed."
+imsb_create_user_failed: "Creating game user can't be completed."
 saba_user_error: "Something went wrong while logging into Saba Sports."
 game_not_found: "Game not found."
 already_followed: "You have already followed the streamer."
@@ -476,6 +483,7 @@ kyc_rejected_reason_suffix: ", please contact our support for more details or yo
 
 file_type_not_allowed: "File type %s is not allowed."
 file_size_exceeded: "File size should not exceed %s."
+file_upload_error: "File could not be uploaded."
 
 err_insufficient_withdrawable: "Insufficient withdrawable amount"
 
@@ -516,3 +524,13 @@ otp_limit_reached: "The daily OTP limit has been reached."
 
 validation_username: "Username must be 6-12 characters long lowercase letters or numbers."
 withdraw_account_limit_exceeded: "Maximum number of withdraw accounts limit exceeded"
+
+insufficient_balance: "Insufficient balance."
+
+achievement_not_whitelisted: "This achievement cannot be completed through this method."
+
+transaction_invalid: "Transaction is invalid."
+voucher_invalid: "Voucher is invalid."
+
+invalid_account_format: "Account format is invalid."
+nothing_to_claim: "Nothing is there to claim."
