@@ -4,6 +4,7 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"blgit.rfdev.tech/zhibo/utilities"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"math/rand"
@@ -19,15 +20,24 @@ import (
 )
 
 type EmailOtpService struct {
-	Email string `form:"email" json:"email" binding:"required,email"`
+	Email  string `form:"email" json:"email" binding:"required,email"`
+	Action string `form:"action" json:"action" binding:"required"`
 }
 
 func (service *EmailOtpService) GetEmail(c *gin.Context) serializer.Response {
 	service.Email = strings.ToLower(service.Email)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	otpSent := cache.RedisSessionClient.Get(context.TODO(), "otp:"+service.Email)
-	if otpSent.Val() != "" {
+
+	otpSent, err := cache.GetOtp(c, service.Action, service.Email)
+	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
+		return serializer.ParamErr(c, service, i18n.T("invalid_otp_action"), nil)
+	}
+	if err != nil {
+		return serializer.GeneralErr(c, err)
+	}
+
+	if otpSent != "" {
 		return serializer.ParamErr(c, service, i18n.T("Email_wait"), nil)
 	}
 
@@ -42,7 +52,11 @@ func (service *EmailOtpService) GetEmail(c *gin.Context) serializer.Response {
 			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Email_fail"), err)
 		}
 	}
-	cache.RedisSessionClient.Set(context.TODO(), "otp:"+service.Email, otp, 2*time.Minute)
+
+	err = cache.SetOtp(c, service.Action, service.Email, otp)
+	if err != nil {
+		return serializer.GeneralErr(c, err)
+	}
 
 	resp := serializer.SendOtp{}
 	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {

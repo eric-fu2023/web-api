@@ -192,8 +192,8 @@ func (service *UserLoginPasswordService) handlePasswordMismatch(c *gin.Context, 
 
 func (service *UserLoginPasswordService) sendOtp(c *gin.Context, user model.User) (serializer.Response, error) {
 	var resp serializer.Response
-	emailOtpService := EmailOtpService{Email: user.Email}
-	smsOtpService := SmsOtpService{CountryCode: user.CountryCode, Mobile: user.Mobile}
+	emailOtpService := EmailOtpService{Email: user.Email, Action: consts.SmsOtpActionLogin}
+	smsOtpService := SmsOtpService{CountryCode: user.CountryCode, Mobile: user.Mobile, Action: consts.SmsOtpActionLogin}
 
 	if service.Email != "" {
 		resp = emailOtpService.GetEmail(c)

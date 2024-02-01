@@ -122,6 +122,7 @@ Otp_html_email: "<html><body><p>Hello!</p><p>You're getting this email because y
   "1001": "%s - OTP for Taya. Valid for 2 mins. Do not share it with anyone. RefCode: #{REFCODE}#{PIN}"
   "1002": "Please key in the verification code in 2 minutes for batace: %s. RefCode: #{REFCODE}#{PIN}"
 
+invalid_otp_action: "Invalid OTP action."
 Email_wait: "Email has been sent. Please wait for a while and retry."
 Otp_fail: "OTP failed."
 User_add_fail: "Adding new user failed."
