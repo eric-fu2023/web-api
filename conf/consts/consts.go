@@ -13,6 +13,7 @@ var (
 		1:  OrderTypeTopup,
 		2:  OrderTypeDepositBonus,
 		3:  OrderTypeBetInsurance,
+		4:  OrderTypeBeginnerBonus,
 	}
 	Platform = map[string]int64{
 		"pc":      1,
@@ -386,6 +387,7 @@ const (
 	OrderTypeWithdraw             = "withdraw"
 	OrderTypeDepositBonus         = "deposit bonus"
 	OrderTypeBetInsurance         = "bet insurance"
+	OrderTypeBeginnerBonus        = "beginner reward"
 	ConfigKeyTopupKycCheck string = "kyc_check_required"
 	// FirstTopupMinimum      int64  = 10_00 //1000_00
 	// TopupMinimum           int64  = 5_00  //500_00
