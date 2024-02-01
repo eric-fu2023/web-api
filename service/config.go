@@ -68,7 +68,6 @@ func (service *AnnouncementsService) Get(c *gin.Context) (r serializer.Response,
 
 type AppUpdateService struct {
 	Platform int64  `form:"platform" json:"platform" binding:"required"`
-	Channel  int64  `form:"channel" json:"channel" binding:"required"`
 	Version  string `form:"version" json:"version" binding:"required"`
 }
 
@@ -76,7 +75,7 @@ func (service *AppUpdateService) Get(c *gin.Context) (r serializer.Response, err
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	brandId := c.MustGet("_brand").(int)
 	var app model.AppUpdate
-	err = app.Get(int64(brandId), service.Platform, service.Channel, service.Version)
+	err = app.Get(int64(brandId), service.Platform, service.Version)
 	if err != nil {
 		r = serializer.Err(c, "", serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
