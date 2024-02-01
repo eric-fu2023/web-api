@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"os"
 	"strings"
 	"time"
 	"web-api/conf/consts"
@@ -59,7 +60,7 @@ func welcomeToRoom(conn *websocket.Connection, message string) {
 						UserId:    consts.ChatSystemId,
 						UserType:  consts.ChatUserType["system"],
 						Nickname:  consts.ChatSystem["names"][0],
-						Avatar:    serializer.Url("/img/user/system/Taya_system_profile.jpg"),
+						Avatar:    serializer.Url(os.Getenv("CHAT_SYSTEM_PROFILE_IMG")),
 						Type:      consts.WebSocketMessageType["text"],
 					}
 					msg.Send(conn)
