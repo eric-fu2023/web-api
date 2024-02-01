@@ -1,12 +1,16 @@
 package imsb
 
 import (
+	"blgit.rfdev.tech/taya/game-service/imsb"
 	"blgit.rfdev.tech/taya/game-service/imsb/callback"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 	"strings"
@@ -15,6 +19,7 @@ import (
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+	"web-api/service/promotion"
 	"web-api/util"
 )
 
@@ -73,7 +78,57 @@ func (c *Callback) IsAdjustment() bool {
 }
 
 func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExists bool) (err error) {
-	// Voucher application not done
+	settleActionIds := []int64{4001, 4002, 4003}
+	if !slices.Contains(settleActionIds, c.Transaction.ActionId) || !betExists || betAmount <= c.Transaction.TransactionAmount {
+		return
+	}
+	var imVoucher ploutos.ImVoucher
+	err = model.DB.Where(`wager_no`, c.Transaction.WagerNo).First(&imVoucher).Error
+	if err != nil {
+		return
+	}
+
+	err = model.DB.Clauses(dbresolver.Use("txConn")).Transaction(func(tx *gorm.DB) (err error) {
+		ctx := context.TODO()
+		now := time.Now()
+		voucher, err := model.VoucherActiveGetByIDUserWithDB(ctx, userId, imVoucher.VoucherId, now, tx)
+		if err != nil {
+			return
+		}
+
+		var order imsb.BetDetailsIMSB
+		coll := model.MongoDB.Collection("imsb_callback_bet_details")
+		filter := bson.M{"wagerid": c.Transaction.WagerNo}
+		opts := options.Find()
+		opts.SetLimit(1)
+		opts.SetSort(bson.D{{"timestamp", -1}})
+		cursor, err := coll.Find(ctx, filter, opts)
+		for cursor.Next(ctx) {
+			cursor.Decode(&order)
+		}
+		if order.WagerType != "Single" || order.OddsType != "EURO" {
+			return
+		}
+		if len(order.WagerItems) != 1 { // single (not parlay) should only have one match in betList
+			return
+		}
+
+		if !promotion.ValidateVoucherUsageByType(voucher, promotion.OddsFormatEU, promotion.MatchTypeNotStarted, order.WagerItems[0].Odds, betAmount, false) {
+			err = promotion.ErrVoucherUseInvalid
+			return
+		}
+
+		rewardAmount := voucher.Amount
+		loss := betAmount - c.Transaction.TransactionAmount
+		if loss < rewardAmount {
+			rewardAmount = loss
+		}
+		err = promotion.CreateCashOrder(tx, voucher, voucher.PromotionType, userId, rewardAmount)
+		if err != nil {
+			return
+		}
+		return
+	})
 	return
 }
 
