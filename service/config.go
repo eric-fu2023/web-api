@@ -49,16 +49,17 @@ func (service *AnnouncementsService) Get(c *gin.Context) (r serializer.Response,
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
-	var texts, images []string
+	var texts []string
+	var images []serializer.ImageAnnouncement
 	for _, a := range announcements {
 		if a.Type == consts.AnnouncementType["text"] {
 			texts = append(texts, a.Text)
 		} else if a.Type == consts.AnnouncementType["image"] {
-			images = append(images, serializer.Url(a.Image))
+			images = append(images, serializer.BuildImageAnnouncement(a))
 		}
 	}
 	r = serializer.Response{
-		Data: map[string][]string{
+		Data: map[string]interface{}{
 			"texts":  texts,
 			"images": images,
 		},
