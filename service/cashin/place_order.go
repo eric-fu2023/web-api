@@ -104,7 +104,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 				return
 			}
-		case "COIN_PAL":
+		case "TRC20":
 			data, err = finpay.FinpayClient{}.PlaceDefaultCoinPalOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID)
 			if err != nil {
 				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data))

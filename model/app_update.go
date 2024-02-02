@@ -10,12 +10,11 @@ type AppUpdate struct {
 	ploutos.AppUpdate
 }
 
-func (a *AppUpdate) Get(brandId int64, osType int64, channel int64, version string) (err error) {
+func (a *AppUpdate) Get(brandId int64, osType int64, version string) (err error) {
 	query := DB.Model(&a).
 		Where(`status = 1`).
 		Where(`brand_id`, brandId).
 		Where(`os_type`, osType).
-		Where(`channel`, channel).
 		Order(`version_serial DESC`)
 
 	ver := strings.Split(version, ".")

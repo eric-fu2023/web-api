@@ -1,10 +1,10 @@
 package service
 
 import (
-	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"web-api/cache"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util/i18n"
@@ -19,11 +19,16 @@ func (service *UserDeleteService) Delete(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	otp := cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.Email)
-	if otp.Err() == redis.Nil {
-		otp = cache.RedisSessionClient.Get(context.TODO(), "otp:"+user.CountryCode+user.Mobile)
+	userKeys := []string{user.Email, user.CountryCode + user.Mobile}
+	otp, err := cache.GetOtpByUserKeys(c, consts.SmsOtpActionDeleteUser, userKeys)
+	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
+		return serializer.ParamErr(c, service, i18n.T("invalid_otp_action"), nil)
 	}
-	if otp.Val() != service.Otp {
+	if err != nil {
+		return serializer.GeneralErr(c, err)
+	}
+
+	if otp != service.Otp {
 		return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 	}
 

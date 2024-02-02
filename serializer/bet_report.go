@@ -1,7 +1,6 @@
 package serializer
 
 import (
-	"fmt"
 	"strconv"
 	"web-api/util"
 
@@ -53,7 +52,6 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 		t := BuildGame(c, *a.Game)
 		b.Game = &t
 	}
-	fmt.Println(a.Voucher)
 	if a.Voucher.ID != 0 {
 		t := BuildVoucher(a.Voucher, deviceInfo.Platform)
 		b.Voucher = &t

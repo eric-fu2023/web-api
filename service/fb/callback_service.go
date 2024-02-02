@@ -98,6 +98,9 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 	}
 	err = model.DB.Clauses(dbresolver.Use("txConn")).Transaction(func(tx *gorm.DB) (err error) {
 		voucherId, err := strconv.ParseInt(c.Transaction.RelatedId, 10, 64)
+		if err != nil {
+			return
+		}
 		ctx := context.TODO()
 		now := time.Now()
 		voucher, err := model.VoucherActiveGetByIDUserWithDB(ctx, userId, voucherId, now, tx)

@@ -27,7 +27,6 @@ func TestApi(t *testing.T) {
 			PaymentOrderStatus: "COMPLETED",
 			MerchantId:         "",
 			MerchantAppId:      os.Getenv("FINPAY_MERCHANT_ID"),
-			PaymentType:        os.Getenv("FINPAY_MERCHANT_APP_ID"),
 			Amount:             111,
 			Currency:           "PHP",
 			// Sign                    :,
