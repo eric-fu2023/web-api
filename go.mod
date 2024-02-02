@@ -9,7 +9,7 @@ require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240131021634-6dac66ee8a5e
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240202063540-219a1c4a664c
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240202062750-5ed18a36e96f
-	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240122104744-be3ce8954229
+	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240202092635-09215ca5cbc2
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/caarlos0/env/v10 v10.0.0

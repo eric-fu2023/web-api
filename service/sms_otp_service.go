@@ -154,9 +154,14 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	}
 
 	// Send SMS
+	smsCfg, err := smsutil.BuildDefaultConfig()
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("BuildDefaultConfig error: %s", err.Error())
+		return err
+	}
 	smsManager := smsutil.Manager{
 		Templates: util.BuildSmsTemplates(c),
-		Config:    smsutil.BuildDefaultConfig(),
+		Config:    smsCfg,
 	}
 	res, err := smsManager.Send(service.CountryCode, service.Mobile, otp)
 	if err != nil {
