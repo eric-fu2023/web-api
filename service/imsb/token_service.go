@@ -59,7 +59,10 @@ func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err e
 	b64Token := base64.StdEncoding.EncodeToString([]byte(token))
 
 	res = serializer.Response{
-		Data: b64Token,
+		Data: map[string]string{
+			"token":       b64Token,
+			"member_code": user.Username,
+		},
 	}
 	return
 }

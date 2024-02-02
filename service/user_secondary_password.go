@@ -27,12 +27,6 @@ func (service *UserSecondaryPasswordService) SetSecondaryPassword(c *gin.Context
 		return serializer.ParamErr(c, service, i18n.T("password_must_be_digits"), nil)
 	}
 
-	if user.Password != "" {
-		if e := bcrypt.CompareHashAndPassword([]byte(user.SecondaryPassword), []byte(service.SecondaryPassword)); e == nil {
-			return serializer.ParamErr(c, service, i18n.T("same_pin"), nil)
-		}
-	}
-
 	userKeys := []string{user.Email, user.CountryCode + user.Mobile}
 	otp, err := cache.GetOtpByUserKeys(c, consts.SmsOtpActionSetSecondaryPassword, userKeys)
 	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
