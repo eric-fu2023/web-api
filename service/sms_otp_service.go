@@ -19,7 +19,6 @@ import (
 )
 
 var (
-	errIgnoreCountry   = errors.New("ignore country")
 	errReachedOtpLimit = errors.New("reached otp limit")
 	errOtpAlreadySent  = errors.New("otp has already been sent")
 )
@@ -52,11 +51,7 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 	}
 
 	err := service.verifyMobileNumber()
-	if err != nil && errors.Is(err, errIgnoreCountry) {
-		return serializer.Response{
-			Msg: i18n.T("success"),
-		}
-	} else if err != nil {
+	if err != nil {
 		return serializer.ParamErr(c, service, i18n.T("invalid_mobile_number_format"), nil)
 	}
 
@@ -191,10 +186,6 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 }
 
 func (service *SmsOtpService) verifyMobileNumber() error {
-	if service.CountryCode != "+63" && service.CountryCode != "+65" {
-		return errIgnoreCountry
-	}
-
 	if service.CountryCode == "+63" {
 		phMobilepattern := `^(9\d{9})$`
 		phMobileRegex := regexp.MustCompile(phMobilepattern)
