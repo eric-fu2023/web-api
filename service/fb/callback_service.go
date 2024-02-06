@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -233,7 +232,7 @@ func SyncOrdersCallback(c *gin.Context, req callback.SyncOrdersRequest) (res cal
 			}
 			var obj ploutos.FbTransactionClone
 			copier.Copy(&obj, &transaction)
-			obj.TransactionId = uuid.NewString()
+			obj.TransactionId = fmt.Sprintf(`%d-%s`, req.Version, req.Id)
 			obj.TransactionType = "IN"
 			obj.TransferType = "WIN"
 			obj.Amount = 0
