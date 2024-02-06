@@ -6,6 +6,10 @@ type TayaTransaction struct {
 	ploutos.FbTransaction
 }
 
+type TayaTransactionClone struct {
+	ploutos.FbTransactionClone
+}
+
 func (TayaTransaction) TableName() string {
 	return "taya_transactions"
 }
