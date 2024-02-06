@@ -4,6 +4,7 @@ import (
 	"os"
 	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
 )
@@ -58,11 +59,11 @@ type GenericCashOrder struct {
 	TypeDetail string `json:"type_detail"`
 }
 
-func BuildGenericCashOrder(p model.CashOrder) GenericCashOrder {
+func BuildGenericCashOrder(p model.CashOrder, i18n i18n.I18n) GenericCashOrder {
 	amount := p.AppliedCashInAmount
 	effectiveAmount := p.EffectiveCashInAmount
 	orderType := consts.OrderTypeMap[p.OrderType]
-	detail := consts.OrderTypeDetailMap[p.OrderType]
+	detail := i18n.T(consts.OrderTypeDetailMap[p.OrderType])
 	if p.OrderType < 0 {
 		amount = p.AppliedCashOutAmount
 		effectiveAmount = p.EffectiveCashOutAmount

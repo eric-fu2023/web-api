@@ -1,13 +1,15 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util"
+	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,6 +26,7 @@ func (s CashOrderService) List(c *gin.Context) (r serializer.Response, err error
 	u, _ := c.Get("user")
 	user := u.(model.User)
 	loc := c.MustGet("_tz").(*time.Location)
+	i18n := c.MustGet("i18n").(i18n.I18n)
 
 	var startTime *time.Time
 	if val, err := time.ParseInLocation(consts.StdTimeFormat, s.StartTime, loc); err == nil {
@@ -39,7 +42,9 @@ func (s CashOrderService) List(c *gin.Context) (r serializer.Response, err error
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
-	r.Data = util.MapSlice(list, serializer.BuildGenericCashOrder)
+	r.Data = util.MapSlice(list, func(input model.CashOrder) serializer.GenericCashOrder {
+		return serializer.BuildGenericCashOrder(input, i18n)
+	})
 	go updateTransactionLastSeen(user.ID)
 	return
 }
