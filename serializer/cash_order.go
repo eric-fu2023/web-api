@@ -55,12 +55,14 @@ type GenericCashOrder struct {
 	EffectiveAmount int64  `json:"effective_amount"`
 	OrderType       string `json:"order_type"`
 	// Currency    string    `json:"currency"`
+	TypeDetail string `json:"type_detail"`
 }
 
 func BuildGenericCashOrder(p model.CashOrder) GenericCashOrder {
 	amount := p.AppliedCashInAmount
 	effectiveAmount := p.EffectiveCashInAmount
 	orderType := consts.OrderTypeMap[p.OrderType]
+	detail := consts.OrderTypeDetailMap[p.OrderType]
 	if p.OrderType < 0 {
 		amount = p.AppliedCashOutAmount
 		effectiveAmount = p.EffectiveCashOutAmount
@@ -73,5 +75,6 @@ func BuildGenericCashOrder(p model.CashOrder) GenericCashOrder {
 		Amount:          amount / 100,
 		EffectiveAmount: effectiveAmount / 100,
 		OrderType:       orderType,
+		TypeDetail:      detail,
 	}
 }

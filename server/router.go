@@ -249,7 +249,7 @@ func NewRouter() *gin.Engine {
 				promotion := user.Group("/promotion")
 				{
 					promotion.GET("/list", promotion_api.GetCoverList)
-					promotion.GET("/details", promotion_api.GetDetail)
+					promotion.GET("/details", middleware.RequestLogger("get promotion details"), promotion_api.GetDetail)
 					promotion.POST("/claim", promotion_api.PromotionClaim)
 				}
 

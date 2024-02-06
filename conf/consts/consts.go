@@ -11,6 +11,13 @@ var (
 	OrderTypeMap = map[int64]string{
 		-1: OrderTypeWithdraw,
 		1:  OrderTypeTopup,
+		2:  OrderTypeTopup,
+		3:  OrderTypeTopup,
+		4:  OrderTypeTopup,
+	}
+	OrderTypeDetailMap = map[int64]string{
+		-1: OrderTypeWithdraw,
+		1:  OrderTypeTopup,
 		2:  OrderTypeDepositBonus,
 		3:  OrderTypeBetInsurance,
 		4:  OrderTypeBeginnerBonus,
