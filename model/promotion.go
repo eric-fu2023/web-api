@@ -8,7 +8,7 @@ import (
 )
 
 func PromotionList(c context.Context, brandID int, now time.Time) (list []models.Promotion, err error) {
-	err = DB.WithContext(c).Where("brand_id", brandID).Where("is_active").Scopes(Ongoing(now, "start_at", "end_at")).Find(&list).Error
+	err = DB.WithContext(c).Where("brand_id", brandID).Where("is_active").Scopes(Ongoing(now, "start_at", "end_at")).Order("id desc").Find(&list).Error
 	return
 }
 

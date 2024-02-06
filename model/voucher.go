@@ -37,7 +37,7 @@ func VoucherListUsableByUserFilter(c context.Context, userID int64, filter strin
 	case "valid":
 		db = db.Where("status", models.VoucherStatusReady).Scopes(Ongoing(time.Now(), "start_at", "end_at"))
 	}
-	err = db.Find(&v).Error
+	err = db.Order("id desc").Find(&v).Error
 	return
 }
 
