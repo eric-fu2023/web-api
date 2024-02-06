@@ -33,26 +33,34 @@ func PasswordValidation(fl validator.FieldLevel) bool {
 		return false
 	}
 
-	hasUppercase := false
-	hasLowercase := false
-	hasNumber := false
-	hasSpecialChar := false
 	hasSpace := false
 	for _, char := range str {
-		if 'A' <= char && char <= 'Z' {
-			hasUppercase = true
-		} else if 'a' <= char && char <= 'z' {
-			hasLowercase = true
-		} else if '0' <= char && char <= '9' {
-			hasNumber = true
-		} else if specialCharacter(char) {
-			hasSpecialChar = true
-		} else if char == ' ' {
+		if char == ' ' {
 			hasSpace = true
 		}
 	}
+	return !hasSpace
 
-	return hasUppercase && hasLowercase && hasNumber && hasSpecialChar && !hasSpace
+	//hasUppercase := false
+	//hasLowercase := false
+	//hasNumber := false
+	//hasSpecialChar := false
+	//hasSpace := false
+	//for _, char := range str {
+	//	if 'A' <= char && char <= 'Z' {
+	//		hasUppercase = true
+	//	} else if 'a' <= char && char <= 'z' {
+	//		hasLowercase = true
+	//	} else if '0' <= char && char <= '9' {
+	//		hasNumber = true
+	//	} else if specialCharacter(char) {
+	//		hasSpecialChar = true
+	//	} else if char == ' ' {
+	//		hasSpace = true
+	//	}
+	//}
+	//
+	//return hasUppercase && hasLowercase && hasNumber && hasSpecialChar && !hasSpace
 }
 
 func specialCharacter(char rune) bool {
