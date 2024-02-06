@@ -535,3 +535,9 @@ voucher_invalid: "Voucher is invalid."
 
 invalid_account_format: "Account format is invalid."
 nothing_to_claim: "Nothing is there to claim."
+
+top-up: "Deposit"
+withdraw: "Withdraw"
+deposit_bonus: "Deposit Bonus"
+bet_insurance: "Insurance"
+beginner_reward: "Beginner Reward"

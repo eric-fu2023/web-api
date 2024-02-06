@@ -72,7 +72,7 @@ func (CashOrder) GetPendingWithLockWithDB(orderID string, tx *gorm.DB) (c CashOr
 }
 
 func (CashOrder) List(userID int64, topupOnly, withdrawOnly bool, startTime, endTime *time.Time, page, limit int) (list []CashOrder, err error) {
-	db := DB.Scopes(Paginate(page, limit))
+	db := DB.Debug().Scopes(Paginate(page, limit))
 	if startTime != nil {
 		db = db.Where("created_at > ?", startTime)
 	}
@@ -88,6 +88,7 @@ func (CashOrder) List(userID int64, topupOnly, withdrawOnly bool, startTime, end
 
 	err = db.
 		Where("user_id", userID).
+		Order("created_at DESC").
 		Order("id DESC").
 		Find(&list).Error
 	return
