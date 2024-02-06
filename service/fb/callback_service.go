@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -220,6 +221,32 @@ func SyncOrdersCallback(c *gin.Context, req callback.SyncOrdersRequest) (res cal
 		_, e := coll.InsertOne(context.TODO(), req)
 		if e != nil {
 			util.Log().Error("mongodb error", e)
+		}
+	}(c, req)
+	go func(c *gin.Context, req callback.SyncOrdersRequest) {
+		if req.OrderStatus == 5 && req.SettleAmount == "0" {
+			var transaction ploutos.FbTransaction
+			e := model.DB.Where(`business_id`, req.Id).Where(`transfer_type = 'BET'`).Order(`created_at DESC`).First(&transaction).Error
+			if e != nil {
+				util.Log().Error("sync_orders settle amount 0 error", e)
+				return
+			}
+			var obj ploutos.FbTransactionClone
+			copier.Copy(&obj, &transaction)
+			obj.TransactionId = uuid.NewString()
+			obj.TransactionType = "IN"
+			obj.TransferType = "WIN"
+			obj.Amount = 0
+			obj.Status = 1
+			obj.RelatedId = req.RelatedId
+			jj, e := json.Marshal(obj)
+			if e != nil {
+				util.Log().Error("sync_orders settle amount 0 error", e)
+			}
+			_, e = cache.RedisSyncTransactionClient.Set(context.TODO(), fmt.Sprintf(`fb:%s:%s`, obj.MerchantUserId, obj.TransactionId), jj, 0).Result()
+			if e != nil {
+				util.Log().Error("sync_orders settle amount 0 error", e)
+			}
 		}
 	}(c, req)
 	res = callback.BaseResponse{
