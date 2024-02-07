@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -71,7 +72,7 @@ func (CashOrder) GetPendingWithLockWithDB(orderID string, tx *gorm.DB) (c CashOr
 	return
 }
 
-func (CashOrder) List(userID int64, topupOnly, withdrawOnly bool, startTime, endTime *time.Time, page, limit int) (list []CashOrder, err error) {
+func (CashOrder) List(userID int64, topupOnly, withdrawOnly bool, startTime, endTime *time.Time, page, limit int, statusF string) (list []CashOrder, err error) {
 	db := DB.Debug().Scopes(Paginate(page, limit))
 	if startTime != nil {
 		db = db.Where("created_at > ?", startTime)
@@ -84,6 +85,14 @@ func (CashOrder) List(userID int64, topupOnly, withdrawOnly bool, startTime, end
 	}
 	if withdrawOnly {
 		db = db.Where("order_type < 0")
+	}
+	switch statusF {
+	case "success":
+		db = db.Where("status in ?", []int64{models.CashOrderStatusSuccess})
+	case "failed":
+		db = db.Where("status in ?", []int64{models.CashOrderStatusCancelled, models.CashOrderStatusRejected, models.CashOrderStatusFailed})
+	case "pending":
+		db = db.Where("status in ?", []int64{models.CashOrderStatusPending, models.CashOrderStatusPendingApproval, models.CashOrderStatusTransferring})
 	}
 
 	err = db.

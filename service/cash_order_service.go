@@ -19,6 +19,7 @@ type CashOrderService struct {
 	WithdrawOnly bool   `form:"withdraw_only" json:"withdraw_only"`
 	StartTime    string `form:"start_time" json:"start_time"`
 	EndTime      string `form:"end_time" json:"end_time"`
+	Status       string `form:"status" json:"status"`
 	common.Page
 }
 
@@ -37,7 +38,7 @@ func (s CashOrderService) List(c *gin.Context) (r serializer.Response, err error
 		endTime = &val
 	}
 
-	list, err := model.CashOrder{}.List(user.ID, s.TopupOnly, s.WithdrawOnly, startTime, endTime, s.Page.Page, s.Limit)
+	list, err := model.CashOrder{}.List(user.ID, s.TopupOnly, s.WithdrawOnly, startTime, endTime, s.Page.Page, s.Limit, s.Status)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
