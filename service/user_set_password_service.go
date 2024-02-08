@@ -23,6 +23,9 @@ type UserSetPasswordService struct {
 
 func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
+
+	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
+
 	var user model.User
 	u, isUser := c.Get("user")
 	if isUser {

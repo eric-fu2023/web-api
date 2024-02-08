@@ -28,6 +28,9 @@ type UserOtpVerificationService struct {
 
 func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
+
+	s.Mobile = strings.TrimPrefix(s.Mobile, "0")
+
 	var user model.User
 	u, exists := c.Get("user")
 	if !exists {
@@ -69,9 +72,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	service.Email = strings.ToLower(service.Email)
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 
-	if len(service.Mobile) > 0 && service.Mobile[:1] == "0" {
-		service.Mobile = service.Mobile[1:]
-	}
+	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
