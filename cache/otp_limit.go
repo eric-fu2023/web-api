@@ -54,7 +54,7 @@ func IncreaseSendOtpLimit(mobile, ip, uuid string, datetime time.Time) (bool, er
 	mobileLimit := os.Getenv("DAILY_OTP_LIMIT_MOBILE")
 	mobileKey := fmt.Sprintf(OtpCountKey, dateStr, mobile)
 
-	keys := []string{dateStr, mobileKey, sourceGroupingKey}
+	keys := []string{mobileKey, sourceGroupingKey}
 	values := []interface{}{mobileLimit, sourceLimit}
 
 	isWithinLimit, err := otpLimitScript.Run(context.Background(), RedisSessionClient, keys, values...).Bool()
