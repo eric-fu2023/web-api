@@ -500,6 +500,8 @@ notification_kyc_rejected_title: "KYC Verification Declined"
 notification_kyc_rejected: "Your KYC verification has not been successful. Please review the provided information and resubmit."
 notification_kyc_pending_title: "KYC Verification is Pending"
 notification_kyc_pending: "Your KYC verification is being processed. Please be patient."
+notification_bet_settlement_title: "Bet Settled"
+notification_bet_settlement: "Your bet has been settled. Go check out the outcome."
 
 negative_amount: "Amount cannot be negative"
 first_topup_amount: "First top up should be at least %d pesos"

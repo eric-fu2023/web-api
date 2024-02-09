@@ -58,6 +58,8 @@ func ProcessFbSyncTransaction() {
 						util.Log().Error("Task:ProcessFbSyncTransaction redis delete key error", err, orderPayRequest)
 						return
 					}
+
+					go sendSettlementNotification(orderPayRequest.MerchantUserId)
 				}
 			}(key, arr)
 		}
