@@ -2,6 +2,7 @@ package serializer
 
 import (
 	"strconv"
+	"web-api/conf/consts"
 	"web-api/util"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -18,6 +19,7 @@ type BetReport struct {
 	Stake      float64  `json:"stake"`
 	MaxReturn  float64  `json:"max_return,omitempty"`
 	Won        *float64 `json:"won,omitempty"`
+	Outcome    *string  `json:"outcome,omitempty"` // only for imsb
 	Bets       []Bet    `json:"bets,omitempty"`
 	Game       *Game    `json:"game,omitempty"`
 	Voucher    *Voucher `json:"voucher,omitempty"`
@@ -42,6 +44,9 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 	if a.Status == 5 {
 		t := float64(a.Win) / 100
 		b.Won = &t
+	}
+	if a.GameType == consts.GameVendor["imsb"] && a.Provider != "" { // only for imsb
+		b.Outcome = &a.Provider
 	}
 	if len(a.Bets) > 0 {
 		for _, l := range a.Bets {
