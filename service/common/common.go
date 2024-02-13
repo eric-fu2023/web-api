@@ -186,9 +186,9 @@ func calMaxWithdrawable(obj CallbackInterface, balance int64, remainingWager int
 		return
 	}
 	if remainingWager == 0 {
-		if balance > originalWithdrawable {
-			newWithdrawable = balance
-		}
+		//if balance > originalWithdrawable {
+		newWithdrawable = balance
+		//}
 	}
 	return
 }
