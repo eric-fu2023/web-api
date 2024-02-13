@@ -27,10 +27,13 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder) (updatedCashOrder 
 		config := method.GetFinpayConfig()
 		var data finpay.TransferOrderResponse
 		switch config.Type {
+		case "BANK_CARD":
+			bankInfo := cashOrder.GetBankInfo()
+			data, err = finpay.FinpayClient{}.DefaultBankCardCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, method.Currency, updatedCashOrder.Account, updatedCashOrder.AccountName, bankInfo.BankBranchName, bankInfo.BankCode, bankInfo.BankName)
 		case "TRC20":
 			data, err = finpay.FinpayClient{}.DefaultTRC20CashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, updatedCashOrder.Account, updatedCashOrder.AccountName)
-		default:
-			data, err = finpay.FinpayClient{}.DefaultCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, updatedCashOrder.Account, updatedCashOrder.AccountName, config.IfCode, config.BankName, config.Type)
+			// default:
+			// 	data, err = finpay.FinpayClient{}.DefaultCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, updatedCashOrder.Account, updatedCashOrder.AccountName, config.IfCode, config.BankName, config.Type)
 		}
 		if data.IsSuccess() {
 			updatedCashOrder.Status = models.CashOrderStatusTransferring
