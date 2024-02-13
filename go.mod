@@ -7,8 +7,8 @@ toolchain go1.21.1
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240206050245-4a4aa02a84a2
-	blgit.rfdev.tech/taya/payment-service v0.0.0-20240208024255-244f8f3fccba
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240208024448-1856f8cf18bf
+	blgit.rfdev.tech/taya/payment-service v0.0.0-20240213055203-aac810c522bc
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240213064943-09b6bfd33b40
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240205103854-a1c5a708f752
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible

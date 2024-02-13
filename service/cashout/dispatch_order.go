@@ -10,11 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, methodID int64) (updatedCashOrder model.CashOrder, err error) {
+func DispatchOrder(c *gin.Context, cashOrder model.CashOrder) (updatedCashOrder model.CashOrder, err error) {
 	brand := c.MustGet(`_brand`).(int)
 
 	updatedCashOrder = cashOrder
-	method, err := model.CashMethod{}.GetByID(c, methodID, brand)
+	method, err := model.CashMethod{}.GetByID(c, cashOrder.CashMethodId, brand)
 	if err != nil {
 		return
 	}
@@ -26,7 +26,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, methodID int64) (u
 	case "finpay":
 		config := method.GetFinpayConfig()
 		var data finpay.TransferOrderResponse
-		switch config.Type{
+		switch config.Type {
 		case "TRC20":
 			data, err = finpay.FinpayClient{}.DefaultTRC20CashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, updatedCashOrder.Account, updatedCashOrder.AccountName)
 		default:

@@ -50,7 +50,7 @@ func (s CashOutOrderService) Approve(c *gin.Context) (r serializer.Response, err
 		return
 	}
 
-	cashOrder, err = cashout.DispatchOrder(c, cashOrder, cashOrder.CashMethodId)
+	cashOrder, err = cashout.DispatchOrder(c, cashOrder)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return r, err

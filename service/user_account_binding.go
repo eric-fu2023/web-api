@@ -36,9 +36,12 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 }
 
 type AddWithdrawAccountService struct {
-	MethodID    int64  `form:"method_id" json:"method_id" binding:"required"`
-	AccountNo   string `form:"account_no" json:"account_no" binding:"required"`
-	AccountName string `form:"account_name" json:"account_name" binding:"required"`
+	MethodID       int64  `form:"method_id" json:"method_id" binding:"required"`
+	AccountNo      string `form:"account_no" json:"account_no" binding:"required"`
+	AccountName    string `form:"account_name" json:"account_name" binding:"required"`
+	BankCode       string `form:"bank_code" json:"bank_code"`
+	BankBranchName string `form:"bank_branch_name" json:"bank_branch_name"`
+	BankName       string `form:"bank_name" json:"bank_name"`
 }
 
 func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, err error) {
@@ -70,6 +73,11 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 			IsActive:      true,
 		},
 	}
+	accountBinding.SetBankInfo(ploutos.BankInfo{
+		BankCode:       s.BankCode,
+		BankBranchName: s.BankBranchName,
+		BankName:       s.BankName,
+	})
 	err = accountBinding.AddToDb()
 	if err != nil {
 		if errors.Is(err, model.ErrAccountLimitExceeded) {
