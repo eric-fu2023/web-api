@@ -23,6 +23,7 @@ import (
 )
 
 var FbTransferTypeCalculateWager = map[string]int64{
+	"BET":                            0, // not for wager calculation but for whether to proceed max_withdrawal calculation
 	"WIN":                            -1,
 	"CASHOUT":                        -1,
 	"SETTLEMENT_ROLLBACK_RETURN":     1,

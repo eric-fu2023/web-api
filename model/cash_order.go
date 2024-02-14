@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -33,7 +34,7 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 	}
 }
 
-func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account, remark string, reviewRequired bool, accountName, ip string) CashOrder {
+func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account, remark string, reviewRequired bool, accountName, ip string, bankInfo models.BankInfo) CashOrder {
 	var orderStatus int64 = 1
 	var approveStatus int64
 	var reviewStatus int64
@@ -42,6 +43,7 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account,
 		approveStatus = 1
 		reviewStatus = 1
 	}
+	raw, _ := json.Marshal(bankInfo)
 
 	return CashOrder{
 		ploutos.CashOrder{
@@ -59,7 +61,8 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account,
 			ApproveStatus:        approveStatus,
 			ReviewStatus:         reviewStatus,
 			//Notes:, update later
-			Ip: ip,
+			Ip:       ip,
+			BankInfo: json.RawMessage(raw),
 		},
 	}
 }

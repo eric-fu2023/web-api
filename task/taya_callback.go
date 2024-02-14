@@ -2,6 +2,7 @@ package task
 
 import (
 	"blgit.rfdev.tech/taya/game-service/fb/callback"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,9 +11,12 @@ import (
 	"sync"
 	"time"
 	"web-api/cache"
+	"web-api/conf/consts"
+	"web-api/model"
 	"web-api/service/common"
 	"web-api/service/taya"
 	"web-api/util"
+	"web-api/util/i18n"
 )
 
 func ProcessTayaSyncTransaction() {
@@ -58,10 +62,23 @@ func ProcessTayaSyncTransaction() {
 						util.Log().Error("Task:ProcessTayaSyncTransaction redis delete key error", err, orderPayRequest)
 						return
 					}
+
+					go sendSettlementNotification(orderPayRequest.MerchantUserId)
 				}
 			}(key, arr)
 		}
 		wg.Wait()
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func sendSettlementNotification(username string) {
+	var user ploutos.User
+	e := model.DB.Where(`username`, username).First(&user).Error
+	if e == nil {
+		i18n := i18n.I18n{}
+		if e = i18n.LoadLanguages("en"); e == nil {
+			common.SendNotification(user.ID, consts.Notification_Type_Bet_Settlement, i18n.T("notification_bet_settlement_title"), i18n.T("notification_bet_settlement"))
+		}
 	}
 }

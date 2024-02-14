@@ -104,7 +104,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		var msg string
 		reviewRequired, msg = rule.OK(amount, payoutCount+1, totalOut+amount, user.GetTagIDList())
 
-		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance, accountBinding.AccountNumber, msg, reviewRequired, accountBinding.AccountName, c.ClientIP())
+		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance, accountBinding.AccountNumber, msg, reviewRequired, accountBinding.AccountName, c.ClientIP(), accountBinding.GetBankInfo())
 		err = tx.Create(&cashOrder).Error
 		if err != nil {
 			return
@@ -144,7 +144,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		notifyBackendWithdraw(cashOrder.ID)
 		return
 	}
-	cashOrder, err = DispatchOrder(c, cashOrder, accountBinding.CashMethodID)
+	cashOrder, err = DispatchOrder(c, cashOrder)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return

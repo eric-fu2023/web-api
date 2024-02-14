@@ -406,6 +406,7 @@ const (
 	Notification_Type_Pin_Reset         = "pin_reset"
 	Notification_Type_Kyc               = "kyc"
 	Notification_Type_Bet_Placement     = "bet_transaction"
+	Notification_Type_Bet_Settlement    = "bet_settlement"
 	Notification_Type_Cash_Transaction  = "cash_transaction"
 
 	//DefaultBrand = 1001
