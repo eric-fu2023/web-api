@@ -28,3 +28,14 @@ func Cache(duration time.Duration) gin.HandlerFunc {
 		cache.CacheByRequestURI(ca.RedisStore, duration, cache.WithPrefixKey(prefix), cache.IgnoreQueryOrder())(c)
 	}
 }
+
+func CacheForGuest(duration time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		_, loggedIn := c.Get("user")
+		if loggedIn {
+			return
+		} else {
+			Cache(duration)(c)
+		}
+	}
+}
