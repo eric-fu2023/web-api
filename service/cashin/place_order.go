@@ -27,6 +27,10 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
+	method, err := model.CashMethod{}.GetByID(c, s.MethodID, brand)
+	if err != nil {
+		return
+	}
 
 	amountDecimal, err := decimal.NewFromString(s.Amount)
 	if err != nil {
@@ -34,7 +38,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		return
 	}
 	amount := amountDecimal.IntPart() * 100
-	r, err = s.verifyCashInAmount(c, amount)
+	r, err = s.verifyCashInAmount(c, amount, method)
 	if err != nil {
 		return
 	}
@@ -45,10 +49,6 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		return
 	}
 
-	method, err := model.CashMethod{}.GetByID(c, s.MethodID, brand)
-	if err != nil {
-		return
-	}
 	err = processCashInMethod(method)
 	if err != nil {
 		return
@@ -121,7 +121,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	return
 }
 
-func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64) (r serializer.Response, err error) {
+func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64, method model.CashMethod) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
@@ -154,7 +154,7 @@ func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64) (r s
 			return
 		} else {
 			err = errors.New("illegal amount")
-			r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("topup_amount"), conf.GetCfg().TopupMinimum/100), err)
+			r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("topup_amount"), method.MinAmount/100), err)
 			return
 		}
 	}
