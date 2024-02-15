@@ -20,6 +20,6 @@ func BuildUserAccountBinding(a model.UserAccountBinding, minAmount, maxAmount in
 		AccountName:   a.AccountName,
 		AccountNumber: a.AccountNumber,
 		IsActive:      a.IsActive,
-		Method:        BuildCashMethodWrapper(minAmount, maxAmount)(*a.CashMethod),
+		Method:        BuildCashMethod(*a.CashMethod),
 	}
 }
