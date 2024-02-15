@@ -49,7 +49,7 @@ func BuildVoucherFromTemplate(a models.VoucherTemplate, amount int64, platform s
 	if len(image) == 0 {
 		image = m["h5"]
 	}
-	displayAmount := amount / 100
+	displayAmount := float64(amount) / 100
 	name := model.AmountReplace(a.Name, displayAmount)
 	b = Voucher{
 		ID:          a.ID,
@@ -59,7 +59,7 @@ func BuildVoucherFromTemplate(a models.VoucherTemplate, amount int64, platform s
 		Type:        a.PromotionType,
 		StartAt:     a.StartAt.Unix(),
 		EndAt:       a.EndAt.Unix(),
-		Amount:      0,
+		Amount:      displayAmount,
 		Status:      0,
 	}
 	return

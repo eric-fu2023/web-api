@@ -152,7 +152,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		BrandID:           p.BrandID,
 		Amount:            rewardAmount,
 		// TransactionDetails
-		Name:               model.AmountReplace(v.Name, rewardAmount),
+		Name:               model.AmountReplace(v.Name, float64(rewardAmount)/100),
 		Description:        v.Description,
 		PromotionType:      v.PromotionType,
 		PromotionID:        p.ID,
