@@ -1,0 +1,5 @@
+package cashin
+
+func HandlePromotion() {
+
+}
