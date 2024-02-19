@@ -13,7 +13,8 @@ import (
 var (
 	// This API is meant for achievements whose progress is tracked by FE
 	isAchievementWhitelisted = map[int64]bool{
-		model.UserAchievementIdFirstAppLoginTutorial: true,
+		model.UserAchievementIdFirstAppLoginTutorial:     true,
+		model.UserAchievementIdFirstDepositBonusTutorial: true,
 	}
 )
 

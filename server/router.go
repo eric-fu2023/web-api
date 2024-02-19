@@ -265,6 +265,7 @@ func NewRouter() *gin.Engine {
 
 				achievement := user.Group("/achievement")
 				{
+					achievement.GET("/list", api.AchievementList)
 					achievement.POST("/complete", api.AchievementComplete)
 				}
 			}
