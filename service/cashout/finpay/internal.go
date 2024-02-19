@@ -49,8 +49,13 @@ func (s CashOutOrderService) Approve(c *gin.Context) (r serializer.Response, err
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
+	var user model.User
+	if err = model.DB.Where(`id`, cashOrder.UserId).First(&user).Error; err != nil {
+		util.GetLoggerEntry(c).Error("get user error")
+		return
+	}
 
-	cashOrder, err = cashout.DispatchOrder(c, cashOrder)
+	cashOrder, err = cashout.DispatchOrder(c, cashOrder, user)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return r, err
