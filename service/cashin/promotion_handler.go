@@ -15,6 +15,23 @@ func HandlePromotion(order model.CashOrder) {
 }
 
 func HandleOneTimeB(order model.CashOrder) {
+	var user model.User
+	if err := model.DB.Where(`id`, order.UserId).First(&user).Error; err != nil {
+		util.Log().Error("get user error", err)
+		return
+	}
+	uaCond := model.GetUserAchievementCond{AchievementIds: []int64{
+		model.UserAchievementIdFirstDepositBonusTutorial,
+	}}
+	a, err := model.GetUserAchievements(order.UserId, uaCond)
+	if err != nil {
+		util.Log().Error("get config error", err)
+		return
+	}
+	if len(a) > 0 && order.CreatedAt.Sub(a[0].CreatedAt) > 1*time.Hour {
+		util.Log().Info("not in reward timeframe", order.AppliedCashInAmount)
+		return
+	}
 	amt, err := service.GetCachedConfig(context.Background(), "static_promotion_one_time_bonus_min_amount")
 	if err != nil {
 		util.Log().Error("get config error", err)
@@ -31,11 +48,7 @@ func HandleOneTimeB(order model.CashOrder) {
 		return
 	}
 	id, _ := strconv.Atoi(v)
-	var user model.User
-	if err = model.DB.Where(`id`, order.UserId).First(&user).Error; err != nil {
-		util.Log().Error("get user error", err)
-		return
-	}
+
 	now := time.Now()
 	p, err := model.PromotionGetActive(context.TODO(), int(user.BrandId), int64(id), now)
 	if err != nil {
