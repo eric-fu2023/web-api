@@ -15,6 +15,16 @@ func HandlePromotion(order model.CashOrder) {
 }
 
 func HandleOneTimeB(order model.CashOrder) {
+	amt, err := service.GetCachedConfig(context.Background(), "static_promotion_one_time_bonus_min_amount")
+	if err != nil {
+		util.Log().Error("get config error", err)
+		return
+	}
+	minAmt, _ := strconv.Atoi(amt)
+	if order.AppliedCashInAmount < int64(minAmt) {
+		util.Log().Info("insufficient amount", order.AppliedCashInAmount)
+		return
+	}
 	v, err := service.GetCachedConfig(context.Background(), "static_promotion_one_time_bonus_id")
 	if err != nil {
 		util.Log().Error("get config error", err)
