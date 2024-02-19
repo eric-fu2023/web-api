@@ -30,10 +30,9 @@ func (s *FinpayPaymentCallback) Handle(c *gin.Context) (err error) {
 	// update user_sum
 	// create transaction history
 	// }
-	order, err := cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB)
+	_, err = cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB)
 	if err != nil {
 		return
 	}
-	go cashin.HandlePromotion(order)
 	return
 }
