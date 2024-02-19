@@ -90,6 +90,12 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 					return err
 				}
 			}
+			if p.Type == models.PromotionTypeOneTimeDepB {
+				err = model.CreateUserAchievement(userID, model.UserAchievementIdFirstDepositBonusReward)
+				if err != nil {
+					return err
+				}
+			}
 			return nil
 		})
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
