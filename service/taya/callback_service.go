@@ -2,6 +2,7 @@ package taya
 
 import (
 	"blgit.rfdev.tech/taya/game-service/fb/callback"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -125,6 +126,13 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 
 		if !promotion.ValidateVoucherUsageByType(voucher, int(order.BetList[0].OddsFormat), promotion.MatchTypeNotStarted, floatOdd, betAmount, false) {
 			err = promotion.ErrVoucherUseInvalid
+			return
+		}
+
+		err = tx.Model(&ploutos.Voucher{}).Where("id", voucher.ID).Updates(map[string]any{
+			"status": ploutos.VoucherStatusRedeemed,
+		}).Error
+		if err != nil {
 			return
 		}
 
