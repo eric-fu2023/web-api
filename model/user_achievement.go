@@ -6,8 +6,10 @@ import (
 )
 
 const (
-	UserAchievementIdFirstAppLoginTutorial = 1
-	UserAchievementIdFirstAppLoginReward   = 2
+	UserAchievementIdFirstAppLoginTutorial     = 1
+	UserAchievementIdFirstAppLoginReward       = 2
+	UserAchievementIdFirstDepositBonusTutorial = 3
+	UserAchievementIdFirstDepositBonusReward   = 4
 )
 
 type UserAchievement struct {
