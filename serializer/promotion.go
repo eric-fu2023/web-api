@@ -27,6 +27,7 @@ type PromotionDetail struct {
 	Image                  string            `json:"image"`
 	StartAt                int64             `json:"start_at"`
 	EndAt                  int64             `json:"end_at"`
+	RecurringDay           int64             `json:"recurring_day"`
 	ResetAt                int64             `json:"reset_at"`
 	Type                   int64             `json:"type"`
 	RewardType             int64             `json:"reward_type"`
@@ -94,6 +95,7 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		ResetAt:                s.EndAt.Unix(),
 		Type:                   p.Type,
 		RewardType:             p.RewardType,
+		RecurringDay:           p.RecurringDay,
 		RewardDistributionType: p.RewardDistributionType,
 		ClaimStatus:            cl,
 		PromotionProgress:      BuildPromotionProgress(progress, p.GetRewardDetails()),
