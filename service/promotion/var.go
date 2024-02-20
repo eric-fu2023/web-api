@@ -32,6 +32,7 @@ var promotionTxTypeMapping = map[int64]int64{
 	models.PromotionTypeFirstDepIns: models.TransactionTypeBetIns,
 	models.PromotionTypeReDepIns:    models.TransactionTypeBetIns,
 	models.PromotionTypeBeginnerB:   models.TransactionTypeBeginnerB,
+	models.PromotionTypeOneTimeDepB: models.TransactionTypeDepB,
 }
 
 var imMatchTypeMapping = map[int]int{

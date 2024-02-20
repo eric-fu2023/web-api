@@ -20,7 +20,7 @@ func (s *FinpayPaymentCallback) Handle(c *gin.Context) (err error) {
 		return
 	}
 	if !s.IsSuccess() {
-		_ = cashin.MarkOrderFailed(c, s.MerchantOrderNo, util.JSON(s))
+		err = cashin.MarkOrderFailed(c, s.MerchantOrderNo, util.JSON(s))
 		return
 	}
 	// check api response
