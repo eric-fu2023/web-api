@@ -14,15 +14,6 @@ type CashMethod struct {
 	MaxAmount   int64  `json:"max_amount"`
 }
 
-func BuildCashMethodWrapper(minAmount, maxAmount int64) func(a model.CashMethod) CashMethod {
-	return func(a model.CashMethod) CashMethod {
-		method := BuildCashMethod(a)
-		method.MinAmount = minAmount
-		method.MaxAmount = maxAmount
-		return method
-	}
-}
-
 func BuildCashMethod(a model.CashMethod) CashMethod {
 	methodType := "top-up"
 	if a.MethodType < 0 {
@@ -36,5 +27,7 @@ func BuildCashMethod(a model.CashMethod) CashMethod {
 		BaseURL:     a.BaseURL,
 		CallbackURL: a.CallbackURL,
 		AccountType: a.AccountType,
+		MinAmount:   a.MinAmount / 100,
+		MaxAmount:   a.MaxAmount / 100,
 	}
 }

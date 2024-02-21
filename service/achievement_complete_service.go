@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -13,7 +12,8 @@ import (
 var (
 	// This API is meant for achievements whose progress is tracked by FE
 	isAchievementWhitelisted = map[int64]bool{
-		model.UserAchievementIdFirstAppLoginTutorial: true,
+		model.UserAchievementIdFirstAppLoginTutorial:     true,
+		model.UserAchievementIdFirstDepositBonusTutorial: true,
 	}
 )
 
@@ -31,7 +31,7 @@ func (service *AchievementCompleteService) Complete(c *gin.Context) (r serialize
 	}
 
 	err = model.CreateUserAchievement(user.ID, service.AchievementId)
-	if err != nil && !errors.Is(err, gorm.ErrDuplicatedKey) {
+	if err != nil && !errors.Is(err, model.ErrAchievementAlreadyCompleted) {
 		util.GetLoggerEntry(c).Errorf("CreateUserAchievement error: %s", err.Error())
 		r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 		return

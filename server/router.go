@@ -150,8 +150,8 @@ func NewRouter() *gin.Engine {
 		v1.GET("/games", middleware.Cache(1*time.Minute), api.GameList)
 		v1.GET("/room_chat/history", api.RoomChatHistory)
 
-		v1.GET("/promotion/list", middleware.CheckAuth(), promotion_api.GetCoverList)
-		v1.GET("/promotion/details", middleware.CheckAuth(), promotion_api.GetDetail)
+		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
+		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
 
 		saba := v1.Group("/saba")
 		{
@@ -248,7 +248,7 @@ func NewRouter() *gin.Engine {
 
 				promotion := user.Group("/promotion")
 				{
-					promotion.GET("/list", promotion_api.GetCoverList)
+					promotion.GET("/list", middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
 					promotion.GET("/details", middleware.RequestLogger("get promotion details"), promotion_api.GetDetail)
 					promotion.POST("/claim", promotion_api.PromotionClaim)
 				}
@@ -265,6 +265,7 @@ func NewRouter() *gin.Engine {
 
 				achievement := user.Group("/achievement")
 				{
+					achievement.GET("/list", api.AchievementList)
 					achievement.POST("/complete", api.AchievementComplete)
 				}
 			}

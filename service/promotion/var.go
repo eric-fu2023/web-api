@@ -24,6 +24,7 @@ var promotionOrderTypeMapping = map[int64]int64{
 	models.PromotionTypeFirstDepIns: models.CashOrderTypeBetIns,
 	models.PromotionTypeReDepIns:    models.CashOrderTypeBetIns,
 	models.PromotionTypeBeginnerB:   models.CashOrderTypeBeginnerB,
+	models.PromotionTypeOneTimeDepB: models.CashOrderTypeDepB,
 }
 
 var promotionTxTypeMapping = map[int64]int64{
@@ -32,6 +33,7 @@ var promotionTxTypeMapping = map[int64]int64{
 	models.PromotionTypeFirstDepIns: models.TransactionTypeBetIns,
 	models.PromotionTypeReDepIns:    models.TransactionTypeBetIns,
 	models.PromotionTypeBeginnerB:   models.TransactionTypeBeginnerB,
+	models.PromotionTypeOneTimeDepB: models.TransactionTypeDepB,
 }
 
 var imMatchTypeMapping = map[int]int{

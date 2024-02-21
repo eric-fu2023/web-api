@@ -72,7 +72,7 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, rewardAmount, userID int64, now time.Time) (voucher models.Voucher, err error) {
 	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, now)
 	switch p.Type {
-	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB:
+	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeOneTimeDepB:
 		//add money and insert voucher
 		// add cash order
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
@@ -86,6 +86,12 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			}
 			if p.Type == models.PromotionTypeBeginnerB {
 				err = model.CreateUserAchievement(userID, model.UserAchievementIdFirstAppLoginReward)
+				if err != nil {
+					return err
+				}
+			}
+			if p.Type == models.PromotionTypeOneTimeDepB {
+				err = model.CreateUserAchievement(userID, model.UserAchievementIdFirstDepositBonusReward)
 				if err != nil {
 					return err
 				}
@@ -152,7 +158,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		BrandID:           p.BrandID,
 		Amount:            rewardAmount,
 		// TransactionDetails
-		Name:               model.AmountReplace(v.Name, rewardAmount),
+		Name:               model.AmountReplace(v.Name, float64(rewardAmount)/100),
 		Description:        v.Description,
 		PromotionType:      v.PromotionType,
 		PromotionID:        p.ID,

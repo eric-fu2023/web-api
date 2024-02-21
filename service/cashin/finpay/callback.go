@@ -15,8 +15,12 @@ type FinpayPaymentCallback struct {
 }
 
 func (s *FinpayPaymentCallback) Handle(c *gin.Context) (err error) {
-	if !s.IsValid() || !s.IsSuccess() {
+	if !s.IsValid() {
 		err = errors.New("invalid response")
+		return
+	}
+	if !s.IsSuccess() {
+		err = cashin.MarkOrderFailed(c, s.MerchantOrderNo, util.JSON(s))
 		return
 	}
 	// check api response

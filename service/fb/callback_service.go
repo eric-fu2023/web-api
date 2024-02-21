@@ -132,6 +132,13 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 			return
 		}
 
+		err = tx.Model(&ploutos.Voucher{}).Where("id", voucher.ID).Updates(map[string]any{
+			"status": ploutos.VoucherStatusRedeemed,
+		}).Error
+		if err != nil {
+			return
+		}
+
 		rewardAmount := voucher.Amount
 		loss := betAmount - c.Transaction.Amount
 		if loss < rewardAmount {

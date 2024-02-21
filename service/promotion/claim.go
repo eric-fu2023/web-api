@@ -1,6 +1,7 @@
 package promotion
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -30,7 +31,6 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 	deviceInfo, _ := util.GetDeviceInfo(c)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
-
 	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -43,42 +43,62 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
+	voucher, err := Claim(c, now, promotion, session, user)
+	if err != nil {
+		switch err.Error() {
+		case "double_claim":
+			r = serializer.Err(c, p, serializer.CodeGeneralError, "Already Claimed", err)
+		case "unavailable_for_now":
+			r = serializer.Err(c, p, serializer.CodeGeneralError, "Unavailable for now", err)
+		case "nothing_to_claim":
+			r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("nothing_to_claim"), err)
+		default:
+			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		}
+		return
+	}
+	r.Data = serializer.BuildVoucher(voucher, deviceInfo.Platform)
+	return
+}
+
+func Claim(c context.Context, now time.Time, promotion models.Promotion, session models.PromotionSession, user model.User) (voucher models.Voucher, err error) {
+	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userPromotionSessionClaimKey, user.ID, session.ID), redsync.WithExpiry(5*time.Second))
+	mutex.Lock()
+	defer mutex.Unlock()
 	var (
 		progress    int64
 		reward      int64
 		claimStatus serializer.ClaimStatus
 		template    models.VoucherTemplate
 	)
-	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userPromotionSessionClaimKey, user.ID, session.ID), redsync.WithExpiry(5*time.Second))
-	mutex.Lock()
-	defer mutex.Unlock()
 	claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
 	if claimStatus.HasClaimed {
 		err = errors.New("double_claim")
-		r = serializer.Err(c, p, serializer.CodeGeneralError, "Already Claimed", err)
+		// r = serializer.Err(c, p, serializer.CodeGeneralError, "Already Claimed", err)
 		return
 	}
 	if time.Unix(claimStatus.ClaimEnd, 0).Before(now) || time.Unix(claimStatus.ClaimStart, 0).After(now) {
 		err = errors.New("unavailable_for_now")
-		r = serializer.Err(c, p, serializer.CodeGeneralError, "Unavailable for now", err)
+		// r = serializer.Err(c, p, serializer.CodeGeneralError, "Unavailable for now", err)
 		return
 	}
 	progress = ProgressByType(c, promotion, session, user.ID, now)
 	reward = promotion.GetRewardDetails().GetReward(progress)
-	template, err = model.VoucherTemplateGetByPromotion(c, p.ID)
+	template, err = model.VoucherTemplateGetByPromotion(c, promotion.ID)
 	if err != nil {
-		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
 	if reward == 0 {
 		err = errors.New("nothing_to_claim")
-		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("nothing_to_claim"), err)
-	}
-	voucher, err := ClaimVoucherByType(c, promotion, session, template, reward, user.ID, now)
-	if err != nil {
-		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		// r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("nothing_to_claim"), err)
 		return
 	}
-	r.Data = serializer.BuildVoucher(voucher, deviceInfo.Platform)
+	voucher, err = ClaimVoucherByType(c, promotion, session, template, reward, user.ID, now)
+	if err != nil {
+		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		return
+	}
+	// r.Data = serializer.BuildVoucher(voucher, deviceInfo.Platform)
 	return
 }
