@@ -57,13 +57,15 @@ func ProcessTayaSyncTransaction() {
 						return
 					}
 
+					fmt.Println("Task:ProcessTayaSyncTransaction deleting redis key", redisKey)
 					_, err = cache.RedisSyncTransactionClient.Del(context.TODO(), redisKey).Result()
 					if err != nil {
 						util.Log().Error("Task:ProcessTayaSyncTransaction redis delete key error", err, orderPayRequest)
 						return
 					}
+					fmt.Println("Task:ProcessTayaSyncTransaction deleted redis key", redisKey)
 
-					go sendSettlementNotification(orderPayRequest.MerchantUserId)
+					//go sendSettlementNotification(orderPayRequest.MerchantUserId)
 				}
 			}(key, arr)
 		}
