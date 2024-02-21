@@ -32,7 +32,7 @@ func HandleOneTimeB(c context.Context, order model.CashOrder) {
 		util.GetLoggerEntry(c).Info("not in reward timeframe", order.AppliedCashInAmount)
 		return
 	}
-	amt, err := service.GetCachedConfig(context.Background(), "static_promotion_one_time_bonus_min_amount")
+	amt, err := service.GetCachedConfigBranded(context.Background(), "static_promotion_one_time_bonus_min_amount", user.BrandId)
 	if err != nil {
 		util.GetLoggerEntry(c).Error("get config error", err)
 		return
@@ -42,7 +42,7 @@ func HandleOneTimeB(c context.Context, order model.CashOrder) {
 		util.GetLoggerEntry(c).Info("insufficient amount", order.AppliedCashInAmount)
 		return
 	}
-	v, err := service.GetCachedConfig(context.Background(), "static_promotion_one_time_bonus_id")
+	v, err := service.GetCachedConfigBranded(context.Background(), "static_promotion_one_time_bonus_id", user.BrandId)
 	if err != nil {
 		util.GetLoggerEntry(c).Error("get config error", err)
 		return
