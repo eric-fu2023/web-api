@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/common"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
@@ -98,6 +100,9 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			}
 			return nil
 		})
+		if err == nil {
+			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+		}
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		//insert voucher only
 		err = model.DB.Create(&voucher).Error
@@ -134,6 +139,7 @@ func CreateCashOrder(tx *gorm.DB, voucher models.Voucher, promoType, userId, rew
 	if err != nil {
 		return err
 	}
+	common.SendUserSumSocketMsg(userId, sum.UserSum)
 	return nil
 }
 
