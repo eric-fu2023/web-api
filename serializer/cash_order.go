@@ -57,6 +57,7 @@ type GenericCashOrder struct {
 	OrderType       string `json:"order_type"`
 	// Currency    string    `json:"currency"`
 	TypeDetail string `json:"type_detail"`
+	Wager      int64  `json:"wager"`
 }
 
 func BuildGenericCashOrder(p model.CashOrder, i18n i18n.I18n) GenericCashOrder {
@@ -77,5 +78,6 @@ func BuildGenericCashOrder(p model.CashOrder, i18n i18n.I18n) GenericCashOrder {
 		EffectiveAmount: effectiveAmount / 100,
 		OrderType:       orderType,
 		TypeDetail:      detail,
+		Wager:           p.WagerChange,
 	}
 }
