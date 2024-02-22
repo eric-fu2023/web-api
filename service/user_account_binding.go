@@ -30,7 +30,13 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 
 	return serializer.Response{
 		Data: util.MapSlice(list, func(a model.UserAccountBinding) serializer.UserAccountBinding {
-			return serializer.BuildUserAccountBinding(a, conf.GetCfg().WithdrawMin/100, conf.GetCfg().WithdrawMax/100)
+			return serializer.BuildUserAccountBinding(a, serializer.Modifier(serializer.BuildCashMethod, func(cm serializer.CashMethod) serializer.CashMethod {
+				firstTopup, err := model.FirstTopup(c, user.ID)
+				if err != nil || len(firstTopup.ID) == 0 {
+					cm.MinAmount = conf.GetCfg().WithdrawMinNoDeposit / 100
+				}
+				return cm
+			}))
 		}),
 	}, nil
 }
