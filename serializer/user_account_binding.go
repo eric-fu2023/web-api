@@ -12,7 +12,7 @@ type UserAccountBinding struct {
 	Method        CashMethod `json:"method"`
 }
 
-func BuildUserAccountBinding(a model.UserAccountBinding, minAmount, maxAmount int64) UserAccountBinding {
+func BuildUserAccountBinding(a model.UserAccountBinding, buildCashMethod func(a model.CashMethod) CashMethod) UserAccountBinding {
 	return UserAccountBinding{
 		ID:            a.ID,
 		UserID:        a.UserID,
@@ -20,6 +20,6 @@ func BuildUserAccountBinding(a model.UserAccountBinding, minAmount, maxAmount in
 		AccountName:   a.AccountName,
 		AccountNumber: a.AccountNumber,
 		IsActive:      a.IsActive,
-		Method:        BuildCashMethod(*a.CashMethod),
+		Method:        buildCashMethod(*a.CashMethod),
 	}
 }
