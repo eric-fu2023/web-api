@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 	"web-api/cache"
+	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -39,23 +40,28 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		return serializer.ParamErr(c, s, i18n.T("secondary_password_mismatch"), nil), err
 	}
 
-	if amount < 0 {
-		err = errors.New("illegal amount")
-		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
-	}
 	var accountBinding model.UserAccountBinding
 	err = model.DB.Where("user_id", user.ID).Where("is_active").Where("id", s.AccountBindingID).First(&accountBinding).Error
 	if err != nil {
 		return
 	}
-
 	method, err := model.CashMethod{}.GetByID(c, accountBinding.CashMethodID, brand)
 	if err != nil {
 		return
 	}
+	minAmount := method.MinAmount
 	err = processCashOutMethod(method)
 	if err != nil {
+		return
+	}
+	firstTopup, err := model.FirstTopup(c, user.ID)
+	if err != nil || len(firstTopup.ID) == 0 {
+		minAmount = conf.GetCfg().WithdrawMinNoDeposit / 100
+	}
+
+	if amount < minAmount {
+		err = errors.New("illegal amount")
+		r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("min_withdraw_unmet"), float64(minAmount)/100), err)
 		return
 	}
 
