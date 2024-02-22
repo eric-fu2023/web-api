@@ -543,3 +543,5 @@ withdraw: "Withdraw"
 deposit_bonus: "Deposit Bonus"
 bet_insurance: "Insurance"
 beginner_reward: "Welcome Bonus"
+
+min_withdraw_unmet: "Minimum withdraw amount is %f"

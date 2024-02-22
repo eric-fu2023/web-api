@@ -408,6 +408,7 @@ const (
 	Notification_Type_Bet_Placement     = "bet_transaction"
 	Notification_Type_Bet_Settlement    = "bet_settlement"
 	Notification_Type_Cash_Transaction  = "cash_transaction"
+	Notification_Type_Deposit_Bonus     = "deposit_bonus"
 
 	//DefaultBrand = 1001
 	//DefaultAgent = 1000001

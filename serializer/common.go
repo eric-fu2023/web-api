@@ -136,3 +136,13 @@ func UserSignature(userId int64) string {
 // 	}
 // 	*res = Err(c, "", CodeGeneralError, "", err)
 // }
+
+func Modifier[T, P any](mapper func(T) P, mods ...func(P) P) func(T) P {
+	return func(t T) P {
+		ret := mapper(t)
+		for _, m := range mods {
+			ret = m(ret)
+		}
+		return ret
+	}
+}
