@@ -219,14 +219,17 @@ func SyncTransactionCallback(c *gin.Context, req []callback.OrderPayRequest) (re
 
 func SyncOrdersCallback(c *gin.Context, req callback.SyncOrdersRequest) (res callback.BaseResponse, err error) {
 	go common.LogGameCallbackRequest("sync_orders", req)
-	go func(c *gin.Context, req callback.SyncOrdersRequest) {
-		coll := model.MongoDB.Collection(MONGODB_CALLBACK_SYNC_ORDERS)
-		req.CreatedAt = time.Now().UnixMilli()
-		_, e := coll.InsertOne(context.TODO(), req)
-		if e != nil {
-			util.Log().Error("mongodb error", e)
-		}
-	}(c, req)
+
+	// insert into mongodb
+	coll := model.MongoDB.Collection(MONGODB_CALLBACK_SYNC_ORDERS)
+	req.CreatedAt = time.Now().UnixMilli()
+	_, e := coll.InsertOne(context.TODO(), req)
+	if e != nil {
+		util.Log().Error("mongodb error", e)
+		res.Code = 1
+		return
+	}
+
 	go func(c *gin.Context, req callback.SyncOrdersRequest) {
 		if req.OrderStatus == 5 && req.SettleAmount == "0" {
 			var transaction model.TayaTransaction
@@ -246,16 +249,16 @@ func SyncOrdersCallback(c *gin.Context, req callback.SyncOrdersRequest) (res cal
 			jj, e := json.Marshal(obj)
 			if e != nil {
 				util.Log().Error("sync_orders settle amount 0 error", e)
+				return
 			}
 			_, e = cache.RedisSyncTransactionClient.Set(context.TODO(), fmt.Sprintf(`taya:%s:%s`, obj.MerchantUserId, obj.TransactionId), jj, 0).Result()
 			if e != nil {
 				util.Log().Error("sync_orders settle amount 0 error", e)
+				return
 			}
 		}
 	}(c, req)
-	res = callback.BaseResponse{
-		Code: 0,
-	}
+
 	return
 }
 
