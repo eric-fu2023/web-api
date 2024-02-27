@@ -151,7 +151,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	}
 	tx.Commit()
 
-	e = obj.ApplyInsuranceVoucher(gpu.UserId, betAmount, betExists)
+	e = obj.ApplyInsuranceVoucher(gpu.UserId, abs(betAmount), betExists)
 	if e != nil {
 		util.Log().Error("apply insurance voucher error: ", e.Error())
 	}

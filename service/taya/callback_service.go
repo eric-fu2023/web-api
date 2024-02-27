@@ -111,7 +111,7 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 		filter := bson.M{"id": c.Transaction.BusinessId}
 		opts := options.Find()
 		opts.SetLimit(1)
-		opts.SetSort(bson.D{{"timestamp", -1}})
+		opts.SetSort(bson.D{{"createdAt", -1}})
 		cursor, err := coll.Find(ctx, filter, opts)
 		for cursor.Next(ctx) {
 			cursor.Decode(&order)
