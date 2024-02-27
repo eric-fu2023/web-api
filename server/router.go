@@ -137,7 +137,7 @@ func NewRouter() *gin.Engine {
 
 		v1.GET("/config", middleware.Cache(10*time.Minute), api.Config)
 		v1.GET("/app_update", middleware.Cache(1*time.Minute), api.AppUpdate)
-		v1.GET("/announcements", middleware.Cache(1*time.Minute), api.Announcements)
+		v1.GET("/announcements", middleware.CheckAuth(), middleware.CacheForGuest(1*time.Minute), api.Announcements)
 		v1.GET("/categories", middleware.Cache(1*time.Minute), api.CategoryList)
 		v1.GET("/vendors", middleware.Cache(1*time.Minute), api.VendorList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)

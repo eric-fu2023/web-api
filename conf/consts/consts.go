@@ -113,6 +113,7 @@ var (
 	AnnouncementType = map[string]int64{
 		"text":  1,
 		"image": 2,
+		"audio": 3,
 	}
 	CashOrderStatus = map[int64]string{
 		1: "Pending",

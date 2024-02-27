@@ -3,7 +3,6 @@ package service
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
-	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -42,27 +41,21 @@ type AnnouncementsService struct {
 func (service *AnnouncementsService) Get(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	var announcements []ploutos.Announcement
+	_, isUser := c.Get("user")
 	brand := c.MustGet(`_brand`).(int)
 	//agent := c.MustGet(`_agent`).(int)
-	err = model.DB.Scopes(model.ByBrandAndPlatform(int64(brand), service.Platform.Platform), model.ByTimeRange, model.ByStatus, model.SortDesc).Find(&announcements).Error
+	loginStatus := 1
+	if isUser {
+		loginStatus = 2
+	}
+	err = model.DB.Scopes(model.ByBrandAndPlatform(int64(brand), service.Platform.Platform), model.ByTimeRange, model.ByStatus, model.SortDesc).
+		Where(`login_status = 0 OR login_status = ?`, loginStatus).Find(&announcements).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
-	var texts []string
-	var images []serializer.ImageAnnouncement
-	for _, a := range announcements {
-		if a.Type == consts.AnnouncementType["text"] {
-			texts = append(texts, a.Text)
-		} else if a.Type == consts.AnnouncementType["image"] {
-			images = append(images, serializer.BuildImageAnnouncement(a))
-		}
-	}
 	r = serializer.Response{
-		Data: map[string]interface{}{
-			"texts":  texts,
-			"images": images,
-		},
+		Data: serializer.BuildAnnouncements(announcements),
 	}
 	return
 }

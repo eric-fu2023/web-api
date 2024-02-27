@@ -8,7 +8,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240206050245-4a4aa02a84a2
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240219075628-32fe3a79b397
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240223102321-14cb9178f205
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240226094011-bc377c6e312b
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240205103854-a1c5a708f752
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
@@ -33,7 +33,7 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.9.3
 	go.mongodb.org/mongo-driver v1.11.2
-	golang.org/x/crypto v0.19.0
+	golang.org/x/crypto v0.20.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
 	golang.org/x/sys v0.17.0
 	golang.org/x/text v0.14.0
@@ -133,7 +133,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/image v0.14.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
