@@ -250,7 +250,7 @@ func NewRouter() *gin.Engine {
 				{
 					promotion.GET("/list", middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
 					promotion.GET("/details", middleware.RequestLogger("get promotion details"), promotion_api.GetDetail)
-					promotion.POST("/claim", promotion_api.PromotionClaim)
+					promotion.POST("/claim", middleware.RequestLogger("promotion claim"), promotion_api.PromotionClaim)
 				}
 
 				voucher := user.Group("/voucher")
