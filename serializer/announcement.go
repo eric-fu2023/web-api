@@ -7,9 +7,10 @@ import (
 )
 
 type Announcements struct {
-	Texts  []string            `json:"texts"`
-	Images []ImageAnnouncement `json:"images"`
-	Audios []AudioAnnouncement `json:"audios"`
+	Texts    []string            `json:"texts,omitempty"`
+	Images   []ImageAnnouncement `json:"images,omitempty"`
+	Audios   []AudioAnnouncement `json:"audios,omitempty"`
+	Overlays []string            `json:"overlays,omitempty"`
 }
 
 type ImageAnnouncement struct {
@@ -18,8 +19,9 @@ type ImageAnnouncement struct {
 }
 
 type AudioAnnouncement struct {
-	Text  string                 `json:"text"`
-	Image string                 `json:"image"`
+	Text  string                 `json:"text,omitempty"`
+	Image string                 `json:"image,omitempty"`
+	Url   string                 `json:"url,omitempty"`
 	Data  map[string]interface{} `json:"data"`
 }
 
@@ -31,6 +33,8 @@ func BuildAnnouncements(a []ploutos.Announcement) (b Announcements) {
 			b.Images = append(b.Images, BuildImageAnnouncement(announcement))
 		} else if announcement.Type == consts.AnnouncementType["audio"] {
 			b.Audios = append(b.Audios, BuildAudioAnnouncement(announcement))
+		} else if announcement.Type == consts.AnnouncementType["overlay"] {
+			b.Overlays = append(b.Overlays, announcement.Text)
 		}
 	}
 	return
@@ -48,6 +52,7 @@ func BuildAudioAnnouncement(a ploutos.Announcement) (b AudioAnnouncement) {
 	b = AudioAnnouncement{
 		Text:  a.Text,
 		Image: Url(a.Image),
+		Url:   a.Url,
 	}
 	var data map[string]interface{}
 	if e := json.Unmarshal(a.Data, &data); e == nil {
