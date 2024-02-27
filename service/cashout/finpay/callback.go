@@ -20,6 +20,7 @@ func (s *FinpayTransferCallback) Handle(c *gin.Context) (err error) {
 		err = errors.New("invalid request")
 		return
 	}
+	defer model.CashOrder{}.MarkCallbackAt(c, s.MerchantOrderNo, model.DB)
 	if s.IsSucess() {
 		_, err = cashout.CloseCashOutOrder(c, s.MerchantOrderNo, int64(s.Amount), 0, 0, util.JSON(s), "", model.DB)
 	} else if s.IsFailed() {

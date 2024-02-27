@@ -1,12 +1,13 @@
 package cashin
 
 import (
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"gorm.io/plugin/dbresolver"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 // check api response
