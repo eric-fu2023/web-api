@@ -8,21 +8,16 @@ import (
 
 type Announcements struct {
 	Texts    []string            `json:"texts,omitempty"`
-	Images   []ImageAnnouncement `json:"images,omitempty"`
-	Audios   []AudioAnnouncement `json:"audios,omitempty"`
-	Overlays []string            `json:"overlays,omitempty"`
+	Images   []OtherAnnouncement `json:"images,omitempty"`
+	Audios   []OtherAnnouncement `json:"audios,omitempty"`
+	Overlays []OtherAnnouncement `json:"overlays,omitempty"`
 }
 
-type ImageAnnouncement struct {
-	Image string `json:"image"`
-	Url   string `json:"url"`
-}
-
-type AudioAnnouncement struct {
+type OtherAnnouncement struct {
 	Text  string                 `json:"text,omitempty"`
 	Image string                 `json:"image,omitempty"`
 	Url   string                 `json:"url,omitempty"`
-	Data  map[string]interface{} `json:"data"`
+	Data  map[string]interface{} `json:"data,omitempty"`
 }
 
 func BuildAnnouncements(a []ploutos.Announcement) (b Announcements) {
@@ -30,26 +25,18 @@ func BuildAnnouncements(a []ploutos.Announcement) (b Announcements) {
 		if announcement.Type == consts.AnnouncementType["text"] {
 			b.Texts = append(b.Texts, announcement.Text)
 		} else if announcement.Type == consts.AnnouncementType["image"] {
-			b.Images = append(b.Images, BuildImageAnnouncement(announcement))
+			b.Images = append(b.Images, BuildOtherAnnouncement(announcement))
 		} else if announcement.Type == consts.AnnouncementType["audio"] {
-			b.Audios = append(b.Audios, BuildAudioAnnouncement(announcement))
+			b.Audios = append(b.Audios, BuildOtherAnnouncement(announcement))
 		} else if announcement.Type == consts.AnnouncementType["overlay"] {
-			b.Overlays = append(b.Overlays, announcement.Text)
+			b.Overlays = append(b.Overlays, BuildOtherAnnouncement(announcement))
 		}
 	}
 	return
 }
 
-func BuildImageAnnouncement(a ploutos.Announcement) (b ImageAnnouncement) {
-	b = ImageAnnouncement{
-		Image: Url(a.Image),
-		Url:   a.Url,
-	}
-	return
-}
-
-func BuildAudioAnnouncement(a ploutos.Announcement) (b AudioAnnouncement) {
-	b = AudioAnnouncement{
+func BuildOtherAnnouncement(a ploutos.Announcement) (b OtherAnnouncement) {
+	b = OtherAnnouncement{
 		Text:  a.Text,
 		Image: Url(a.Image),
 		Url:   a.Url,
