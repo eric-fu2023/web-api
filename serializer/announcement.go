@@ -7,17 +7,17 @@ import (
 )
 
 type Announcements struct {
-	Texts    []string            `json:"texts,omitempty"`
-	Images   []OtherAnnouncement `json:"images,omitempty"`
-	Audios   []OtherAnnouncement `json:"audios,omitempty"`
-	Overlays []OtherAnnouncement `json:"overlays,omitempty"`
+	Texts  []string            `json:"texts,omitempty"`
+	Images []OtherAnnouncement `json:"images,omitempty"`
+	Others []OtherAnnouncement `json:"others,omitempty"`
 }
 
 type OtherAnnouncement struct {
-	Text  string                 `json:"text,omitempty"`
-	Image string                 `json:"image,omitempty"`
-	Url   string                 `json:"url,omitempty"`
-	Data  map[string]interface{} `json:"data,omitempty"`
+	Text         string                 `json:"text,omitempty"`
+	Image        string                 `json:"image,omitempty"`
+	Url          string                 `json:"url,omitempty"`
+	RedirectType int64                  `json:"redirect_type,omitempty"`
+	Data         map[string]interface{} `json:"data,omitempty"`
 }
 
 func BuildAnnouncements(a []ploutos.Announcement) (b Announcements) {
@@ -26,10 +26,8 @@ func BuildAnnouncements(a []ploutos.Announcement) (b Announcements) {
 			b.Texts = append(b.Texts, announcement.Text)
 		} else if announcement.Type == consts.AnnouncementType["image"] {
 			b.Images = append(b.Images, BuildOtherAnnouncement(announcement))
-		} else if announcement.Type == consts.AnnouncementType["audio"] {
-			b.Audios = append(b.Audios, BuildOtherAnnouncement(announcement))
-		} else if announcement.Type == consts.AnnouncementType["overlay"] {
-			b.Overlays = append(b.Overlays, BuildOtherAnnouncement(announcement))
+		} else {
+			b.Others = append(b.Others, BuildOtherAnnouncement(announcement))
 		}
 	}
 	return
@@ -37,9 +35,10 @@ func BuildAnnouncements(a []ploutos.Announcement) (b Announcements) {
 
 func BuildOtherAnnouncement(a ploutos.Announcement) (b OtherAnnouncement) {
 	b = OtherAnnouncement{
-		Text:  a.Text,
-		Image: Url(a.Image),
-		Url:   a.Url,
+		Text:         a.Text,
+		Image:        Url(a.Image),
+		Url:          a.Url,
+		RedirectType: int64(a.RedirectType),
 	}
 	var data map[string]interface{}
 	if e := json.Unmarshal(a.Data, &data); e == nil {
