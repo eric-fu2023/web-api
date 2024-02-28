@@ -40,7 +40,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		}
 		newCashOrderState.ActualCashInAmount = actualAmount
 		newCashOrderState.BonusCashInAmount = bonusAmount
-		newCashOrderState.EffectiveCashInAmount = newCashOrderState.AppliedCashInAmount + bonusAmount
+		newCashOrderState.EffectiveCashInAmount = actualAmount + bonusAmount
 		newCashOrderState.Notes = notes
 		newCashOrderState.WagerChange += additionalWagerChange
 		newCashOrderState.Status = 2
