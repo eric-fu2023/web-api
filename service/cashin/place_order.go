@@ -6,7 +6,6 @@ import (
 	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
-	"web-api/service"
 	"web-api/util"
 	"web-api/util/i18n"
 
@@ -66,11 +65,11 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	// create cash order
 	// create payment order
 	// err handling and return
-	_, err = service.VerifyKyc(c, user.ID)
-	if err != nil {
-		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("kyc_get_failed"), err)
-		return
-	}
+	// _, err = service.VerifyKyc(c, user.ID)
+	// if err != nil {
+	// 	r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("kyc_get_failed"), err)
+	// 	return
+	// }
 	var userSum model.UserSum
 	userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
 	if err != nil {
