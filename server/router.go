@@ -5,6 +5,7 @@ import (
 	"time"
 	"web-api/api"
 	dc_api "web-api/api/dc"
+	"web-api/api/dollar_jackpot"
 	fb_api "web-api/api/fb"
 	api_finpay "web-api/api/finpay"
 	imsb_api "web-api/api/imsb"
@@ -161,6 +162,11 @@ func NewRouter() *gin.Engine {
 		dc := v1.Group("/dc")
 		{
 			dc.GET("/fun_play", middleware.CheckAuth(), dc_api.FunPlay)
+		}
+
+		dj := v1.Group("/dollar_jackpot")
+		{
+			dj.GET("/", dollar_jackpot.DollarJackpotGet) // can't have cache due to "total" value; cache at the query
 		}
 
 		auth := v1.Group("/user")
