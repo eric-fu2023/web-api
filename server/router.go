@@ -166,7 +166,7 @@ func NewRouter() *gin.Engine {
 
 		dj := v1.Group("/dollar_jackpot")
 		{
-			dj.GET("/", dollar_jackpot.DollarJackpotGet) // can't have cache due to "total" value; cache at the query
+			dj.GET("/", dollar_jackpot_api.DollarJackpotGet) // can't have cache due to "total" value; cache at the query
 		}
 
 		auth := v1.Group("/user")
@@ -237,6 +237,11 @@ func NewRouter() *gin.Engine {
 				{
 					imsb.GET("/token", imsb_api.GetToken)
 					imsb.POST("/apply_voucher", imsb_api.ApplyVoucher)
+				}
+
+				dj := user.Group("/dollar_jackpot")
+				{
+					dj.POST("/place_order", dollar_jackpot_api.PlaceOrder)
 				}
 
 				kyc := user.Group("/kyc")

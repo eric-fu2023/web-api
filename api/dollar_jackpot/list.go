@@ -1,4 +1,4 @@
-package dollar_jackpot
+package dollar_jackpot_api
 
 import (
 	"github.com/gin-gonic/gin"

@@ -169,7 +169,7 @@ func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betE
 		return
 	}
 	betAmount, betExists = obj.GetBetAmount()
-	if !exists {
+	if !betExists {
 		return
 	}
 	absBetAmount := abs(betAmount)
