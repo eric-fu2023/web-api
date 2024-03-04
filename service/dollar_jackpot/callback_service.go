@@ -1,14 +1,16 @@
 package dollar_jackpot
 
 import (
-	"blgit.rfdev.tech/taya/game-service/dc/callback"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"time"
+	"web-api/cache"
 	"web-api/model"
+	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
@@ -74,7 +76,22 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 		BetTime:    &now,
 		Status:     4, // confirmed
 	}
-	return model.DB.Omit("id").Create(&betReport).Error
+	err = model.DB.Transaction(func(tx2 *gorm.DB) (err error) {
+		err = tx2.Omit("id").Create(&betReport).Error
+		if err != nil {
+			return err
+		}
+		r := cache.RedisClient.IncrBy(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, c.DrawId), util.MoneyInt(c.Amount))
+		if r.Err() != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return nil
 }
 
 func (c *PlaceOrder) GetAmount() int64 {
@@ -114,20 +131,42 @@ func (c *SettleOrder) GetWagerMultiplier() (value int64, exists bool) {
 }
 
 func (c *SettleOrder) GetBetAmount() (amount int64, exists bool) {
-	return 0, true
+	return util.MoneyInt(c.Amount) * 2, true
 }
 
-func Place(c *gin.Context, req PlaceOrder) (res callback.BaseResponse, err error) {
+func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) {
 	go common.LogGameCallbackRequest("dollar_jackpot_place_order", req)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	user := c.MustGet("user").(model.User)
+	brand := c.MustGet(`_brand`).(int)
+	var djd ploutos.DollarJackpotDraw
+	err = model.DB.Joins(`JOIN dollar_jackpots ON dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.status = 1 AND dollar_jackpots.brand_id = ?`, brand).
+		Where(`dollar_jackpot_draws.id`, req.DrawId).Where(`dollar_jackpot_draws.status`, 0).First(&djd).Error
+	if err != nil {
+		res = serializer.ParamErr(c, req, i18n.T("invalid_draw_id"), err)
+		return
+	}
 	req.User = &user
 	err = common.ProcessTransaction(&req)
 	if err != nil {
+		res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
-	res = callback.BaseResponse{
+	res = serializer.Response{
 		Msg: i18n.T("success"),
+	}
+	return
+}
+
+func Settle(c *gin.Context, req SettleOrder) (res serializer.Response, err error) {
+	go common.LogGameCallbackRequest("dollar_jackpot_place_order", req)
+	err = common.ProcessTransaction(&req)
+	if err != nil {
+		res = serializer.Err(c, req, serializer.CodeGeneralError, "Error", err)
+		return
+	}
+	res = serializer.Response{
+		Msg: "Success",
 	}
 	return
 }

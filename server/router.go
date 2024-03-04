@@ -92,6 +92,13 @@ func NewRouter() *gin.Engine {
 		}
 	}
 
+	if os.Getenv("GAME_DOLLAR_JACKPOT_EXPOSE_CALLBACKS") == "true" {
+		djCallback := r.Group("/dollar_jackpot")
+		{
+			djCallback.POST("/settle_order", dollar_jackpot_api.SettleOrder)
+		}
+	}
+
 	if os.Getenv("FINPAY_CALLBACK_ENABLED") == "true" {
 		fpCallback := r.Group("/callback/finpay")
 		fpCallback.POST("/payment-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayPaymentCallback)

@@ -545,3 +545,5 @@ bet_insurance: "Insurance"
 beginner_reward: "Welcome Bonus"
 
 min_withdraw_unmet: "Minimum withdraw amount is %f"
+
+invalid_draw_id: "Dollar Jackpot draw is invalid."

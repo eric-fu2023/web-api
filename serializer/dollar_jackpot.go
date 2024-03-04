@@ -8,17 +8,19 @@ import (
 )
 
 type DollarJackpot struct {
-	Name        string   `json:"name"`
-	Prize       float64  `json:"prize"`
-	Description string   `json:"description"`
-	Images      []string `json:"images,omitempty"`
+	Name           string   `json:"name"`
+	Prize          float64  `json:"prize"`
+	DescriptionWeb string   `json:"description_web"`
+	DescriptionH5  string   `json:"description_h5"`
+	Images         []string `json:"images,omitempty"`
 }
 
 func BuildDollarJackpot(c *gin.Context, a ploutos.DollarJackpot) (b DollarJackpot) {
 	b = DollarJackpot{
-		Name:        a.Name,
-		Prize:       util.MoneyFloat(a.Prize),
-		Description: Url(a.Description),
+		Name:           a.Name,
+		Prize:          util.MoneyFloat(a.Prize),
+		DescriptionWeb: Url(a.DescriptionWeb),
+		DescriptionH5:  Url(a.DescriptionH5),
 	}
 	if a.Images != nil {
 		var images []string
