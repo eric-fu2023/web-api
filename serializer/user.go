@@ -100,6 +100,21 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 	return u
 }
 
+type SimpleUser struct {
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Bio      string `json:"bio,omitempty"`
+}
+
+func BuildSimpleUser(c *gin.Context, user model.User) SimpleUser {
+	u := SimpleUser{
+		Nickname: user.Nickname,
+		Avatar:   Url(user.Avatar),
+		Bio:      user.Bio,
+	}
+	return u
+}
+
 type UserAvatar struct {
 	ID     int64  `json:"id"`
 	Avatar string `json:"avatar"`

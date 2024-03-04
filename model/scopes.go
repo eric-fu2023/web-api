@@ -58,6 +58,12 @@ func ByBrandAndPlatform(brand int64, platform int64) func(db *gorm.DB) *gorm.DB 
 	}
 }
 
+func ByBrand(brand int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(`brand_id = ? OR brand_id = 0`, brand)
+	}
+}
+
 func ByBrandAgentAndPlatform(brand int64, agent int64, platform int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Where(`brand_id = ? OR brand_id = 0`, brand).Where(`agent_id = ? OR agent_id = 0`, agent).Where(`platform = ? OR platform = 0`, platform)

@@ -5,6 +5,7 @@ import (
 	"time"
 	"web-api/api"
 	dc_api "web-api/api/dc"
+	"web-api/api/dollar_jackpot"
 	fb_api "web-api/api/fb"
 	api_finpay "web-api/api/finpay"
 	imsb_api "web-api/api/imsb"
@@ -163,6 +164,12 @@ func NewRouter() *gin.Engine {
 			dc.GET("/fun_play", middleware.CheckAuth(), dc_api.FunPlay)
 		}
 
+		dj := v1.Group("/dollar_jackpot")
+		{
+			dj.GET("/", dollar_jackpot_api.DollarJackpotGet) // can't have cache due to "total" value; cache at the query
+			dj.GET("/winners", dollar_jackpot_api.DollarJackpotWinners)
+		}
+
 		auth := v1.Group("/user")
 		{
 			userWithoutBrand := auth.Group("")
@@ -231,6 +238,11 @@ func NewRouter() *gin.Engine {
 				{
 					imsb.GET("/token", imsb_api.GetToken)
 					imsb.POST("/apply_voucher", imsb_api.ApplyVoucher)
+				}
+
+				dj := user.Group("/dollar_jackpot")
+				{
+					dj.POST("/place_order", dollar_jackpot_api.PlaceOrder)
 				}
 
 				kyc := user.Group("/kyc")
