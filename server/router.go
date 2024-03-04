@@ -5,6 +5,7 @@ import (
 	"time"
 	"web-api/api"
 	dc_api "web-api/api/dc"
+	"web-api/api/dollar_jackpot"
 	fb_api "web-api/api/fb"
 	api_finpay "web-api/api/finpay"
 	imsb_api "web-api/api/imsb"
@@ -91,6 +92,13 @@ func NewRouter() *gin.Engine {
 		}
 	}
 
+	if os.Getenv("GAME_DOLLAR_JACKPOT_EXPOSE_CALLBACKS") == "true" {
+		djCallback := r.Group("/dollar_jackpot")
+		{
+			djCallback.POST("/settle_order", dollar_jackpot_api.SettleOrder)
+		}
+	}
+
 	if os.Getenv("FINPAY_CALLBACK_ENABLED") == "true" {
 		fpCallback := r.Group("/callback/finpay")
 		fpCallback.POST("/payment-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayPaymentCallback)
@@ -137,7 +145,7 @@ func NewRouter() *gin.Engine {
 
 		v1.GET("/config", middleware.Cache(10*time.Minute), api.Config)
 		v1.GET("/app_update", middleware.Cache(1*time.Minute), api.AppUpdate)
-		v1.GET("/announcements", middleware.Cache(1*time.Minute), api.Announcements)
+		v1.GET("/announcements", middleware.CheckAuth(), middleware.CacheForGuest(1*time.Minute), api.Announcements)
 		v1.GET("/categories", middleware.Cache(1*time.Minute), api.CategoryList)
 		v1.GET("/vendors", middleware.Cache(1*time.Minute), api.VendorList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)
@@ -161,6 +169,12 @@ func NewRouter() *gin.Engine {
 		dc := v1.Group("/dc")
 		{
 			dc.GET("/fun_play", middleware.CheckAuth(), dc_api.FunPlay)
+		}
+
+		dj := v1.Group("/dollar_jackpot")
+		{
+			dj.GET("/", dollar_jackpot_api.DollarJackpotGet) // can't have cache due to "total" value; cache at the query
+			dj.GET("/winners", dollar_jackpot_api.DollarJackpotWinners)
 		}
 
 		auth := v1.Group("/user")
@@ -233,6 +247,11 @@ func NewRouter() *gin.Engine {
 					imsb.POST("/apply_voucher", imsb_api.ApplyVoucher)
 				}
 
+				dj := user.Group("/dollar_jackpot")
+				{
+					dj.POST("/place_order", dollar_jackpot_api.PlaceOrder)
+				}
+
 				kyc := user.Group("/kyc")
 				{
 					kyc.GET("", api.GetKyc)
@@ -250,7 +269,7 @@ func NewRouter() *gin.Engine {
 				{
 					promotion.GET("/list", middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
 					promotion.GET("/details", middleware.RequestLogger("get promotion details"), promotion_api.GetDetail)
-					promotion.POST("/claim", promotion_api.PromotionClaim)
+					promotion.POST("/claim", middleware.RequestLogger("promotion claim"), promotion_api.PromotionClaim)
 				}
 
 				voucher := user.Group("/voucher")

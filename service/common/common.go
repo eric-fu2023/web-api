@@ -151,7 +151,10 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	}
 	tx.Commit()
 
-	obj.ApplyInsuranceVoucher(gpu.UserId, betAmount, betExists)
+	e = obj.ApplyInsuranceVoucher(gpu.UserId, abs(betAmount), betExists)
+	if e != nil {
+		util.Log().Error("apply insurance voucher error: ", e.Error())
+	}
 
 	//SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
 	SendUserSumSocketMsg(gpu.UserId, userSum)
@@ -166,7 +169,7 @@ func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betE
 		return
 	}
 	betAmount, betExists = obj.GetBetAmount()
-	if !exists {
+	if !betExists {
 		return
 	}
 	absBetAmount := abs(betAmount)

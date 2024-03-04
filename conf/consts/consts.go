@@ -47,11 +47,13 @@ var (
 		4: "mobile",
 	}
 	GameVendor = map[string]int64{
-		"fb":   1,
-		"saba": 2,
-		"dc":   3,
-		"taya": 4,
-		"imsb": 5,
+		"fb":                 1,
+		"saba":               2,
+		"dc":                 3,
+		"taya":               4,
+		"imsb":               5,
+		"dollar_jackpot_usd": 6,
+		"dollar_jackpot_inr": 7,
 	}
 	WebSocketMessageType = map[string]int64{
 		"text":       1,
@@ -111,8 +113,10 @@ var (
 		"dota2":      103,
 	}
 	AnnouncementType = map[string]int64{
-		"text":  1,
-		"image": 2,
+		"text":    1,
+		"image":   2,
+		"audio":   3,
+		"overlay": 4,
 	}
 	CashOrderStatus = map[int64]string{
 		1: "Pending",

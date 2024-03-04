@@ -6,10 +6,14 @@ import (
 )
 
 type Game struct {
-	GameName string `json:"game_name"`
+	GameName   string `json:"game_name"`
+	SeasonName string `json:"season_name,omitempty"`
 }
 
 func BuildGame(c *gin.Context, a ploutos.Game) (b Game) {
-	b.GameName = a.GetGameName()
+	b = Game{
+		GameName:   a.GetGameName(),
+		SeasonName: a.GetSeasonName(),
+	}
 	return
 }

@@ -75,6 +75,11 @@ func (CashOrder) GetPendingWithLockWithDB(orderID string, tx *gorm.DB) (c CashOr
 	return
 }
 
+func (CashOrder) MarkCallbackAt(c context.Context, orderNumber string, txDB *gorm.DB) (err error) {
+	err = txDB.Model(&CashOrder{}).Where("id", orderNumber).Update("callback_at", time.Now()).Error
+	return
+}
+
 func (CashOrder) List(userID int64, topupOnly, withdrawOnly bool, startTime, endTime *time.Time, page, limit int, statusF string) (list []CashOrder, err error) {
 	db := DB.Debug().Scopes(Paginate(page, limit))
 	if startTime != nil {

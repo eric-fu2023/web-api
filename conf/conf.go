@@ -2,7 +2,9 @@ package conf
 
 import (
 	"github.com/gin-gonic/gin/binding"
+	"github.com/go-gorm/caches/v3"
 	"github.com/go-playground/validator/v10"
+	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	"os"
 	"strings"
@@ -54,4 +56,14 @@ func Init() {
 		v.RegisterValidation("username", util.UsernameValidation)
 		v.RegisterValidation("password", util.PasswordValidation)
 	}
+	loadGormCaches(cache.RedisClient)
+}
+
+func loadGormCaches(client *redis.Client) {
+	cachesPlugin := &caches.Caches{Conf: &caches.Config{
+		Cacher: &model.RedisCacher{
+			Redis: client,
+		},
+	}}
+	model.DB.Use(cachesPlugin)
 }
