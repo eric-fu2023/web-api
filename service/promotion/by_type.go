@@ -144,7 +144,7 @@ func CreateCashOrder(tx *gorm.DB, voucher models.Voucher, promoType, userId, rew
 }
 
 func CraftVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, rewardAmount, userID int64, now time.Time) (voucher models.Voucher) {
-	endAt := earlier(v.EndAt, now.Add(time.Duration(v.ExpiryValue)*time.Second))
+	endAt := earlier(v.EndAt, v.GetExpiryTimeStamp(now))
 	status := models.VoucherStatusReady
 	isUsable := false
 	switch p.Type {
