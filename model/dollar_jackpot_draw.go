@@ -6,5 +6,6 @@ import (
 
 type DollarJackpotDraw struct {
 	ploutos.DollarJackpotDraw
-	Total int64 `gorm:"-"`
+	Total  *int64 `gorm:"-"`
+	Winner User   `gorm:"references:WinnerId;foreignKey:ID"`
 }
