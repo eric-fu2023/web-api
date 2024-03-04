@@ -26,12 +26,12 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 	var dollarJackpotDraw model.DollarJackpotDraw
 	brand := c.MustGet(`_brand`).(int)
 	cacheInfo := model.CacheInfo{
-		Prefix: fmt.Sprintf(`query:dollar_jackpot:%d`, brand),
-		Ttl:    3,
+		Prefix: fmt.Sprintf(`query:dollar_jackpot:%d:`, brand),
+		Ttl:    10,
 	}
 	ctx := context.WithValue(context.TODO(), model.KeyCacheInfo, cacheInfo)
 	err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
-		Where(`winner_id`, 0).Order(`start_time`).
+		Where(`dollar_jackpot_draws.status`, 0).Order(`start_time`).
 		Preload(`DollarJackpot`).Limit(1).Find(&dollarJackpotDraw).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
