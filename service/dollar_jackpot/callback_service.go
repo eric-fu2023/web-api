@@ -4,6 +4,7 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -148,8 +149,28 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 	req.User = &user
 	err = common.ProcessTransaction(&req)
 	if err != nil {
-		res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
+		if !errors.Is(err, common.ErrGameVendorUserInvalid) {
+			res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("general_error"), err)
+			return
+		}
+		// if error is due to user not being registered with the game, retry registration
+		var currency ploutos.CurrencyGameVendor
+		err = model.DB.Where(`game_vendor_id`, req.GameId).Where(`currency_id`, user.CurrencyId).First(&currency).Error
+		if err != nil {
+			res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("empty_currency_id"), err)
+			return
+		}
+		var game UserRegister
+		err = game.CreateUser(user, currency.Value)
+		if err != nil {
+			res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("dollar_jackpot_create_user_failed"), err)
+			return
+		}
+		err = common.ProcessTransaction(&req)
+		if err != nil {
+			res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("general_error"), err)
+			return
+		}
 	}
 	res = serializer.Response{
 		Msg: i18n.T("success"),

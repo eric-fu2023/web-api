@@ -29,7 +29,10 @@ const NOTIFICATION_WITHDRAWAL_FAILED = "Your withdrawal transaction with the amo
 const NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE string = "Deposit Bonus Rewarded"
 const NOTIFICATION_DEPOSIT_BONUS_SUCCESS string = "Your deposit bonus with the amount of %.2f %s has been awarded."
 
-var ErrInsuffientBalance = errors.New("insufficient balance or invalid transaction")
+var (
+	ErrInsuffientBalance     = errors.New("insufficient balance or invalid transaction")
+	ErrGameVendorUserInvalid = errors.New("user not found in game_vendor_users")
+)
 
 type Platform struct {
 	Platform int64 `form:"platform" json:"platform" binding:"required"`
@@ -98,6 +101,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 
 	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(tx, obj.GetGameVendorId(), obj.GetExternalUserId())
 	if err != nil {
+		err = fmt.Errorf("%w: %w", ErrGameVendorUserInvalid, err)
 		tx.Rollback()
 		return
 	}
