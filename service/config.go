@@ -48,7 +48,7 @@ func (service *AnnouncementsService) Get(c *gin.Context) (r serializer.Response,
 	if isUser {
 		loginStatus = 2
 	}
-	err = model.DB.Scopes(model.ByBrandAndPlatform(int64(brand), service.Platform.Platform), model.ByTimeRange, model.ByStatus, model.SortDesc).
+	err = model.DB.Scopes(model.ByBrandAndPlatform(int64(brand), service.Platform.Platform), model.ByTimeRange, model.ByStatus, model.SortAsc).
 		Where(`login_status = 0 OR login_status = ?`, loginStatus).Find(&announcements).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
