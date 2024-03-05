@@ -7,9 +7,10 @@ import (
 )
 
 type Announcements struct {
-	Texts  []string            `json:"texts,omitempty"`
-	Images []OtherAnnouncement `json:"images,omitempty"`
-	Others []OtherAnnouncement `json:"others,omitempty"`
+	Texts     []string            `json:"texts,omitempty"`
+	Images    []OtherAnnouncement `json:"images,omitempty"`
+	Downloads []OtherAnnouncement `json:"downloads,omitempty"`
+	Others    []OtherAnnouncement `json:"others,omitempty"`
 }
 
 type OtherAnnouncement struct {
@@ -26,6 +27,8 @@ func BuildAnnouncements(a []ploutos.Announcement) (b Announcements) {
 			b.Texts = append(b.Texts, announcement.Text)
 		} else if announcement.Type == consts.AnnouncementType["image"] {
 			b.Images = append(b.Images, BuildOtherAnnouncement(announcement))
+		} else if announcement.Type == consts.AnnouncementType["download"] {
+			b.Downloads = append(b.Downloads, BuildOtherAnnouncement(announcement))
 		} else {
 			b.Others = append(b.Others, BuildOtherAnnouncement(announcement))
 		}

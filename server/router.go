@@ -173,7 +173,7 @@ func NewRouter() *gin.Engine {
 
 		dj := v1.Group("/dollar_jackpot")
 		{
-			dj.GET("/", dollar_jackpot_api.DollarJackpotGet) // can't have cache due to "total" value; cache at the query
+			dj.GET("/", middleware.CheckAuth(), dollar_jackpot_api.DollarJackpotGet) // can't have cache due to "total" value; cache at the query
 			dj.GET("/winners", dollar_jackpot_api.DollarJackpotWinners)
 		}
 

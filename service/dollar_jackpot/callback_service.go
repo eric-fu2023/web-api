@@ -17,7 +17,9 @@ import (
 )
 
 type Callback struct {
-	GameId int64 `json:"game_id" form:"game_id" binding:"required"`
+	GameId int64   `json:"game_id" form:"game_id" binding:"required"`
+	DrawId int64   `json:"draw_id" form:"draw_id" binding:"required"`
+	Amount float64 `json:"amount" form:"amount" binding:"required"`
 }
 
 func (c *Callback) NewCallback(userId int64) {}
@@ -27,7 +29,7 @@ func (c *Callback) GetGameVendorId() int64 {
 }
 
 func (c *Callback) GetGameTransactionId() int64 {
-	return 0
+	return c.DrawId
 }
 
 func (c *Callback) ShouldProceed() bool {
@@ -45,9 +47,7 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 
 type PlaceOrder struct {
 	Callback
-	DrawId int64       `json:"draw_id" form:"draw_id" binding:"required"`
-	Amount float64     `json:"amount" form:"amount" binding:"required"`
-	User   *model.User `json:"user"`
+	User *model.User `json:"user"`
 }
 
 func (c *PlaceOrder) GetExternalUserId() string {
@@ -75,6 +75,7 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 		Bet:        util.MoneyInt(c.Amount),
 		BetTime:    &now,
 		Status:     4, // confirmed
+		GameId:     c.DrawId,
 	}
 	err = model.DB.Transaction(func(tx2 *gorm.DB) (err error) {
 		err = tx2.Omit("id").Create(&betReport).Error
@@ -95,7 +96,7 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 }
 
 func (c *PlaceOrder) GetAmount() int64 {
-	return util.MoneyInt(c.Amount)
+	return -1 * util.MoneyInt(c.Amount)
 }
 
 func (c *PlaceOrder) GetWagerMultiplier() (value int64, exists bool) {
@@ -108,10 +109,8 @@ func (c *PlaceOrder) GetBetAmount() (amount int64, exists bool) {
 
 type SettleOrder struct {
 	Callback
-	DrawId          int64   `json:"draw_id" form:"draw_id" binding:"required"`
-	Username        string  `json:"username" form:"username" binding:"required"`
-	Amount          float64 `json:"amount" form:"amount" binding:"required"`
-	WagerMultiplier int64   `json:"wager_multiplier" form:"wager_multiplier" binding:"required"`
+	Username        string `json:"username" form:"username" binding:"required"`
+	WagerMultiplier int64  `json:"wager_multiplier" form:"wager_multiplier" binding:"required"`
 }
 
 func (c *SettleOrder) GetExternalUserId() string {

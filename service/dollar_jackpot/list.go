@@ -1,6 +1,7 @@
 package dollar_jackpot
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -55,7 +56,23 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 		tt := int64(total)
 		dollarJackpotDraw.Total = &tt
 
-		t := serializer.BuildDollarJackpotDraw(c, dollarJackpotDraw)
+		var sum struct {
+			Sum int64
+		}
+		var contribution *int64
+		u, isUser := c.Get("user")
+		if isUser {
+			user := u.(model.User)
+			err = model.DB.Model(ploutos.DollarJackpotBetReport{}).Where(`user_id`, user.ID).
+				Where(`game_id`, dollarJackpotDraw.ID).Select(`SUM(bet) as sum`).Find(&sum).Error
+			if err != nil {
+				r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+				return
+			}
+			contribution = &sum.Sum
+		}
+
+		t := serializer.BuildDollarJackpotDraw(c, dollarJackpotDraw, contribution)
 		data = &t
 	}
 	r = serializer.Response{
@@ -82,7 +99,7 @@ func (service *DollarJackpotWinnersService) List(c *gin.Context) (r serializer.R
 
 	var data []serializer.DollarJackpotDraw
 	for _, d := range dollarJackpotDraws {
-		data = append(data, serializer.BuildDollarJackpotDraw(c, d))
+		data = append(data, serializer.BuildDollarJackpotDraw(c, d, nil))
 	}
 
 	r = serializer.Response{
