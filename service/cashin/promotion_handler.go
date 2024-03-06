@@ -28,6 +28,9 @@ func HandleOneTimeB(c context.Context, order model.CashOrder) {
 		util.GetLoggerEntry(c).Error("get config error", err)
 		return
 	}
+	if len(a) == 0 {
+		return
+	}
 	if len(a) > 0 && order.CreatedAt.Sub(a[0].CreatedAt) > 1*time.Hour {
 		util.GetLoggerEntry(c).Info("not in reward timeframe", order.AppliedCashInAmount)
 		return
