@@ -61,8 +61,10 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 		}
 		var contribution *int64
 		u, isUser := c.Get("user")
+		fmt.Println("debugdebug u", u)
 		if isUser {
 			user := u.(model.User)
+			fmt.Println("debugdebug user", user)
 			err = model.DB.Model(ploutos.DollarJackpotBetReport{}).Where(`user_id`, user.ID).
 				Where(`game_id`, dollarJackpotDraw.ID).Select(`SUM(bet) as sum`).Find(&sum).Error
 			if err != nil {
