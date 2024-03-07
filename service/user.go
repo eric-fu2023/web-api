@@ -25,13 +25,12 @@ import (
 var (
 	ErrEmptyCurrencyId           = errors.New("empty currency id")
 	GameVendorUserRegisterStruct = map[string]common.UserRegisterInterface{
-		"taya":               &taya.UserRegister{},
-		"fb":                 &fb.UserRegister{},
-		"saba":               &saba.UserRegister{},
-		"dc":                 &dc.UserRegister{},
-		"imsb":               &imsb.UserRegister{},
-		"dollar_jackpot_usd": &dollar_jackpot.UserRegister{Game: "dollar_jackpot_usd"},
-		"dollar_jackpot_inr": &dollar_jackpot.UserRegister{Game: "dollar_jackpot_inr"},
+		"taya":           &taya.UserRegister{},
+		"fb":             &fb.UserRegister{},
+		"saba":           &saba.UserRegister{},
+		"dc":             &dc.UserRegister{},
+		"imsb":           &imsb.UserRegister{},
+		"dollar_jackpot": &dollar_jackpot.UserRegister{},
 	}
 )
 

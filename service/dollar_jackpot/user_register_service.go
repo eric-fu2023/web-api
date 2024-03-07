@@ -10,13 +10,11 @@ import (
 var ErrVendorRegister = errors.New("register user with dollar jackpot failed")
 var ErrOthers = errors.New("dollar jackpot create user failed")
 
-type UserRegister struct {
-	Game string
-}
+type UserRegister struct{}
 
 func (c *UserRegister) CreateUser(user model.User, currency string) (err error) {
 	gpu := ploutos.GameVendorUser{
-		GameVendorId:     consts.GameVendor[c.Game],
+		GameVendorId:     consts.GameVendor["dollar_jackpot"],
 		UserId:           user.ID,
 		ExternalUserId:   user.Username,
 		ExternalCurrency: currency,

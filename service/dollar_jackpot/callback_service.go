@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"time"
 	"web-api/cache"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -18,7 +19,6 @@ import (
 )
 
 type Callback struct {
-	GameId int64   `json:"game_id" form:"game_id" binding:"required"`
 	DrawId int64   `json:"draw_id" form:"draw_id" binding:"required"`
 	Amount float64 `json:"amount" form:"amount" binding:"required"`
 }
@@ -26,7 +26,7 @@ type Callback struct {
 func (c *Callback) NewCallback(userId int64) {}
 
 func (c *Callback) GetGameVendorId() int64 {
-	return c.GameId
+	return consts.GameVendor["dollar_jackpot"]
 }
 
 func (c *Callback) GetGameTransactionId() int64 {
@@ -66,17 +66,16 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 		return err
 	}
 	now := time.Now().UTC()
-	businessId := fmt.Sprintf(`%d%d%d%d`, c.GameId, c.DrawId, c.User.ID, now.Unix())
+	businessId := fmt.Sprintf(`%d%d%d`, c.DrawId, c.User.ID, now.Unix())
 	betReport := ploutos.DollarJackpotBetReport{
 		UserId:     c.User.ID,
 		OrderId:    "DJ" + businessId,
 		BusinessId: businessId,
-		GameType:   c.GameId,
+		GameType:   c.DrawId,
 		InfoJson:   j,
 		Bet:        util.MoneyInt(c.Amount),
 		BetTime:    &now,
 		Status:     4, // confirmed
-		GameId:     c.DrawId,
 	}
 	err = model.DB.Transaction(func(tx2 *gorm.DB) (err error) {
 		err = tx2.Omit("id").Create(&betReport).Error
@@ -155,7 +154,7 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 		}
 		// if error is due to user not being registered with the game, retry registration
 		var currency ploutos.CurrencyGameVendor
-		err = model.DB.Where(`game_vendor_id`, req.GameId).Where(`currency_id`, user.CurrencyId).First(&currency).Error
+		err = model.DB.Where(`game_vendor_id`, consts.GameVendor["dollar_jackpot"]).Where(`currency_id`, user.CurrencyId).First(&currency).Error
 		if err != nil {
 			res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("empty_currency_id"), err)
 			return

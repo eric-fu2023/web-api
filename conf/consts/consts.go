@@ -47,13 +47,12 @@ var (
 		4: "mobile",
 	}
 	GameVendor = map[string]int64{
-		"fb":                 1,
-		"saba":               2,
-		"dc":                 3,
-		"taya":               4,
-		"imsb":               5,
-		"dollar_jackpot_usd": 6,
-		"dollar_jackpot_inr": 7,
+		"fb":             1,
+		"saba":           2,
+		"dc":             3,
+		"taya":           4,
+		"imsb":           5,
+		"dollar_jackpot": 6,
 	}
 	WebSocketMessageType = map[string]int64{
 		"text":       1,
