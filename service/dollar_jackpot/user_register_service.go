@@ -3,6 +3,7 @@ package dollar_jackpot
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
+	"gorm.io/gorm"
 	"web-api/conf/consts"
 	"web-api/model"
 )
@@ -21,6 +22,9 @@ func (c *UserRegister) CreateUser(user model.User, currency string) (err error) 
 	}
 	err = model.DB.Save(&gpu).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			err = c.VendorRegisterError()
+		}
 		return
 	}
 	return
