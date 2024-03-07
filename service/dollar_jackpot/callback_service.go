@@ -19,8 +19,8 @@ import (
 )
 
 type Callback struct {
-	DrawId int64   `json:"draw_id" form:"draw_id" binding:"required"`
-	Amount float64 `json:"amount" form:"amount" binding:"required"`
+	Amount *float64 `json:"amount" form:"amount" binding:"required"`
+	DrawId int64    `json:"draw_id"`
 }
 
 func (c *Callback) NewCallback(userId int64) {}
@@ -71,18 +71,19 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 		UserId:     c.User.ID,
 		OrderId:    "DJ" + businessId,
 		BusinessId: businessId,
-		GameType:   c.DrawId,
+		GameType:   consts.GameVendor["dollar_jackpot"],
 		InfoJson:   j,
-		Bet:        util.MoneyInt(c.Amount),
+		Bet:        util.MoneyInt(*c.Amount),
 		BetTime:    &now,
 		Status:     4, // confirmed
+		GameId:     c.DrawId,
 	}
 	err = model.DB.Transaction(func(tx2 *gorm.DB) (err error) {
 		err = tx2.Omit("id").Create(&betReport).Error
 		if err != nil {
 			return err
 		}
-		r := cache.RedisClient.IncrBy(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, c.DrawId), util.MoneyInt(c.Amount))
+		r := cache.RedisClient.IncrBy(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, c.DrawId), util.MoneyInt(*c.Amount))
 		if r.Err() != nil {
 			return err
 		}
@@ -96,7 +97,7 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 }
 
 func (c *PlaceOrder) GetAmount() int64 {
-	return -1 * util.MoneyInt(c.Amount)
+	return -1 * util.MoneyInt(*c.Amount)
 }
 
 func (c *PlaceOrder) GetWagerMultiplier() (value int64, exists bool) {
@@ -109,8 +110,10 @@ func (c *PlaceOrder) GetBetAmount() (amount int64, exists bool) {
 
 type SettleOrder struct {
 	Callback
+	BusinessId      string `json:"business_id" form:"business_id" binding:"required"`
 	Username        string `json:"username" form:"username" binding:"required"`
 	WagerMultiplier int64  `json:"wager_multiplier" form:"wager_multiplier" binding:"required"`
+	BetAmount       int64  `json:"bet_amount"`
 }
 
 func (c *SettleOrder) GetExternalUserId() string {
@@ -122,15 +125,21 @@ func (c *SettleOrder) SaveGameTransaction(tx *gorm.DB) error {
 }
 
 func (c *SettleOrder) GetAmount() int64 {
-	return util.MoneyInt(c.Amount)
+	return util.MoneyInt(*c.Amount)
 }
 
 func (c *SettleOrder) GetWagerMultiplier() (value int64, exists bool) {
+	if *c.Amount == 0 { // lost bets
+		return -1, true
+	}
 	return c.WagerMultiplier, true
 }
 
 func (c *SettleOrder) GetBetAmount() (amount int64, exists bool) {
-	return util.MoneyInt(c.Amount) * 2, true
+	if *c.Amount == 0 { // lost bets
+		return c.BetAmount, true
+	}
+	return util.MoneyInt(*c.Amount) * 2, true // won bets; c.amount * 2 because the equation in processTransaction is betAmount - winAmount
 }
 
 func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) {
@@ -179,9 +188,17 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 
 func Settle(c *gin.Context, req SettleOrder) (res serializer.Response, err error) {
 	go common.LogGameCallbackRequest("dollar_jackpot_place_order", req)
+	var br ploutos.DollarJackpotBetReport
+	err = model.DB.Where(`business_id`, req.BusinessId).First(&br).Error
+	if err != nil {
+		res = serializer.Err(c, req, serializer.CodeGeneralError, "dollar jackpot settle error", err)
+		return
+	}
+	req.DrawId = br.GameId
+	req.BetAmount = br.Bet
 	err = common.ProcessTransaction(&req)
 	if err != nil {
-		res = serializer.Err(c, req, serializer.CodeGeneralError, "Error", err)
+		res = serializer.Err(c, req, serializer.CodeGeneralError, "dollar jackpot settle error", err)
 		return
 	}
 	res = serializer.Response{
