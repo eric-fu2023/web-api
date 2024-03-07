@@ -20,17 +20,12 @@ import (
 
 type Callback struct {
 	Amount *float64 `json:"amount" form:"amount" binding:"required"`
-	DrawId int64    `json:"draw_id"`
 }
 
 func (c *Callback) NewCallback(userId int64) {}
 
 func (c *Callback) GetGameVendorId() int64 {
 	return consts.GameVendor["dollar_jackpot"]
-}
-
-func (c *Callback) GetGameTransactionId() int64 {
-	return c.DrawId
 }
 
 func (c *Callback) ShouldProceed() bool {
@@ -48,11 +43,16 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 
 type PlaceOrder struct {
 	Callback
-	User *model.User `json:"user"`
+	DrawId int64       `json:"draw_id" form:"draw_id" binding:"required"`
+	User   *model.User `json:"user"`
 }
 
 func (c *PlaceOrder) GetExternalUserId() string {
 	return c.User.Username
+}
+
+func (c *PlaceOrder) GetGameTransactionId() int64 {
+	return c.DrawId
 }
 
 func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
@@ -114,10 +114,15 @@ type SettleOrder struct {
 	Username        string `json:"username" form:"username" binding:"required"`
 	WagerMultiplier int64  `json:"wager_multiplier" form:"wager_multiplier" binding:"required"`
 	BetAmount       int64  `json:"bet_amount"`
+	DrawId          int64  `json:"draw_id"`
 }
 
 func (c *SettleOrder) GetExternalUserId() string {
 	return c.Username
+}
+
+func (c *SettleOrder) GetGameTransactionId() int64 {
+	return c.DrawId
 }
 
 func (c *SettleOrder) SaveGameTransaction(tx *gorm.DB) error {
@@ -189,7 +194,7 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 func Settle(c *gin.Context, req SettleOrder) (res serializer.Response, err error) {
 	go common.LogGameCallbackRequest("dollar_jackpot_place_order", req)
 	var br ploutos.DollarJackpotBetReport
-	err = model.DB.Where(`business_id`, req.BusinessId).First(&br).Error
+	err = model.DB.Where(`business_id`, req.BusinessId).Where(`status`, 4).First(&br).Error // 4: unsettled
 	if err != nil {
 		res = serializer.Err(c, req, serializer.CodeGeneralError, "dollar jackpot settle error", err)
 		return
