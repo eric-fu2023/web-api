@@ -65,7 +65,6 @@ func CheckAuth() gin.HandlerFunc {
 func doAuth(c *gin.Context, getUser bool, checkBrand bool) (err error) {
 	const BEARER_SCHEMA = "Bearer"
 	authHeader := c.GetHeader("Authorization")
-	fmt.Println("debugdebug header", authHeader)
 	if authHeader == "" {
 		err = errors.New("no Authorization header")
 		return
