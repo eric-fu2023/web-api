@@ -18,9 +18,7 @@ import (
 	"web-api/util/i18n"
 )
 
-type Callback struct {
-	Amount *float64 `json:"amount" form:"amount" binding:"required"`
-}
+type Callback struct{}
 
 func (c *Callback) NewCallback(userId int64) {}
 
@@ -43,6 +41,7 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 
 type PlaceOrder struct {
 	Callback
+	Amount float64     `json:"amount" form:"amount" binding:"required"`
 	DrawId int64       `json:"draw_id" form:"draw_id" binding:"required"`
 	User   *model.User `json:"user"`
 }
@@ -73,7 +72,7 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 		BusinessId:   businessId,
 		GameType:     consts.GameVendor["dollar_jackpot"],
 		InfoJson:     j,
-		Bet:          util.MoneyInt(*c.Amount),
+		Bet:          util.MoneyInt(c.Amount),
 		BetTime:      &now,
 		Status:       4, // confirmed
 		GameId:       c.DrawId,
@@ -84,7 +83,7 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 		if err != nil {
 			return err
 		}
-		r := cache.RedisClient.IncrBy(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, c.DrawId), util.MoneyInt(*c.Amount))
+		r := cache.RedisClient.IncrBy(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, c.DrawId), util.MoneyInt(c.Amount))
 		if r.Err() != nil {
 			return err
 		}
@@ -98,7 +97,7 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 }
 
 func (c *PlaceOrder) GetAmount() int64 {
-	return -1 * util.MoneyInt(*c.Amount)
+	return -1 * util.MoneyInt(c.Amount)
 }
 
 func (c *PlaceOrder) GetWagerMultiplier() (value int64, exists bool) {
@@ -111,11 +110,12 @@ func (c *PlaceOrder) GetBetAmount() (amount int64, exists bool) {
 
 type SettleOrder struct {
 	Callback
-	BusinessId      string `json:"business_id" form:"business_id" binding:"required"`
-	Username        string `json:"username" form:"username" binding:"required"`
-	WagerMultiplier int64  `json:"wager_multiplier" form:"wager_multiplier" binding:"required"`
-	BetAmount       int64  `json:"bet_amount"`
-	DrawId          int64  `json:"draw_id"`
+	Amount          *float64 `json:"amount" form:"amount" binding:"required"`
+	BusinessId      string   `json:"business_id" form:"business_id" binding:"required"`
+	Username        string   `json:"username" form:"username" binding:"required"`
+	WagerMultiplier int64    `json:"wager_multiplier" form:"wager_multiplier" binding:"required"`
+	BetAmount       int64    `json:"bet_amount"`
+	DrawId          int64    `json:"draw_id"`
 }
 
 func (c *SettleOrder) GetExternalUserId() string {
@@ -170,7 +170,7 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 	}
 	if djd.DollarJackpot != nil {
 		limit := float64(djd.DollarJackpot.Prize) * model.ContributionLimitPercent
-		totalContrib := sum.Sum + util.MoneyInt(*req.Amount)
+		totalContrib := sum.Sum + util.MoneyInt(req.Amount)
 		if limit < float64(totalContrib) {
 			res = serializer.ParamErr(c, req, i18n.T("contribution_limit_reached"), err)
 			return
