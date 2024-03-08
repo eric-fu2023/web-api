@@ -68,15 +68,16 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 	now := time.Now().UTC()
 	businessId := fmt.Sprintf(`%d%d%d`, c.DrawId, c.User.ID, now.Unix())
 	betReport := ploutos.DollarJackpotBetReport{
-		UserId:     c.User.ID,
-		OrderId:    "DJ" + businessId,
-		BusinessId: businessId,
-		GameType:   consts.GameVendor["dollar_jackpot"],
-		InfoJson:   j,
-		Bet:        util.MoneyInt(*c.Amount),
-		BetTime:    &now,
-		Status:     4, // confirmed
-		GameId:     c.DrawId,
+		UserId:       c.User.ID,
+		OrderId:      "DJ" + businessId,
+		BusinessId:   businessId,
+		GameType:     consts.GameVendor["dollar_jackpot"],
+		InfoJson:     j,
+		Bet:          util.MoneyInt(*c.Amount),
+		BetTime:      &now,
+		Status:       4, // confirmed
+		GameId:       c.DrawId,
+		MaxWinAmount: fmt.Sprintf(`%d`, djd.DollarJackpot.Prize),
 	}
 	err = model.DB.Transaction(func(tx2 *gorm.DB) (err error) {
 		err = tx2.Omit("id").Create(&betReport).Error

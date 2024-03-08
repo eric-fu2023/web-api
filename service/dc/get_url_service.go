@@ -79,7 +79,8 @@ func (service *GetUrlService) Get(c *gin.Context) (res serializer.Response, err 
 	if lang == "zh" {
 		lang = "zh_hans"
 	}
-	cc := strings.ToUpper(c.MustGet("_country_code").(string))
+	//cc := strings.ToUpper(c.MustGet("_country_code").(string))
+	cc := "IN" // default to india
 	r, err := client.LoginGame(user.Username, token, gameCode, gpu.ExternalCurrency, lang, consts.PlatformIdToDcPlatformId[service.Platform.Platform], cc, "", &service.Fullscreen)
 	if err != nil {
 		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
