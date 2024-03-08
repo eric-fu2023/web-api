@@ -153,11 +153,27 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 	user := c.MustGet("user").(model.User)
 	brand := c.MustGet(`_brand`).(int)
 	var djd ploutos.DollarJackpotDraw
-	err = model.DB.Joins(`JOIN dollar_jackpots ON dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.status = 1 AND dollar_jackpots.brand_id = ?`, brand).
+	//err = model.DB.Joins(`JOIN dollar_jackpots ON dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.status = 1 AND dollar_jackpots.brand_id = ?`, brand).
+	//	Where(`dollar_jackpot_draws.id`, req.DrawId).Where(`dollar_jackpot_draws.status`, 0).First(&djd).Error
+	err = model.DB.InnerJoins(`DollarJackpot`, model.DB.Where(&ploutos.DollarJackpot{Status: 1, BrandId: int64(brand)})).
 		Where(`dollar_jackpot_draws.id`, req.DrawId).Where(`dollar_jackpot_draws.status`, 0).First(&djd).Error
 	if err != nil {
 		res = serializer.ParamErr(c, req, i18n.T("invalid_draw_id"), err)
 		return
+	}
+	var sum model.ContributionSum
+	err = model.DB.Model(ploutos.DollarJackpotBetReport{}).Scopes(model.GetContribution(user.ID, djd.ID)).Find(&sum).Error
+	if err != nil {
+		res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+	if djd.DollarJackpot != nil {
+		limit := float64(djd.DollarJackpot.Prize) * model.ContributionLimitPercent
+		totalContrib := sum.Sum + util.MoneyInt(*req.Amount)
+		if limit < float64(totalContrib) {
+			res = serializer.ParamErr(c, req, i18n.T("contribution_limit_reached"), err)
+			return
+		}
 	}
 	req.User = &user
 	err = common.ProcessTransaction(&req)

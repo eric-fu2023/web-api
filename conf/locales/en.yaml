@@ -548,3 +548,4 @@ beginner_reward: "Welcome Bonus"
 min_withdraw_unmet: "Minimum withdraw amount is %f"
 
 invalid_draw_id: "Dollar Jackpot draw is invalid."
+contribution_limit_reached: "You have reached the contribution limit for this draw."

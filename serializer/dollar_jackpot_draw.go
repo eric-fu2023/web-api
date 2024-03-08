@@ -7,14 +7,15 @@ import (
 )
 
 type DollarJackpotDraw struct {
-	Id            int64          `json:"id"`
-	Name          string         `json:"name"`
-	Total         *float64       `json:"total,omitempty"`
-	Contribution  *float64       `json:"contribution,omitempty"`
-	StartTimeTs   int64          `json:"start_time_ts"`
-	EndTimeTs     int64          `json:"end_time_ts"`
-	DollarJackpot *DollarJackpot `json:"dollar_jackpot,omitempty"`
-	Winner        *SimpleUser    `json:"winner,omitempty"`
+	Id                int64          `json:"id"`
+	Name              string         `json:"name"`
+	Total             *float64       `json:"total,omitempty"`
+	Contribution      *float64       `json:"contribution,omitempty"`
+	ContributionLimit *float64       `json:"contribution_limit,omitempty"`
+	StartTimeTs       int64          `json:"start_time_ts"`
+	EndTimeTs         int64          `json:"end_time_ts"`
+	DollarJackpot     *DollarJackpot `json:"dollar_jackpot,omitempty"`
+	Winner            *SimpleUser    `json:"winner,omitempty"`
 }
 
 func BuildDollarJackpotDraw(c *gin.Context, a model.DollarJackpotDraw, contribution *int64) (b DollarJackpotDraw) {
@@ -31,6 +32,8 @@ func BuildDollarJackpotDraw(c *gin.Context, a model.DollarJackpotDraw, contribut
 	if a.DollarJackpot != nil {
 		t := BuildDollarJackpot(c, *a.DollarJackpot)
 		b.DollarJackpot = &t
+		limit := float64(a.DollarJackpot.Prize/100) * model.ContributionLimitPercent
+		b.ContributionLimit = &limit
 	}
 	if a.Winner.ID != 0 {
 		t := BuildSimpleUser(c, a.Winner)
