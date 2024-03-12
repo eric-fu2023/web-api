@@ -32,8 +32,12 @@ func BuildDollarJackpotDraw(c *gin.Context, a model.DollarJackpotDraw, contribut
 	if a.DollarJackpot != nil {
 		t := BuildDollarJackpot(c, *a.DollarJackpot)
 		b.DollarJackpot = &t
-		limit := float64(a.DollarJackpot.Prize/100) * model.ContributionLimitPercent
+		prizeFloat := float64(a.DollarJackpot.Prize) / 100
+		limit := prizeFloat * model.ContributionLimitPercent
 		b.ContributionLimit = &limit
+		if b.Total != nil && prizeFloat < *b.Total {
+			b.Total = &prizeFloat
+		}
 	}
 	if a.Winner.ID != 0 {
 		t := BuildSimpleUser(c, a.Winner)
