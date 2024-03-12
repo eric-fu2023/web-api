@@ -13,6 +13,7 @@ type GetStreamGame struct {
 	Ongoing *serializer.StreamGameSession  `json:"ongoing,omitempty"`
 	Results []serializer.StreamGameSession `json:"results,omitempty"`
 }
+
 type StreamGameService struct {
 	StreamId int64 `form:"stream_id" json:"stream_id" binding:"required"`
 	common.PageById
@@ -53,6 +54,27 @@ func (service *StreamGameService) Get(c *gin.Context) (r serializer.Response, er
 	var data *GetStreamGame
 	if d.Ongoing != nil || d.Results != nil {
 		data = &d
+	}
+	r = serializer.Response{
+		Data: data,
+	}
+	return
+}
+
+type StreamGameServiceList struct {
+}
+
+func (service *StreamGameServiceList) List(c *gin.Context) (r serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	var games []ploutos.StreamGame
+	err = model.DB.Model(ploutos.StreamGame{}).Order(`id`).Find(&games).Error
+	if err != nil {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+	var data []serializer.StreamGame
+	for _, g := range games {
+		data = append(data, serializer.BuildStreamGame(c, g))
 	}
 	r = serializer.Response{
 		Data: data,
