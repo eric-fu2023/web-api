@@ -157,6 +157,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/share", api.ShareGet)
 		v1.GET("/games", middleware.Cache(1*time.Minute), api.GameList)
 		v1.GET("/room_chat/history", api.RoomChatHistory)
+		v1.GET("/stream_game", api.StreamGame)
 
 		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
 		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
