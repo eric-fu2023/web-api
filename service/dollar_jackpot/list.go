@@ -39,42 +39,58 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 		return
 	}
 	var data *serializer.DollarJackpotDraw
-	if dollarJackpotDraw.ID != 0 && dollarJackpotDraw.DollarJackpot != nil && time.Now().Before(dollarJackpotDraw.EndTime) && time.Now().After(dollarJackpotDraw.StartTime) {
-		res := cache.RedisClient.Get(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, dollarJackpotDraw.ID))
-		if res.Err() != nil && res.Err() != redis.Nil {
-			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), res.Err())
-			return
-		}
-		var total int
-		if res.Val() != "" {
-			total, err = strconv.Atoi(res.Val())
-		}
-		if err != nil {
-			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
-			return
-		}
-		tt := int64(total)
-		dollarJackpotDraw.Total = &tt
-
-		var contribution *int64
-		u, isUser := c.Get("user")
-		if isUser {
-			user := u.(model.User)
-			var sum model.ContributionSum
-			err = model.DB.Model(ploutos.DollarJackpotBetReport{}).Scopes(model.GetContribution(user.ID, dollarJackpotDraw.ID)).Find(&sum).Error
+	if dollarJackpotDraw.ID != 0 && dollarJackpotDraw.DollarJackpot != nil {
+		if time.Now().Before(dollarJackpotDraw.StartTime) || time.Now().After(dollarJackpotDraw.EndTime) { // if there is no ongoing draw
+			err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
+				Where(`dollar_jackpot_draws.status != ?`, 0).Order(`start_time DESC`).
+				Preload(`DollarJackpot`).Limit(1).Find(&dollarJackpotDraw).Error
 			if err != nil {
 				r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 				return
 			}
-			contribution = &sum.Sum
 		}
-
-		t := serializer.BuildDollarJackpotDraw(c, dollarJackpotDraw, contribution)
-		data = &t
+		data, err = prepareObj(c, dollarJackpotDraw)
+		if err != nil {
+			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+			return
+		}
 	}
 	r = serializer.Response{
 		Data: data,
 	}
+	return
+}
+
+func prepareObj(c *gin.Context, dollarJackpotDraw model.DollarJackpotDraw) (data *serializer.DollarJackpotDraw, err error) {
+	res := cache.RedisClient.Get(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, dollarJackpotDraw.ID))
+	if res.Err() != nil && res.Err() != redis.Nil {
+		err = res.Err()
+		return
+	}
+	var total int
+	if res.Val() != "" {
+		total, err = strconv.Atoi(res.Val())
+	}
+	if err != nil {
+		return
+	}
+	tt := int64(total)
+	dollarJackpotDraw.Total = &tt
+
+	var contribution *int64
+	u, isUser := c.Get("user")
+	if isUser {
+		user := u.(model.User)
+		var sum model.ContributionSum
+		err = model.DB.Model(ploutos.DollarJackpotBetReport{}).Scopes(model.GetContribution(user.ID, dollarJackpotDraw.ID)).Find(&sum).Error
+		if err != nil {
+			return
+		}
+		contribution = &sum.Sum
+	}
+
+	t := serializer.BuildDollarJackpotDraw(c, dollarJackpotDraw, contribution)
+	data = &t
 	return
 }
 
