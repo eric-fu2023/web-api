@@ -3,7 +3,6 @@ package cashin
 import (
 	"errors"
 	"fmt"
-	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -142,18 +141,15 @@ func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64, meth
 		}
 	}
 
-	minAmount := conf.GetCfg().TopupMinimum
-	if firstTime {
-		minAmount = conf.GetCfg().FirstTopupMinimum
-	}
+	minAmount := method.MinAmount
 	if amount < minAmount {
 		if firstTime {
 			err = errors.New("illegal amount")
-			r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("first_topup_amount"), conf.GetCfg().FirstTopupMinimum/100), err)
+			r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("first_topup_amount"), minAmount/100), err)
 			return
 		} else {
 			err = errors.New("illegal amount")
-			r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("topup_amount"), method.MinAmount/100), err)
+			r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("topup_amount"), minAmount/100), err)
 			return
 		}
 	}
