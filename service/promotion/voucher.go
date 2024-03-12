@@ -183,7 +183,7 @@ func (v VoucherPreBinding) Handle(c *gin.Context) (r serializer.Response, err er
 		if err != nil {
 			return err
 		}
-		if !ValidateVoucherUsageByType(voucher, oddsFormat, matchType, odds, betAmount, isParlay) {
+		if voucher.Status != models.VoucherStatusReady || !ValidateVoucherUsageByType(voucher, oddsFormat, matchType, odds, betAmount, isParlay) {
 			err = ErrVoucherUseInvalid
 			r = serializer.Err(c, v, serializer.CodeGeneralError, "Invalid use of voucher", err)
 			return err
