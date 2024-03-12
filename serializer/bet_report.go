@@ -60,6 +60,11 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 	if a.Voucher.ID != 0 {
 		t := BuildVoucher(a.Voucher, deviceInfo.Platform)
 		b.Voucher = &t
+	} else {
+		if len(a.ImVoucher) > 0 {
+			t := BuildVoucher(a.ImVoucher[0], deviceInfo.Platform)
+			b.Voucher = &t
+		}
 	}
 	return
 }
