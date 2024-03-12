@@ -41,13 +41,16 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 	var data *serializer.DollarJackpotDraw
 	if dollarJackpotDraw.ID != 0 && dollarJackpotDraw.DollarJackpot != nil {
 		if time.Now().Before(dollarJackpotDraw.StartTime) || time.Now().After(dollarJackpotDraw.EndTime) { // if there is no ongoing draw
+			var djd model.DollarJackpotDraw
 			err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
 				Where(`dollar_jackpot_draws.status != ?`, 0).Order(`start_time DESC`).
-				Preload(`DollarJackpot`).Limit(1).Find(&dollarJackpotDraw).Error
+				Preload(`DollarJackpot`).Limit(1).Find(&djd).Error
 			if err != nil {
 				r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 				return
 			}
+			dollarJackpotDraw = djd
+			dollarJackpotDraw.Total = &dollarJackpotDraw.DollarJackpot.Prize
 		}
 		data, err = prepareObj(c, dollarJackpotDraw)
 		if err != nil {
@@ -62,20 +65,22 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 }
 
 func prepareObj(c *gin.Context, dollarJackpotDraw model.DollarJackpotDraw) (data *serializer.DollarJackpotDraw, err error) {
-	res := cache.RedisClient.Get(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, dollarJackpotDraw.ID))
-	if res.Err() != nil && res.Err() != redis.Nil {
-		err = res.Err()
-		return
+	if dollarJackpotDraw.Total == nil {
+		res := cache.RedisClient.Get(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, dollarJackpotDraw.ID))
+		if res.Err() != nil && res.Err() != redis.Nil {
+			err = res.Err()
+			return
+		}
+		var total int
+		if res.Val() != "" {
+			total, err = strconv.Atoi(res.Val())
+		}
+		if err != nil {
+			return
+		}
+		tt := int64(total)
+		dollarJackpotDraw.Total = &tt
 	}
-	var total int
-	if res.Val() != "" {
-		total, err = strconv.Atoi(res.Val())
-	}
-	if err != nil {
-		return
-	}
-	tt := int64(total)
-	dollarJackpotDraw.Total = &tt
 
 	var contribution *int64
 	u, isUser := c.Get("user")

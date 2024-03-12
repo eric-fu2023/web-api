@@ -14,6 +14,7 @@ type DollarJackpotDraw struct {
 	ContributionLimit *float64       `json:"contribution_limit,omitempty"`
 	StartTimeTs       int64          `json:"start_time_ts"`
 	EndTimeTs         int64          `json:"end_time_ts"`
+	IsClosed          bool           `json:"is_closed"`
 	DollarJackpot     *DollarJackpot `json:"dollar_jackpot,omitempty"`
 	Winner            *SimpleUser    `json:"winner,omitempty"`
 }
@@ -28,6 +29,9 @@ func BuildDollarJackpotDraw(c *gin.Context, a model.DollarJackpotDraw, contribut
 	if a.Total != nil {
 		t := util.MoneyFloat(*a.Total)
 		b.Total = &t
+	}
+	if a.Status > 0 {
+		b.IsClosed = true
 	}
 	if a.DollarJackpot != nil {
 		t := BuildDollarJackpot(c, *a.DollarJackpot)
