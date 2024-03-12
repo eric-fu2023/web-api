@@ -1,4 +1,4 @@
-package service
+package stream_game
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
