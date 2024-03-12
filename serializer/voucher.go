@@ -17,6 +17,7 @@ type Voucher struct {
 	EndAt       int64           `json:"end_at"`
 	Amount      float64         `json:"amount"`
 	Status      int             `json:"status"`
+	BindingAt   int64           `json:"binding_at"`
 }
 
 func BuildVoucher(a models.Voucher, platform string) (b Voucher) {
@@ -37,6 +38,7 @@ func BuildVoucher(a models.Voucher, platform string) (b Voucher) {
 		EndAt:       a.EndAt.Unix(),
 		Amount:      float64(a.Amount) / 100,
 		Status:      a.Status,
+		BindingAt:   a.BindingAt.Unix(),
 	}
 	return
 }

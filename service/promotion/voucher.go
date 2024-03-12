@@ -193,6 +193,7 @@ func (v VoucherPreBinding) Handle(c *gin.Context) (r serializer.Response, err er
 			map[string]any{
 				"status":              models.VoucherStatusPending,
 				"transaction_details": v,
+				"binding_at":          time.Now(),
 			},
 		).Error
 		if err != nil {
