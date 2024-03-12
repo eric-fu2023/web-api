@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/common"
 	"web-api/util/i18n"
 )
 
@@ -14,20 +15,28 @@ type GetStreamGame struct {
 }
 type StreamGameService struct {
 	StreamId int64 `form:"stream_id" json:"stream_id" binding:"required"`
+	common.PageById
 }
 
 func (service *StreamGameService) Get(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	var ongoing ploutos.StreamGameSession
-	err = model.DB.Where(`reference_id`, service.StreamId).Where(`status`, ploutos.StreamGameSessionStatusOpen).
-		Order(`created_at DESC, id DESC`).Limit(1).Find(&ongoing).Error
-	if err != nil {
-		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
+	if service.PageById.IdFrom == 0 { // ongoing will only show on first page
+		err = model.DB.Where(`reference_id`, service.StreamId).Where(`status`, ploutos.StreamGameSessionStatusOpen).
+			Order(`created_at DESC, id DESC`).Limit(1).Find(&ongoing).Error
+		if err != nil {
+			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+			return
+		}
 	}
 	var results []ploutos.StreamGameSession
-	err = model.DB.Where(`reference_id`, service.StreamId).Where(`status`, []int64{ploutos.StreamGameSessionStatusComplete, ploutos.StreamGameSessionStatusSettled}).
-		Order(`created_at DESC, id DESC`).Find(&results).Error
+	q := model.DB.Where(`reference_id`, service.StreamId).
+		Where(`status`, []int64{ploutos.StreamGameSessionStatusComplete, ploutos.StreamGameSessionStatusSettled}).
+		Order(`created_at DESC, id DESC`).Limit(service.PageById.Limit)
+	if service.PageById.IdFrom != 0 {
+		q = q.Where(`id < ?`, service.PageById.IdFrom)
+	}
+	err = q.Find(&results).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return

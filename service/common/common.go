@@ -43,6 +43,11 @@ type Page struct {
 	Limit int `form:"limit" json:"limit" binding:"min=1"`
 }
 
+type PageById struct {
+	IdFrom int `form:"id_from" json:"id_from"`
+	Limit  int `form:"limit" json:"limit" binding:"min=1"`
+}
+
 type UserRegisterInterface interface {
 	CreateUser(model.User, string) error
 	VendorRegisterError() error
