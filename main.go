@@ -38,6 +38,7 @@ func main() {
 		go task.ProcessTayaSyncTransaction()
 		go task.ProcessSabaSettle()
 		go task.ProcessImUpdateBalance()
+		go task.UpdateOnlineUsers()
 		go func() {
 			websocketTask.Functions = []func(*websocket.Connection, context.Context, context.CancelFunc){ // modules to be run when connected
 				websocketTask.Reply,
