@@ -25,6 +25,7 @@ type DollarJackpotGetService struct {
 func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	var dollarJackpotDraw model.DollarJackpotDraw
+	var draws []model.DollarJackpotDraw
 	brand := c.MustGet(`_brand`).(int)
 	cacheInfo := model.CacheInfo{
 		Prefix: fmt.Sprintf(`query:dollar_jackpot:%d:`, brand),
@@ -32,31 +33,35 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 	}
 	ctx := context.WithValue(context.TODO(), model.KeyCacheInfo, cacheInfo)
 	err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.status = 1 AND dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
-		Where(`dollar_jackpot_draws.status`, 0).Order(`start_time`).
-		Preload(`DollarJackpot`).Limit(1).Find(&dollarJackpotDraw).Error
+		Where(`dollar_jackpot_draws.status`, 0).Order(`start_time`).Preload(`DollarJackpot`).Find(&draws).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
-	var data *serializer.DollarJackpotDraw
-	if dollarJackpotDraw.ID != 0 && dollarJackpotDraw.DollarJackpot != nil {
-		if time.Now().Before(dollarJackpotDraw.StartTime) || time.Now().After(dollarJackpotDraw.EndTime) { // if there is no ongoing draw
-			var djd model.DollarJackpotDraw
-			err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.status = 1 AND dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
-				Where(`dollar_jackpot_draws.status != ?`, 0).Order(`start_time DESC`).
-				Preload(`DollarJackpot`).Limit(1).Find(&djd).Error
-			if err != nil {
-				r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
-				return
+	for _, d := range draws {
+		if d.ID != 0 && d.DollarJackpot != nil {
+			if time.Now().After(d.StartTime) && time.Now().Before(d.EndTime) {
+				dollarJackpotDraw = d
 			}
-			dollarJackpotDraw = djd
-			dollarJackpotDraw.Total = &dollarJackpotDraw.DollarJackpot.Prize
 		}
-		data, err = prepareObj(c, dollarJackpotDraw)
+	}
+	var data *serializer.DollarJackpotDraw
+	if dollarJackpotDraw.ID == 0 { // if there is no ongoing draw
+		var djd model.DollarJackpotDraw
+		err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.status = 1 AND dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
+			Where(`dollar_jackpot_draws.status != ?`, 0).Order(`start_time DESC`).
+			Preload(`DollarJackpot`).Limit(1).Find(&djd).Error
 		if err != nil {
 			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 			return
 		}
+		dollarJackpotDraw = djd
+		dollarJackpotDraw.Total = &dollarJackpotDraw.DollarJackpot.Prize
+	}
+	data, err = prepareObj(c, dollarJackpotDraw)
+	if err != nil {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
 	}
 	r = serializer.Response{
 		Data: data,
