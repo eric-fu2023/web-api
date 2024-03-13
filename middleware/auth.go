@@ -78,7 +78,7 @@ func doAuth(c *gin.Context, getUser bool, checkBrand bool) (err error) {
 		return
 	}
 	a := token.Claims.(*AuthClaims)
-	sess := cache.RedisSessionClient.Get(context.TODO(), a.GetRedisSessionKey())
+	sess := cache.RedisSessionClient.HGet(context.TODO(), a.GetRedisSessionKey(), "token")
 	if sess.Val() != tokenString {
 		err = errors.New("invalid token")
 		return

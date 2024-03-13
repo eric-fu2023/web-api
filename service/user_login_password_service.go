@@ -216,7 +216,12 @@ func (service *UserLoginPasswordService) processUserLogin(c *gin.Context, user m
 		return "", ErrTokenGeneration
 	}
 	if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
-		cache.RedisSessionClient.Set(context.TODO(), user.GetRedisSessionKey(), tokenString, time.Duration(timeout)*time.Minute)
+		val := map[string]interface{}{
+			"token":    tokenString,
+			"password": serializer.UserSignature(user.ID),
+		}
+		cache.RedisSessionClient.HSet(context.TODO(), user.GetRedisSessionKey(), val)
+		cache.RedisSessionClient.Expire(context.TODO(), user.GetRedisSessionKey(), time.Duration(timeout)*time.Minute)
 	}
 
 	loginTime := time.Now()
