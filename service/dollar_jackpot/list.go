@@ -31,7 +31,7 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 		Ttl:    10,
 	}
 	ctx := context.WithValue(context.TODO(), model.KeyCacheInfo, cacheInfo)
-	err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
+	err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.status = 1 AND dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
 		Where(`dollar_jackpot_draws.status`, 0).Order(`start_time`).
 		Preload(`DollarJackpot`).Limit(1).Find(&dollarJackpotDraw).Error
 	if err != nil {
@@ -42,7 +42,7 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 	if dollarJackpotDraw.ID != 0 && dollarJackpotDraw.DollarJackpot != nil {
 		if time.Now().Before(dollarJackpotDraw.StartTime) || time.Now().After(dollarJackpotDraw.EndTime) { // if there is no ongoing draw
 			var djd model.DollarJackpotDraw
-			err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
+			err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.status = 1 AND dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
 				Where(`dollar_jackpot_draws.status != ?`, 0).Order(`start_time DESC`).
 				Preload(`DollarJackpot`).Limit(1).Find(&djd).Error
 			if err != nil {
