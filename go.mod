@@ -7,13 +7,14 @@ toolchain go1.21.1
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240206050245-4a4aa02a84a2
-	blgit.rfdev.tech/taya/payment-service v0.0.0-20240219075628-32fe3a79b397
+	blgit.rfdev.tech/taya/payment-service v0.0.0-20240314023435-18348eac87f6
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240314022026-1f2ffee6617a
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240205103854-a1c5a708f752
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/chenyahui/gin-cache v1.7.1
+	github.com/eclipse/paho.golang v0.21.0
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-contrib/sessions v0.0.3
@@ -72,7 +73,6 @@ require (
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/clbanning/mxj/v2 v2.5.5 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/eclipse/paho.golang v0.21.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
