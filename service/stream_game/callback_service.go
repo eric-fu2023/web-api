@@ -83,8 +83,7 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 		Bet:        util.MoneyInt(c.Amount),
 		BetTime:    &now,
 		Status:     4, // confirmed
-		GameId:     draw.StreamGameId,
-		RefId:      c.DrawId,
+		GameId:     c.DrawId,
 	}
 	err = tx.Omit("id").Create(&betReport).Error
 	if err != nil {
@@ -95,7 +94,7 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 }
 
 func (c *PlaceOrder) GetAmount() int64 {
-	return util.MoneyInt(c.Amount)
+	return -1 * util.MoneyInt(c.Amount)
 }
 
 func (c *PlaceOrder) GetWagerMultiplier() (value int64, exists bool) {
@@ -143,7 +142,12 @@ func (c *SettleOrder) GetBetAmount() (amount int64, exists bool) {
 	if *c.Amount == 0 { // lost bets
 		return c.BetAmount, true
 	}
-	return util.MoneyInt(*c.Amount) * 2, true // won bets; c.amount * 2 because the equation in processTransaction is betAmount - winAmount
+	return util.MoneyInt(*c.Amount) + c.BetAmount, true // won bets; c.amount + c.BetAmount because the equation in processTransaction is betAmount - winAmount
+}
+
+type PlaceResponse struct {
+	Game serializer.StreamGameSession `json:"draw"`
+	Ts   int64                        `json:"ts"`
 }
 
 func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) {
@@ -151,7 +155,7 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	user := c.MustGet("user").(model.User)
 	var draw ploutos.StreamGameSession
-	err = model.DB.Where(`id`, req.DrawId).Where(`status`, ploutos.StreamGameSessionStatusOpen).First(&draw).Error
+	err = model.DB.Preload(`StreamGame`).Where(`id`, req.DrawId).Where(`status`, ploutos.StreamGameSessionStatusOpen).First(&draw).Error
 	if err != nil {
 		res = serializer.ParamErr(c, req, i18n.T("invalid_draw_id"), err)
 		return
@@ -183,24 +187,27 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 		}
 	}
 	res = serializer.Response{
-		Msg: i18n.T("success"),
+		Data: PlaceResponse{
+			Game: serializer.BuildStreamGameSession(c, draw),
+			Ts:   time.Now().Unix(),
+		},
 	}
 	return
 }
 
 func Settle(c *gin.Context, req SettleOrder) (res serializer.Response, err error) {
-	go common.LogGameCallbackRequest("dollar_jackpot_place_order", req)
-	var br ploutos.DollarJackpotBetReport
+	go common.LogGameCallbackRequest("stream_game_settle_order", req)
+	var br ploutos.StreamGameBetReport
 	err = model.DB.Where(`business_id`, req.BusinessId).Where(`status`, 4).First(&br).Error // 4: unsettled
 	if err != nil {
-		res = serializer.Err(c, req, serializer.CodeGeneralError, "dollar jackpot settle error", err)
+		res = serializer.Err(c, req, serializer.CodeGeneralError, "stream game settle error", err)
 		return
 	}
 	req.DrawId = br.GameId
 	req.BetAmount = br.Bet
 	err = common.ProcessTransaction(&req)
 	if err != nil {
-		res = serializer.Err(c, req, serializer.CodeGeneralError, "dollar jackpot settle error", err)
+		res = serializer.Err(c, req, serializer.CodeGeneralError, "stream game settle error", err)
 		return
 	}
 	res = serializer.Response{

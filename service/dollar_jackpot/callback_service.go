@@ -209,7 +209,7 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 }
 
 func Settle(c *gin.Context, req SettleOrder) (res serializer.Response, err error) {
-	go common.LogGameCallbackRequest("dollar_jackpot_place_order", req)
+	go common.LogGameCallbackRequest("dollar_jackpot_settle_order", req)
 	var br ploutos.DollarJackpotBetReport
 	err = model.DB.Where(`business_id`, req.BusinessId).Where(`status`, 4).First(&br).Error // 4: unsettled
 	if err != nil {

@@ -100,6 +100,13 @@ func NewRouter() *gin.Engine {
 		}
 	}
 
+	if os.Getenv("GAME_STREAM_GAME_EXPOSE_CALLBACKS") == "true" {
+		djCallback := r.Group("/stream_game")
+		{
+			djCallback.POST("/settle_order", stream_game_api.SettleOrder)
+		}
+	}
+
 	if os.Getenv("FINPAY_CALLBACK_ENABLED") == "true" {
 		fpCallback := r.Group("/callback/finpay")
 		fpCallback.POST("/payment-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayPaymentCallback)

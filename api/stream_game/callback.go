@@ -3,7 +3,6 @@ package stream_game_api
 import (
 	"github.com/gin-gonic/gin"
 	"web-api/api"
-	"web-api/service/dollar_jackpot"
 	"web-api/service/stream_game"
 	"web-api/util"
 )
@@ -23,9 +22,9 @@ func PlaceOrder(c *gin.Context) {
 }
 
 func SettleOrder(c *gin.Context) {
-	var req dollar_jackpot.SettleOrder
+	var req stream_game.SettleOrder
 	if err := c.ShouldBind(&req); err == nil {
-		res, e := dollar_jackpot.Settle(c, req)
+		res, e := stream_game.Settle(c, req)
 		c.JSON(200, res)
 		if e != nil {
 			util.Log().Error("stream game settle order: ", e)
