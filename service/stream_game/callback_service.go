@@ -16,6 +16,16 @@ import (
 	"web-api/util/i18n"
 )
 
+var GameMultiple = map[int64]map[int64]float64{
+	1: { // dice
+		1: 1.95, // small
+		2: 1.95, // big
+		3: 31,   // triple
+		4: 1.95, // odd
+		5: 1.95, // even
+	},
+}
+
 type BetObj struct {
 	GameSession ploutos.StreamGameSession `json:"game_session"`
 	Selection   int64                     `json:"selection"`
@@ -60,7 +70,7 @@ func (c *PlaceOrder) GetGameTransactionId() int64 {
 
 func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 	var draw ploutos.StreamGameSession
-	err := model.DB.Where(`id`, c.DrawId).First(&draw).Error
+	err := model.DB.Preload(`StreamGame`).Where(`id`, c.DrawId).First(&draw).Error
 	if err != nil {
 		return err
 	}
@@ -75,15 +85,16 @@ func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
 	now := time.Now().UTC()
 	businessId := fmt.Sprintf(`%d%d%d`, c.DrawId, c.User.ID, now.Unix())
 	betReport := ploutos.StreamGameBetReport{
-		UserId:     c.User.ID,
-		OrderId:    "SG" + businessId,
-		BusinessId: businessId,
-		GameType:   consts.GameVendor["stream_game"],
-		InfoJson:   j,
-		Bet:        util.MoneyInt(c.Amount),
-		BetTime:    &now,
-		Status:     4, // confirmed
-		GameId:     c.DrawId,
+		UserId:       c.User.ID,
+		OrderId:      "SG" + businessId,
+		BusinessId:   businessId,
+		GameType:     consts.GameVendor["stream_game"],
+		InfoJson:     j,
+		Bet:          util.MoneyInt(c.Amount),
+		BetTime:      &now,
+		Status:       4, // confirmed
+		GameId:       c.DrawId,
+		MaxWinAmount: fmt.Sprintf(`%d`, util.MoneyInt(c.Amount*GameMultiple[draw.StreamGameId][c.Selection])),
 	}
 	err = tx.Omit("id").Create(&betReport).Error
 	if err != nil {
