@@ -16,13 +16,14 @@ type GetStreamGame struct {
 }
 
 type StreamGameService struct {
-	GameId   int64 `form:"game_id" json:"game_id" binding:"required"`
+	GameId   int64 `form:"game_id" json:"game_id"`
 	StreamId int64 `form:"stream_id" json:"stream_id" binding:"required"`
 	common.PageById
 }
 
 func (service *StreamGameService) Get(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
+
 	var results []ploutos.StreamGameSession
 	q := model.DB.Where(`reference_id`, service.StreamId).Where(`stream_game_id`, service.GameId).
 		Where(`status`, []int64{ploutos.StreamGameSessionStatusComplete, ploutos.StreamGameSessionStatusSettled}).
@@ -30,24 +31,28 @@ func (service *StreamGameService) Get(c *gin.Context) (r serializer.Response, er
 	if service.PageById.IdFrom != 0 {
 		q = q.Where(`id < ?`, service.PageById.IdFrom)
 	}
-	err = q.Find(&results).Error
-	if err != nil {
-		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
+	if service.GameId != 0 {
+		err = q.Find(&results).Error
+		if err != nil {
+			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+			return
+		}
 	}
 
 	var d GetStreamGame
 	var ongoing ploutos.StreamGameSession
 	if service.PageById.IdFrom == 0 { // ongoing will only show on first page
-		err = model.DB.Where(`reference_id`, service.StreamId).Where(`stream_game_id`, service.GameId).Where(`status`, ploutos.StreamGameSessionStatusOpen).
+		err = model.DB.Where(`reference_id`, service.StreamId).Where(`status`, ploutos.StreamGameSessionStatusOpen).
 			Order(`created_at DESC, id DESC`).Limit(1).Find(&ongoing).Error
 		if err != nil {
 			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 			return
 		}
 		var count int64
-		if e := q.Count(&count).Error; e == nil {
-			d.ResultCount = &count
+		if service.GameId != 0 {
+			if e := q.Count(&count).Error; e == nil {
+				d.ResultCount = &count
+			}
 		}
 	}
 
