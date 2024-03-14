@@ -1,6 +1,7 @@
 package task
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,22 +13,36 @@ import (
 	"strings"
 	"time"
 	"web-api/cache"
+	"web-api/model"
+	"web-api/serializer"
+	"web-api/util"
 )
 
 var (
 	Client         *autopaho.ConnectionManager
 	connectedCh    chan []byte
 	disconnectedCh chan []byte
+	subscribedCh   chan []byte
 )
 
-type ConnectDisconnect struct {
+type BaseMsg struct {
 	Username string `json:"username"`
 	ClientId string `json:"clientid"`
 }
 
-func UpdateOnlineUsers() {
-	connectedCh = make(chan []byte, 100)    // max 100 msg in buffer
-	disconnectedCh = make(chan []byte, 100) // max 100 msg in buffer
+type ConnectDisconnect struct {
+	BaseMsg
+}
+
+type Subscribe struct {
+	BaseMsg
+	Topic string `json:"topic"`
+}
+
+func PrivateMessage() {
+	connectedCh = make(chan []byte, 100) // max 100 msg in buffer
+	disconnectedCh = make(chan []byte, 100)
+	subscribedCh = make(chan []byte, 100)
 	go func() {
 		for {
 			select {
@@ -61,6 +76,49 @@ func UpdateOnlineUsers() {
 						cache.RedisSessionClient.SRem(context.TODO(), "online_guests", v.ClientId)
 					} else {
 						cache.RedisSessionClient.SRem(context.TODO(), "online_users", v.Username)
+					}
+				}
+			}
+		}
+	}()
+	go func() {
+		for {
+			select {
+			case msg, ok := <-subscribedCh:
+				if !ok { // channel closed
+					return
+				}
+				var v Subscribe
+				if e := json.Unmarshal(msg, &v); e == nil {
+					var userRef string
+					if strings.Contains(v.Topic, "/cs/user") {
+						userRef = v.Username
+					} else if strings.Contains(v.Topic, "/cs/guest") {
+						userRef = v.ClientId
+					}
+					if userRef != "" {
+						go func(userRef string, v Subscribe) {
+							var messages []ploutos.PrivateMessage
+							err := model.DB.Model(ploutos.PrivateMessage{}).Where(`user_ref = ? OR user_ref = '0'`, userRef).Order(`created_at DESC`).Limit(10).Find(&messages).Error
+							if err != nil {
+								util.Log().Error("private message history error", err)
+								return
+							}
+							for i := len(messages) - 1; i >= 0; i-- {
+								message := serializer.BuildPrivateMessage(messages[i])
+								if j, e := json.Marshal(message); e == nil {
+									pb := &paho.Publish{
+										Topic:   v.Topic,
+										QoS:     byte(1),
+										Payload: j,
+									}
+									_, err = Client.Publish(context.Background(), pb)
+									if err != nil {
+										util.Log().Error("private message history error", err)
+									}
+								}
+							}
+						}(userRef, v)
 					}
 				}
 			}
@@ -110,6 +168,8 @@ func Connect() {
 						connectedCh <- pr.Packet.Payload
 					} else if strings.Contains(pr.Packet.Topic, "/disconnected") {
 						disconnectedCh <- pr.Packet.Payload
+					} else if strings.Contains(pr.Packet.Topic, "/subscribed") {
+						subscribedCh <- pr.Packet.Payload
 					}
 					return true, nil
 				}},
