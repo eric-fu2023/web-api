@@ -1,7 +1,9 @@
 package stream_game
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"blgit.rfdev.tech/taya/game-service/game/stream_game_api"
+	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"web-api/model"
 	"web-api/serializer"
@@ -23,49 +25,29 @@ type StreamGameService struct {
 
 func (service *StreamGameService) Get(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-
-	var results []ploutos.StreamGameSession
-	q := model.DB.Where(`reference_id`, service.StreamId).Where(`stream_game_id`, service.GameId).
-		Where(`status`, []int64{ploutos.StreamGameSessionStatusComplete, ploutos.StreamGameSessionStatusSettled}).
-		Order(`created_at DESC, id DESC`).Limit(service.PageById.Limit)
-	if service.PageById.IdFrom != 0 {
-		q = q.Where(`id < ?`, service.PageById.IdFrom)
+	gameService := stream_game_api.NewService(model.DB)
+	cacheInfo := model.CacheInfo{
+		Prefix: fmt.Sprintf(`query:stream_game:%d`, service.StreamId),
+		Ttl:    10,
 	}
-	if service.GameId != 0 {
-		err = q.Find(&results).Error
-		if err != nil {
-			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
-			return
-		}
-	}
-
-	var d GetStreamGame
-	var ongoing ploutos.StreamGameSession
-	if service.PageById.IdFrom == 0 { // ongoing will only show on first page
-		err = model.DB.Where(`reference_id`, service.StreamId).Where(`status`, ploutos.StreamGameSessionStatusOpen).
-			Order(`created_at DESC, id DESC`).Limit(1).Find(&ongoing).Error
-		if err != nil {
-			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
-			return
-		}
-		var count int64
-		if service.GameId != 0 {
-			if e := q.Count(&count).Error; e == nil {
-				d.ResultCount = &count
-			}
-		}
-	}
-
-	if ongoing.ID != 0 {
-		t := serializer.BuildStreamGameSession(c, ongoing)
-		d.Ongoing = &t
-	}
-	for _, rr := range results {
-		t := serializer.BuildStreamGameSession(c, rr)
-		d.Results = append(d.Results, t)
+	ctx := context.WithValue(context.TODO(), model.KeyCacheInfo, cacheInfo)
+	res, err := gameService.GetGameSession(ctx, service.GameId, service.StreamId, service.PageById.IdFrom, service.PageById.Limit)
+	if err != nil {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
 	}
 	var data *GetStreamGame
-	if d.Ongoing != nil || d.Results != nil {
+	if res.Ongoing.ID != 0 || len(res.Results) != 0 {
+		var d GetStreamGame
+		d.ResultCount = res.ResultCount
+		if res.Ongoing.ID != 0 {
+			t := serializer.BuildStreamGameSession(c, res.Ongoing)
+			d.Ongoing = &t
+		}
+		for _, rr := range res.Results {
+			t := serializer.BuildStreamGameSession(c, rr)
+			d.Results = append(d.Results, t)
+		}
 		data = &d
 	}
 	r = serializer.Response{
@@ -79,8 +61,8 @@ type StreamGameServiceList struct {
 
 func (service *StreamGameServiceList) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	var games []ploutos.StreamGame
-	err = model.DB.Model(ploutos.StreamGame{}).Order(`id`).Find(&games).Error
+	gameService := stream_game_api.NewService(model.DB)
+	games, err := gameService.ListGames()
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
