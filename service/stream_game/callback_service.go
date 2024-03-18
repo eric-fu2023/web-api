@@ -168,7 +168,7 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 	var draw ploutos.StreamGameSession
 	err = model.DB.Preload(`StreamGame`).Where(`id`, req.DrawId).Where(`status`, ploutos.StreamGameSessionStatusOpen).First(&draw).Error
 	if err != nil {
-		res = serializer.ParamErr(c, req, i18n.T("invalid_draw_id"), err)
+		res = serializer.ParamErr(c, req, i18n.T("invalid_stream_game_draw_id"), err)
 		return
 	}
 	req.User = &user
