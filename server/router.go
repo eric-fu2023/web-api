@@ -171,6 +171,12 @@ func NewRouter() *gin.Engine {
 		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
 		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
 
+		pm := v1.Group("/pm")
+		{
+			pm.GET("/cs/history", middleware.CheckAuth(), api.CsHistory)
+			pm.POST("/cs/send", middleware.CheckAuth(), api.CsSend)
+		}
+
 		saba := v1.Group("/saba")
 		{
 			saba.GET("/get_url", middleware.CheckAuth(), saba_api.GetUrl)
