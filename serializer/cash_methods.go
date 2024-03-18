@@ -1,17 +1,21 @@
 package serializer
 
-import "web-api/model"
+import (
+	"web-api/model"
+	"web-api/util"
+)
 
 type CashMethod struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	IconURL     string `json:"icon_url"`
-	MethodType  string `json:"method_type"`
-	BaseURL     string `json:"base_url"`
-	CallbackURL string `json:"callback_url"`
-	AccountType string `json:"account_type"`
-	MinAmount   int64  `json:"min_amount"`
-	MaxAmount   int64  `json:"max_amount"`
+	ID             int64  `json:"id"`
+	Name           string `json:"name"`
+	IconURL        string `json:"icon_url"`
+	MethodType     string `json:"method_type"`
+	BaseURL        string `json:"base_url"`
+	CallbackURL    string `json:"callback_url"`
+	AccountType    string `json:"account_type"`
+	MinAmount      int64  `json:"min_amount"`
+	MaxAmount      int64  `json:"max_amount"`
+	DefaultOptions []int  `json:"default_options"`
 }
 
 func BuildCashMethod(a model.CashMethod) CashMethod {
@@ -29,5 +33,8 @@ func BuildCashMethod(a model.CashMethod) CashMethod {
 		AccountType: a.AccountType,
 		MinAmount:   a.MinAmount / 100,
 		MaxAmount:   a.MaxAmount / 100,
+		DefaultOptions: util.MapSlice(a.DefaultOptions, func(a int32) int {
+			return int(a) / 100
+		}),
 	}
 }

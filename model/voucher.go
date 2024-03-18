@@ -31,7 +31,7 @@ func VoucherListUsableByUserFilter(c context.Context, userID int64, filter strin
 		return
 	case "all":
 	case "used":
-		db = db.Where("status", models.VoucherStatusRedeemed)
+		db = db.Where("status IN ?", []int{models.VoucherStatusRedeemed, models.VoucherStatusPending})
 	case "expired":
 		db = db.Where("status != ?", models.VoucherStatusRedeemed).Where("end_at < ?", time.Now())
 	case "valid":

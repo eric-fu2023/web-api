@@ -6,14 +6,15 @@ toolchain go1.21.1
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
-	blgit.rfdev.tech/taya/game-service v0.0.0-20240206050245-4a4aa02a84a2
-	blgit.rfdev.tech/taya/payment-service v0.0.0-20240219075628-32fe3a79b397
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240312074717-f2544653691c
+	blgit.rfdev.tech/taya/game-service v0.0.0-20240315052321-474c83b0c3a1
+	blgit.rfdev.tech/taya/payment-service v0.0.0-20240314023435-18348eac87f6
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240318074331-ccbd6cc82e17
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240205103854-a1c5a708f752
 	firebase.google.com/go/v4 v4.12.1
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/chenyahui/gin-cache v1.7.1
+	github.com/eclipse/paho.golang v0.21.0
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-contrib/sessions v0.0.3
@@ -25,7 +26,7 @@ require (
 	github.com/go-resty/resty/v2 v2.9.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.5.0
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.1
 	github.com/jinzhu/copier v0.4.0
 	github.com/joho/godotenv v1.3.0
 	github.com/mailgun/mailgun-go/v4 v4.12.0

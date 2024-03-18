@@ -1,15 +1,13 @@
-package dollar_jackpot
+package stream_game
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"time"
-	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -18,16 +16,31 @@ import (
 	"web-api/util/i18n"
 )
 
+var GameMultiple = map[int64]map[int64]float64{
+	1: { // dice
+		1: 1.95, // small
+		2: 1.95, // big
+		3: 31,   // triple
+		4: 1.95, // odd
+		5: 1.95, // even
+	},
+}
+
+type BetObj struct {
+	GameSession ploutos.StreamGameSession `json:"game_session"`
+	Selection   int64                     `json:"selection"`
+}
+
 type Callback struct{}
 
 func (c *Callback) NewCallback(userId int64) {}
 
 func (c *Callback) GetGameVendorId() int64 {
-	return consts.GameVendor["dollar_jackpot"]
+	return consts.GameVendor["stream_game"]
 }
 
 func (c *Callback) ShouldProceed() bool {
-	return true // dc doesn't have wager that shouldn't proceed
+	return true
 }
 
 func (c *Callback) IsAdjustment() bool {
@@ -41,9 +54,10 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 
 type PlaceOrder struct {
 	Callback
-	Amount float64     `json:"amount" form:"amount" binding:"required"`
-	DrawId int64       `json:"draw_id" form:"draw_id" binding:"required"`
-	User   *model.User `json:"user"`
+	DrawId    int64       `json:"draw_id" form:"draw_id" binding:"required"`
+	Selection int64       `json:"selection" form:"selection" binding:"required"`
+	Amount    float64     `json:"amount" form:"amount" binding:"required"`
+	User      *model.User `json:"user"`
 }
 
 func (c *PlaceOrder) GetExternalUserId() string {
@@ -55,40 +69,34 @@ func (c *PlaceOrder) GetGameTransactionId() int64 {
 }
 
 func (c *PlaceOrder) SaveGameTransaction(tx *gorm.DB) error {
-	var djd ploutos.DollarJackpotDraw
-	err := model.DB.Preload(`DollarJackpot`).Where(`id`, c.DrawId).First(&djd).Error
+	var draw ploutos.StreamGameSession
+	err := model.DB.Preload(`StreamGame`).Where(`id`, c.DrawId).First(&draw).Error
 	if err != nil {
 		return err
 	}
-	j, err := json.Marshal(&djd)
+	bet := BetObj{
+		GameSession: draw,
+		Selection:   c.Selection,
+	}
+	j, err := json.Marshal(&bet)
 	if err != nil {
 		return err
 	}
 	now := time.Now().UTC()
 	businessId := fmt.Sprintf(`%d%d%d`, c.DrawId, c.User.ID, now.Unix())
-	betReport := ploutos.DollarJackpotBetReport{
+	betReport := ploutos.StreamGameBetReport{
 		UserId:       c.User.ID,
-		OrderId:      "DJ" + businessId,
+		OrderId:      "SG" + businessId,
 		BusinessId:   businessId,
-		GameType:     consts.GameVendor["dollar_jackpot"],
+		GameType:     consts.GameVendor["stream_game"],
 		InfoJson:     j,
 		Bet:          util.MoneyInt(c.Amount),
 		BetTime:      &now,
 		Status:       4, // confirmed
 		GameId:       c.DrawId,
-		MaxWinAmount: fmt.Sprintf(`%d`, djd.DollarJackpot.Prize),
+		MaxWinAmount: fmt.Sprintf(`%d`, util.MoneyInt(c.Amount*GameMultiple[draw.StreamGameId][c.Selection])),
 	}
-	err = model.DB.Transaction(func(tx2 *gorm.DB) (err error) {
-		err = tx2.Omit("id").Create(&betReport).Error
-		if err != nil {
-			return err
-		}
-		r := cache.RedisClient.IncrBy(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, c.DrawId), util.MoneyInt(c.Amount))
-		if r.Err() != nil {
-			return err
-		}
-		return nil
-	})
+	err = tx.Omit("id").Create(&betReport).Error
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -145,36 +153,23 @@ func (c *SettleOrder) GetBetAmount() (amount int64, exists bool) {
 	if *c.Amount == 0 { // lost bets
 		return c.BetAmount, true
 	}
-	return util.MoneyInt(*c.Amount) * 2, true // won bets; c.amount * 2 because the equation in processTransaction is betAmount - winAmount
+	return util.MoneyInt(*c.Amount) + c.BetAmount, true // won bets; c.amount + c.BetAmount because the equation in processTransaction is betAmount - winAmount
+}
+
+type PlaceResponse struct {
+	Game serializer.StreamGameSession `json:"draw"`
+	Ts   int64                        `json:"ts"`
 }
 
 func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) {
-	go common.LogGameCallbackRequest("dollar_jackpot_place_order", req)
+	go common.LogGameCallbackRequest("stream_game_place_order", req)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	user := c.MustGet("user").(model.User)
-	brand := c.MustGet(`_brand`).(int)
-	var djd ploutos.DollarJackpotDraw
-	//err = model.DB.Joins(`JOIN dollar_jackpots ON dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.status = 1 AND dollar_jackpots.brand_id = ?`, brand).
-	//	Where(`dollar_jackpot_draws.id`, req.DrawId).Where(`dollar_jackpot_draws.status`, 0).First(&djd).Error
-	err = model.DB.InnerJoins(`DollarJackpot`, model.DB.Where(&ploutos.DollarJackpot{Status: 1, BrandId: int64(brand)})).
-		Where(`dollar_jackpot_draws.id`, req.DrawId).Where(`dollar_jackpot_draws.status`, 0).First(&djd).Error
+	var draw ploutos.StreamGameSession
+	err = model.DB.Preload(`StreamGame`).Where(`id`, req.DrawId).Where(`status`, ploutos.StreamGameSessionStatusOpen).First(&draw).Error
 	if err != nil {
 		res = serializer.ParamErr(c, req, i18n.T("invalid_draw_id"), err)
 		return
-	}
-	var sum model.ContributionSum
-	err = model.DB.Model(ploutos.DollarJackpotBetReport{}).Scopes(model.GetContribution(user.ID, djd.ID)).Find(&sum).Error
-	if err != nil {
-		res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
-	}
-	if djd.DollarJackpot != nil {
-		limit := float64(djd.DollarJackpot.Prize) * model.ContributionLimitPercent
-		totalContrib := sum.Sum + util.MoneyInt(req.Amount)
-		if limit < float64(totalContrib) {
-			res = serializer.ParamErr(c, req, i18n.T("contribution_limit_reached"), err)
-			return
-		}
 	}
 	req.User = &user
 	err = common.ProcessTransaction(&req)
@@ -185,7 +180,7 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 		}
 		// if error is due to user not being registered with the game, retry registration
 		var currency ploutos.CurrencyGameVendor
-		err = model.DB.Where(`game_vendor_id`, consts.GameVendor["dollar_jackpot"]).Where(`currency_id`, user.CurrencyId).First(&currency).Error
+		err = model.DB.Where(`game_vendor_id`, consts.GameVendor["stream_game"]).Where(`currency_id`, user.CurrencyId).First(&currency).Error
 		if err != nil {
 			res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("empty_currency_id"), err)
 			return
@@ -193,7 +188,7 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 		var game UserRegister
 		err = game.CreateUser(user, currency.Value)
 		if err != nil {
-			res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("dollar_jackpot_create_user_failed"), err)
+			res = serializer.Err(c, req, serializer.CodeGeneralError, i18n.T("stream_game_create_user_failed"), err)
 			return
 		}
 		err = common.ProcessTransaction(&req)
@@ -203,24 +198,27 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 		}
 	}
 	res = serializer.Response{
-		Msg: i18n.T("success"),
+		Data: PlaceResponse{
+			Game: serializer.BuildStreamGameSession(c, draw),
+			Ts:   time.Now().Unix(),
+		},
 	}
 	return
 }
 
 func Settle(c *gin.Context, req SettleOrder) (res serializer.Response, err error) {
-	go common.LogGameCallbackRequest("dollar_jackpot_settle_order", req)
-	var br ploutos.DollarJackpotBetReport
+	go common.LogGameCallbackRequest("stream_game_settle_order", req)
+	var br ploutos.StreamGameBetReport
 	err = model.DB.Where(`business_id`, req.BusinessId).Where(`status`, 4).First(&br).Error // 4: unsettled
 	if err != nil {
-		res = serializer.Err(c, req, serializer.CodeGeneralError, "dollar jackpot settle error", err)
+		res = serializer.Err(c, req, serializer.CodeGeneralError, "stream game settle error", err)
 		return
 	}
 	req.DrawId = br.GameId
 	req.BetAmount = br.Bet
 	err = common.ProcessTransaction(&req)
 	if err != nil {
-		res = serializer.Err(c, req, serializer.CodeGeneralError, "dollar jackpot settle error", err)
+		res = serializer.Err(c, req, serializer.CodeGeneralError, "stream game settle error", err)
 		return
 	}
 	res = serializer.Response{

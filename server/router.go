@@ -13,6 +13,7 @@ import (
 	"web-api/api/mock"
 	promotion_api "web-api/api/promotion"
 	saba_api "web-api/api/saba"
+	"web-api/api/stream_game"
 	taya_api "web-api/api/taya"
 
 	"web-api/middleware"
@@ -99,6 +100,13 @@ func NewRouter() *gin.Engine {
 		}
 	}
 
+	if os.Getenv("GAME_STREAM_GAME_EXPOSE_CALLBACKS") == "true" {
+		djCallback := r.Group("/stream_game")
+		{
+			djCallback.POST("/settle_order", stream_game_api.SettleOrder)
+		}
+	}
+
 	if os.Getenv("FINPAY_CALLBACK_ENABLED") == "true" {
 		fpCallback := r.Group("/callback/finpay")
 		fpCallback.POST("/payment-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayPaymentCallback)
@@ -157,11 +165,17 @@ func NewRouter() *gin.Engine {
 		v1.GET("/share", api.ShareGet)
 		v1.GET("/games", middleware.Cache(1*time.Minute), api.GameList)
 		v1.GET("/room_chat/history", api.RoomChatHistory)
-		v1.GET("/stream_game", api.StreamGame)
-		v1.GET("/stream_games", middleware.Cache(10*time.Minute), api.StreamGameList)
+		v1.GET("/stream_game", stream_game_api.StreamGame)
+		v1.GET("/stream_games", middleware.Cache(10*time.Minute), stream_game_api.StreamGameList)
 
 		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
 		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
+
+		pm := v1.Group("/pm")
+		{
+			pm.GET("/cs/history", middleware.CheckAuth(), api.CsHistory)
+			pm.POST("/cs/send", middleware.CheckAuth(), api.CsSend)
+		}
 
 		saba := v1.Group("/saba")
 		{
@@ -252,6 +266,11 @@ func NewRouter() *gin.Engine {
 				dj := user.Group("/dollar_jackpot")
 				{
 					dj.POST("/place_order", dollar_jackpot_api.PlaceOrder)
+				}
+
+				sg := user.Group("/stream_game")
+				{
+					sg.POST("/place_order", stream_game_api.PlaceOrder)
 				}
 
 				kyc := user.Group("/kyc")
