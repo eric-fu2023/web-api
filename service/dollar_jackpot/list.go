@@ -55,8 +55,10 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 			return
 		}
-		dollarJackpotDraw = djd
-		dollarJackpotDraw.Total = &dollarJackpotDraw.DollarJackpot.Prize
+		if djd.ID != 0 {
+			dollarJackpotDraw = djd
+			dollarJackpotDraw.Total = &dollarJackpotDraw.DollarJackpot.Prize
+		}
 	}
 	data, err = prepareObj(c, dollarJackpotDraw)
 	if err != nil {
@@ -70,6 +72,9 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 }
 
 func prepareObj(c *gin.Context, dollarJackpotDraw model.DollarJackpotDraw) (data *serializer.DollarJackpotDraw, err error) {
+	if dollarJackpotDraw.ID == 0 {
+		return
+	}
 	if dollarJackpotDraw.Total == nil {
 		res := cache.RedisClient.Get(context.TODO(), fmt.Sprintf(DollarJackpotRedisKey, dollarJackpotDraw.ID))
 		if res.Err() != nil && res.Err() != redis.Nil {
