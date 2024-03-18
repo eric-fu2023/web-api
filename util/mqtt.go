@@ -12,16 +12,6 @@ import (
 	"time"
 )
 
-type BaseMQTTMsg struct {
-	Username string `json:"username"`
-	ClientId string `json:"clientid"`
-}
-
-type Subscribe struct {
-	BaseMQTTMsg
-	Topic string `json:"topic"`
-}
-
 var (
 	MQTTClient    *autopaho.ConnectionManager
 	Subscriptions []paho.SubscribeOptions

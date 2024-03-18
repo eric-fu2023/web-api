@@ -38,8 +38,11 @@ func main() {
 		go task.ProcessTayaSyncTransaction()
 		go task.ProcessSabaSettle()
 		go task.ProcessImUpdateBalance()
-		go task.UpdateOnlineStatus()
-		go task.SendPrivateChatHistory()
+		if os.Getenv("MQTT_ADDRESS") != "" { // mqtt tasks
+			go task.UpdateOnlineStatus()
+			go task.UpdateUnsubscribed()
+			go task.UpdateSubscribed()
+		}
 		go func() {
 			websocketTask.Functions = []func(*websocket.Connection, context.Context, context.CancelFunc){ // modules to be run when connected
 				websocketTask.Reply,

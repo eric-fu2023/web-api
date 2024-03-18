@@ -4,13 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/eclipse/paho.golang/paho"
+	"os"
 	"web-api/cache"
 	"web-api/util"
 )
-
-type ConnectDisconnect struct {
-	util.BaseMQTTMsg
-}
 
 func init() {
 	subscription := paho.SubscribeOptions{Topic: "$SYS/brokers/#", QoS: 1}
@@ -51,10 +48,10 @@ func UpdateOnlineStatus() {
 				if e := json.Unmarshal(msg, &v); e == nil {
 					if v.Username == "admin" {
 						// do nothing
-					} else if v.Username == "test" {
-						cache.RedisSessionClient.SAdd(context.TODO(), "online_guests", v.ClientId)
+					} else if v.Username == os.Getenv("MQTT_GUEST_USERNAME") {
+						cache.RedisSessionClient.SAdd(context.TODO(), RedisKeyOnlineGuests, v.ClientId)
 					} else {
-						cache.RedisSessionClient.SAdd(context.TODO(), "online_users", v.Username)
+						cache.RedisSessionClient.SAdd(context.TODO(), RedisKeyOnlineUsers, v.Username)
 					}
 				}
 			}
@@ -71,7 +68,7 @@ func UpdateOnlineStatus() {
 				if e := json.Unmarshal(msg, &v); e == nil {
 					if v.Username == "admin" {
 						// do nothing
-					} else if v.Username == "test" {
+					} else if v.Username == os.Getenv("MQTT_GUEST_USERNAME") {
 						cache.RedisSessionClient.SRem(context.TODO(), "online_guests", v.ClientId)
 					} else {
 						cache.RedisSessionClient.SRem(context.TODO(), "online_users", v.Username)

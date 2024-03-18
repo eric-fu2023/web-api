@@ -4,17 +4,15 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/eclipse/paho.golang/paho"
+	"os"
 	"strings"
+	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
 )
-
-type Subscribe struct {
-	util.BaseMQTTMsg
-	Topic string `json:"topic"`
-}
 
 func init() {
 	subscription := paho.SubscribeOptions{Topic: "$SYS/brokers/#", QoS: 1}
@@ -43,7 +41,7 @@ func init() {
 	}
 }
 
-func SendPrivateChatHistory() {
+func UpdateSubscribed() {
 	go func() {
 		for {
 			select {
@@ -51,16 +49,22 @@ func SendPrivateChatHistory() {
 				if !ok { // channel closed
 					return
 				}
-				var v Subscribe
+				var v SubscribeUnsubscribe
 				if e := json.Unmarshal(msg, &v); e == nil {
 					var userRef string
-					if strings.Contains(v.Topic, "/cs/user") {
-						userRef = v.Username
-					} else if strings.Contains(v.Topic, "/cs/guest") {
-						userRef = v.ClientId
+					if v.Username != "admin" {
+						if strings.Contains(v.Topic, "/cs/user") {
+							if v.Username != os.Getenv("MQTT_GUEST_USERNAME") {
+								userRef = v.Username
+								go cache.RedisSessionClient.SAdd(context.TODO(), fmt.Sprintf(RedisKeySubscribedUsers, "cs"), userRef)
+							}
+						} else if strings.Contains(v.Topic, "/cs/guest") {
+							userRef = v.ClientId
+							go cache.RedisSessionClient.SAdd(context.TODO(), fmt.Sprintf(RedisKeySubscribedGuests, "cs"), userRef)
+						}
 					}
 					if userRef != "" {
-						go func(userRef string, v Subscribe) {
+						go func(userRef string, v SubscribeUnsubscribe) {
 							var messages []ploutos.PrivateMessage
 							err := model.DB.Model(ploutos.PrivateMessage{}).Where(`user_ref = ? OR user_ref = '0'`, userRef).Order(`created_at DESC`).Limit(10).Find(&messages).Error
 							if err != nil {
