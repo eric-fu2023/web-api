@@ -27,6 +27,7 @@ var txRelated = []any{&ploutos.UserSum{}, "user_sums",
 var DB *gorm.DB
 var MongoDB *mongo.Database
 var IPDB *awdb.Reader
+var ShengWang Rtc
 
 func Database(primaryConn string, txConn string) {
 	getLogLevel := func() logger.LogLevel {
@@ -80,5 +81,12 @@ func SetupMongo(uri string) {
 		panic(err)
 	} else {
 		MongoDB = client.Database(os.Getenv("MONGO_DB"))
+	}
+}
+
+func InitShengWang() {
+	ShengWang = Rtc{
+		AppId:       os.Getenv("SHENGWANG_APP_ID"),
+		Certificate: os.Getenv("SHENGWANG_CERTIFICATE"),
 	}
 }

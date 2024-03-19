@@ -171,6 +171,9 @@ func NewRouter() *gin.Engine {
 		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
 		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
 
+		v1.GET("/rtc_token", middleware.CheckAuth(), api.RtcToken)
+		v1.GET("/rtc_tokens", middleware.CheckAuth(), api.RtcTokens)
+
 		pm := v1.Group("/pm")
 		{
 			pm.GET("/cs/history", middleware.CheckAuth(), api.CsHistory)
