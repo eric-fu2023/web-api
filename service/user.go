@@ -19,6 +19,7 @@ import (
 	"web-api/service/fb"
 	"web-api/service/imsb"
 	"web-api/service/saba"
+	"web-api/service/stream_game"
 	"web-api/service/taya"
 )
 
@@ -31,6 +32,7 @@ var (
 		"dc":             &dc.UserRegister{},
 		"imsb":           &imsb.UserRegister{},
 		"dollar_jackpot": &dollar_jackpot.UserRegister{},
+		"stream_game":    &stream_game.UserRegister{},
 	}
 )
 
