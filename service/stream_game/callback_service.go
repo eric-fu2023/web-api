@@ -118,12 +118,11 @@ func (c *PlaceOrder) GetBetAmount() (amount int64, exists bool) {
 
 type SettleOrder struct {
 	Callback
-	Amount          *float64 `json:"amount" form:"amount" binding:"required"`
-	BusinessId      string   `json:"business_id" form:"business_id" binding:"required"`
-	Username        string   `json:"username" form:"username" binding:"required"`
-	WagerMultiplier int64    `json:"wager_multiplier" form:"wager_multiplier" binding:"required"`
-	BetAmount       int64    `json:"bet_amount"`
-	DrawId          int64    `json:"draw_id"`
+	Amount     *float64 `json:"amount" form:"amount" binding:"required"`
+	BusinessId string   `json:"business_id" form:"business_id" binding:"required"`
+	Username   string   `json:"username" form:"username" binding:"required"`
+	BetAmount  int64    `json:"bet_amount"`
+	DrawId     int64    `json:"draw_id"`
 }
 
 func (c *SettleOrder) GetExternalUserId() string {
@@ -143,10 +142,7 @@ func (c *SettleOrder) GetAmount() int64 {
 }
 
 func (c *SettleOrder) GetWagerMultiplier() (value int64, exists bool) {
-	if *c.Amount == 0 { // lost bets
-		return -1, true
-	}
-	return c.WagerMultiplier, true
+	return -1, true
 }
 
 func (c *SettleOrder) GetBetAmount() (amount int64, exists bool) {
