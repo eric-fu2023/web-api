@@ -116,7 +116,8 @@ func NewRouter() *gin.Engine {
 	if os.Getenv("BACKEND_APIS_ON") == "true" {
 		backend := r.Group("/backend")
 		{
-			backend.GET("/get_token", api.BackendGetToken)
+			backend.POST("/token", api.BackendGetToken)
+			backend.POST("/pin", api.BackendSetPin)
 		}
 	}
 

@@ -14,3 +14,13 @@ func BackendGetToken(c *gin.Context) {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
+
+func BackendSetPin(c *gin.Context) {
+	var service backend.PinService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Set(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}

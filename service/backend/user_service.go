@@ -4,16 +4,18 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service"
 )
 
 type GetTokenService struct {
-	Username   string `form:"username" json:"username" binding:"required"`
+	Username   string `form:"username" json:"username" binding:"required,username"`
 	BrandId    int64  `form:"brand_id" json:"brand_id" binding:"required"`
 	CurrencyId int64  `form:"currency_id" json:"currency_id"`
 	Nickname   string `form:"nickname" json:"nickname"`
+	Pin        string `form:"pin" json:"pin"`
 	Code       string `form:"code" json:"code"`
 	Ip         string `form:"ip" json:"ip"`
 	DeviceUuid string `form:"device_uuid" json:"device_uuid"`
@@ -59,6 +61,13 @@ func (s *GetTokenService) Get(c *gin.Context) (r serializer.Response, err error)
 				RegistrationDeviceUuid: s.DeviceUuid,
 			},
 		}
+		if s.Pin != "" {
+			bytes, err := bcrypt.GenerateFromPassword([]byte(s.Pin), model.PassWordCost)
+			if err != nil {
+				r = serializer.Err(c, s, serializer.CodeGeneralError, "adding user secondary password failed", err)
+			}
+			user.SecondaryPassword = string(bytes)
+		}
 		err = service.CreateUser(&user)
 		if err != nil {
 			r = serializer.Err(c, s, serializer.CodeDBError, "adding new user failed", err)
@@ -87,6 +96,34 @@ func (s *GetTokenService) Get(c *gin.Context) (r serializer.Response, err error)
 		Data: map[string]interface{}{
 			"token": token,
 		},
+	}
+	return
+}
+
+type PinService struct {
+	Username string `form:"username" json:"username" binding:"required"`
+	BrandId  int64  `form:"brand_id" json:"brand_id" binding:"required"`
+	Pin      string `form:"pin" json:"pin" binding:"required"`
+}
+
+func (s *PinService) Set(c *gin.Context) (r serializer.Response, err error) {
+	var user model.User
+	err = model.DB.Scopes(model.ByActiveNonStreamerUser).Where(`username`, s.Username).Where(`brand_id`, s.BrandId).First(&user).Error
+	if err != nil {
+		r = serializer.Err(c, s, serializer.CodeDBError, "user not found", err)
+		return
+	}
+	bytes, err := bcrypt.GenerateFromPassword([]byte(s.Pin), model.PassWordCost)
+	if err != nil {
+		r = serializer.Err(c, s, serializer.CodeGeneralError, "password encryption failed", err)
+	}
+	err = model.DB.Model(&user).Update(`secondary_password`, string(bytes)).Error
+	if err != nil {
+		r = serializer.Err(c, s, serializer.CodeDBError, "pin update failed", err)
+		return
+	}
+	r = serializer.Response{
+		Msg: "success",
 	}
 	return
 }
