@@ -123,7 +123,7 @@ func (service *UserFinishSetupService) Set(c *gin.Context) serializer.Response {
 	user.BrandId = agent.BrandId
 	user.AgentId = agent.ID
 
-	err = CreateUser(user)
+	err = CreateUser(&user)
 	if err != nil {
 		if errors.Is(err, ErrEmptyCurrencyId) {
 			return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)

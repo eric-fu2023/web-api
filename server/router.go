@@ -113,6 +113,13 @@ func NewRouter() *gin.Engine {
 		fpCallback.POST("/transfer-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayTransferCallback)
 	}
 
+	if os.Getenv("BACKEND_APIS_ON") == "true" {
+		backend := r.Group("/backend")
+		{
+			backend.GET("/get_token", api.BackendGetToken)
+		}
+	}
+
 	internal := r.Group("/internal")
 	{
 		internal.Use(middleware.BrandAgent())
