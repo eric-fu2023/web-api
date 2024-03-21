@@ -7,10 +7,11 @@ toolchain go1.21.1
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240315052321-474c83b0c3a1
-	blgit.rfdev.tech/taya/payment-service v0.0.0-20240314023435-18348eac87f6
+	blgit.rfdev.tech/taya/payment-service v0.0.0-20240321042502-ebf9a04497a5
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240318074331-ccbd6cc82e17
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240205103854-a1c5a708f752
 	firebase.google.com/go/v4 v4.12.1
+	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/chenyahui/gin-cache v1.7.1
@@ -55,7 +56,6 @@ require (
 	cloud.google.com/go/iam v1.1.5 // indirect
 	cloud.google.com/go/longrunning v0.5.4 // indirect
 	cloud.google.com/go/storage v1.30.1 // indirect
-	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f // indirect
 	github.com/MicahParks/keyfunc v1.9.0 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4 // indirect
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.0.5 // indirect
