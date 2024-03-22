@@ -64,7 +64,7 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 	}
 
 	var streams []ploutos.LiveStream
-	q := model.DB.Scopes(model.StreamsOnlineSorted(categoryOrder, categoryTypeOrder), model.ExcludeStreamers(service.ExcludedStreamerIds), model.Paginate(service.Page.Page, service.Limit)).Preload(`Streamer`)
+	q := model.DB.Scopes(model.StreamsOnlineSorted(categoryOrder, categoryTypeOrder), model.ExcludeStreamers(service.ExcludedStreamerIds), model.Paginate(service.Page.Page, service.Limit)).Preload(`Streamer`).Preload(`Streamer.UserAgoraInfo`)
 	if len(categories) > 0 {
 		q = q.Where(`stream_category_id`, categories)
 	}
