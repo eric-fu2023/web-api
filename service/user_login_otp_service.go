@@ -73,6 +73,8 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 
 	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
+	mobileHash := serializer.MobileEmailHash(service.Mobile)
+	emailHash := serializer.MobileEmailHash(service.Email)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
@@ -109,9 +111,9 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 
 	q := model.DB
 	if service.Email != "" {
-		q = q.Where(`email`, service.Email)
+		q = q.Where(`email_hash`, emailHash)
 	} else if service.CountryCode != "" && service.Mobile != "" {
-		q = q.Where(`country_code = ? AND mobile = ?`, service.CountryCode, service.Mobile)
+		q = q.Where(`country_code = ? AND mobile_hash = ?`, service.CountryCode, mobileHash)
 	} else if service.Username != "" {
 		q = q.Where(`username = ?`, service.Username)
 	}
@@ -119,14 +121,23 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		// new user
 		user = model.User{
 			User: ploutos.User{
-				Email:                  service.Email,
 				CountryCode:            service.CountryCode,
-				Mobile:                 service.Mobile,
 				Status:                 1,
 				Role:                   1, // default role user
 				RegistrationIp:         c.ClientIP(),
 				RegistrationDeviceUuid: deviceInfo.Uuid,
 			},
+		}
+		if service.Email != "" {
+			if enc, e := util.AesEncrypt([]byte(service.Email)); e == nil {
+				user.Email = enc
+				user.EmailHash = serializer.MobileEmailHash(service.Email)
+			}
+		} else if service.Mobile != "" {
+			if enc, e := util.AesEncrypt([]byte(service.Mobile)); e == nil {
+				user.Mobile = enc
+				user.MobileHash = serializer.MobileEmailHash(service.Mobile)
+			}
 		}
 		//user.BrandId = int64(c.MustGet("_brand").(int))
 		//user.AgentId = int64(c.MustGet("_agent").(int))

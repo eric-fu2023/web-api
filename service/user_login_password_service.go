@@ -39,6 +39,9 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 	service.Email = strings.ToLower(service.Email)
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 
+	mobileHash := serializer.MobileEmailHash(service.Mobile)
+	emailHash := serializer.MobileEmailHash(service.Email)
+
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
 	var user model.User
@@ -48,10 +51,10 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 		q = q.Where(`username`, service.Username)
 		errStr = i18n.T("Username_password_invalid")
 	} else if service.Email != "" {
-		q = q.Where(`email`, service.Email)
+		q = q.Where(`email_hash`, emailHash)
 		errStr = i18n.T("Email_password_invalid")
 	} else if service.CountryCode != "" && service.Mobile != "" {
-		q = q.Where(`country_code`, service.CountryCode).Where(`mobile`, service.Mobile)
+		q = q.Where(`country_code`, service.CountryCode).Where(`mobile_hash`, mobileHash)
 		errStr = i18n.T("Mobile_password_invalid")
 	} else {
 		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
