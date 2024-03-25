@@ -8,7 +8,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240315052321-474c83b0c3a1
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240321042502-ebf9a04497a5
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240322061926-dfd148d4f61c
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240325072306-8862e7900dd8
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240205103854-a1c5a708f752
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
@@ -29,7 +29,7 @@ require (
 	github.com/google/uuid v1.5.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/jinzhu/copier v0.4.0
-	github.com/joho/godotenv v1.3.0
+	github.com/joho/godotenv v1.5.1
 	github.com/mailgun/mailgun-go/v4 v4.12.0
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1

@@ -17,14 +17,16 @@ type UserAccountBinding struct {
 }
 
 func BuildUserAccountBinding(a model.UserAccountBinding, buildCashMethod func(a model.CashMethod) CashMethod) UserAccountBinding {
+	info := a.GetBankInfo()
+	bytes, _ := json.Marshal(info)
 	return UserAccountBinding{
 		ID:            a.ID,
 		UserID:        a.UserID,
 		CashMethodID:  a.CashMethodID,
 		AccountName:   a.AccountName,
-		AccountNumber: a.AccountNumber,
+		AccountNumber: string(a.AccountNumber),
 		IsActive:      a.IsActive,
-		BankInfo:      a.BankInfo,
+		BankInfo:      json.RawMessage(bytes),
 		Method:        buildCashMethod(*a.CashMethod),
 	}
 }

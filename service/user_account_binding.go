@@ -10,6 +10,7 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
@@ -75,7 +76,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 			UserID:        user.ID,
 			CashMethodID:  s.MethodID,
 			AccountName:   s.AccountName,
-			AccountNumber: s.AccountNo,
+			AccountNumber: models.EncryptedStr(s.AccountNo),
 			IsActive:      true,
 		},
 	}
