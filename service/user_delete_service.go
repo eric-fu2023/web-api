@@ -19,7 +19,7 @@ func (service *UserDeleteService) Delete(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	userKeys := []string{user.Email, user.CountryCode + user.Mobile}
+	userKeys := []string{string(user.Email), user.CountryCode + string(user.Mobile)}
 	otp, err := cache.GetOtpByUserKeys(c, consts.SmsOtpActionDeleteUser, userKeys)
 	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
 		return serializer.ParamErr(c, service, i18n.T("invalid_otp_action"), nil)
