@@ -41,7 +41,7 @@ func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
 		user = u.(model.User)
 	}
 
-	userKeys := []string{user.Email, user.CountryCode + user.Mobile}
+	userKeys := []string{string(user.Email), user.CountryCode + string(user.Mobile)}
 	otp, err := cache.GetOtpByUserKeys(c, s.Action, userKeys)
 	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
 		return serializer.ParamErr(c, s, i18n.T("invalid_otp_action"), nil)
@@ -127,17 +127,14 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 				RegistrationIp:         c.ClientIP(),
 				RegistrationDeviceUuid: deviceInfo.Uuid,
 			},
+			Email:  ploutos.EncryptedStr(service.Email),
+			Mobile: ploutos.EncryptedStr(service.Mobile),
 		}
 		if service.Email != "" {
-			if enc, e := util.AesEncrypt([]byte(service.Email)); e == nil {
-				user.Email = enc
-				user.EmailHash = serializer.MobileEmailHash(service.Email)
-			}
-		} else if service.Mobile != "" {
-			if enc, e := util.AesEncrypt([]byte(service.Mobile)); e == nil {
-				user.Mobile = enc
-				user.MobileHash = serializer.MobileEmailHash(service.Mobile)
-			}
+			user.EmailHash = emailHash
+		}
+		if service.Mobile != "" {
+			user.MobileHash = mobileHash
 		}
 		//user.BrandId = int64(c.MustGet("_brand").(int))
 		//user.AgentId = int64(c.MustGet("_agent").(int))

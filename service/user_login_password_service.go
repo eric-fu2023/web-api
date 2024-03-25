@@ -89,10 +89,10 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 
 		// Return masked email and mobile
 		if service.Email != "" || user.Email != "" {
-			respData["email"] = util.MaskEmail(user.Email)
+			respData["email"] = util.MaskEmail(string(user.Email))
 		} else if (service.CountryCode != "" && service.Mobile != "") || (user.CountryCode != "" && user.Mobile != "") {
 			respData["country_code"] = user.CountryCode
-			respData["mobile"] = util.MaskMobile(user.Mobile)
+			respData["mobile"] = util.MaskMobile(string(user.Mobile))
 		}
 
 		if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
@@ -195,8 +195,8 @@ func (service *UserLoginPasswordService) handlePasswordMismatch(c *gin.Context, 
 
 func (service *UserLoginPasswordService) sendOtp(c *gin.Context, user model.User) (serializer.Response, error) {
 	var resp serializer.Response
-	emailOtpService := EmailOtpService{Email: user.Email, Action: consts.SmsOtpActionLogin}
-	smsOtpService := SmsOtpService{CountryCode: user.CountryCode, Mobile: user.Mobile, Action: consts.SmsOtpActionLogin}
+	emailOtpService := EmailOtpService{Email: string(user.Email), Action: consts.SmsOtpActionLogin}
+	smsOtpService := SmsOtpService{CountryCode: user.CountryCode, Mobile: string(user.Mobile), Action: consts.SmsOtpActionLogin}
 
 	if service.Email != "" {
 		resp = emailOtpService.GetEmail(c)
