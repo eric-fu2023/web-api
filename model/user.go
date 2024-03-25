@@ -15,10 +15,12 @@ import (
 
 type User struct {
 	ploutos.User
-	KycCheckRequired bool              `gorm:"-"`
-	UserSum          *ploutos.UserSum  `gorm:"foreignKey:UserId;references:ID"`
-	Kyc              *Kyc              `gorm:"foreignKey:UserId;references:ID"`
-	Achievements     []UserAchievement `gorm:"foreignKey:UserId;references:ID"`
+	Mobile           ploutos.EncryptedStr `json:"mobile" form:"mobile" gorm:"column:mobile"`
+	Email            ploutos.EncryptedStr `json:"email" form:"email" gorm:"column:email"`
+	KycCheckRequired bool                 `gorm:"-"`
+	UserSum          *ploutos.UserSum     `gorm:"foreignKey:UserId;references:ID"`
+	Kyc              *Kyc                 `gorm:"foreignKey:UserId;references:ID"`
+	Achievements     []UserAchievement    `gorm:"foreignKey:UserId;references:ID"`
 }
 
 const (
@@ -32,10 +34,14 @@ func (user *User) GenToken() (tokenString string, err error) {
 	days, _ := strconv.Atoi(os.Getenv("TOKEN_EXPIRED_DAYS"))
 	now := time.Now()
 	exp := now.AddDate(0, 0, days)
+	fmt.Println("------------------")
+	fmt.Println(user.Mobile)
+	fmt.Println(ploutos.EncryptedStr(user.Mobile))
+	fmt.Println("------------------")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":      user.ID,
 		"country_code": user.CountryCode,
-		"mobile":       user.Mobile,
+		"mobile":       string(user.Mobile),
 		"iat":          now.Unix(),
 		"exp":          exp.Unix(),
 	})

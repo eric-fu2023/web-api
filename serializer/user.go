@@ -22,9 +22,9 @@ func BuildUser(user model.User) User {
 	u := User{
 		ID:          user.ID,
 		CountryCode: user.CountryCode,
-		Mobile:      user.Mobile,
+		Mobile:      string(user.Mobile),
 		Username:    user.Username,
-		Email:       user.Email,
+		Email:       string(user.Email),
 	}
 	if os.Getenv("ENV") == "staging" || os.Getenv("ENV") == "local" { // for development convenience
 		//u.SmsOtp = user.SmsOtp
@@ -61,9 +61,9 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 	u := UserInfo{
 		ID:                 user.ID,
 		CountryCode:        user.CountryCode,
-		Mobile:             user.Mobile,
+		Mobile:             string(user.Mobile),
 		Username:           user.Username,
-		Email:              user.Email,
+		Email:              string(user.Email),
 		Nickname:           user.Nickname,
 		Avatar:             Url(user.Avatar),
 		Bio:                user.Bio,
