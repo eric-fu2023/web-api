@@ -42,7 +42,7 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 		}
 	}
 
-	userKeys := []string{user.Email, user.CountryCode + user.Mobile}
+	userKeys := []string{string(user.Email), user.CountryCode + string(user.Mobile)}
 	otp, err := cache.GetOtpByUserKeys(c, consts.SmsOtpActionSetPassword, userKeys)
 	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
 		return serializer.ParamErr(c, service, i18n.T("invalid_otp_action"), nil)
