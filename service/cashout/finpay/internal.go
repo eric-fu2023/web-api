@@ -41,7 +41,7 @@ func (s CashOutOrderService) Reject(c *gin.Context) (r serializer.Response, err 
 
 func (s CashOutOrderService) Approve(c *gin.Context) (r serializer.Response, err error) {
 	var cashOrder model.CashOrder
-	err = model.DB.Where("id", s.OrderNumber).
+	err = model.DB.Preload("UserAccountBinding").Where("id", s.OrderNumber).
 		Where("review_status", 2).
 		Where("status", models.CashOrderStatusPendingApproval).
 		First(&cashOrder).Error

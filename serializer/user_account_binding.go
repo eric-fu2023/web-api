@@ -23,7 +23,7 @@ func BuildUserAccountBinding(a model.UserAccountBinding, buildCashMethod func(a 
 		ID:            a.ID,
 		UserID:        a.UserID,
 		CashMethodID:  a.CashMethodID,
-		AccountName:   a.AccountName,
+		AccountName:   string(a.AccountName),
 		AccountNumber: string(a.AccountNumber),
 		IsActive:      a.IsActive,
 		BankInfo:      json.RawMessage(bytes),

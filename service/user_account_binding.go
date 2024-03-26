@@ -11,7 +11,6 @@ import (
 	"web-api/util/i18n"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
@@ -72,15 +71,15 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	}
 
 	accountBinding := model.UserAccountBinding{
-		UserAccountBinding: ploutos.UserAccountBinding{
+		UserAccountBinding: models.UserAccountBinding{
 			UserID:        user.ID,
 			CashMethodID:  s.MethodID,
-			AccountName:   s.AccountName,
+			AccountName:   models.EncryptedStr(s.AccountName),
 			AccountNumber: models.EncryptedStr(s.AccountNo),
 			IsActive:      true,
 		},
 	}
-	accountBinding.SetBankInfo(ploutos.BankInfo{
+	accountBinding.SetBankInfo(models.BankInfo{
 		BankCode:       s.BankCode,
 		BankBranchName: s.BankBranchName,
 		BankName:       s.BankName,
@@ -108,8 +107,8 @@ func (s DeleteWithdrawAccountService) Do(c *gin.Context) (r serializer.Response,
 	accID, _ := s.AccountBindingID.Int64()
 
 	accountBinding := model.UserAccountBinding{
-		UserAccountBinding: ploutos.UserAccountBinding{
-			BASE:     ploutos.BASE{ID: accID},
+		UserAccountBinding: models.UserAccountBinding{
+			BASE:     models.BASE{ID: accID},
 			UserID:   user.ID,
 			IsActive: true,
 		},
