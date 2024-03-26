@@ -40,7 +40,7 @@ var (
 	ErrTokenGeneration = errors.New("token generation error")
 )
 
-func CreateUser(user model.User) (err error) {
+func CreateUser(user *model.User) (err error) {
 	var currencies []ploutos.CurrencyGameVendor
 	err = model.DB.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
 	if err != nil {
@@ -94,7 +94,7 @@ func CreateUser(user model.User) (err error) {
 				return ErrEmptyCurrencyId
 			}
 			game := GameVendorUserRegisterStruct[g]
-			e := game.CreateUser(user, currency)
+			e := game.CreateUser(*user, currency)
 			if e != nil && !errors.Is(e, game.VendorRegisterError()) { // if create vendor user failed, can proceed safely. when user first enter the game, it will retry
 				tx2.Rollback()
 				return fmt.Errorf("%w: %w", game.OthersError(), e)

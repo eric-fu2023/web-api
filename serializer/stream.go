@@ -25,6 +25,8 @@ type Stream struct {
 	StreamCategoryTypeId int64             `json:"category_type_id,omitempty"`
 	RecommendStreamerId  int64             `json:"recommend_streamer_id,omitempty"`
 	ChatRoom             string            `json:"chat_room,omitempty"`
+	Width                int64             `json:"width,omitempty"`
+	Height               int64             `json:"height,omitempty"`
 	Match                *Match            `json:"match,omitempty"`
 	Streamer             *Streamer         `json:"streamer,omitempty"`
 }
@@ -41,6 +43,8 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 		OnlineAtTs:           a.OnlineAt.Unix(),
 		StreamCategoryId:     a.StreamCategoryId,
 		StreamCategoryTypeId: a.StreamCategoryTypeId,
+		Width:                a.Width,
+		Height:               a.Height,
 	}
 	if a.ImgUrl != "" {
 		b.ImgUrl = Url(a.ImgUrl)

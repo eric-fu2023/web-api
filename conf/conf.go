@@ -51,6 +51,7 @@ func Init() {
 	util.InitImFactory()
 
 	util.InitFCMFactory()
+	model.InitShengWang()
 
 	if os.Getenv("MQTT_ADDRESS") != "" {
 		util.InitMQTT()

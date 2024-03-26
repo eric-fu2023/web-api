@@ -142,7 +142,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		setupRequired = true
 	}
 
-	tokenString, err := service.processUserLogin(c, user)
+	tokenString, err := service.ProcessUserLogin(c, user)
 	if err != nil && errors.Is(err, ErrTokenGeneration) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
 	} else if err != nil && errors.Is(err, util.ErrInvalidDeviceInfo) {
@@ -161,7 +161,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	}
 }
 
-func (service *UserLoginOtpService) processUserLogin(c *gin.Context, user model.User) (string, error) {
+func (service *UserLoginOtpService) ProcessUserLogin(c *gin.Context, user model.User) (string, error) {
 	tokenString, err := user.GenToken()
 	if err != nil {
 		return "", ErrTokenGeneration

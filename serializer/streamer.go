@@ -14,6 +14,7 @@ type Streamer struct {
 	Streams           int64             `json:"stream_count"`
 	IsLive            bool              `json:"is_live"`
 	LastLiveAtTs      int64             `json:"last_live_at_ts,omitempty"`
+	AgoraUid          *int64            `json:"agora_uid,omitempty"`
 	LiveStream        *Stream           `json:"live,omitempty"`
 	StreamerGalleries []StreamerGallery `json:"gallery,omitempty"`
 	Tags              []UserTag         `json:"tags,omitempty"`
@@ -49,6 +50,9 @@ func BuildStreamer(c *gin.Context, a model.Streamer) (b Streamer) {
 		for _, t := range a.UserTags {
 			b.Tags = append(b.Tags, BuildUserTag(t))
 		}
+	}
+	if a.User.UserAgoraInfo != nil && a.User.UserAgoraInfo.Uid != 0 {
+		b.AgoraUid = &a.User.UserAgoraInfo.Uid
 	}
 	return
 }

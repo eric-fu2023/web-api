@@ -113,6 +113,14 @@ func NewRouter() *gin.Engine {
 		fpCallback.POST("/transfer-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayTransferCallback)
 	}
 
+	if os.Getenv("BACKEND_APIS_ON") == "true" {
+		backend := r.Group("/backend")
+		{
+			backend.POST("/token", api.BackendGetToken)
+			backend.POST("/pin", api.BackendSetPin)
+		}
+	}
+
 	internal := r.Group("/internal")
 	{
 		internal.Use(middleware.BrandAgent())
@@ -170,6 +178,9 @@ func NewRouter() *gin.Engine {
 
 		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
 		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
+
+		v1.GET("/rtc_token", middleware.CheckAuth(), api.RtcToken)
+		v1.GET("/rtc_tokens", middleware.CheckAuth(), api.RtcTokens)
 
 		pm := v1.Group("/pm")
 		{

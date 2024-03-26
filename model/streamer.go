@@ -25,5 +25,5 @@ func StreamerWithGallery(db *gorm.DB) *gorm.DB {
 func StreamerDefaultPreloads(db *gorm.DB) *gorm.DB {
 	return db.Preload(`UserTags`, func(db *gorm.DB) *gorm.DB {
 		return db.Where(`status`, 1).Order(`id`)
-	})
+	}).Preload(`UserAgoraInfo`)
 }
