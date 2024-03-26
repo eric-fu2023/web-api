@@ -76,7 +76,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		if err != nil {
 			return
 		}
-		if userSum.MaxWithdrawable < amount || userSum.Balance < amount {
+		if userSum.RemainingWager != 0 || userSum.Balance < amount {
 			err = errors.New("withdraw exceeded")
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("err_insufficient_withdrawable"), err)
 			return
