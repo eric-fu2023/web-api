@@ -211,6 +211,16 @@ func UserCounters(c *gin.Context) {
 	}
 }
 
+func UserRegister(c *gin.Context) {
+	var service service.UserRegisterService
+	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
+		res := service.Register(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
 func validationErrorWithMsg(c *gin.Context, service any, err error) (exists bool) {
 	var ve validator.ValidationErrors
 	if errors.As(err, &ve) {

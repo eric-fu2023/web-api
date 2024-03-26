@@ -1,0 +1,76 @@
+package service
+
+import (
+	"errors"
+	"golang.org/x/crypto/bcrypt"
+	"strings"
+	"web-api/conf/consts"
+	"web-api/model"
+	"web-api/serializer"
+	"web-api/util"
+	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+)
+
+type UserRegisterService struct {
+	Username   string `form:"username" json:"username" binding:"required,username"`
+	Password   string `form:"password" json:"password" binding:"required,password"`
+	CurrencyId int64  `form:"currency_id" json:"currency_id" binding:"required"`
+	Code       string `form:"code" json:"code"`
+}
+
+func (service *UserRegisterService) Register(c *gin.Context) serializer.Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	brandId := c.MustGet("_brand").(int)
+	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("GetDeviceInfo error: %s", err.Error())
+		return serializer.ParamErr(c, service, i18n.T("invalid_device_info"), err)
+	}
+	bytes, err := bcrypt.GenerateFromPassword([]byte(service.Password), model.PassWordCost)
+	if err != nil {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("password_encrypt_failed"), err)
+	}
+	var existing model.User
+	rows := model.DB.Where(`username`, service.Username).First(&existing).RowsAffected
+	if rows > 0 {
+		return serializer.Err(c, service, serializer.CodeExistingUsername, i18n.T("existing_username"), nil)
+	}
+	user := model.User{
+		User: ploutos.User{
+			Username:               service.Username,
+			Password:               string(bytes),
+			BrandId:                int64(brandId),
+			CurrencyId:             service.CurrencyId,
+			Status:                 1,
+			Role:                   1, // default role user
+			RegistrationIp:         c.ClientIP(),
+			RegistrationDeviceUuid: deviceInfo.Uuid,
+		},
+	}
+	genNickname(&user)
+	err = model.DB.Create(&user).Error
+	if err != nil {
+		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
+	}
+
+	tokenString, err := ProcessUserLogin(c, user, consts.AuthEventLoginMethod["username"], "", "", "")
+	if err != nil && errors.Is(err, ErrTokenGeneration) {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
+	} else if err != nil && errors.Is(err, util.ErrInvalidDeviceInfo) {
+		util.GetLoggerEntry(c).Errorf("processUserLogin error: %s", err.Error())
+		return serializer.ParamErr(c, service, i18n.T("invalid_device_info"), err)
+	} else if err != nil {
+		util.GetLoggerEntry(c).Errorf("processUserLogin error: %s", err.Error())
+		return serializer.GeneralErr(c, err)
+	}
+
+	return serializer.Response{
+		Data: map[string]interface{}{
+			"token": tokenString,
+		},
+	}
+}

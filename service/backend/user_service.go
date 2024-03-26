@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service"
@@ -74,7 +75,6 @@ func (s *GetTokenService) Get(c *gin.Context) (r serializer.Response, err error)
 			return
 		}
 	}
-	loginService := service.UserLoginOtpService{}
 	deviceInfo := map[string]string{
 		"uuid":     s.DeviceUuid,
 		"platform": s.Platform,
@@ -86,7 +86,7 @@ func (s *GetTokenService) Get(c *gin.Context) (r serializer.Response, err error)
 	}
 	c.Request.Header.Add("Device-Info", string(j)) // ProcessUserLogin and other functions get Device-Info from the header
 	c.Request.Header.Add("X-Forwarded-For", s.Ip)
-	token, err := loginService.ProcessUserLogin(c, user)
+	token, err := service.ProcessUserLogin(c, user, consts.AuthEventLoginMethod["backend"], "", "", "")
 	if err != nil {
 		r = serializer.Err(c, s, serializer.CodeDBError, "adding new user failed", err)
 		return

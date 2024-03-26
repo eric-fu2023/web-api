@@ -99,6 +99,8 @@ var (
 	AuthEventLoginMethod = map[string]int{
 		"otp":      1,
 		"password": 2,
+		"backend":  3,
+		"username": 4,
 	}
 	SportsType = map[string]int64{
 		"football":   1,
