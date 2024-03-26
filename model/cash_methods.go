@@ -10,13 +10,13 @@ type CashMethod struct {
 }
 
 func (CashMethod) GetByID(c *gin.Context, id int64, brandID int) (item CashMethod, err error) {
-	err = DB.Where("brand_id", brandID).Where("id", id).First(&item, id).Error
+	err = DB.Where("brand_id = ? or brand_id = 0", brandID).Where("id", id).First(&item, id).Error
 	return
 }
 
 func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform string, brandID int) (list []CashMethod, err error) {
 	var t []CashMethod
-	q := DB.Debug().Where("is_active").Where("brand_id", brandID)
+	q := DB.Debug().Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
 	if withdrawOnly {
 		q = q.Where("method_type < 0")
 	}
