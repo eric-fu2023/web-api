@@ -14,5 +14,6 @@ func BuildSmsTemplates(c *gin.Context) smsutil.Templates {
 	return smsutil.Templates{
 		Default: i18n.T("Your_request_otp" + "." + strconv.FormatInt(int64(brandId), 10)),
 		M360:    i18n.T("m360_otp_content" + "." + strconv.FormatInt(int64(brandId), 10)),
+		CxCloud: "%s", // Only need OTP. Msg will be automatically formatted by provider
 	}
 }

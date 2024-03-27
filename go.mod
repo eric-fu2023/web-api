@@ -9,7 +9,7 @@ require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240315052321-474c83b0c3a1
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240321042502-ebf9a04497a5
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240327041712-b53bdb8aa1ff
-	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240205103854-a1c5a708f752
+	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240327064507-e9c31d10b51a
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
