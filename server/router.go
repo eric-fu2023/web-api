@@ -158,6 +158,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("/login_password", api.UserLoginPassword)
 		v1.POST("/password", middleware.CheckAuth(), api.UserSetPassword)
 		v1.GET("/otp-check", api.VerifyOtp)
+		v1.POST("/register", api.UserRegister)
 
 		v1.GET("/config", middleware.Cache(10*time.Minute), api.Config)
 		v1.GET("/app_update", middleware.Cache(1*time.Minute), api.AppUpdate)
@@ -237,6 +238,7 @@ func NewRouter() *gin.Engine {
 				user.DELETE("/favourite", api.UserFavouriteRemove)
 
 				user.PUT("/secondary-password", api.UserSetSecondaryPassword)
+				user.PUT("/mobile", api.UserSetMobile)
 
 				user.GET("/orders", api.OrderList)
 				user.GET("/recent_games", api.UserRecentGameList)

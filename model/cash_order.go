@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -16,7 +15,7 @@ type CashOrder struct {
 	ploutos.CashOrder
 }
 
-func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, account, ip string) CashOrder {
+func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, ip string) CashOrder {
 	return CashOrder{
 		ploutos.CashOrder{
 			ID:                  ploutos.GenerateCashInOrderNo(),
@@ -27,14 +26,13 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 			AppliedCashInAmount: amount,
 			BalanceBefore:       balanceBefore,
 			WagerChange:         wagerChange,
-			Account:             account,
 			//Notes:, update later
 			Ip: ip,
 		},
 	}
 }
 
-func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account, remark string, reviewRequired bool, accountName, ip string, bankInfo models.BankInfo) CashOrder {
+func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingID int64, remark string, reviewRequired bool, ip string) CashOrder {
 	var orderStatus int64 = 1
 	var approveStatus int64
 	var reviewStatus int64
@@ -43,7 +41,6 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account,
 		approveStatus = 1
 		reviewStatus = 1
 	}
-	raw, _ := json.Marshal(bankInfo)
 
 	return CashOrder{
 		ploutos.CashOrder{
@@ -54,15 +51,13 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore int64, account,
 			Status:               orderStatus,
 			AppliedCashOutAmount: amount,
 			BalanceBefore:        balanceBefore,
-			Account:              account,
 			Remark:               remark,
 			RequireReview:        reviewRequired,
-			AccountName:          accountName,
 			ApproveStatus:        approveStatus,
 			ReviewStatus:         reviewStatus,
 			//Notes:, update later
-			Ip:       ip,
-			BankInfo: json.RawMessage(raw),
+			Ip:                   ip,
+			UserAccountBindingID: accountBindingID,
 		},
 	}
 }

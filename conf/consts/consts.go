@@ -99,6 +99,8 @@ var (
 	AuthEventLoginMethod = map[string]int{
 		"otp":      1,
 		"password": 2,
+		"backend":  3,
+		"username": 4,
 	}
 	SportsType = map[string]int64{
 		"football":   1,
@@ -413,6 +415,7 @@ const (
 	Notification_Type_Bet_Settlement    = "bet_settlement"
 	Notification_Type_Cash_Transaction  = "cash_transaction"
 	Notification_Type_Deposit_Bonus     = "deposit_bonus"
+	Notification_Type_Mobile_Reset      = "mobile_reset"
 
 	//DefaultBrand = 1001
 	//DefaultAgent = 1000001
@@ -421,4 +424,5 @@ const (
 	SmsOtpActionDeleteUser           = "delete_user"
 	SmsOtpActionSetPassword          = "set_password"
 	SmsOtpActionSetSecondaryPassword = "set_secondary_password"
+	SmsOtpActionSetMobile            = "set_mobile"
 )

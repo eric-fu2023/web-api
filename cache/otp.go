@@ -17,6 +17,7 @@ var (
 		consts.SmsOtpActionDeleteUser:           true,
 		consts.SmsOtpActionSetPassword:          true,
 		consts.SmsOtpActionSetSecondaryPassword: true,
+		consts.SmsOtpActionSetMobile:            true,
 	}
 )
 

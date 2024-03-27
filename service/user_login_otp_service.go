@@ -41,7 +41,7 @@ func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
 		user = u.(model.User)
 	}
 
-	userKeys := []string{user.Email, user.CountryCode + user.Mobile}
+	userKeys := []string{string(user.Email), user.CountryCode + string(user.Mobile)}
 	otp, err := cache.GetOtpByUserKeys(c, s.Action, userKeys)
 	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
 		return serializer.ParamErr(c, s, i18n.T("invalid_otp_action"), nil)
@@ -73,6 +73,8 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 
 	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
+	mobileHash := serializer.MobileEmailHash(service.Mobile)
+	emailHash := serializer.MobileEmailHash(service.Email)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
@@ -96,7 +98,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 			return serializer.GeneralErr(c, err)
 		}
 		if otp != service.Otp {
-			go service.logFailedLogin(c)
+			go LogFailedLogin(c, user, consts.AuthEventLoginMethod["otp"], service.Email, service.CountryCode, service.Mobile)
 			return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 		}
 	}
@@ -109,9 +111,9 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 
 	q := model.DB
 	if service.Email != "" {
-		q = q.Where(`email`, service.Email)
+		q = q.Where(`email_hash`, emailHash)
 	} else if service.CountryCode != "" && service.Mobile != "" {
-		q = q.Where(`country_code = ? AND mobile = ?`, service.CountryCode, service.Mobile)
+		q = q.Where(`country_code = ? AND mobile_hash = ?`, service.CountryCode, mobileHash)
 	} else if service.Username != "" {
 		q = q.Where(`username = ?`, service.Username)
 	}
@@ -119,14 +121,20 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		// new user
 		user = model.User{
 			User: ploutos.User{
-				Email:                  service.Email,
 				CountryCode:            service.CountryCode,
-				Mobile:                 service.Mobile,
 				Status:                 1,
 				Role:                   1, // default role user
 				RegistrationIp:         c.ClientIP(),
 				RegistrationDeviceUuid: deviceInfo.Uuid,
 			},
+			Email:  ploutos.EncryptedStr(service.Email),
+			Mobile: ploutos.EncryptedStr(service.Mobile),
+		}
+		if service.Email != "" {
+			user.EmailHash = emailHash
+		}
+		if service.Mobile != "" {
+			user.MobileHash = mobileHash
 		}
 		//user.BrandId = int64(c.MustGet("_brand").(int))
 		//user.AgentId = int64(c.MustGet("_agent").(int))
@@ -142,7 +150,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		setupRequired = true
 	}
 
-	tokenString, err := service.ProcessUserLogin(c, user)
+	tokenString, err := ProcessUserLogin(c, user, consts.AuthEventLoginMethod["otp"], service.Email, service.CountryCode, service.Mobile)
 	if err != nil && errors.Is(err, ErrTokenGeneration) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
 	} else if err != nil && errors.Is(err, util.ErrInvalidDeviceInfo) {
@@ -161,7 +169,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	}
 }
 
-func (service *UserLoginOtpService) ProcessUserLogin(c *gin.Context, user model.User) (string, error) {
+func ProcessUserLogin(c *gin.Context, user model.User, loginMethod int, inputtedEmail, inputtedCountryCode, inputtedMobile string) (string, error) {
 	tokenString, err := user.GenToken()
 	if err != nil {
 		return "", ErrTokenGeneration
@@ -182,11 +190,11 @@ func (service *UserLoginOtpService) ProcessUserLogin(c *gin.Context, user model.
 		return "", err
 	}
 
-	go service.logSuccessfulLogin(c, user, loginTime)
+	go LogSuccessfulLogin(c, user, loginTime, loginMethod, inputtedEmail, inputtedCountryCode, inputtedMobile)
 	return tokenString, nil
 }
 
-func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time) {
+func LogSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time, loginMethod int, inputtedEmail, inputtedCountryCode, inputtedMobile string) {
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		// Just log error if failed
@@ -199,11 +207,11 @@ func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user mode
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["successful"],
 			DateTime:    loginTime.Format(time.DateTime),
-			LoginMethod: consts.AuthEventLoginMethod["otp"],
+			LoginMethod: loginMethod,
 			Username:    user.Username,
-			Email:       service.Email,
-			CountryCode: service.CountryCode,
-			Mobile:      service.Mobile,
+			Email:       inputtedEmail,
+			CountryCode: inputtedCountryCode,
+			Mobile:      inputtedMobile,
 			Ip:          c.ClientIP(),
 			Platform:    deviceInfo.Platform,
 			BrandId:     user.BrandId,
@@ -217,11 +225,12 @@ func (service *UserLoginOtpService) logSuccessfulLogin(c *gin.Context, user mode
 	}
 }
 
-func (service *UserLoginOtpService) logFailedLogin(c *gin.Context) {
+func LogFailedLogin(c *gin.Context, user model.User, loginMethod int, inputtedEmail, inputtedCountryCode, inputtedMobile string) (err error) {
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		// Just log error if failed
 		util.GetLoggerEntry(c).Errorf("Get device info error: %s", err.Error())
+		return
 	}
 
 	event := model.AuthEvent{
@@ -229,11 +238,11 @@ func (service *UserLoginOtpService) logFailedLogin(c *gin.Context) {
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["failed"],
 			DateTime:    time.Now().Format(time.DateTime),
-			LoginMethod: consts.AuthEventLoginMethod["otp"],
-			Username:    service.Username,
-			Email:       service.Email,
-			CountryCode: service.CountryCode,
-			Mobile:      service.Mobile,
+			LoginMethod: loginMethod,
+			Username:    user.Username,
+			Email:       inputtedEmail,
+			CountryCode: inputtedCountryCode,
+			Mobile:      inputtedMobile,
 			Ip:          c.ClientIP(),
 			Platform:    deviceInfo.Platform,
 			//BrandId:     int64(c.MustGet("_brand").(int)),
@@ -244,7 +253,9 @@ func (service *UserLoginOtpService) logFailedLogin(c *gin.Context) {
 
 	if err = model.LogAuthEvent(event); err != nil {
 		util.GetLoggerEntry(c).Errorf("Log auth event error: %s", err.Error())
+		return
 	}
+	return
 }
 
 func genNickname(user *model.User) {
