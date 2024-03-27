@@ -39,11 +39,17 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 	if rows > 0 {
 		return serializer.Err(c, service, serializer.CodeExistingUsername, i18n.T("existing_username"), nil)
 	}
+	var agent ploutos.Agent
+	err = model.DB.Where(`brand_id`, brandId).Order(`id`).First(&agent).Error
+	if err != nil {
+		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+	}
 	user := model.User{
 		User: ploutos.User{
 			Username:               service.Username,
 			Password:               string(bytes),
 			BrandId:                int64(brandId),
+			AgentId:                agent.ID,
 			CurrencyId:             service.CurrencyId,
 			Status:                 1,
 			Role:                   1, // default role user
@@ -55,6 +61,15 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 	err = model.DB.Create(&user).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
+	}
+
+	err = CreateUser(&user)
+	if err != nil {
+		if errors.Is(err, ErrEmptyCurrencyId) {
+			return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
+		} else {
+			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
+		}
 	}
 
 	tokenString, err := ProcessUserLogin(c, user, consts.AuthEventLoginMethod["username"], "", "", "")
