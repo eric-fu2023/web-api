@@ -88,6 +88,9 @@ func CreateUser(user *model.User) (err error) {
 		}
 		games := strings.Split(os.Getenv("GAMES_REGISTERED_FOR_NEW_USER"), ",")
 		for _, g := range games {
+			if g == "" {
+				continue
+			}
 			currency, exists := currMap[consts.GameVendor[g]]
 			if !exists {
 				tx2.Rollback()
