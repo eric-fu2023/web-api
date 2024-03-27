@@ -34,10 +34,6 @@ func (user *User) GenToken() (tokenString string, err error) {
 	days, _ := strconv.Atoi(os.Getenv("TOKEN_EXPIRED_DAYS"))
 	now := time.Now()
 	exp := now.AddDate(0, 0, days)
-	fmt.Println("------------------")
-	fmt.Println(user.Mobile)
-	fmt.Println(ploutos.EncryptedStr(user.Mobile))
-	fmt.Println("------------------")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":      user.ID,
 		"country_code": user.CountryCode,
