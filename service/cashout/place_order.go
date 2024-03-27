@@ -11,6 +11,7 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/plugin/dbresolver"
 
 	"github.com/gin-gonic/gin"
@@ -40,7 +41,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		return serializer.ParamErr(c, s, i18n.T("secondary_password_mismatch"), nil), err
 	}
 
-	var accountBinding model.UserAccountBinding
+	var accountBinding models.UserAccountBinding
 	err = model.DB.Where("user_id", user.ID).Where("is_active").Where("id", s.AccountBindingID).First(&accountBinding).Error
 	if err != nil {
 		return
@@ -110,7 +111,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		var msg string
 		reviewRequired, msg = rule.OK(amount, payoutCount+1, totalOut+amount, user.GetTagIDList())
 
-		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance,s.AccountBindingID,  msg, reviewRequired,  c.ClientIP())
+		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance, s.AccountBindingID, msg, reviewRequired, c.ClientIP())
 		err = tx.Create(&cashOrder).Error
 		if err != nil {
 			return
@@ -150,7 +151,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		notifyBackendWithdraw(cashOrder.ID)
 		return
 	}
-	cashOrder, err = DispatchOrder(c, cashOrder, user)
+	cashOrder, err = DispatchOrder(c, cashOrder, user, accountBinding)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
