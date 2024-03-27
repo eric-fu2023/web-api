@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User) (updatedCashOrder model.CashOrder, err error) {
+func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, accountBinding models.UserAccountBinding) (updatedCashOrder model.CashOrder, err error) {
 	brand := c.MustGet(`_brand`).(int)
 
 	updatedCashOrder = cashOrder
@@ -29,9 +29,9 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User) (
 		switch config.Type {
 		case "BANK_CARD":
 			bankInfo := cashOrder.GetBankInfo()
-			data, err = finpay.FinpayClient{}.DefaultBankCardCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, method.Currency, string(updatedCashOrder.UserAccountBinding.AccountNumber), string(updatedCashOrder.UserAccountBinding.AccountName), bankInfo.BankBranchName, bankInfo.BankCode, bankInfo.BankName, user.Username)
+			data, err = finpay.FinpayClient{}.DefaultBankCardCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, method.Currency, string(accountBinding.AccountNumber), string(accountBinding.AccountName), bankInfo.BankBranchName, bankInfo.BankCode, bankInfo.BankName, user.Username)
 		case "TRC20":
-			data, err = finpay.FinpayClient{}.DefaultTRC20CashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, string(updatedCashOrder.UserAccountBinding.AccountNumber), string(updatedCashOrder.UserAccountBinding.AccountName), user.Username)
+			data, err = finpay.FinpayClient{}.DefaultTRC20CashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, string(accountBinding.AccountNumber), string(accountBinding.AccountName), user.Username)
 			// default:
 			// 	data, err = finpay.FinpayClient{}.DefaultCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, updatedCashOrder.Account, updatedCashOrder.AccountName, config.IfCode, config.BankName, config.Type)
 		}
