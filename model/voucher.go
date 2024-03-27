@@ -14,7 +14,7 @@ import (
 
 func AmountReplace(original string, amount float64) string {
 	return util.TextReplace(original, map[string]string{
-		"amount": fmt.Sprintf("%.2f", amount),
+		"amount": fmt.Sprintf("%f", amount),
 	})
 }
 
