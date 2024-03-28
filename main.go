@@ -60,7 +60,7 @@ func main() {
 		c.Start()
 		select {}
 	} else {
-		task.EncryptMobileAndEmail()
+		//task.EncryptMobileAndEmail()
 		r := server.NewRouter()
 		pprof.Register(r)
 		r.Run(":" + os.Getenv("PORT"))

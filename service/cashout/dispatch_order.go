@@ -28,7 +28,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 		var data finpay.TransferOrderResponse
 		switch config.Type {
 		case "BANK_CARD":
-			bankInfo := cashOrder.GetBankInfo()
+			bankInfo := accountBinding.GetBankInfo()
 			data, err = finpay.FinpayClient{}.DefaultBankCardCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, method.Currency, string(accountBinding.AccountNumber), string(accountBinding.AccountName), bankInfo.BankBranchName, bankInfo.BankCode, bankInfo.BankName, user.Username)
 		case "TRC20":
 			data, err = finpay.FinpayClient{}.DefaultTRC20CashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, string(accountBinding.AccountNumber), string(accountBinding.AccountName), user.Username)
@@ -38,7 +38,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 		if data.IsSuccess() {
 			updatedCashOrder.Status = models.CashOrderStatusTransferring
 			updatedCashOrder.TransactionId = &data.TransferOrderNo
-			updatedCashOrder.Notes = util.JSON(data)
+			updatedCashOrder.Notes = models.EncryptedStr(util.JSON(data))
 			err = model.DB.Debug().WithContext(c).Updates(&updatedCashOrder).Error
 			if err != nil {
 				return

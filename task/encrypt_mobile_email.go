@@ -26,15 +26,15 @@ func EncryptMobileAndEmail() {
 			var toUpdate bool
 			if user.MobileHash == "" && user.Mobile != "" {
 				if enc, e := util.AesEncrypt([]byte(user.Mobile)); e == nil {
-					user.MobileHash = serializer.MobileEmailHash(user.Mobile)
-					user.Mobile = enc
+					user.MobileHash = serializer.MobileEmailHash(string(user.Mobile))
+					user.Mobile = ploutos.EncryptedStr(enc)
 					toUpdate = true
 				}
 			}
 			if user.EmailHash == "" && user.Email != "" {
 				if enc, e := util.AesEncrypt([]byte(user.Email)); e == nil {
-					user.EmailHash = serializer.MobileEmailHash(user.Email)
-					user.Email = enc
+					user.EmailHash = serializer.MobileEmailHash(string(user.Email))
+					user.Email = ploutos.EncryptedStr(enc)
 					toUpdate = true
 				}
 			}

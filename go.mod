@@ -6,10 +6,10 @@ toolchain go1.21.1
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
-	blgit.rfdev.tech/taya/game-service v0.0.0-20240315052321-474c83b0c3a1
+	blgit.rfdev.tech/taya/game-service v0.0.0-20240320101015-6a336e458e7e
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240321042502-ebf9a04497a5
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240326084327-9a549f39349f
-	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240205103854-a1c5a708f752
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240327095555-6d9c280518c4
+	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240327071634-698e840139e1
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
@@ -78,7 +78,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-chi/chi/v5 v5.0.11 // indirect
+	github.com/go-chi/chi/v5 v5.0.12 // indirect
 	github.com/go-logr/logr v1.3.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

@@ -5,6 +5,7 @@ import (
 	"web-api/model"
 	"web-api/service/common"
 
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
@@ -41,7 +42,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		newCashOrderState.ActualCashInAmount = actualAmount
 		newCashOrderState.BonusCashInAmount = bonusAmount
 		newCashOrderState.EffectiveCashInAmount = actualAmount + bonusAmount
-		newCashOrderState.Notes = notes
+		newCashOrderState.Notes = models.EncryptedStr(notes)
 		newCashOrderState.WagerChange += additionalWagerChange
 		newCashOrderState.Status = 2
 		updatedCashOrder, err = closeOrder(c, orderNumber, newCashOrderState, tx, 10000)

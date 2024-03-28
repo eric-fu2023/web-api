@@ -28,7 +28,7 @@ func RevertCashOutOrder(c *gin.Context, orderNumber string, notes, remark string
 		if err != nil || newCashOrderState.Status == models.CashOrderStatusFailed {
 			return
 		}
-		newCashOrderState.Notes = notes
+		newCashOrderState.Notes = models.EncryptedStr(notes)
 		newCashOrderState.Remark += remark
 		newCashOrderState.Status = newStatus
 		// update cash order

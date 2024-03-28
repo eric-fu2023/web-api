@@ -24,7 +24,7 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 		updatedCashOrder.ActualCashOutAmount = actualAmount
 		updatedCashOrder.BonusCashOutAmount = bonusAmount
 		updatedCashOrder.EffectiveCashOutAmount = updatedCashOrder.AppliedCashOutAmount + bonusAmount
-		updatedCashOrder.Notes = notes
+		updatedCashOrder.Notes = models.EncryptedStr(notes)
 		updatedCashOrder.WagerChange += additionalWagerChange
 		updatedCashOrder.Remark += remark
 		updatedCashOrder.Status = 2
