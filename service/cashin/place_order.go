@@ -2,7 +2,6 @@ package cashin
 
 import (
 	"errors"
-	"fmt"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -12,7 +11,6 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
 type TopUpOrderService struct {
@@ -121,38 +119,39 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 
 func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64, method model.CashMethod) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	u, _ := c.Get("user")
-	user := u.(model.User)
+	// u, _ := c.Get("user")
+	// user := u.(model.User)
 
 	if amount < 0 {
 		err = errors.New("illegal amount")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("negative_amount"), err)
 		return
 	}
+	return
 
-	var firstTime bool = false
-	err = model.DB.WithContext(c).Where("user_id", user.ID).Where("order_type > 0").Where("status", models.CashOrderStatusSuccess).First(&model.CashOrder{}).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			firstTime = true
-			err = nil
-		} else {
-			return
-		}
-	}
+	// var firstTime bool = false
+	// err = model.DB.WithContext(c).Where("user_id", user.ID).Where("order_type > 0").Where("status", models.CashOrderStatusSuccess).First(&model.CashOrder{}).Error
+	// if err != nil {
+	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
+	// 		firstTime = true
+	// 		err = nil
+	// 	} else {
+	// 		return
+	// 	}
+	// }
 
-	minAmount := method.MinAmount
-	if amount < minAmount {
-		if firstTime {
-			err = errors.New("illegal amount")
-			r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("first_topup_amount"), minAmount/100), err)
-			return
-		} else {
-			err = errors.New("illegal amount")
-			r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("topup_amount"), minAmount/100), err)
-			return
-		}
-	}
+	// minAmount := method.MinAmount
+	// if amount < minAmount {
+	// 	if firstTime {
+	// 		err = errors.New("illegal amount")
+	// 		r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("first_topup_amount"), minAmount/100), err)
+	// 		return
+	// 	} else {
+	// 		err = errors.New("illegal amount")
+	// 		r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("topup_amount"), minAmount/100), err)
+	// 		return
+	// 	}
+	// }
 
 	return
 }
