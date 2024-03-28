@@ -11,13 +11,16 @@ type UserSum struct {
 }
 
 func BuildUserSum(a ploutos.UserSum) UserSum {
+	var withdrawable float64
+	if a.RemainingWager == 0 {
+		withdrawable = float64(a.Balance) / 100
+	} else {
+		withdrawable = 0
+	}
 	u := UserSum{
 		Balance:        float64(a.Balance) / 100,
 		RemainingWager: float64(a.RemainingWager) / 100,
-		Withdrawable:   float64(a.MaxWithdrawable) / 100,
-	}
-	if u.Balance < u.Withdrawable {
-		u.Withdrawable = u.Balance
+		Withdrawable:   withdrawable,
 	}
 	return u
 }
