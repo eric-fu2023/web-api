@@ -41,12 +41,6 @@ var (
 )
 
 func CreateUser(user *model.User) (err error) {
-	var currencies []ploutos.CurrencyGameVendor
-	err = model.DB.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
-	if err != nil {
-		return ErrEmptyCurrencyId
-	}
-
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&user).Error
 		if err != nil {
@@ -82,10 +76,50 @@ func CreateUser(user *model.User) (err error) {
 			return
 		}
 
+		var integrationCurrencies []ploutos.CurrencyGameIntegration
+		err = tx.Where(`currency_id`, user.CurrencyId).Find(&integrationCurrencies).Error
+		if err != nil {
+			tx2.Rollback()
+			return ErrEmptyCurrencyId
+		}
+
+		inteCurrMap := make(map[int64]string)
+		for _, cur := range integrationCurrencies {
+			inteCurrMap[cur.GameIntegrationId] = cur.Value
+		}
+
+		var gameIntegrations []ploutos.GameIntegration
+		err = tx.Model(ploutos.GameIntegration{}).Find(&gameIntegrations).Error
+		if err != nil {
+			tx2.Rollback()
+			return
+		}
+		for _, gi := range gameIntegrations {
+			currency, exists := inteCurrMap[gi.ID]
+			if !exists {
+				tx2.Rollback()
+				return ErrEmptyCurrencyId
+			}
+			err = common.GameIntegration[gi.ID].CreateWallet(*user, currency)
+			if err != nil {
+				tx2.Rollback()
+				return
+			}
+		}
+
+		// TODO: might remove in the future
+		var currencies []ploutos.CurrencyGameVendor
+		err = tx.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
+		if err != nil {
+			tx2.Rollback()
+			return ErrEmptyCurrencyId
+		}
+
 		currMap := make(map[int64]string)
 		for _, cur := range currencies {
 			currMap[cur.GameVendorId] = cur.Value
 		}
+
 		games := strings.Split(os.Getenv("GAMES_REGISTERED_FOR_NEW_USER"), ",")
 		for _, g := range games {
 			if g == "" {
@@ -103,6 +137,7 @@ func CreateUser(user *model.User) (err error) {
 				return fmt.Errorf("%w: %w", game.OthersError(), e)
 			}
 		}
+		// TODO: END
 
 		tx2.Commit()
 		return
