@@ -183,6 +183,8 @@ func NewRouter() *gin.Engine {
 		v1.GET("/rtc_token", middleware.CheckAuth(), api.RtcToken)
 		v1.GET("/rtc_tokens", middleware.CheckAuth(), api.RtcTokens)
 
+		v1.GET("/vips", middleware.Cache(5*time.Minute), api.VipLoad)
+
 		pm := v1.Group("/pm")
 		{
 			pm.GET("/cs/history", middleware.CheckAuth(), api.CsHistory)
@@ -254,6 +256,8 @@ func NewRouter() *gin.Engine {
 				user.POST("/transfer_back", api.TransferBack)
 
 				user.POST("/feedback", api.FeedbackAdd)
+
+				user.GET("/vip-status", api.VipGet)
 
 				taya := user.Group("/taya")
 				{
