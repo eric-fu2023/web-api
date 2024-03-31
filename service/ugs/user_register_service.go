@@ -7,21 +7,24 @@ import (
 )
 
 const IntegrationIdUGS = 1
+const (
+	TransferStatusFailed  = 0
+	TransferStatusSuccess = 1
+	TransferStatusPending = 2
+)
+
+var PlatformMapping = map[int64]int64{
+	1: 1, // pc
+	2: 2, // h5
+	3: 2, // android
+	4: 2, // ios
+}
 
 type UGS struct {
 }
 
 func (c UGS) CreateWallet(user model.User, currency string) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
-		//var isTestUser bool
-		//if user.Role == 2 {
-		//	isTestUser = true
-		//}
-		//client := util.UgsFactory.NewClient(cache.RedisClient)
-		//_, _, err = client.GetUserToken(user.ID, user.Username, currency, lang, ip, isTestUser)
-		//if err != nil {
-		//	return
-		//}
 		var gameVendors []ploutos.GameVendor
 		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id AND gvb.brand_id = ?`, user.BrandId).
 			Where(`game_vendor.game_integration_id`, IntegrationIdUGS).Find(&gameVendors).Error

@@ -8,6 +8,7 @@ import (
 	"web-api/api/dollar_jackpot"
 	fb_api "web-api/api/fb"
 	api_finpay "web-api/api/finpay"
+	game_integration_api "web-api/api/game_integration"
 	imsb_api "web-api/api/imsb"
 	internal_api "web-api/api/internalapi"
 	"web-api/api/mock"
@@ -288,6 +289,11 @@ func NewRouter() *gin.Engine {
 				sg := user.Group("/stream_game")
 				{
 					sg.POST("/place_order", stream_game_api.PlaceOrder)
+				}
+
+				integration := user.Group("/game")
+				{
+					integration.GET("/url", game_integration_api.GetUrl)
 				}
 
 				kyc := user.Group("/kyc")
