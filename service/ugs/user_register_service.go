@@ -3,7 +3,9 @@ package ugs
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
+	"web-api/cache"
 	"web-api/model"
+	"web-api/util"
 )
 
 const IntegrationIdUGS = 1
@@ -47,5 +49,88 @@ func (c UGS) CreateWallet(user model.User, currency string) (err error) {
 	if err != nil {
 		return
 	}
+	return
+}
+
+func (c UGS) TransferFrom(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, lang, gameCode, ip string) (err error) {
+	var isTestUser bool
+	if user.Role == 2 {
+		isTestUser = true
+	}
+	client := util.UgsFactory.NewClient(cache.RedisClient)
+	balance, status, ptxid, e := client.TransferOut(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser)
+	if e != nil {
+		err = e
+		return
+	}
+	util.Log().Info("GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", IntegrationIdUGS, user.ID, balance, status, ptxid)
+	if status == TransferStatusSuccess && balance > 0 && ptxid != "" {
+		amount := util.MoneyInt(balance)
+		transaction := ploutos.Transaction{
+			UserId:                user.ID,
+			Amount:                amount,
+			BalanceBefore:         sum.Balance,
+			BalanceAfter:          sum.Balance + amount,
+			TransactionType:       ploutos.TransactionTypeFromUGS,
+			Wager:                 0,
+			WagerBefore:           sum.RemainingWager,
+			WagerAfter:            sum.RemainingWager,
+			ExternalTransactionId: ptxid,
+		}
+		err = tx.Create(&transaction).Error
+		if err != nil {
+			return
+		}
+		err = tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`balance`, gorm.Expr(`balance + ?`, amount)).Error
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, lang, gameCode, ip string) (err error) {
+	var isTestUser bool
+	if user.Role == 2 {
+		isTestUser = true
+	}
+	client := util.UgsFactory.NewClient(cache.RedisClient)
+	status, ptxid, e := client.TransferIn(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser, util.MoneyFloat(sum.Balance))
+	if e != nil {
+		err = e
+		return
+	}
+	util.Log().Info("GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", IntegrationIdUGS, user.ID, util.MoneyFloat(sum.Balance), status, ptxid)
+	if status == TransferStatusSuccess && ptxid != "" {
+		transaction := ploutos.Transaction{
+			UserId:                user.ID,
+			Amount:                -1 * sum.Balance,
+			BalanceBefore:         sum.Balance,
+			BalanceAfter:          0,
+			TransactionType:       ploutos.TransactionTypeToUGS,
+			Wager:                 0,
+			WagerBefore:           sum.RemainingWager,
+			WagerAfter:            sum.RemainingWager,
+			ExternalTransactionId: ptxid,
+		}
+		err = tx.Create(&transaction).Error
+		if err != nil {
+			return
+		}
+		err = tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`balance`, 0).Error
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (c UGS) GetGameUrl(user model.User, currency, lang, gameCode, subGameCode, ip string, platform int64) (url string, err error) {
+	var isTestUser bool
+	if user.Role == 2 {
+		isTestUser = true
+	}
+	client := util.UgsFactory.NewClient(cache.RedisClient)
+	url, err = client.GetGameUrl(user.ID, user.Username, currency, lang, gameCode, subGameCode, ip, PlatformMapping[platform], isTestUser)
 	return
 }
