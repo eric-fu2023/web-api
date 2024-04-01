@@ -7,30 +7,30 @@ import (
 )
 
 type Vip struct {
-	ID         int64
-	UserID     int64
-	AcquiredAt time.Time
-	ExpireAt   time.Time
+	ID         int64     `json:"id"`
+	UserID     int64     `json:"user_id"`
+	AcquiredAt time.Time `json:"acquired_at"`
+	ExpireAt   time.Time `json:"expire_at"`
 
-	Progress VipProgress
-	Rule     VipRule
+	Progress VipProgress `json:"progress"`
+	Rule     VipRule     `json:"rule"`
 }
 
 type VipProgress struct {
-	ID              int64
-	UserID          int64
-	TotalProgress   int64
-	CurrentProgress int64
+	ID              int64 `json:"id"`
+	UserID          int64 `json:"user_id"`
+	TotalProgress   int64 `json:"total_progress"`
+	CurrentProgress int64 `json:"current_progress"`
 }
 
 type VipRule struct {
 	ID                   int64 `json:"id"`
-	VIPLevel             int64 `json:"vip_level" gorm:"default:0"`
-	WithdrawCount        int64
-	WithdrawAmount       int64
-	WithdrawAmountTotal  int64
-	PromotionRequirement int64
-	RetentionRequirement int64
+	VIPLevel             int64 `json:"vip_level"`
+	WithdrawCount        int64 `json:"withdraw_count"`
+	WithdrawAmount       int64 `json:"withdraw_amount"`
+	WithdrawAmountTotal  int64 `json:"withdraw_amount_total"`
+	PromotionRequirement int64 `json:"promotion_requirement"`
+	RetentionRequirement int64 `json:"retention_requirement"`
 }
 
 func BuildVip(v models.VipRecord) Vip {
