@@ -24,13 +24,15 @@ type VipProgress struct {
 }
 
 type VipRule struct {
-	ID                   int64 `json:"id"`
-	VIPLevel             int64 `json:"vip_level"`
-	WithdrawCount        int64 `json:"withdraw_count"`
-	WithdrawAmount       int64 `json:"withdraw_amount"`
-	WithdrawAmountTotal  int64 `json:"withdraw_amount_total"`
-	PromotionRequirement int64 `json:"promotion_requirement"`
-	RetentionRequirement int64 `json:"retention_requirement"`
+	ID                   int64  `json:"id"`
+	VIPLevel             int64  `json:"vip_level"`
+	WithdrawCount        int64  `json:"withdraw_count"`
+	WithdrawAmount       int64  `json:"withdraw_amount"`
+	WithdrawAmountTotal  int64  `json:"withdraw_amount_total"`
+	PromotionRequirement int64  `json:"promotion_requirement"`
+	RetentionRequirement int64  `json:"retention_requirement"`
+	Icon                 string `json:"icon"`
+	Background           string `json:"background"`
 }
 
 func BuildVip(v models.VipRecord) Vip {
@@ -48,8 +50,8 @@ func BuildVipProgress(v models.VipProgress) VipProgress {
 	return VipProgress{
 		ID:              v.ID,
 		UserID:          v.UserID,
-		TotalProgress:   v.TotalProgress,
-		CurrentProgress: v.CurrentProgress,
+		TotalProgress:   v.TotalProgress / 100,
+		CurrentProgress: v.CurrentProgress / 100,
 	}
 
 }
@@ -59,9 +61,11 @@ func BuildVipRule(v models.VIPRule) VipRule {
 		ID:                   v.ID,
 		VIPLevel:             v.VIPLevel,
 		WithdrawCount:        v.WithdrawCount,
-		WithdrawAmount:       v.WithdrawAmount,
-		WithdrawAmountTotal:  v.WithdrawAmountTotal,
-		PromotionRequirement: v.PromotionRequirement,
-		RetentionRequirement: v.RetentionRequirement,
+		WithdrawAmount:       v.WithdrawAmount / 100,
+		WithdrawAmountTotal:  v.WithdrawAmountTotal / 100,
+		PromotionRequirement: v.PromotionRequirement / 100,
+		RetentionRequirement: v.RetentionRequirement / 100,
+		Icon:                 v.Icon,
+		Background:           v.Background,
 	}
 }
