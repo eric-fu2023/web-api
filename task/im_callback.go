@@ -35,6 +35,7 @@ func ProcessImUpdateBalance() {
 		for key, arr := range keys {
 			sort.Strings(arr)
 			wg.Add(1)
+			time.Sleep(1 * time.Second)
 			go func(key string, arr []string) {
 				defer wg.Done()
 				for _, a := range arr {
