@@ -3,6 +3,7 @@ package ugs
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"web-api/cache"
 	"web-api/model"
 	"web-api/util"
@@ -52,18 +53,22 @@ func (c UGS) CreateWallet(user model.User, currency string) (err error) {
 	return
 }
 
-func (c UGS) TransferFrom(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, lang, gameCode, ip string) (err error) {
+func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, lang, gameCode, ip string) (err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
 	}
 	client := util.UgsFactory.NewClient(cache.RedisClient)
-	balance, status, ptxid, e := client.TransferOut(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser)
-	if e != nil {
-		err = e
+	balance, status, ptxid, err := client.TransferOut(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser)
+	if err != nil {
 		return
 	}
 	util.Log().Info("GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", IntegrationIdUGS, user.ID, balance, status, ptxid)
+	var sum ploutos.UserSum
+	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error
+	if err != nil {
+		return
+	}
 	if status == TransferStatusSuccess && balance > 0 && ptxid != "" {
 		amount := util.MoneyInt(balance)
 		transaction := ploutos.Transaction{
@@ -89,15 +94,14 @@ func (c UGS) TransferFrom(tx *gorm.DB, user model.User, sum ploutos.UserSum, cur
 	return
 }
 
-func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, lang, gameCode, ip string) (err error) {
+func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, lang, gameCode, ip string) (balance int64, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
 	}
 	client := util.UgsFactory.NewClient(cache.RedisClient)
-	status, ptxid, e := client.TransferIn(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser, util.MoneyFloat(sum.Balance))
-	if e != nil {
-		err = e
+	status, ptxid, err := client.TransferIn(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser, util.MoneyFloat(sum.Balance))
+	if err != nil {
 		return
 	}
 	util.Log().Info("GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", IntegrationIdUGS, user.ID, util.MoneyFloat(sum.Balance), status, ptxid)
@@ -122,6 +126,7 @@ func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, curre
 			return
 		}
 	}
+	balance = sum.Balance
 	return
 }
 
