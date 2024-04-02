@@ -35,7 +35,7 @@ func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
 	u, exists := c.Get("user")
 	if !exists {
 		mobileHash := serializer.MobileEmailHash(s.Mobile)
-		if err := model.DB.Where(`country_code`, s.CountryCode).Where(`mobile`, mobileHash).First(&user).Error; err != nil {
+		if err := model.DB.Where(`country_code`, s.CountryCode).Where(`mobile_hash`, mobileHash).First(&user).Error; err != nil {
 			return serializer.ParamErr(c, s, i18n.T("account_invalid"), err)
 		}
 	} else {

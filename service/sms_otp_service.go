@@ -204,7 +204,8 @@ func (service *SmsOtpService) verifyMobileNumber() error {
 
 func (service *SmsOtpService) checkExisting(countryCode, mobile string) bool {
 	var user model.User
-	row := model.DB.Where(`country_code`, countryCode).Where(`mobile`, mobile).First(&user).RowsAffected
+	mobileHash := serializer.MobileEmailHash(service.Mobile)
+	row := model.DB.Where(`country_code`, countryCode).Where(`mobile_hash`, mobileHash).First(&user).RowsAffected
 	if row > 0 {
 		return true
 	}
