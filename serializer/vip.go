@@ -24,15 +24,20 @@ type VipProgress struct {
 }
 
 type VipRule struct {
-	ID                   int64  `json:"id"`
-	VIPLevel             int64  `json:"vip_level"`
-	WithdrawCount        int64  `json:"withdraw_count"`
-	WithdrawAmount       int64  `json:"withdraw_amount"`
-	WithdrawAmountTotal  int64  `json:"withdraw_amount_total"`
-	PromotionRequirement int64  `json:"promotion_requirement"`
-	RetentionRequirement int64  `json:"retention_requirement"`
-	Icon                 string `json:"icon"`
-	Background           string `json:"background"`
+	ID                   int64   `json:"id"`
+	VIPLevel             int64   `json:"vip_level"`
+	WithdrawCount        int64   `json:"withdraw_count"`
+	WithdrawAmount       int64   `json:"withdraw_amount"`
+	WithdrawAmountTotal  int64   `json:"withdraw_amount_total"`
+	PromotionRequirement int64   `json:"promotion_requirement"`
+	RetentionRequirement int64   `json:"retention_requirement"`
+	Icon                 string  `json:"icon"`
+	Background           string  `json:"background"`
+	RefundRate           float64 `json:"refund_rate"`
+	ReferralRate         float64 `json:"referral_rate"`
+	PromotionBenefit     int64   `json:"promotion_benefit"`
+	WeeklyBenefit        int64   `json:"weekly_benefit"`
+	BirthdayBenefit      int64   `json:"birthday_benefit"`
 }
 
 func BuildVip(v models.VipRecord) Vip {
@@ -67,5 +72,10 @@ func BuildVipRule(v models.VIPRule) VipRule {
 		RetentionRequirement: v.RetentionRequirement / 100,
 		Icon:                 v.Icon,
 		Background:           v.Background,
+		RefundRate:           v.RefundRate,
+		ReferralRate:         v.ReferralRate,
+		PromotionBenefit:     v.PromotionBenefit / 100,
+		WeeklyBenefit:        v.WeeklyBenefit / 100,
+		BirthdayBenefit:      v.BirthdayBenefit / 100,
 	}
 }
