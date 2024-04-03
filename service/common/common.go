@@ -187,11 +187,6 @@ func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betE
 		wager = absBetAmount
 	}
 	newWager = originalWager + (multiplier * wager)
-	fmt.Println("DebugLog123: newWager:", newWager)
-	fmt.Println("DebugLog123: originalWager:", originalWager)
-	fmt.Println("DebugLog123: multiplier:", multiplier)
-	fmt.Println("DebugLog123: wager:", wager)
-
 	if newWager < 0 {
 		newWager = 0
 	}
