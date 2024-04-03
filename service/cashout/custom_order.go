@@ -16,6 +16,7 @@ import (
 
 type CustomOrderService struct {
 	model.CashOrder
+	TransactionType int64
 }
 
 func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err error) {
@@ -37,7 +38,7 @@ func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Respons
 		if err != nil {
 			return
 		}
-		if userSum.MaxWithdrawable < amount || userSum.Balance < amount {
+		if userSum.Balance < amount {
 			err = errors.New("withdraw exceeded")
 			r = serializer.Err(c, nil, serializer.CodeGeneralError, "err_insufficient_withdrawable", err)
 			return
