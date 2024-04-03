@@ -1,7 +1,6 @@
 package dc
 
 import (
-	"fmt"
 	"web-api/model"
 	"web-api/service/common"
 	"web-api/util"
@@ -50,12 +49,6 @@ func EndWagerCallback(c *gin.Context, req callback.EndWagerRequest) (res callbac
 	if res.Code != 0 || err != nil {
 		return
 	}
-
-	fmt.Println("DebugLog123: EndWagerRequest.Amount", req.Amount)
-	fmt.Println("DebugLog123: EndWagerRequest.RoundId", req.RoundId)
-	fmt.Println("DebugLog123: EndWagerRequest.WagerId", req.WagerId)
-	fmt.Println("DebugLog123: EndWagerRequest.Provider", req.Provider)
-	fmt.Println("DebugLog123: EndWagerRequest.IsEndround", req.IsEndround)
 
 	a := EndWager{Request: req}
 	err = common.ProcessTransaction(&a)
