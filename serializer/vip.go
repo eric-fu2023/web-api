@@ -24,17 +24,20 @@ type VipProgress struct {
 }
 
 type VipRule struct {
-	ID                   int64   `json:"id"`
-	VIPLevel             int64   `json:"vip_level"`
-	WithdrawCount        int64   `json:"withdraw_count"`
-	WithdrawAmount       int64   `json:"withdraw_amount"`
-	WithdrawAmountTotal  int64   `json:"withdraw_amount_total"`
-	PromotionRequirement int64   `json:"promotion_requirement"`
+	ID                  int64 `json:"id"`
+	VIPLevel            int64 `json:"vip_level"`
+	WithdrawCount       int64 `json:"withdraw_count"`
+	WithdrawAmount      int64 `json:"withdraw_amount"`
+	WithdrawAmountTotal int64 `json:"withdraw_amount_total"`
+	// PromotionRequirement int64   `json:"promotion_requirement"`
+	TotalRequirement     int64   `json:"total_requirement"`
 	RetentionRequirement int64   `json:"retention_requirement"`
 	Icon                 string  `json:"icon"`
 	Background           string  `json:"background"`
-	RefundRate           float64 `json:"refund_rate"`
+	RebateRate           float64 `json:"rebate_rate"`
+	RebateCap            int64   `json:"rebate_cap"`
 	ReferralRate         float64 `json:"referral_rate"`
+	ReferralCap          int64   `json:"referral_cap"`
 	PromotionBenefit     int64   `json:"promotion_benefit"`
 	WeeklyBenefit        int64   `json:"weekly_benefit"`
 	BirthdayBenefit      int64   `json:"birthday_benefit"`
@@ -68,14 +71,16 @@ func BuildVipRule(v models.VIPRule) VipRule {
 		WithdrawCount:        v.WithdrawCount,
 		WithdrawAmount:       v.WithdrawAmount / 100,
 		WithdrawAmountTotal:  v.WithdrawAmountTotal / 100,
-		PromotionRequirement: v.PromotionRequirement / 100,
+		TotalRequirement:     v.TotalRequirement / 100,
 		RetentionRequirement: v.RetentionRequirement / 100,
 		Icon:                 v.Icon,
 		Background:           v.Background,
-		RefundRate:           v.RefundRate,
+		RebateRate:           v.RebateRate,
 		ReferralRate:         v.ReferralRate,
 		PromotionBenefit:     v.PromotionBenefit / 100,
 		WeeklyBenefit:        v.WeeklyBenefit / 100,
 		BirthdayBenefit:      v.BirthdayBenefit / 100,
+		RebateCap:            v.RebateCap / 100,
+		ReferralCap:          v.ReferralCap / 100,
 	}
 }
