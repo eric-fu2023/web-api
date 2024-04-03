@@ -45,7 +45,7 @@ func (c *Callback) GetWagerMultiplier() (int64, bool) {
 
 func (c *Callback) GetBetAmount() (amount int64, exists bool) {
 	e := model.DB.Clauses(dbresolver.Use("txConn")).Model(ploutos.DcTransaction{}).Select(`amount`).
-		Where(`round_id`, c.Transaction.RoundId).Where(`wager_id`, c.Transaction.WagerId).Where(`bet_type`, 1).Order(`id`).First(&amount).Error
+		Where(`round_id`, c.Transaction.RoundId).Where(`bet_type`, 1).Order(`id`).First(&amount).Error
 	if e == nil {
 		exists = true
 	}
