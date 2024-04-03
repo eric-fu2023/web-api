@@ -98,13 +98,11 @@ func GetSums(tx *gorm.DB, gpu ploutos.GameVendorUser) (balance int64, remainingW
 }
 
 func ProcessTransaction(obj CallbackInterface) (err error) {
-	fmt.Println("DebugLog123: 1")
 	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 	if tx.Error != nil {
 		err = tx.Error
 		return
 	}
-	fmt.Println("DebugLog123: 2")
 
 	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(tx, obj.GetGameVendorId(), obj.GetExternalUserId())
 	if err != nil {
@@ -117,8 +115,6 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 		tx.Rollback()
 		return
 	}
-
-	fmt.Println("DebugLog123: 3")
 	newBalance := balance + obj.GetAmount()
 	newRemainingWager := remainingWager
 	betAmount, betExists, w, e := calWager(obj, remainingWager)
@@ -176,22 +172,13 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 }
 
 func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betExists bool, newWager int64, err error) {
-	fmt.Println("DebugLog123: 4")
 	newWager = originalWager
-	fmt.Println("DebugLog123: originalWager 1", originalWager)
-	fmt.Println("DebugLog123: newWager 1", newWager)
 	multiplier, exists := obj.GetWagerMultiplier()
-	fmt.Println("DebugLog123: multiplier", multiplier)
-	fmt.Println("DebugLog123: exists", exists)
 	if !exists {
-		fmt.Println("DebugLog123: 5")
 		return
 	}
 	betAmount, betExists = obj.GetBetAmount()
-	fmt.Println("DebugLog123: betAmount", betAmount)
-	fmt.Println("DebugLog123: betExists", betExists)
 	if !betExists {
-		fmt.Println("DebugLog123: 6")
 		return
 	}
 	absBetAmount := abs(betAmount)
