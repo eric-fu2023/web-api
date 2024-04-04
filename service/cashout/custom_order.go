@@ -20,6 +20,9 @@ type CustomOrderService struct {
 }
 
 func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err error) {
+	if cashOrder.TransactionType == 0 {
+		cashOrder.TransactionType = 10001
+	}
 	amount := cashOrder.AppliedCashOutAmount
 
 	verified := cashOrder.VerifyManualCashOut()

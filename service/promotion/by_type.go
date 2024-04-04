@@ -16,6 +16,14 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
+func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward int64) {
+	switch p.Type {
+	default:
+		reward = p.GetRewardDetails().GetReward(progress)
+	}
+	return
+}
+
 func ProgressByType(c context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
 	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
