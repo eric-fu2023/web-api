@@ -13,6 +13,7 @@ const (
 	UserAchievementIdFirstAppLoginReward       = 2
 	UserAchievementIdFirstDepositBonusTutorial = 3
 	UserAchievementIdFirstDepositBonusReward   = 4
+	UserAchievementIdUpdateBirthday            = 5
 )
 
 var (
@@ -70,4 +71,13 @@ func CreateUserAchievementWithDB(tx *gorm.DB, userId int64, achievementId int64)
 		AchievementId: achievementId,
 	}}
 	return tx.Create(&ua).Error
+}
+
+func GetUserAchievementsForMe(userId int64) ([]UserAchievement, error) {
+	uaCond := GetUserAchievementCond{AchievementIds: []int64{
+		UserAchievementIdFirstAppLoginTutorial,
+		UserAchievementIdFirstAppLoginReward,
+		UserAchievementIdUpdateBirthday,
+	}}
+	return GetUserAchievements(userId, uaCond)
 }

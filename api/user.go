@@ -171,6 +171,16 @@ func UserDelete(c *gin.Context) {
 	}
 }
 
+func ProfileUpdate(c *gin.Context) {
+	var service service.ProfileUpdateService
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
+		res := service.Update(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
 func NicknameUpdate(c *gin.Context) {
 	var service service.NicknameUpdateService
 	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
