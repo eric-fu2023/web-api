@@ -72,3 +72,12 @@ func CreateUserAchievementWithDB(tx *gorm.DB, userId int64, achievementId int64)
 	}}
 	return tx.Create(&ua).Error
 }
+
+func GetUserAchievementsForMe(userId int64) ([]UserAchievement, error) {
+	uaCond := GetUserAchievementCond{AchievementIds: []int64{
+		UserAchievementIdFirstAppLoginTutorial,
+		UserAchievementIdFirstAppLoginReward,
+		UserAchievementIdUpdateBirthday,
+	}}
+	return GetUserAchievements(userId, uaCond)
+}

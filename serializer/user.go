@@ -56,6 +56,7 @@ type UserInfo struct {
 	HasCompletedFirstAppLoginTutorial bool     `json:"has_completed_first_app_login_tutorial"`
 	HasClaimedFirstAppLoginReward     bool     `json:"has_claimed_first_app_login_reward"`
 	Birthday                          string   `json:"birthday"`
+	CanUpdateBirthday                 bool     `json:"can_update_birthday"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
@@ -100,6 +101,7 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 	}
 	u.HasCompletedFirstAppLoginTutorial = hasCompletedAchievement[model.UserAchievementIdFirstAppLoginTutorial]
 	u.HasClaimedFirstAppLoginReward = hasCompletedAchievement[model.UserAchievementIdFirstAppLoginReward]
+	u.CanUpdateBirthday = !hasCompletedAchievement[model.UserAchievementIdUpdateBirthday]
 
 	return u
 }

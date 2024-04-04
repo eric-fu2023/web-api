@@ -158,11 +158,7 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 		user.UserSum = &userSum
 	}
 
-	uaCond := model.GetUserAchievementCond{AchievementIds: []int64{
-		model.UserAchievementIdFirstAppLoginTutorial,
-		model.UserAchievementIdFirstAppLoginReward,
-	}}
-	userAchievements, err := model.GetUserAchievements(user.ID, uaCond)
+	userAchievements, err := model.GetUserAchievementsForMe(user.ID)
 	if err == nil {
 		user.Achievements = userAchievements
 	}

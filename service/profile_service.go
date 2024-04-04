@@ -28,11 +28,18 @@ func (service *ProfileUpdateService) Update(c *gin.Context) serializer.Response 
 		return validateResp
 	}
 
-	err := service.updateUser(user)
+	err := service.updateUser(&user)
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("update user error: %s", err.Error())
 		return serializer.GeneralErr(c, err)
 	}
+
+	userAchievements, err := model.GetUserAchievementsForMe(user.ID)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("get user achievements error: %s", err.Error())
+		return serializer.GeneralErr(c, err)
+	}
+	user.Achievements = userAchievements
 
 	return serializer.Response{
 		Data: serializer.BuildUserInfo(c, user),
@@ -72,7 +79,7 @@ func (service *ProfileUpdateService) validate(c *gin.Context, user model.User) s
 	return serializer.Response{}
 }
 
-func (service *ProfileUpdateService) updateUser(user model.User) (err error) {
+func (service *ProfileUpdateService) updateUser(user *model.User) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) error {
 		if service.Nickname != "" {
 			user.Nickname = service.Nickname
@@ -90,14 +97,14 @@ func (service *ProfileUpdateService) updateUser(user model.User) (err error) {
 		}
 
 		if service.ProfilePicture != nil {
-			path, err := service.uploadProfilePic(user)
+			path, err := service.uploadProfilePic(*user)
 			if err != nil {
 				return fmt.Errorf("upload profile pic: %w", err)
 			}
 			user.Avatar = path
 		}
 
-		err = tx.Updates(&user).Error
+		err = tx.Updates(user).Error
 		if err != nil {
 			return fmt.Errorf("update user: %w", err)
 		}
