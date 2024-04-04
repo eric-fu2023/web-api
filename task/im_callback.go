@@ -48,7 +48,7 @@ func ProcessImUpdateBalance() {
 						continue
 					}
 
-					err = common.ProcessTransaction(&imsb.Callback{Request: data})
+					err = common.ProcessImUpdateBalanceTransaction(&imsb.Callback{Request: data})
 					if err != nil {
 						util.Log().Error("Task:ProcessImUpdateBalance error", err, data)
 						return
