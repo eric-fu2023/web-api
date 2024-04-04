@@ -117,6 +117,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	}
 	newBalance := balance + obj.GetAmount()
 	if newBalance < 0 {
+		err = ErrInsuffientBalance
 		tx.Rollback()
 		return
 	}
