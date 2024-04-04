@@ -63,7 +63,7 @@ func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Respons
 			cashOrder.UserId,
 			-amount,
 			0,
-			-amount, 10001, cashOrder.ID)
+			-amount, cashOrder.TransactionType, cashOrder.ID)
 		if err != nil {
 			return
 		}
