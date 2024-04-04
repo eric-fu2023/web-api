@@ -21,7 +21,7 @@ func (s *FinpayPaymentCallback) Handle(c *gin.Context) (err error) {
 	}
 	defer model.CashOrder{}.MarkCallbackAt(c, s.MerchantOrderNo, model.DB)
 	if !s.IsSuccess() {
-		err = cashin.MarkOrderFailed(c, s.MerchantOrderNo, util.JSON(s))
+		err = cashin.MarkOrderFailed(c, s.MerchantOrderNo, util.JSON(s), s.PaymentOrderNo)
 		return
 	}
 	// check api response

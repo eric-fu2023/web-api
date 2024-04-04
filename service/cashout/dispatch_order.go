@@ -48,6 +48,12 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			if err != nil {
 				return
 			}
+		} else if data.TransferOrderNo != "" {
+			updatedCashOrder.TransactionId = &data.TransferOrderNo
+			err = model.DB.Debug().WithContext(c).Updates(&updatedCashOrder).Error
+			if err != nil {
+				return
+			}
 		}
 		if err != nil {
 			return

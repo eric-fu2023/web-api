@@ -8,11 +8,12 @@ import (
 )
 
 // idempotent
-func MarkOrderFailed(c context.Context, orderNumber, notes string) (err error) {
+func MarkOrderFailed(c context.Context, orderNumber, notes, transactionID string) (err error) {
 	err = model.DB.Model(&model.CashOrder{}).Where("id", orderNumber).Where("status = 1").
 		Updates(map[string]any{
-			"status": models.CashOrderStatusFailed,
-			"notes":  notes,
+			"status":         models.CashOrderStatusFailed,
+			"notes":          models.EncryptedStr(notes),
+			"transaction_id": transactionID,
 		}).Error
 	return
 }
