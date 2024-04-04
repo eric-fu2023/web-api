@@ -485,6 +485,8 @@ kyc_submit_failed: "An error occurred during KYC submission."
 kyc_get_failed: "An error occurred when retrieving KYC information."
 kyc_rejected_reason_suffix: ", please contact our support for more details or you can resubmit documents again."
 
+user_update_birthday_once: "User birthday can only be updated once."
+
 file_type_not_allowed: "File type %s is not allowed."
 file_size_exceeded: "File size should not exceed %s."
 file_upload_error: "File could not be uploaded."

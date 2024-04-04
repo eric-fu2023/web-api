@@ -13,6 +13,7 @@ const (
 	UserAchievementIdFirstAppLoginReward       = 2
 	UserAchievementIdFirstDepositBonusTutorial = 3
 	UserAchievementIdFirstDepositBonusReward   = 4
+	UserAchievementIdUpdateBirthday            = 5
 )
 
 var (

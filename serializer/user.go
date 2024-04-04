@@ -55,6 +55,7 @@ type UserInfo struct {
 	Kyc                               *Kyc     `json:"kyc,omitempty"`
 	HasCompletedFirstAppLoginTutorial bool     `json:"has_completed_first_app_login_tutorial"`
 	HasClaimedFirstAppLoginReward     bool     `json:"has_claimed_first_app_login_reward"`
+	Birthday                          string   `json:"birthday"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
@@ -73,6 +74,9 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		HasSetSecondaryPwd: len(user.SecondaryPassword) > 0,
 		Brand:              user.BrandId,
 		Agent:              user.AgentId,
+	}
+	if user.Birthday.Valid {
+		u.Birthday = user.Birthday.Time.Format(time.DateOnly)
 	}
 	if user.Username == "" {
 		u.SetupRequired = true
