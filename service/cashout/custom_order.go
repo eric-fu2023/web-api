@@ -19,13 +19,14 @@ type CustomOrderService struct {
 	TransactionType int64
 }
 
-func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err error) {
-	if cashOrder.TransactionType == 0 {
-		cashOrder.TransactionType = 10001
+func (svc CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err error) {
+	cashOrder := svc.CashOrder
+	if svc.TransactionType == 0 {
+		svc.TransactionType = 10001
 	}
 	amount := cashOrder.AppliedCashOutAmount
 
-	verified := cashOrder.VerifyManualCashOut()
+	verified := svc.VerifyManualCashOut()
 	if !verified {
 		err = errors.New("invalid cashout order")
 		r = serializer.Err(c, nil, serializer.CodeGeneralError, "err_invalid_order", err)
@@ -66,7 +67,7 @@ func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Respons
 			cashOrder.UserId,
 			-amount,
 			0,
-			-amount, cashOrder.TransactionType, cashOrder.ID)
+			-amount, svc.TransactionType, cashOrder.ID)
 		if err != nil {
 			return
 		}
