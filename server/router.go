@@ -13,6 +13,7 @@ import (
 	internal_api "web-api/api/internalapi"
 	"web-api/api/mock"
 	promotion_api "web-api/api/promotion"
+	referral_api "web-api/api/referral"
 	saba_api "web-api/api/saba"
 	"web-api/api/stream_game"
 	taya_api "web-api/api/taya"
@@ -331,6 +332,14 @@ func NewRouter() *gin.Engine {
 				{
 					achievement.GET("/list", api.AchievementList)
 					achievement.POST("/complete", api.AchievementComplete)
+				}
+
+				referralAlliance := user.Group("/referral/alliance")
+				{
+					referralAlliance.GET("/summary", referral_api.GetRewardSummary)
+					referralAlliance.GET("/referrals", referral_api.ListRewardReferrals)
+					referralAlliance.GET("/referral_summary", referral_api.GetRewardReferralSummary)
+					referralAlliance.GET("/referral_reward_records", referral_api.GetRewardReferralRewardRecords)
 				}
 			}
 		}
