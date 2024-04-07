@@ -139,3 +139,17 @@ func (c UGS) GetGameUrl(user model.User, currency, lang, gameCode, subGameCode, 
 	url, err = client.GetGameUrl(user.ID, user.Username, currency, lang, gameCode, subGameCode, ip, PlatformMapping[platform], isTestUser)
 	return
 }
+
+func (c UGS) GetGameBalance(user model.User, currency, lang, gameCode, ip string) (balance int64, err error) {
+	var isTestUser bool
+	if user.Role == 2 {
+		isTestUser = true
+	}
+	client := util.UgsFactory.NewClient(cache.RedisClient)
+	balanceFloat, err := client.GetGameBalance(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser)
+	if err != nil {
+		return
+	}
+	balance = util.MoneyInt(balanceFloat)
+	return
+}

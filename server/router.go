@@ -233,6 +233,9 @@ func NewRouter() *gin.Engine {
 				user.PUT("/notification/mark_read", api.UserNotificationMarkRead)
 				user.GET("/counters", api.UserCounters)
 				user.PUT("/fcm_token", api.FcmTokenUpdate)
+				user.GET("/wallets", api.UserWallets)
+				user.PUT("/sync_wallet", api.UserSyncWallet)
+				user.PUT("/recall", api.UserRecallFund)
 
 				user.GET("/following_ids", api.UserFollowingIdList)
 				user.POST("/follow", api.UserFollowingAdd)

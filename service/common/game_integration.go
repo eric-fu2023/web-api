@@ -16,4 +16,5 @@ type GameIntegrationInterface interface {
 	TransferFrom(*gorm.DB, model.User, string, string, string, string) error
 	TransferTo(*gorm.DB, model.User, ploutos.UserSum, string, string, string, string) (int64, error)
 	GetGameUrl(model.User, string, string, string, string, string, int64) (string, error)
+	GetGameBalance(model.User, string, string, string, string) (int64, error)
 }

@@ -8,7 +8,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240401105335-ce3d388f8636
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240403061908-131305efa6b7
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240404073735-e6be6479d2ff
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240407101513-a72824848590
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240327071634-698e840139e1
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
@@ -36,9 +36,9 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.9.3
 	go.mongodb.org/mongo-driver v1.11.2
-	golang.org/x/crypto v0.21.0
+	golang.org/x/crypto v0.22.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
-	golang.org/x/sys v0.18.0
+	golang.org/x/sys v0.19.0
 	golang.org/x/text v0.14.0
 	google.golang.org/api v0.156.0
 	gopkg.in/go-playground/validator.v8 v8.18.2

@@ -231,6 +231,36 @@ func UserCounters(c *gin.Context) {
 	}
 }
 
+func UserWallets(c *gin.Context) {
+	var service service.WalletService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Get(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
+func UserSyncWallet(c *gin.Context) {
+	var service service.SyncWalletService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Update(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
+func UserRecallFund(c *gin.Context) {
+	var service service.RecallFundService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Recall(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
 func UserRegister(c *gin.Context) {
 	var service service.UserRegisterService
 	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
