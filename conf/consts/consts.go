@@ -119,6 +119,7 @@ var (
 		"image":        2,
 		"audioOverlay": 3,
 		"download":     4,
+		"gameLobby":    5,
 	}
 	CashOrderStatus = map[int64]string{
 		1: "Pending",
