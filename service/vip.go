@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const vip_rules_full = "vip_rules_full"
+
 type VipQuery struct {
 }
 
@@ -40,3 +42,15 @@ func (s VipLoad) Load(c *gin.Context) serializer.Response {
 		Data: util.MapSlice(list, serializer.BuildVipRule),
 	}
 }
+
+// func CachedVipRules(ctx context.Context) ([]models.VIPRule, error) {
+// 	res := cache.RedisClient.Get(ctx, vip_rules_full)
+// 	if res.Err() != nil {
+// 		list, err := model.LoadRule(ctx)
+// 		go cache.RedisClient.Set(ctx, vip_rules_full, list, 5*time.Minute)
+// 		return list, err
+// 	}
+// 	ret := []models.VIPRule{}
+// 	err := json.Unmarshal([]byte(res.Val()), &ret)
+// 	return ret, err
+// }
