@@ -30,7 +30,7 @@ func (service *RewardReferralSummaryService) Get(c *gin.Context) (r serializer.R
 		ReferralId:        224,
 		Nickname:          "Some User",
 		Avatar:            "https://static.tayalive.com/img/user/224/avatar/224-avatar-20240404090035-PWauUp.jpg",
-		VipId:             1,
+		VipId:             3,
 		JoinTime:          1711617294,
 		RewardRecordCount: 2,
 		TotalReward:       996.03,
