@@ -57,6 +57,7 @@ type UserInfo struct {
 	HasClaimedFirstAppLoginReward     bool     `json:"has_claimed_first_app_login_reward"`
 	Birthday                          string   `json:"birthday"`
 	CanUpdateBirthday                 bool     `json:"can_update_birthday"`
+	ReferralCode                      string   `json:"referral_code"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
@@ -75,6 +76,7 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		HasSetSecondaryPwd: len(user.SecondaryPassword) > 0,
 		Brand:              user.BrandId,
 		Agent:              user.AgentId,
+		ReferralCode:       user.ReferralCode,
 	}
 	if user.Birthday.Valid {
 		u.Birthday = user.Birthday.Time.Format(time.DateOnly)
