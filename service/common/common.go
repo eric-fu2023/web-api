@@ -252,20 +252,36 @@ func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
 
 func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betExists bool, newWager int64, err error) {
 	newWager = originalWager
+	fmt.Println("DebugLog1234: originalWager 1", originalWager)
+	fmt.Println("DebugLog1234: newWager 1", newWager)
+
 	multiplier, exists := obj.GetWagerMultiplier()
 	if !exists {
 		return
 	}
+	fmt.Println("DebugLog1234: multiplier", multiplier)
+	fmt.Println("DebugLog1234: multiplier exists", exists)
+
 	betAmount, betExists = obj.GetBetAmount()
 	if !betExists {
 		return
 	}
+	fmt.Println("DebugLog1234: betAmount", betAmount)
+	fmt.Println("DebugLog1234: betAmount exists", betExists)
+
 	absBetAmount := abs(betAmount)
 	wager := abs(absBetAmount - abs(obj.GetAmount()))
+	fmt.Println("DebugLog1234: obj.GetAmount", obj.GetAmount())
+	fmt.Println("DebugLog1234: wager", wager)
+
 	if wager > absBetAmount {
 		wager = absBetAmount
 	}
 	newWager = originalWager + (multiplier * wager)
+	fmt.Println("DebugLog1234: originalWager 2", originalWager)
+	fmt.Println("DebugLog1234: newWager 2", newWager)
+	fmt.Println("")
+
 	if newWager < 0 {
 		newWager = 0
 	}
