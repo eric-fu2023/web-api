@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"runtime/debug"
 	"time"
 	"web-api/conf/consts"
 
@@ -118,6 +119,7 @@ func MarshalService(service any) string {
 
 // Logger creates a new Ginrus logger with a UUID included
 func GetLoggerEntry(c context.Context) *logrus.Entry {
+	stk := string(debug.Stack())
 	logger := c.Value(consts.LogKey)
 	if logger == nil {
 		logLevel := logrus.DebugLevel
@@ -125,9 +127,9 @@ func GetLoggerEntry(c context.Context) *logrus.Entry {
 			logLevel = l
 		}
 		logrus.SetLevel(logLevel)
-		return logrus.WithField(consts.CorrelationKey, c.Value(consts.CorrelationKey))
+		return logrus.WithField(consts.CorrelationKey, c.Value(consts.CorrelationKey)).WithField(consts.StackTraceKey, stk)
 	}
-	return logger.(*logrus.Entry)
+	return logger.(*logrus.Entry).WithField(consts.StackTraceKey, stk)
 }
 
 func GetCorrelationID(c context.Context) string {

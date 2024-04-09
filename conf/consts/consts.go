@@ -407,6 +407,7 @@ const (
 	// TopupMinimum           int64  = 5_00  //500_00
 	// TopupMax               int64  = 30000_00
 	WithdrawMethodLimit = 5
+	StackTraceKey       = "stack_trace"
 
 	Notification_Type_User_Registration = "user_registration"
 	Notification_Type_Password_Reset    = "password_reset"
