@@ -1,14 +1,15 @@
 package game_integration
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type GetUrlService struct {
@@ -78,6 +79,29 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 
 	r = serializer.Response{
 		Data: url,
+	}
+	return
+}
+
+type GameCategoryListService struct {
+}
+
+func (service *GameCategoryListService) List(c *gin.Context) (r serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	var games []ploutos.GameCategory
+
+	if err = model.DB.Model(ploutos.GameCategory{}).Preload(`GameVendor`, "game_integration_id = 1").
+		Find(&games).Error; err != nil {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+
+	var data []serializer.GameCategory
+	for _, g := range games {
+		data = append(data, serializer.BuildGameCategory(c, g))
+	}
+	r = serializer.Response{
+		Data: data,
 	}
 	return
 }

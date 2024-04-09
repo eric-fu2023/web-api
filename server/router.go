@@ -5,7 +5,7 @@ import (
 	"time"
 	"web-api/api"
 	dc_api "web-api/api/dc"
-	"web-api/api/dollar_jackpot"
+	dollar_jackpot_api "web-api/api/dollar_jackpot"
 	fb_api "web-api/api/fb"
 	api_finpay "web-api/api/finpay"
 	game_integration_api "web-api/api/game_integration"
@@ -15,7 +15,7 @@ import (
 	promotion_api "web-api/api/promotion"
 	referral_api "web-api/api/referral"
 	saba_api "web-api/api/saba"
-	"web-api/api/stream_game"
+	stream_game_api "web-api/api/stream_game"
 	taya_api "web-api/api/taya"
 
 	"web-api/middleware"
@@ -178,6 +178,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/room_chat/history", api.RoomChatHistory)
 		v1.GET("/stream_game", stream_game_api.StreamGame)
 		v1.GET("/stream_games", middleware.Cache(10*time.Minute), stream_game_api.StreamGameList)
+		v1.GET("/game_categories", middleware.Cache(5*time.Minute), game_integration_api.GameCategoryList)
 
 		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
 		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
