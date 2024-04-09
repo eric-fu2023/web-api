@@ -9,7 +9,6 @@ import (
 type RewardReferralsService struct {
 	JoinTimeStart int64 `form:"join_time_start"`
 	JoinTimeEnd   int64 `form:"join_time_end"`
-	Limit         int64 `form:"limit"  binding:"required"`
 }
 
 func (service *RewardReferralsService) List(c *gin.Context) (r serializer.Response, err error) {

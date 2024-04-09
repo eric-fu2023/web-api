@@ -10,7 +10,6 @@ type RewardReferralRewardRecordsService struct {
 	ReferralId      int64 `form:"referral_id"  binding:"required"`
 	RecordTimeStart int64 `form:"record_time_start"`
 	RecordTimeEnd   int64 `form:"record_time_end"`
-	Limit           int64 `form:"limit"  binding:"required"`
 }
 
 func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r serializer.Response, err error) {
