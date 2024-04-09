@@ -98,7 +98,11 @@ func (service *GameCategoryListService) List(c *gin.Context) (r serializer.Respo
 
 	var data []serializer.GameCategory
 	for _, g := range games {
-		data = append(data, serializer.BuildGameCategory(c, g))
+		var subGameId int64
+		if g.GameVendor != nil {
+			model.DB.Model(ploutos.SubGameC{}).Select("id").Where("vendor_id = ?", g.GameVendor.ID).Where("game_code = ?", "lobby").Find(&subGameId)
+		}
+		data = append(data, serializer.BuildGameCategory(c, g, subGameId))
 	}
 	r = serializer.Response{
 		Data: data,
