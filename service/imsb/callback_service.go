@@ -145,8 +145,14 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 }
 
 func GetBalanceCallback(c *gin.Context, req callback.GetBalanceRequest, enc callback.EncryptedRequest) (res callback.CommonWalletBaseResponse, err error) {
+	fmt.Println("DebugLog2345:GetBalanceCallback:req.MemberCode", req.MemberCode)
+	fmt.Println("DebugLog2345:GetBalanceCallback:req.ActionId", req.ActionId)
+
 	_, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["imsb"], req.MemberCode)
+
+	fmt.Println("DebugLog2345:GetBalanceCallback:balance", balance)
 	if err != nil {
+		fmt.Println("DebugLog2345:GetBalanceCallback:err", err.Error())
 		return
 	}
 	res = callback.CommonWalletBaseResponse{
