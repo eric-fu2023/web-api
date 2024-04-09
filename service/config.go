@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -19,16 +20,53 @@ type AppConfigService struct {
 }
 
 func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err error) {
-	var configs []ploutos.AppConfig
-	brand := c.MustGet(`_brand`).(int)
+
 	//agent := c.MustGet(`_agent`).(int)
 
-	err = model.DB.Scopes(model.ByBrandPlatformAndKey(int64(brand), service.Platform.Platform, service.Key)).Find(&configs).Error
+	cf, err := service.getAppConfigs(c)
 	if err != nil {
+		util.GetLoggerEntry(c).Errorf("getAppConfigs err: %s", err.Error())
 		r = serializer.GeneralErr(c, err)
+		return
 	}
 
-	cf := make(map[string]map[string]string)
+	// Get AB toggle configs
+	isA, err := service.isA(c)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("isA err: %s", err.Error())
+		r = serializer.GeneralErr(c, err)
+		return
+	}
+
+	cf["ab"] = map[string]string{
+		"is_a": strconv.FormatBool(isA),
+	}
+	r = serializer.Response{
+		Data: cf,
+	}
+
+	return
+}
+
+// getAppConfigs retrieves the app config from cache or db
+func (service *AppConfigService) getAppConfigs(c *gin.Context) (cf map[string]map[string]string, err error) {
+	brand := c.MustGet(`_brand`).(int)
+	cf, err = cache.GetAppConfig(brand, service.Platform.Platform, service.Key)
+	if err != nil && !errors.Is(err, cache.ErrCacheMiss) {
+		// Don't block request if cache fails, just log the error and query db
+		util.GetLoggerEntry(c).Errorf("GetAppConfig: %s", err.Error())
+	}
+	if err == nil {
+		return cf, nil
+	}
+
+	var configs []ploutos.AppConfig
+	err = model.DB.Scopes(model.ByBrandPlatformAndKey(int64(brand), service.Platform.Platform, service.Key)).Find(&configs).Error
+	if err != nil {
+		return nil, fmt.Errorf("find app configs from db: %w", err)
+	}
+
+	cf = make(map[string]map[string]string)
 	for _, b := range configs {
 		_, exists := cf[b.Name]
 		if !exists {
@@ -37,27 +75,17 @@ func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err
 		cf[b.Name][b.Key] = b.Value
 	}
 
-	// Get AB toggle configs
-	isA, err := service.isA(c)
+	err = cache.SetAppConfig(brand, service.Platform.Platform, service.Key, cf)
 	if err != nil {
-		util.GetLoggerEntry(c).Errorf("isA err: %s", err.Error())
-		r = serializer.GeneralErr(c, err)
+		// Don't block request if cache fails, just log the error and return
+		util.GetLoggerEntry(c).Errorf("SetAppConfig: %s", err.Error())
 	}
 
-	cf["ab"] = map[string]string{
-		"is_a": strconv.FormatBool(isA),
-	}
-
-	r = serializer.Response{
-		Data: cf,
-	}
-
-	return
+	return cf, nil
 }
 
 func (service *AppConfigService) isA(c *gin.Context) (isA bool, err error) {
 	deviceInfo, err := util.GetDeviceInfo(c)
-	err = errors.New("potato err")
 	if err != nil {
 		err = fmt.Errorf("getDeviceInfo: %w", err)
 		return
