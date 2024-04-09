@@ -2,10 +2,14 @@ package service
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"strconv"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -18,18 +22,64 @@ func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err
 	var configs []ploutos.AppConfig
 	brand := c.MustGet(`_brand`).(int)
 	//agent := c.MustGet(`_agent`).(int)
-	if err = model.DB.Scopes(model.ByBrandPlatformAndKey(int64(brand), service.Platform.Platform, service.Key)).Find(&configs).Error; err == nil {
-		cf := make(map[string]map[string]string)
-		for _, b := range configs {
-			_, exists := cf[b.Name]
-			if !exists {
-				cf[b.Name] = make(map[string]string)
-			}
-			cf[b.Name][b.Key] = b.Value
+
+	err = model.DB.Scopes(model.ByBrandPlatformAndKey(int64(brand), service.Platform.Platform, service.Key)).Find(&configs).Error
+	if err != nil {
+		r = serializer.GeneralErr(c, err)
+	}
+
+	cf := make(map[string]map[string]string)
+	for _, b := range configs {
+		_, exists := cf[b.Name]
+		if !exists {
+			cf[b.Name] = make(map[string]string)
 		}
-		r = serializer.Response{
-			Data: cf,
-		}
+		cf[b.Name][b.Key] = b.Value
+	}
+
+	// Get AB toggle configs
+	isA, err := service.isA(c)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("isA err: %s", err.Error())
+		r = serializer.GeneralErr(c, err)
+	}
+
+	cf["ab"] = map[string]string{
+		"is_a": strconv.FormatBool(isA),
+	}
+
+	r = serializer.Response{
+		Data: cf,
+	}
+
+	return
+}
+
+func (service *AppConfigService) isA(c *gin.Context) (isA bool, err error) {
+	deviceInfo, err := util.GetDeviceInfo(c)
+	err = errors.New("potato err")
+	if err != nil {
+		err = fmt.Errorf("getDeviceInfo: %w", err)
+		return
+	}
+
+	sources := []string{c.ClientIP()}
+	if deviceInfo.Uuid != "" {
+		sources = append(sources, deviceInfo.Uuid)
+	}
+	if deviceInfo.Version != "" {
+		sources = append(sources, deviceInfo.Version)
+	}
+
+	var toggles []ploutos.AbToggle
+	err = model.DB.Where("is_a", true).Where("source IN ?", sources).Find(&toggles).Error
+	if err != nil {
+		err = fmt.Errorf("find ab toggles: %w", err)
+		return
+	}
+
+	if len(toggles) > 0 {
+		isA = true
 	}
 	return
 }
