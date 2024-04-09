@@ -18,6 +18,7 @@ type PromotionCover struct {
 	Type                   int64           `json:"type"`
 	RewardType             int64           `json:"reward_type"`
 	RewardDistributionType int64           `json:"reward_distribution_type"`
+	Category               string          `json:"category"`
 }
 
 type PromotionDetail struct {
@@ -32,6 +33,7 @@ type PromotionDetail struct {
 	Type                   int64             `json:"type"`
 	RewardType             int64             `json:"reward_type"`
 	RewardDistributionType int64             `json:"reward_distribution_type"`
+	Category               string            `json:"category"`
 	PromotionProgress      PromotionProgress `json:"promotion_progress"`
 	Reward                 float64           `json:"reward"`
 	ClaimStatus            ClaimStatus       `json:"claim_status"`
@@ -74,6 +76,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 		Type:                   p.Type,
 		RewardType:             p.RewardType,
 		RewardDistributionType: p.RewardDistributionType,
+		Category:               p.Category,
 	}
 }
 
@@ -101,6 +104,7 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		PromotionProgress:      BuildPromotionProgress(progress, p.GetRewardDetails()),
 		Reward:                 float64(reward) / 100,
 		Voucher:                v,
+		Category:               p.Category,
 	}
 }
 
