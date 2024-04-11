@@ -34,9 +34,6 @@ func (s VipLoad) Load(c *gin.Context) serializer.Response {
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err)
 	}
-	if err != nil {
-		return serializer.Err(c, s, serializer.CodeGeneralError, "", err)
-	}
 
 	return serializer.Response{
 		Data: util.MapSlice(list, serializer.BuildVipRule),
