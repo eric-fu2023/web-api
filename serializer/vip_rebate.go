@@ -14,13 +14,15 @@ type VipRebateColumnValue struct {
 }
 
 type VipRebateCategory struct {
-	Header  string            `json:"header"`
-	Columns []VipRebateColumn `json:"columns"`
+	CategoryId int64             `json:"category_id"`
+	Header     string            `json:"header"`
+	Columns    []VipRebateColumn `json:"columns"`
 }
 
 type VipRebateColumn struct {
-	Header string                 `json:"header"`
-	Values []VipRebateColumnValue `json:"values"`
+	Header       string                 `json:"header"`
+	GameVendorId int64                  `json:"game_vendor_id"`
+	Values       []VipRebateColumnValue `json:"values"`
 }
 
 type VipRebateDetails struct {
@@ -45,7 +47,8 @@ func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []mode
 				ret.Categories[idx].Columns[idx2].Values = append(ret.Categories[idx].Columns[idx2].Values, Val)
 			} else {
 				Col := VipRebateColumn{
-					Header: item.GameVendorBrand.Name,
+					Header:       item.GameVendorBrand.Name,
+					GameVendorId: item.GameVendorId,
 				}
 				ret.Categories[idx].Columns = append(ret.Categories[idx].Columns, Col)
 				idx2 = len(ret.Categories[idx].Columns) - 1
@@ -54,14 +57,16 @@ func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []mode
 			}
 		} else {
 			Cat := VipRebateCategory{
-				Header: item.GameVendorBrand.GameCategory.Name,
+				Header:     item.GameVendorBrand.GameCategory.Name,
+				CategoryId: item.GameVendorBrand.CategoryId,
 			}
 			ret.Categories = append(ret.Categories, Cat)
 			idx = len(ret.Categories) - 1
 			cats[item.GameVendorBrand.CategoryId] = idx
 			catsCol[item.GameVendorBrand.CategoryId] = make(map[int64]int)
 			Col := VipRebateColumn{
-				Header: item.GameVendorBrand.Name,
+				Header:       item.GameVendorBrand.Name,
+				GameVendorId: item.GameVendorId,
 			}
 			ret.Categories[idx].Columns = append(ret.Categories[idx].Columns, Col)
 			idx2 := len(ret.Categories[idx].Columns) - 1
