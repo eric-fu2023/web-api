@@ -22,12 +22,7 @@ func GetVipWithDefault(c context.Context, userID int64) (ret models.VipRecord, e
 	return
 }
 
-func LoadRule(c context.Context) (ret []models.VIPRule, err error) {
-	err = DB.Where("is_active").Order("vip_level").Find(&ret).Error
-	return
-}
-
-func LoadVipRebateRules(c context.Context) (ret []models.VipRebateRule, err error) {
+func LoadVipRule(c context.Context) (ret []models.VIPRule, err error) {
 	err = DB.Where("is_active").Order("vip_level").Find(&ret).Error
 	return
 }

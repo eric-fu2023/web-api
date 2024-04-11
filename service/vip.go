@@ -30,7 +30,7 @@ type VipLoad struct {
 
 func (s VipLoad) Load(c *gin.Context) serializer.Response {
 
-	list, err := model.LoadRule(c)
+	list, err := model.LoadVipRule(c)
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err)
 	}

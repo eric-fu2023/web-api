@@ -265,6 +265,7 @@ func NewRouter() *gin.Engine {
 				user.POST("/feedback", api.FeedbackAdd)
 
 				user.GET("/vip-status", api.VipGet)
+				user.GET("/vip-rebate-details", api.VipLoadRebateRule)
 
 				taya := user.Group("/taya")
 				{

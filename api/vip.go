@@ -25,3 +25,13 @@ func VipLoad(c *gin.Context) {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
+
+func VipLoadRebateRule(c *gin.Context) {
+	var service service.VipRebateQuery
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Load(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
