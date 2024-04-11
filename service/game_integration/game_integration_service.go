@@ -88,21 +88,25 @@ type GameCategoryListService struct {
 
 func (service *GameCategoryListService) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	var games []ploutos.GameCategory
+	var categories []ploutos.GameCategory
 
 	if err = model.DB.Model(ploutos.GameCategory{}).Preload(`GameVendor`, "game_integration_id = 1").
-		Find(&games).Error; err != nil {
+		Find(&categories).Error; err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
 
 	var data []serializer.GameCategory
-	for _, g := range games {
-		var subGameId int64
-		if g.GameVendor != nil {
-			model.DB.Model(ploutos.SubGameC{}).Select("id").Where("vendor_id = ?", g.GameVendor.ID).Where("game_code = ?", "lobby").Find(&subGameId)
+	for _, cat := range categories {
+		var subGameIds []int64
+		var gameId int64
+		if len(cat.GameVendor) > 0 {
+			for _, v := range cat.GameVendor {
+				model.DB.Model(ploutos.SubGameC{}).Select("id").Where("vendor_id = ?", v.ID).Where("game_code = ?", "lobby").Find(&gameId)
+				subGameIds = append(subGameIds, gameId)
+			}
 		}
-		data = append(data, serializer.BuildGameCategory(c, g, subGameId))
+		data = append(data, serializer.BuildGameCategory(c, cat, subGameIds))
 	}
 	r = serializer.Response{
 		Data: data,
