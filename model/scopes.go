@@ -247,3 +247,7 @@ func ByCreatedAtGreaterThan(time time.Time) func(db *gorm.DB) *gorm.DB {
 		return db.Where(`created_at > ?`, time)
 	}
 }
+
+func GameVendorUserDefaultJoinAndPreload(db *gorm.DB) *gorm.DB {
+	return db.InnerJoins(`GameVendor`).Preload(`GameVendor.GameVendorBrand`)
+}

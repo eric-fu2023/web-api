@@ -31,6 +31,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 	var gvu ploutos.GameVendorUser
 	err = model.DB.Where(`user_id`, user.ID).Where(`game_vendor_id`, subGame.VendorId).First(&gvu).Error
 	if err != nil {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
 
@@ -74,8 +75,16 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 		if err != nil {
 			return
 		}
+		err = tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update("is_recall_needed", true).Error
+		if err != nil {
+			return
+		}
 		return
 	})
+	if err != nil {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
 
 	r = serializer.Response{
 		Data: url,

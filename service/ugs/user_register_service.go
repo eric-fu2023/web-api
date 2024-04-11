@@ -29,7 +29,7 @@ type UGS struct {
 func (c UGS) CreateWallet(user model.User, currency string) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
-		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id AND gvb.brand_id = ?`, user.BrandId).
+		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id`).
 			Where(`game_vendor.game_integration_id`, IntegrationIdUGS).Find(&gameVendors).Error
 		if err != nil {
 			return
@@ -64,12 +64,12 @@ func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, lang, gameCode
 		return
 	}
 	util.Log().Info("GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", IntegrationIdUGS, user.ID, balance, status, ptxid)
-	var sum ploutos.UserSum
-	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error
-	if err != nil {
-		return
-	}
 	if status == TransferStatusSuccess && balance > 0 && ptxid != "" {
+		var sum ploutos.UserSum
+		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error
+		if err != nil {
+			return
+		}
 		amount := util.MoneyInt(balance)
 		transaction := ploutos.Transaction{
 			UserId:                user.ID,
