@@ -18,7 +18,8 @@ type PromotionCover struct {
 	Type                   int64           `json:"type"`
 	RewardType             int64           `json:"reward_type"`
 	RewardDistributionType int64           `json:"reward_distribution_type"`
-	Category               string          `json:"category"`
+	Category               int64           `json:"category"`
+	Label                  int64           `json:"label"`
 }
 
 type PromotionDetail struct {
@@ -33,7 +34,8 @@ type PromotionDetail struct {
 	Type                   int64             `json:"type"`
 	RewardType             int64             `json:"reward_type"`
 	RewardDistributionType int64             `json:"reward_distribution_type"`
-	Category               string            `json:"category"`
+	Category               int64             `json:"category"`
+	Label                  int64             `json:"label"`
 	PromotionProgress      PromotionProgress `json:"promotion_progress"`
 	Reward                 float64           `json:"reward"`
 	ClaimStatus            ClaimStatus       `json:"claim_status"`
@@ -56,6 +58,22 @@ type RewardTier struct {
 	Max    float64 `json:"max"`
 	Type   string  `json:"type"`
 	Reward float64 `json:"reward"`
+}
+
+type SysDictionaryDetail struct {
+	ID    int64
+	Label string `json:"label" form:"label" gorm:"column:label;comment:展示值"` // 展示值
+	Value int    `json:"value" form:"value" gorm:"column:value;comment:字典值"` // 字典值
+	Sort  int    `json:"sort" form:"sort" gorm:"column:sort;comment:排序标记"`   // 排序标记
+}
+
+func BuildSysDictionaryDetail(s models.SysDictionaryDetail) SysDictionaryDetail {
+	return SysDictionaryDetail{
+		ID:    s.ID,
+		Label: s.Label,
+		Value: s.Value,
+		Sort:  s.Sort,
+	}
 }
 
 func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {

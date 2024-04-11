@@ -7,6 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GetCategoryList(c *gin.Context) {
+	var service promotion.PromotionList
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.ListCategories(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
+
 func GetCoverList(c *gin.Context) {
 	var service promotion.PromotionList
 	if err := c.ShouldBind(&service); err == nil {
