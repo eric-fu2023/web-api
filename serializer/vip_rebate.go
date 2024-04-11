@@ -81,7 +81,7 @@ func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []mode
 				return VipRebateColumnValue{
 					VipLevel: input.VIPLevel,
 					Format:   "currency",
-					Value:    float64(input.RebateCap),
+					Value:    float64(input.RebateCap / 100),
 				}
 			})},
 		},
