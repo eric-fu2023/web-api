@@ -63,8 +63,20 @@ func (service *SyncWalletService) Update(c *gin.Context) (r serializer.Response,
 }
 
 type RecallFundService struct {
+	Force string `form:"force" json:"force"`
 }
 
 func (service *RecallFundService) Recall(c *gin.Context) (r serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	user := c.MustGet("user").(model.User)
+	var userSum ploutos.UserSum
+	err = model.DB.Where(`user_id`, user.ID).First(&userSum).Error
+	if err != nil {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+	r = serializer.Response{
+		Data: serializer.BuildUserSum(userSum),
+	}
 	return
 }
