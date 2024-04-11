@@ -2,6 +2,7 @@ package serializer
 
 import (
 	"encoding/json"
+	"fmt"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
@@ -25,7 +26,7 @@ type VipRebateColumn struct {
 
 type VipRebateDetails struct {
 	Categories  []VipRebateCategory `json:"categories"`
-	Description map[string]any      `json:"description"`
+	Description []map[string]any    `json:"description"`
 }
 
 func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []models.VIPRule) (ret VipRebateDetails) {
@@ -72,11 +73,11 @@ func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []mode
 	Cat := VipRebateCategory{
 		Header: "cap",
 		Columns: []VipRebateColumn{
-			{Header: "cap",Values: util.MapSlice(vips,func(input models.VIPRule) VipRebateColumnValue {
+			{Header: "cap", Values: util.MapSlice(vips, func(input models.VIPRule) VipRebateColumnValue {
 				return VipRebateColumnValue{
 					VipLevel: input.VIPLevel,
-					Format: "currency",
-					Value: float64(input.RebateCap),
+					Format:   "currency",
+					Value:    float64(input.RebateCap),
 				}
 			})},
 		},
