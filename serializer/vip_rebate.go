@@ -2,7 +2,6 @@ package serializer
 
 import (
 	"encoding/json"
-	"fmt"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
