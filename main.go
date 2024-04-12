@@ -5,7 +5,11 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/robfig/cron/v3"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 	"web-api/conf"
 	"web-api/model"
 	"web-api/server"
@@ -63,7 +67,24 @@ func main() {
 		//task.EncryptMobileAndEmail()
 		r := server.NewRouter()
 		pprof.Register(r)
-		r.Run(":" + os.Getenv("PORT"))
+		srv := &http.Server{
+			Addr:    ":" + os.Getenv("PORT"),
+			Handler: r,
+		}
+		go func() {
+			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("listen: %s\n", err)
+			}
+		}()
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		<-quit
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Fatal("Server forced to shutdown: ", err)
+		}
+		log.Println("Server gracefully shutdown")
 	}
 
 	defer model.IPDB.Close()
