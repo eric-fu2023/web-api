@@ -46,6 +46,9 @@ func Database(primaryConn string, txConn string) {
 	db, err := gorm.Open(postgres.Open(primaryConn), &gorm.Config{
 		Logger:         newLogger,
 		TranslateError: true,
+		NowFunc: func() time.Time {
+			return time.Now().UTC()
+		},
 	})
 	db.Use(dbresolver.Register(dbresolver.Config{
 		Sources: []gorm.Dialector{postgres.Open(txConn)},
