@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"os"
 	"strconv"
 	"web-api/cache"
 	"web-api/model"
@@ -12,10 +13,6 @@ import (
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
-)
-
-const (
-	appConfigSocketChatUrlA = "https://chat-zh.ctchat.live"
 )
 
 type AppConfigService struct {
@@ -43,8 +40,9 @@ func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err
 	}
 
 	// If is A, replace chat socket url with hardcoded value
-	if isA {
-		cf["socket"]["chat_url"] = appConfigSocketChatUrlA
+	socketChatUrl := os.Getenv("SOCKET_CHAT_URL_A")
+	if isA && socketChatUrl != "" {
+		cf["socket"]["chat_url"] = socketChatUrl
 	}
 	cf["ab"] = map[string]string{
 		"is_a": strconv.FormatBool(isA),
