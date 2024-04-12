@@ -40,6 +40,28 @@ var (
 	ErrTokenGeneration = errors.New("token generation error")
 )
 
+func CreateNewUser(user *model.User, referralCode string) (err error) {
+	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = user.CreateWithDB(tx)
+		if err != nil {
+			return fmt.Errorf("create with db: %w", err)
+		}
+
+		// Link referral
+		if referralCode == "" {
+			return tx.Commit().Error
+		}
+
+		err = model.LinkReferralWithDB(tx, user.ID, referralCode)
+		if err != nil {
+			return fmt.Errorf("link referral with db: %w", err)
+		}
+
+		return nil
+	})
+	return nil
+}
+
 func CreateUser(user *model.User) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&user).Error
