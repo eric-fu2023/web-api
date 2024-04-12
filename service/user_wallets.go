@@ -89,6 +89,9 @@ func (service *RecallFundService) Recall(c *gin.Context) (r serializer.Response,
 		tx := model.DB.Begin()
 		var wg sync.WaitGroup
 		for _, g := range gvu {
+			if g.GameVendor.GameIntegrationId == 0 {
+				continue
+			}
 			wg.Add(1)
 			go func(tx *gorm.DB, g ploutos.GameVendorUser) {
 				defer wg.Done()
