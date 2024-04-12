@@ -8,6 +8,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/plugin/dbresolver"
 	"os"
+	"sync"
 	"time"
 	"web-api/util"
 	"web-api/util/awdb"
@@ -28,6 +29,7 @@ var DB *gorm.DB
 var MongoDB *mongo.Database
 var IPDB *awdb.Reader
 var ShengWang Rtc
+var GlobalWaitGroup sync.WaitGroup
 
 func Database(primaryConn string, txConn string) {
 	getLogLevel := func() logger.LogLevel {
