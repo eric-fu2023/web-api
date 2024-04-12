@@ -14,6 +14,10 @@ import (
 	"web-api/util/i18n"
 )
 
+const (
+	appConfigSocketChatUrlA = "https://chat-zh.ctchat.live"
+)
+
 type AppConfigService struct {
 	common.Platform
 	Key string `form:"key" json:"key"`
@@ -38,9 +42,14 @@ func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err
 		return
 	}
 
+	// If is A, replace chat socket url with hardcoded value
+	if isA {
+		cf["socket"]["chat_url"] = appConfigSocketChatUrlA
+	}
 	cf["ab"] = map[string]string{
 		"is_a": strconv.FormatBool(isA),
 	}
+
 	r = serializer.Response{
 		Data: cf,
 	}
