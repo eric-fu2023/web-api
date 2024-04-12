@@ -148,6 +148,7 @@ func NewRouter() *gin.Engine {
 	r.Use(middleware.Timezone())
 	r.Use(middleware.Location())
 	r.Use(middleware.Locale())
+	r.Use(middleware.AB())
 
 	r.GET("/ping", api.Ping)
 
@@ -163,31 +164,31 @@ func NewRouter() *gin.Engine {
 		v1.POST("/register", api.UserRegister)
 
 		v1.GET("/config", api.Config)
-		v1.GET("/app_update", middleware.Cache(1*time.Minute), api.AppUpdate)
+		v1.GET("/app_update", middleware.Cache(1*time.Minute, false), api.AppUpdate)
 		v1.GET("/announcements", middleware.CheckAuth(), middleware.CacheForGuest(1*time.Minute), api.Announcements)
-		v1.GET("/categories", middleware.Cache(1*time.Minute), api.CategoryList)
-		v1.GET("/vendors", middleware.Cache(1*time.Minute), api.VendorList)
-		v1.GET("/streams", middleware.Cache(1*time.Minute), api.StreamList)
-		v1.GET("/streamer", middleware.Cache(1*time.Minute), api.Streamer)
+		v1.GET("/categories", middleware.Cache(1*time.Minute, false), api.CategoryList)
+		v1.GET("/vendors", middleware.Cache(1*time.Minute, false), api.VendorList)
+		v1.GET("/streams", middleware.Cache(1*time.Minute, true), api.StreamList)
+		v1.GET("/streamer", middleware.Cache(1*time.Minute, false), api.Streamer)
 		v1.GET("/topup-methods", middleware.CheckAuth(), api.TopupMethodList)
 		v1.GET("/withdraw-methods", middleware.CheckAuth(), api.WithdrawMethodList)
-		v1.GET("/avatars", middleware.Cache(1*time.Minute), api.AvatarList)
+		v1.GET("/avatars", middleware.Cache(1*time.Minute, false), api.AvatarList)
 		v1.POST("/share", api.ShareCreate)
 		v1.GET("/share", api.ShareGet)
-		v1.GET("/games", middleware.Cache(1*time.Minute), api.GameList)
+		v1.GET("/games", middleware.Cache(1*time.Minute, false), api.GameList)
 		v1.GET("/room_chat/history", api.RoomChatHistory)
 		v1.GET("/stream_game", stream_game_api.StreamGame)
-		v1.GET("/stream_games", middleware.Cache(10*time.Minute), stream_game_api.StreamGameList)
-		v1.GET("/game_categories", middleware.Cache(5*time.Minute), game_integration_api.GameCategoryList)
+		v1.GET("/stream_games", middleware.Cache(10*time.Minute, false), stream_game_api.StreamGameList)
+		v1.GET("/game_categories", middleware.Cache(5*time.Minute, false), game_integration_api.GameCategoryList)
 
-		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
+		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute, false), promotion_api.GetCoverList)
 		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
-		v1.GET("/promotion/categories", middleware.CheckAuth(), middleware.Cache(5*time.Minute), promotion_api.GetCategoryList)
+		v1.GET("/promotion/categories", middleware.CheckAuth(), middleware.Cache(5*time.Minute, false), promotion_api.GetCategoryList)
 
 		v1.GET("/rtc_token", middleware.CheckAuth(), api.RtcToken)
 		v1.GET("/rtc_tokens", middleware.CheckAuth(), api.RtcTokens)
 
-		v1.GET("/vips", middleware.Cache(5*time.Minute), api.VipLoad)
+		v1.GET("/vips", middleware.Cache(5*time.Minute, false), api.VipLoad)
 
 		pm := v1.Group("/pm")
 		{
@@ -319,7 +320,7 @@ func NewRouter() *gin.Engine {
 
 				promotion := user.Group("/promotion")
 				{
-					promotion.GET("/list", middleware.Cache(5*time.Minute), promotion_api.GetCoverList)
+					promotion.GET("/list", middleware.Cache(5*time.Minute, false), promotion_api.GetCoverList)
 					promotion.GET("/details", middleware.RequestLogger("get promotion details"), promotion_api.GetDetail)
 					promotion.POST("/claim", middleware.RequestLogger("promotion claim"), promotion_api.PromotionClaim)
 				}

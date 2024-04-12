@@ -62,9 +62,20 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 		}
 		categoryTypeOrder = categoryTypeOrder[:len(categoryTypeOrder)-1] + `)`
 	}
-
+	isA := false
+	if v, exists := c.Get("_isA"); exists {
+		if vv, ok := v.(bool); ok && vv {
+			isA = vv
+		}
+	}
 	var streams []ploutos.LiveStream
-	q := model.DB.Scopes(model.StreamsOnlineSorted(categoryOrder, categoryTypeOrder), model.ExcludeStreamers(service.ExcludedStreamerIds), model.Paginate(service.Page.Page, service.Limit)).Preload(`Streamer`).Preload(`Streamer.UserAgoraInfo`)
+	q := model.DB.Scopes(
+		model.StreamsOnlineSorted(categoryOrder, categoryTypeOrder),
+		model.ExcludeStreamers(service.ExcludedStreamerIds),
+		model.Paginate(service.Page.Page, service.Limit),
+		model.StreamsABStreamSource(isA)).
+		Preload(`Streamer`).
+		Preload(`Streamer.UserAgoraInfo`)
 	if len(categories) > 0 {
 		q = q.Where(`stream_category_id`, categories)
 	}

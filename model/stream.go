@@ -40,3 +40,13 @@ func StreamsByFbMatchIdSportId(matchId int64, sportId int64) func(db *gorm.DB) *
 			Where(`live_streams.status`, 2).Order(`live_streams.sort_factor DESC, live_streams.schedule_time`)
 	}
 }
+
+func StreamsABStreamSource(isA bool) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if isA {
+			return db.Where(`live_streams.stream_source = ?`, 999)
+		} else {
+			return db.Where(`live_streams.stream_source != ?`, 999)
+		}
+	}
+}
