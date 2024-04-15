@@ -31,13 +31,18 @@ func InitLocale() {
 	}
 }
 
-func GetI18N(lang string) i18n.I18n {
+func GetDefaultLocale() string {
+	return defaultLocale
+}
+
+func GetI18N(lang string) *i18n.I18n {
 	if i17on, exists := i18nDefault[lang]; exists {
-		return i17on
+		return &i17on
 	} else if i17on, exists := i18nDefault[defaultLocale]; exists {
-		return i17on
+		return &i17on
 	} else {
-		return i18nDefault["en"]
+		i17on = i18nDefault["en"]
+		return &i17on
 	}
 }
 
