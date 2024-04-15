@@ -20,6 +20,7 @@ func Init() {
 
 	godotenv.Load()
 	InitCfg()
+	InitLocale()
 
 	if os.Getenv("CHAT_WELCOME_NAMES") != "" {
 		arr := strings.Split(os.Getenv("CHAT_WELCOME_NAMES"), "|")

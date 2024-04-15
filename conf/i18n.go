@@ -14,7 +14,7 @@ var Dictinary *map[interface{}]interface{}
 var i18nDefault map[string]i18n.I18n
 var defaultLocale string
 
-func LoadDefaultLocale() {
+func InitLocale() {
 	i18nDefault = make(map[string]i18n.I18n)
 	defaultLocale = os.Getenv("LANGUAGE")
 
