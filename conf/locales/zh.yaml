@@ -567,3 +567,13 @@ NOTIFICATION_WITHDRAWAL_FAILED_TITLE: "提款交易失败"
 NOTIFICATION_WITHDRAWAL_FAILED: "您的提款交易金额为 %.2f %s，未成功完成。请稍后再试或联系我们的客户支持获取更多信息。"
 NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE: "存款奖金已发放"
 NOTIFICATION_DEPOSIT_BONUS_SUCCESS: "您的存款奖金金额为 %.2f %s，已发放。"
+
+game_category_name_sports: "体育"
+game_category_name_live: "真人"
+game_category_name_electronic: "电子"
+game_category_name_card: "棋牌"
+game_category_name_esports: "电竞"
+game_category_name_lottery: "彩票"
+game_category_name_fishing: "捕鱼"
+
+referral_not_found: "未找到被邀亲人"

@@ -2,7 +2,10 @@ package referral
 
 import (
 	"github.com/gin-gonic/gin"
+	"time"
+	"web-api/model"
 	"web-api/serializer"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -14,36 +17,41 @@ type RewardReferralRewardRecordsService struct {
 
 func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	//u, _ := c.Get("user")
-	//user := u.(model.User)
-	// TODO!Jh replace mock
-	type RewardRecord struct {
-		Date             string  `json:"date"`
-		GameCategoryName string  `json:"game_category_name"`
-		ReferrerReward   float64 `json:"referrer_reward"`
+	u, _ := c.Get("user")
+	user := u.(model.User)
+
+	urCond := model.UserReferralCond{
+		ReferrerIds: []int64{user.ID},
+		ReferralIds: []int64{service.ReferralId},
+	}
+	urs, err := model.GetUserReferrals(urCond)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("GetUserReferrals error: %s", err.Error())
+		return serializer.GeneralErr(c, err), err
+	}
+	if len(urs) == 0 {
+		return serializer.ParamErr(c, service, i18n.T("referral_not_found"), err), nil
 	}
 
-	type Response struct {
-		RewardRecords []RewardRecord `json:"reward_records"`
+	cond := model.GetReferralAllianceRewardsCond{
+		ReferralIds: []int64{service.ReferralId},
 	}
-
-	respData := Response{
-		RewardRecords: []RewardRecord{
-			{
-				Date:             "2024-04-04",
-				GameCategoryName: "Sports",
-				ReferrerReward:   888.01,
-			},
-			{
-				Date:             "2024-04-04",
-				GameCategoryName: "Slots",
-				ReferrerReward:   108.02,
-			},
-		},
+	if service.RecordTimeStart > 0 {
+		cond.BetDateStart = time.Unix(service.RecordTimeStart, 0).Format(time.DateOnly)
+	}
+	if service.RecordTimeEnd > 0 {
+		cond.BetDateEnd = time.Unix(service.RecordTimeEnd, 0).Format(time.DateOnly)
+	}
+	rewardRecords, err := model.GetReferralAllianceRewards(cond)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("GetReferralAllianceRewards error: %s", err.Error())
+		return serializer.GeneralErr(c, err), err
 	}
 
 	return serializer.Response{
-		Data: respData,
-		Msg:  i18n.T("success"),
+		Data: map[string]any{
+			"reward_records": serializer.BuildReferralAllianceRewards(c, rewardRecords),
+		},
+		Msg: i18n.T("success"),
 	}, nil
 }

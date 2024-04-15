@@ -567,3 +567,13 @@ NOTIFICATION_WITHDRAWAL_FAILED_TITLE: "Withdrawal Transaction Failed"
 NOTIFICATION_WITHDRAWAL_FAILED: "Your withdrawal transaction with the amount of %.2f %s was unsuccessful. Please try again later or contact our customer support for more information."
 NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE: "Deposit Bonus Rewarded"
 NOTIFICATION_DEPOSIT_BONUS_SUCCESS: "Your deposit bonus with the amount of %.2f %s has been awarded."
+
+game_category_name_sports: "Sports"
+game_category_name_live: "Live"
+game_category_name_electronic: "Electronic"
+game_category_name_card: "Card"
+game_category_name_esports: "ESports"
+game_category_name_lottery: "Lottery"
+game_category_name_fishing: "Fishing"
+
+referral_not_found: "Referral not found."
