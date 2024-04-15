@@ -77,9 +77,7 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		Brand:              user.BrandId,
 		Agent:              user.AgentId,
 		ReferralCode:       user.ReferralCode,
-	}
-	if user.Birthday.Valid {
-		u.Birthday = user.Birthday.Time.Format(time.DateOnly)
+		Birthday:           user.Birthday,
 	}
 	if user.Username == "" {
 		u.SetupRequired = true

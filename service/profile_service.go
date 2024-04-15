@@ -1,7 +1,6 @@
 package service
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -86,14 +85,13 @@ func (service *ProfileUpdateService) updateUser(user *model.User) (err error) {
 		}
 
 		if service.Birthday != "" {
-			birthday, _ := time.Parse(time.DateOnly, service.Birthday)
-			if user.Birthday.Valid { // if user has updated birthday before
+			if user.Birthday != "" { // if user has updated birthday before
 				err := model.CreateUserAchievementWithDB(tx, user.ID, model.UserAchievementIdUpdateBirthday)
 				if err != nil {
 					return fmt.Errorf("create birthday achievement: %w", err)
 				}
 			}
-			user.Birthday = sql.NullTime{Time: birthday, Valid: true}
+			user.Birthday = service.Birthday
 		}
 
 		if service.ProfilePicture != nil {
