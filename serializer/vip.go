@@ -73,7 +73,7 @@ func BuildVipRule(v models.VIPRule) VipRule {
 		WithdrawAmountTotal:  v.WithdrawAmountTotal / 100,
 		TotalRequirement:     v.TotalRequirement / 100,
 		RetentionRequirement: v.RetentionRequirement / 100,
-		Icon:                 v.Icon,
+		Icon:                 Url(v.Icon),
 		Background:           v.Background,
 		RebateRate:           v.RebateRate,
 		ReferralRate:         v.ReferralRate,
