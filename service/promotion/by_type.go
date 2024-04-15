@@ -16,8 +16,32 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
+func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward int64) {
+	switch p.Type {
+	case models.PromotionTypeVipReferral, models.PromotionTypeVipRebate:
+		//separate calculation
+	case models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
+	case models.PromotionTypeVipBirthdayB:
+
+	default:
+		reward = p.GetRewardDetails().GetReward(progress)
+	}
+	return
+}
+
 func ProgressByType(c context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
 	switch p.Type {
+	// not necessary
+	// case models.PromotionTypeVipReferral, models.PromotionTypeVipRebate:
+	// 	//separate handling based on separate table
+	case models.PromotionTypeVipWeeklyB:
+		//may need to check deposit requirement + vip
+		vip, _ := model.GetVipWithDefault(c, userID)
+		progress = vip.VipRule.VIPLevel
+		// not necessary
+	// case models.PromotionTypeVipBirthdayB, models.PromotionTypeVipPromotionB:
+	// 	vip, _ := model.GetVipWithDefault(c, userID)
+	// 	progress = vip.VipRule.VIPLevel
 	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
 		order, err := model.FirstTopup(c, userID)
 		if util.IsGormNotFound(err) {

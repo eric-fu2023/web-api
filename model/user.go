@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+	"math"
 	"os"
 	"strconv"
 	"time"
@@ -79,4 +81,38 @@ func (user *User) UpdateLoginInfo(c *gin.Context, loginTime time.Time) error {
 	}
 
 	return nil
+}
+
+func (user *User) CreateWithDB(tx *gorm.DB) error {
+	if err := tx.Create(&user).Error; err != nil {
+		return fmt.Errorf("create user: %w", err)
+	}
+	user.ReferralCode = generateReferralCode(user.ID)
+	if err := tx.Updates(&user).Error; err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+	return nil
+}
+
+const (
+	// Note: Do not modify
+	alp1 = "GLKZT4B98Y7P6ENXWU32M5VCQSFDHRJA"
+	alp2 = "JC5MHVLGRFP4UBWNTZ6D9X8Y3QKAS7E2"
+	alp3 = "DMG7592UV4XL86CPSEWTK3NBRZHQFYJA"
+	alp4 = "YV8DFX4PERBAZ629T5HCK3JMUQWN7LGS"
+	alp5 = "KBQAEFJ6X4M5VDC2NG7LU3ZPRH98TYWS"
+	alp6 = "ZANWSM9JV6HE4LY5DUC87PGT32XFBRQK"
+)
+
+func generateReferralCode(userId int64) string {
+	referralCode := ""
+
+	referralCode += string(alp1[(userId/int64(math.Pow(float64(32), float64(5))))%32])
+	referralCode += string(alp2[(userId/int64(math.Pow(float64(32), float64(4))))%32])
+	referralCode += string(alp3[(userId/int64(math.Pow(float64(32), float64(3))))%32])
+	referralCode += string(alp4[(userId/int64(math.Pow(float64(32), float64(2))))%32])
+	referralCode += string(alp5[(userId/int64(math.Pow(float64(32), float64(1))))%32])
+	referralCode += string(alp6[(userId/int64(math.Pow(float64(32), float64(0))))%32])
+
+	return referralCode
 }

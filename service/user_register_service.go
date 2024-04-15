@@ -58,8 +58,10 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 		},
 	}
 	genNickname(&user)
-	err = model.DB.Create(&user).Error
+
+	err = CreateNewUser(&user, service.Code)
 	if err != nil {
+		util.GetLoggerEntry(c).Errorf("CreateNewUser error: %s", err.Error())
 		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 	}
 

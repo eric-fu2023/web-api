@@ -6,6 +6,7 @@ import (
 	"blgit.rfdev.tech/taya/game-service/fb"
 	"blgit.rfdev.tech/taya/game-service/imsb"
 	"blgit.rfdev.tech/taya/game-service/saba"
+	"blgit.rfdev.tech/taya/game-service/ugs"
 	"os"
 	"web-api/conf/consts"
 )
@@ -16,6 +17,7 @@ var (
 	SabaFactory saba.Saba
 	DCFactory   dc.Dc
 	IMFactory   imsb.IM
+	UgsFactory  ugs.UGS
 )
 var VendorIdToGameClient = make(map[int64]common.TransferWalletInterface)
 
@@ -62,5 +64,13 @@ func InitImFactory() {
 		BaseUrl:        os.Getenv("GAME_IMSB_BASE_URL"),
 		AccessCode:     os.Getenv("GAME_IMSB_ACCESS_CODE"),
 		CommonWalletIv: os.Getenv("GAME_IMSB_COMMON_WALLET_IV"),
+	}
+}
+
+func InitUgsFactory() {
+	UgsFactory = ugs.UGS{
+		BaseUrl:      os.Getenv("GAME_UGS_BASE_URL"),
+		ClientId:     os.Getenv("GAME_UGS_CLIENT_ID"),
+		ClientSecret: os.Getenv("GAME_UGS_CLIENT_SECRET"),
 	}
 }

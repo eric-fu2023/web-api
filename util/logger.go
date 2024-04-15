@@ -118,6 +118,7 @@ func MarshalService(service any) string {
 
 // Logger creates a new Ginrus logger with a UUID included
 func GetLoggerEntry(c context.Context) *logrus.Entry {
+	// stk := string(debug.Stack())
 	logger := c.Value(consts.LogKey)
 	if logger == nil {
 		logLevel := logrus.DebugLevel

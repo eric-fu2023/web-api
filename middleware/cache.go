@@ -8,7 +8,7 @@ import (
 	ca "web-api/cache"
 )
 
-func Cache(duration time.Duration) gin.HandlerFunc {
+func Cache(duration time.Duration, needAbCache bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var prefix string
 		if v, exists := c.Get("_tz_abbr"); exists {
@@ -25,6 +25,14 @@ func Cache(duration time.Duration) gin.HandlerFunc {
 		//	}
 		//}
 		prefix += c.MustGet("_language").(string)
+
+		v, exists := c.Get("_isA")
+		if needAbCache && exists {
+			if isA, ok := v.(bool); ok && isA {
+				prefix += "_a"
+			}
+		}
+
 		cache.CacheByRequestURI(ca.RedisStore, duration, cache.WithPrefixKey(prefix), cache.IgnoreQueryOrder())(c)
 	}
 }
@@ -35,7 +43,7 @@ func CacheForGuest(duration time.Duration) gin.HandlerFunc {
 		if loggedIn {
 			return
 		} else {
-			Cache(duration)(c)
+			Cache(duration, false)(c)
 		}
 	}
 }

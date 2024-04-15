@@ -55,6 +55,9 @@ type UserInfo struct {
 	Kyc                               *Kyc     `json:"kyc,omitempty"`
 	HasCompletedFirstAppLoginTutorial bool     `json:"has_completed_first_app_login_tutorial"`
 	HasClaimedFirstAppLoginReward     bool     `json:"has_claimed_first_app_login_reward"`
+	Birthday                          string   `json:"birthday"`
+	CanUpdateBirthday                 bool     `json:"can_update_birthday"`
+	ReferralCode                      string   `json:"referral_code"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
@@ -73,6 +76,8 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		HasSetSecondaryPwd: len(user.SecondaryPassword) > 0,
 		Brand:              user.BrandId,
 		Agent:              user.AgentId,
+		ReferralCode:       user.ReferralCode,
+		Birthday:           user.Birthday,
 	}
 	if user.Username == "" {
 		u.SetupRequired = true
@@ -96,6 +101,7 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 	}
 	u.HasCompletedFirstAppLoginTutorial = hasCompletedAchievement[model.UserAchievementIdFirstAppLoginTutorial]
 	u.HasClaimedFirstAppLoginReward = hasCompletedAchievement[model.UserAchievementIdFirstAppLoginReward]
+	u.CanUpdateBirthday = !hasCompletedAchievement[model.UserAchievementIdUpdateBirthday]
 
 	return u
 }

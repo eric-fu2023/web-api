@@ -13,6 +13,16 @@ import (
 type PromotionList struct {
 }
 
+func (p PromotionList) ListCategories(c *gin.Context) (r serializer.Response, err error) {
+	detail, err := models.GetDictionaryValues("promotionCategory", model.DB)
+	if err != nil {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		return
+	}
+	r.Data = util.MapSlice(detail, serializer.BuildSysDictionaryDetail)
+	return
+}
+
 func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error) {
 	now := time.Now()
 	brand := c.MustGet(`_brand`).(int)

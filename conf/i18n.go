@@ -2,14 +2,46 @@ package conf
 
 import (
 	"io/ioutil"
+	"log"
+	"os"
 	"strings"
+	"web-api/util/i18n"
 
 	yaml "gopkg.in/yaml.v2"
 )
 
 var Dictinary *map[interface{}]interface{}
+var i18nDefault map[string]i18n.I18n
+var defaultLocale string
 
-func LoadLocales(path string) error {
+func InitLocale() {
+	i18nDefault = make(map[string]i18n.I18n)
+	defaultLocale = os.Getenv("LANGUAGE")
+
+	files, err := os.ReadDir("conf/locales/")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, f := range files {
+		name := f.Name()
+		lang := strings.TrimSuffix(name, ".yaml")
+		i17on := i18n.I18n{}
+		i17on.LoadLanguages(lang)
+		i18nDefault[lang] = i17on
+	}
+}
+
+func GetI18N(lang string) i18n.I18n {
+	if i17on, exists := i18nDefault[lang]; exists {
+		return i17on
+	} else if i17on, exists := i18nDefault[defaultLocale]; exists {
+		return i17on
+	} else {
+		return i18nDefault["en"]
+	}
+}
+
+func LoadLocales(path string, dict *map[interface{}]interface{}) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -21,7 +53,7 @@ func LoadLocales(path string) error {
 		return err
 	}
 
-	Dictinary = &m
+	*dict = m
 
 	return nil
 }

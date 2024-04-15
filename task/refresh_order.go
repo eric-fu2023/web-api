@@ -35,7 +35,7 @@ func RefreshPaymentOrder() {
 			if errors.Is(err, finpay.ErrorOrderNotFound) {
 				err = model.DB.Model(&t).Updates(map[string]any{
 					"status":           models.CashOrderStatusFailed,
-					"notes":            string(serializedData),
+					"notes":            models.EncryptedStr(serializedData),
 					"manual_closed_by": specialUpdatedBy,
 				}).Error
 
@@ -59,7 +59,7 @@ func RefreshPaymentOrder() {
 		} else if data.PaymentOrderStatus == "FAILED" || data.PaymentOrderStatus == "CLOSED" {
 			err = model.DB.Debug().Model(&t).Updates(map[string]any{
 				"status":           models.CashOrderStatusFailed,
-				"notes":            string(serializedData),
+				"notes":            models.EncryptedStr(serializedData),
 				"manual_closed_by": specialUpdatedBy,
 			}).Error
 			if err == nil {

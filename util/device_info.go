@@ -14,6 +14,7 @@ var (
 type DeviceInfo struct {
 	Platform string `json:"platform"`
 	Uuid     string `json:"uuid"`
+	Version  string `json:"version"`
 }
 
 func GetDeviceInfo(c *gin.Context) (DeviceInfo, error) {

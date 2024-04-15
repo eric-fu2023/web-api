@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"github.com/chenyahui/gin-cache/persist"
 	"os"
 	"strconv"
@@ -10,6 +11,10 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
+)
+
+var (
+	ErrCacheMiss = errors.New("cache miss")
 )
 
 var RedisClient *redis.Client

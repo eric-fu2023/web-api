@@ -2,10 +2,16 @@ package service
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"os"
+	"strconv"
+	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -15,21 +21,100 @@ type AppConfigService struct {
 }
 
 func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err error) {
-	var configs []ploutos.AppConfig
-	brand := c.MustGet(`_brand`).(int)
+
 	//agent := c.MustGet(`_agent`).(int)
-	if err = model.DB.Scopes(model.ByBrandPlatformAndKey(int64(brand), service.Platform.Platform, service.Key)).Find(&configs).Error; err == nil {
-		cf := make(map[string]map[string]string)
-		for _, b := range configs {
-			_, exists := cf[b.Name]
-			if !exists {
-				cf[b.Name] = make(map[string]string)
-			}
-			cf[b.Name][b.Key] = b.Value
+
+	cf, err := service.getAppConfigs(c)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("getAppConfigs err: %s", err.Error())
+		r = serializer.GeneralErr(c, err)
+		return
+	}
+
+	// Get AB toggle configs
+	isA, err := service.isA(c)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("isA err: %s", err.Error())
+		r = serializer.GeneralErr(c, err)
+		return
+	}
+
+	// If is A, replace chat socket url with hardcoded value
+	socketChatUrl := os.Getenv("SOCKET_CHAT_URL_A")
+	if isA && socketChatUrl != "" {
+		cf["socket"]["chat_url"] = socketChatUrl
+	}
+	cf["ab"] = map[string]string{
+		"is_a": strconv.FormatBool(isA),
+	}
+
+	r = serializer.Response{
+		Data: cf,
+	}
+
+	return
+}
+
+// getAppConfigs retrieves the app config from cache or db
+func (service *AppConfigService) getAppConfigs(c *gin.Context) (cf map[string]map[string]string, err error) {
+	brand := c.MustGet(`_brand`).(int)
+	cf, err = cache.GetAppConfig(brand, service.Platform.Platform, service.Key)
+	if err != nil && !errors.Is(err, cache.ErrCacheMiss) {
+		// Don't block request if cache fails, just log the error and query db
+		util.GetLoggerEntry(c).Errorf("GetAppConfig: %s", err.Error())
+	}
+	if err == nil {
+		return cf, nil
+	}
+
+	var configs []ploutos.AppConfig
+	err = model.DB.Scopes(model.ByBrandPlatformAndKey(int64(brand), service.Platform.Platform, service.Key)).Find(&configs).Error
+	if err != nil {
+		return nil, fmt.Errorf("find app configs from db: %w", err)
+	}
+
+	cf = make(map[string]map[string]string)
+	for _, b := range configs {
+		_, exists := cf[b.Name]
+		if !exists {
+			cf[b.Name] = make(map[string]string)
 		}
-		r = serializer.Response{
-			Data: cf,
-		}
+		cf[b.Name][b.Key] = b.Value
+	}
+
+	err = cache.SetAppConfig(brand, service.Platform.Platform, service.Key, cf)
+	if err != nil {
+		// Don't block request if cache fails, just log the error and return
+		util.GetLoggerEntry(c).Errorf("SetAppConfig: %s", err.Error())
+	}
+
+	return cf, nil
+}
+
+func (service *AppConfigService) isA(c *gin.Context) (isA bool, err error) {
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil {
+		err = fmt.Errorf("getDeviceInfo: %w", err)
+		return
+	}
+
+	sources := []string{c.ClientIP()}
+	if deviceInfo.Uuid != "" {
+		sources = append(sources, deviceInfo.Uuid)
+	}
+	if deviceInfo.Version != "" {
+		sources = append(sources, deviceInfo.Version)
+	}
+
+	var toggles []ploutos.AbToggle
+	err = model.DB.Where("is_a", true).Where("source IN ?", sources).Find(&toggles).Error
+	if err != nil {
+		err = fmt.Errorf("find ab toggles: %w", err)
+		return
+	}
+
+	if len(toggles) > 0 {
+		isA = true
 	}
 	return
 }

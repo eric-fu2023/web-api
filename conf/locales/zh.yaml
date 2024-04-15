@@ -485,6 +485,8 @@ kyc_submit_failed: "在提交 KYC 期间发生错误."
 kyc_get_failed: "检索 KYC 信息时发生错误."
 kyc_rejected_reason_suffix: "，请联系我们的支持部门获取更多详细信息，或您可以重新提交文件."
 
+user_update_birthday_once: "用户只能更新生日一次."
+
 file_type_not_allowed: "不允许的文件类型 %s."
 file_size_exceeded: "文件大小不应超过 %s."
 file_upload_error: "文件无法上传."

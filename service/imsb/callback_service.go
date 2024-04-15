@@ -100,7 +100,7 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 	err = model.DB.Clauses(dbresolver.Use("txConn")).Transaction(func(tx *gorm.DB) (err error) {
 		ctx := context.TODO()
 		now := time.Now()
-		voucher, err := model.VoucherActiveGetByIDUserWithDB(ctx, userId, imVoucher.VoucherId, now, tx)
+		voucher, err := model.VoucherPendingGetByIDUserWithDB(ctx, userId, imVoucher.VoucherId, now, tx)
 		if err != nil {
 			return
 		}
@@ -149,8 +149,14 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 }
 
 func GetBalanceCallback(c *gin.Context, req callback.GetBalanceRequest, enc callback.EncryptedRequest) (res callback.CommonWalletBaseResponse, err error) {
+	fmt.Println("DebugLog2345:GetBalanceCallback:req.MemberCode", req.MemberCode)
+	fmt.Println("DebugLog2345:GetBalanceCallback:req.ActionId", req.ActionId)
+
 	_, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["imsb"], req.MemberCode)
+
+	fmt.Println("DebugLog2345:GetBalanceCallback:balance", balance)
 	if err != nil {
+		fmt.Println("DebugLog2345:GetBalanceCallback:err", err.Error())
 		return
 	}
 	res = callback.CommonWalletBaseResponse{

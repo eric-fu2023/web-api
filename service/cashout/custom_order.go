@@ -16,12 +16,17 @@ import (
 
 type CustomOrderService struct {
 	model.CashOrder
+	TransactionType int64
 }
 
-func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err error) {
+func (svc CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err error) {
+	cashOrder := svc.CashOrder
+	if svc.TransactionType == 0 {
+		svc.TransactionType = 10001
+	}
 	amount := cashOrder.AppliedCashOutAmount
 
-	verified := cashOrder.VerifyManualCashOut()
+	verified := svc.VerifyManualCashOut()
 	if !verified {
 		err = errors.New("invalid cashout order")
 		r = serializer.Err(c, nil, serializer.CodeGeneralError, "err_invalid_order", err)
@@ -37,7 +42,7 @@ func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Respons
 		if err != nil {
 			return
 		}
-		if userSum.MaxWithdrawable < amount || userSum.Balance < amount {
+		if userSum.Balance < amount {
 			err = errors.New("withdraw exceeded")
 			r = serializer.Err(c, nil, serializer.CodeGeneralError, "err_insufficient_withdrawable", err)
 			return
@@ -62,7 +67,7 @@ func (cashOrder CustomOrderService) Handle(c *gin.Context) (r serializer.Respons
 			cashOrder.UserId,
 			-amount,
 			0,
-			-amount, 10001, cashOrder.ID)
+			-amount, svc.TransactionType, cashOrder.ID)
 		if err != nil {
 			return
 		}

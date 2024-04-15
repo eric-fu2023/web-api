@@ -96,14 +96,14 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		default:
 			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username)
 			if err != nil {
-				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data))
+				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 				return
 			}
 		case "TRC20":
 			data, err = finpay.FinpayClient{}.PlaceDefaultCoinPalOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, user.Username)
 			if err != nil {
-				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data))
+				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 				return
 			}
