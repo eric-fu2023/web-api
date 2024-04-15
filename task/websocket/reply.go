@@ -95,6 +95,7 @@ func welcomeToRoom(conn *websocket.Connection, message string) {
 						Avatar:    ms[i].Avatar,
 						Type:      ms[i].Type,
 						IsHistory: true,
+						VipId:     ms[i].VipId,
 					}
 					msg1.Send(conn)
 				}
