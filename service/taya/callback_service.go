@@ -91,14 +91,25 @@ func (c *Callback) IsAdjustment() bool {
 }
 
 func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExists bool) (err error) {
-	if c.Transaction.RelatedId == "" {
-		return
-	}
 	if c.Transaction.TransferType != "WIN" || !betExists || betAmount <= c.Transaction.Amount {
 		return
 	}
+
+	var tayaTx model.TayaTransaction
+	err = model.DB.Clauses(dbresolver.Use("txConn")).Where(`business_id`, c.Transaction.BusinessId).Where(`transfer_type`, `BET`).
+		Order(`id`).First(&tayaTx).Error
+	if err != nil {
+		return
+	}
+	if tayaTx.RelatedId == "" {
+		return
+	}
+
 	err = model.DB.Clauses(dbresolver.Use("txConn")).Transaction(func(tx *gorm.DB) (err error) {
-		voucherId, err := strconv.ParseInt(c.Transaction.RelatedId, 10, 64)
+		voucherId, err := strconv.ParseInt(tayaTx.RelatedId, 10, 64)
+		if err != nil {
+			return
+		}
 		ctx := context.TODO()
 		now := time.Now()
 		voucher, err := model.VoucherPendingGetByIDUserWithDB(ctx, userId, voucherId, now, tx)
