@@ -140,7 +140,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		//user.BrandId = int64(c.MustGet("_brand").(int))
 		//user.AgentId = int64(c.MustGet("_agent").(int))
 		genNickname(&user)
-		err := model.DB.Create(&user).Error
+		err = user.CreateWithDB(model.DB)
 		if err != nil {
 			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 		}
