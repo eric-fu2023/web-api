@@ -1,9 +1,12 @@
 package referral
 
 import (
+	"database/sql"
 	"github.com/gin-gonic/gin"
+	"time"
+	"web-api/model"
 	"web-api/serializer"
-	"web-api/util/i18n"
+	"web-api/util"
 )
 
 type RewardReferralsService struct {
@@ -12,46 +15,50 @@ type RewardReferralsService struct {
 }
 
 func (service *RewardReferralsService) List(c *gin.Context) (r serializer.Response, err error) {
-	i18n := c.MustGet("i18n").(i18n.I18n)
-	//u, _ := c.Get("user")
-	//user := u.(model.User)
-	// TODO!Jh replace mock
+	u, _ := c.Get("user")
+	user := u.(model.User)
 
-	type Referral struct {
-		Id             int64   `json:"id"`
-		Nickname       string  `json:"nickname"`
-		Avatar         string  `json:"avatar"`
-		VipId          int64   `json:"vip_id"`
-		JoinTime       int64   `json:"join_time"`
-		ReferrerReward float64 `json:"referrer_reward"`
+	rdCond := model.GetReferralDetailsCond{ReferrerId: user.ID}
+	if service.JoinTimeStart != 0 {
+		rdCond.JoinTimeStart = sql.NullTime{Time: time.Unix(service.JoinTimeStart, 0), Valid: true}
+	}
+	if service.JoinTimeEnd != 0 {
+		rdCond.JoinTimeEnd = sql.NullTime{Time: time.Unix(service.JoinTimeEnd, 0), Valid: true}
 	}
 
-	type Response struct {
-		Referrals []Referral `json:"referrals"`
+	referralDetails, err := model.GetReferralDetails(rdCond)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("GetReferralDetails error: %s", err.Error())
+		return serializer.GeneralErr(c, err), err
 	}
 
-	respData := Response{
-		Referrals: []Referral{
-			{
-				Id:             224,
-				Nickname:       "Some User",
-				Avatar:         "https://static.tayalive.com/img/user/224/avatar/224-avatar-20240404090035-PWauUp.jpg",
-				VipId:          3,
-				JoinTime:       1711617294,
-				ReferrerReward: 996.03,
-			},
-			{
-				Id:             225,
-				Nickname:       "Another User",
-				VipId:          4,
-				JoinTime:       1711617293,
-				ReferrerReward: 1080.01,
-			},
-		},
+	defaultVip, err := model.GetDefaultVip()
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("GetDefaultVip error: %s", err.Error())
+		return serializer.GeneralErr(c, err), err
+	}
+
+	var referralIds []int64
+	for _, rd := range referralDetails {
+		referralIds = append(referralIds, rd.ReferralId)
+	}
+
+	rewardSummaries, err := model.GetReferralAllianceSummary(model.GetReferralAllianceSummaryCond{
+		ReferralIds: referralIds,
+	})
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("GetReferralAllianceSummary error: %s", err.Error())
+		return serializer.GeneralErr(c, err), err
+	}
+
+	rewardSummaryMap := map[int64]model.ReferralAllianceSummary{}
+	for _, rs := range rewardSummaries {
+		rewardSummaryMap[rs.ReferralId] = rs
 	}
 
 	return serializer.Response{
-		Data: respData,
-		Msg:  i18n.T("success"),
+		Data: map[string]any{
+			"referrals": serializer.BuildReferralAllianceReferrals(c, referralDetails, rewardSummaryMap, defaultVip),
+		},
 	}, nil
 }

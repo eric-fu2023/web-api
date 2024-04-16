@@ -26,3 +26,9 @@ func LoadVipRule(c context.Context) (ret []models.VIPRule, err error) {
 	err = DB.Where("is_active").Order("vip_level").Find(&ret).Error
 	return
 }
+
+func GetDefaultVip() (models.VIPRule, error) {
+	var vipRule models.VIPRule
+	err := DB.Where("is_active").Order("vip_level").First(&vipRule).Error
+	return vipRule, err
+}

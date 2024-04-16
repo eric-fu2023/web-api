@@ -1,33 +1,36 @@
 package common
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"firebase.google.com/go/v4/messaging"
 	"fmt"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/plugin/dbresolver"
 	"os"
+	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
 	"web-api/websocket"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"firebase.google.com/go/v4/messaging"
+	"golang.org/x/text/message"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"gorm.io/plugin/dbresolver"
 )
 
-const NOTIFICATION_PLACE_BET_TITLE = "Bet placed successfully!"
-const NOTIFICATION_PLACE_BET = "You have successfully placed a bet. Keep watching the event or check your bet history in your account. Wish you good luck!"
-const NOTIFICATION_DEPOSIT_SUCCESS_TITLE = "Deposit Transaction Successful"
-const NOTIFICATION_DEPOSIT_SUCCESS = "Your deposit transaction with the amount of %.2f %s has been successful."
-const NOTIFICATION_WITHDRAWAL_SUCCESS_TITLE = "Withdrawal Transaction Successful"
-const NOTIFICATION_WITHDRAWAL_SUCCESS = "Your withdrawal transaction with the amount of %.2f %s has been successful."
-const NOTIFICATION_WITHDRAWAL_FAILED_TITLE = "Withdrawal Transaction Failed"
-const NOTIFICATION_WITHDRAWAL_FAILED = "Your withdrawal transaction with the amount of %.2f %s was unsuccessful. Please try again later or contact our customer support for more information."
-const NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE string = "Deposit Bonus Rewarded"
-const NOTIFICATION_DEPOSIT_BONUS_SUCCESS string = "Your deposit bonus with the amount of %.2f %s has been awarded."
+const NOTIFICATION_PLACE_BET_TITLE = "NOTIFICATION_PLACE_BET_TITLE"
+const NOTIFICATION_PLACE_BET = "NOTIFICATION_PLACE_BET"
+const NOTIFICATION_DEPOSIT_SUCCESS_TITLE = "NOTIFICATION_DEPOSIT_SUCCESS_TITLE"
+const NOTIFICATION_DEPOSIT_SUCCESS = "NOTIFICATION_DEPOSIT_SUCCESS"
+const NOTIFICATION_WITHDRAWAL_SUCCESS_TITLE = "NOTIFICATION_WITHDRAWAL_SUCCESS_TITLE"
+const NOTIFICATION_WITHDRAWAL_SUCCESS = "NOTIFICATION_WITHDRAWAL_SUCCESS"
+const NOTIFICATION_WITHDRAWAL_FAILED_TITLE = "NOTIFICATION_WITHDRAWAL_FAILED_TITLE"
+const NOTIFICATION_WITHDRAWAL_FAILED = "NOTIFICATION_WITHDRAWAL_FAILED"
+const NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE = "NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE"
+const NOTIFICATION_DEPOSIT_BONUS_SUCCESS = "NOTIFICATION_DEPOSIT_BONUS_SUCCESS"
 
 var (
 	ErrInsuffientBalance     = errors.New("insufficient balance or invalid transaction")
@@ -361,7 +364,12 @@ func SendCashNotification(userId int64, notificationType string, title string, t
 			util.Log().Error("send cash notification error (query currency): ", err.Error())
 			return
 		}
-		SendNotification(userId, notificationType, title, fmt.Sprintf(text, float64(amount)/100, currency.Name))
+
+		lang := conf.GetDefaultLocale()
+		title = conf.GetI18N(lang).T(title)
+		text = conf.GetI18N(lang).T(text)
+		p := message.NewPrinter(message.MatchLanguage(lang))
+		SendNotification(userId, notificationType, title, p.Sprintf(text, float64(amount)/100, currency.Name))
 	}()
 }
 

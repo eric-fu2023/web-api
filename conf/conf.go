@@ -1,11 +1,6 @@
 package conf
 
 import (
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-gorm/caches/v3"
-	"github.com/go-playground/validator/v10"
-	"github.com/go-redis/redis/v8"
-	"github.com/joho/godotenv"
 	"os"
 	"strings"
 	"web-api/cache"
@@ -13,6 +8,12 @@ import (
 	"web-api/model"
 	"web-api/service/aj_captcha"
 	"web-api/util"
+
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-gorm/caches/v3"
+	"github.com/go-playground/validator/v10"
+	"github.com/go-redis/redis/v8"
+	"github.com/joho/godotenv"
 )
 
 func Init() {

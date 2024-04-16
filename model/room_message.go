@@ -18,6 +18,7 @@ type RoomMessage struct {
 	UserId    int64 `bson:"user_id"`
 	Sender    *ploutos.User
 	Timestamp int64
+	VipId     int64 `bson:"vip_id"`
 }
 
 func (a RoomMessage) List(room string, from int64, page int64, limit int64) (r []RoomMessage, err error) {

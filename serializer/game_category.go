@@ -3,6 +3,7 @@ package serializer
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
+	"web-api/util/i18n"
 )
 
 type GameCategory struct {
@@ -23,4 +24,27 @@ func BuildGameCategory(c *gin.Context, a ploutos.GameCategory, gameIds []int64) 
 		}
 	}
 	return
+}
+
+func FormatGameCategoryName(c *gin.Context, id int64) string {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+
+	switch id {
+	case ploutos.GameCategoryIdSports:
+		return i18n.T("game_category_name_sports")
+	case ploutos.GameCategoryIdLive:
+		return i18n.T("game_category_name_live")
+	case ploutos.GameCategoryIdElectronic:
+		return i18n.T("game_category_name_electronic")
+	case ploutos.GameCategoryIdCard:
+		return i18n.T("game_category_name_card")
+	case ploutos.GameCategoryIdEsports:
+		return i18n.T("game_category_name_esports")
+	case ploutos.GameCategoryIdLottery:
+		return i18n.T("game_category_name_lottery")
+	case ploutos.GameCategoryIdFishing:
+		return i18n.T("game_category_name_fishing")
+	default:
+		return ""
+	}
 }

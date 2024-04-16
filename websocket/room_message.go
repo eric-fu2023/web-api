@@ -18,6 +18,7 @@ type RoomMessage struct {
 	Avatar    string `json:"avatar"`
 	Type      int64  `json:"type"`
 	IsHistory bool   `json:"is_history"`
+	VipId     int64  `json:"vip_id"`
 }
 
 func (a RoomMessage) Send(conn *Connection) (err error) {
