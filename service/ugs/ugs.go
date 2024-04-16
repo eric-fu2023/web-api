@@ -53,13 +53,13 @@ func (c UGS) CreateWallet(user model.User, currency string) (err error) {
 	return
 }
 
-func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, lang, gameCode, ip string) (err error) {
+func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, extra model.Extra) (err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
 	}
 	client := util.UgsFactory.NewClient(cache.RedisClient)
-	balance, status, ptxid, err := client.TransferOut(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser)
+	balance, status, ptxid, err := client.TransferOut(user.ID, user.Username, currency, extra.Locale, gameCode, extra.Ip, isTestUser)
 	if err != nil {
 		return
 	}
@@ -94,13 +94,13 @@ func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, lang, gameCode
 	return
 }
 
-func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, lang, gameCode, ip string) (balance int64, err error) {
+func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, gameCode string, extra model.Extra) (balance int64, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
 	}
 	client := util.UgsFactory.NewClient(cache.RedisClient)
-	status, ptxid, err := client.TransferIn(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser, util.MoneyFloat(sum.Balance))
+	status, ptxid, err := client.TransferIn(user.ID, user.Username, currency, extra.Locale, gameCode, extra.Ip, isTestUser, util.MoneyFloat(sum.Balance))
 	if err != nil {
 		return
 	}
@@ -130,23 +130,23 @@ func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, curre
 	return
 }
 
-func (c UGS) GetGameUrl(user model.User, currency, lang, gameCode, subGameCode, ip string, platform int64) (url string, err error) {
+func (c UGS) GetGameUrl(user model.User, currency, gameCode, subGameCode string, platform int64, extra model.Extra) (url string, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
 	}
 	client := util.UgsFactory.NewClient(cache.RedisClient)
-	url, err = client.GetGameUrl(user.ID, user.Username, currency, lang, gameCode, subGameCode, ip, PlatformMapping[platform], isTestUser)
+	url, err = client.GetGameUrl(user.ID, user.Username, currency, extra.Locale, gameCode, subGameCode, extra.Ip, PlatformMapping[platform], isTestUser)
 	return
 }
 
-func (c UGS) GetGameBalance(user model.User, currency, lang, gameCode, ip string) (balance int64, err error) {
+func (c UGS) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
 	}
 	client := util.UgsFactory.NewClient(cache.RedisClient)
-	balanceFloat, err := client.GetGameBalance(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser)
+	balanceFloat, err := client.GetGameBalance(user.ID, user.Username, currency, extra.Locale, gameCode, extra.Ip, isTestUser)
 	if err != nil {
 		return
 	}

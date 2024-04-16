@@ -41,7 +41,7 @@ type SyncWalletService struct {
 
 func (service *SyncWalletService) Update(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	lang := c.MustGet("_locale").(string)
+	locale := c.MustGet("_locale").(string)
 	user := c.MustGet("user").(model.User)
 	var gvu ploutos.GameVendorUser
 	err = model.DB.Model(ploutos.GameVendorUser{}).Scopes(model.GameVendorUserDefaultJoinAndPreload).
@@ -50,7 +50,8 @@ func (service *SyncWalletService) Update(c *gin.Context) (r serializer.Response,
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
-	balance, err := common.GameIntegration[gvu.GameVendor.GameIntegrationId].GetGameBalance(user, gvu.ExternalCurrency, lang, gvu.GameVendor.GameCode, c.ClientIP())
+	extra := model.Extra{Locale: locale, Ip: c.ClientIP()}
+	balance, err := common.GameIntegration[gvu.GameVendor.GameIntegrationId].GetGameBalance(user, gvu.ExternalCurrency, gvu.GameVendor.GameCode, extra)
 	if gvu.Balance != balance {
 		err = model.DB.Model(ploutos.GameVendorUser{}).Where(`id`, gvu.ID).Update(`balance`, balance).Error
 		if err != nil {
@@ -71,7 +72,7 @@ type RecallFundService struct {
 
 func (service *RecallFundService) Recall(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	lang := c.MustGet("_locale").(string)
+	locale := c.MustGet("_locale").(string)
 	user := c.MustGet("user").(model.User)
 	var userSum ploutos.UserSum
 	err = model.DB.Where(`user_id`, user.ID).First(&userSum).Error
@@ -95,7 +96,8 @@ func (service *RecallFundService) Recall(c *gin.Context) (r serializer.Response,
 			wg.Add(1)
 			go func(tx *gorm.DB, g ploutos.GameVendorUser) {
 				defer wg.Done()
-				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(tx, user, g.ExternalCurrency, lang, g.GameVendor.GameCode, c.ClientIP())
+				extra := model.Extra{Locale: locale, Ip: c.ClientIP()}
+				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(tx, user, g.ExternalCurrency, g.GameVendor.GameCode, extra)
 				if err != nil {
 					util.Log().Error("GAME INTEGRATION RECALL ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error())
 					return
