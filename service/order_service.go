@@ -56,13 +56,26 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	if service.IsSettled {
 		sumStatuses = []int64{5}
 	}
-	err = model.DB.Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, orderType[service.Type], sumStatuses, service.IsParlay, service.IsSettled, start, end)).
+	types := orderType[service.Type]
+	if service.Type == 2 { // 2: games (which include games from game integration)
+		var gi []ploutos.GameIntegration
+		err = model.DB.Model(ploutos.GameIntegration{}).Preload(`GameVendors`).Find(&gi).Error
+		if err != nil {
+			return serializer.DBErr(c, service, i18n.T("general_error"), err)
+		}
+		for _, g := range gi {
+			for _, v := range g.GameVendors {
+				types = append(types, v.ID)
+			}
+		}
+	}
+	err = model.DB.Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, types, sumStatuses, service.IsParlay, service.IsSettled, start, end)).
 		Select(`COUNT(1) as count, SUM(bet) as amount, SUM(win-bet) as win`).Find(&orderSummary).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
-	err = model.DB.Preload(`Voucher`).Preload(`ImVoucher`).
-		Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, orderType[service.Type], statuses, service.IsParlay, service.IsSettled, start, end), model.ByBetTimeSort, model.Paginate(service.Page.Page, service.Page.Limit)).
+	err = model.DB.Preload(`Voucher`).Preload(`ImVoucher`).Preload(`GameVendor`).
+		Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, types, statuses, service.IsParlay, service.IsSettled, start, end), model.ByBetTimeSort, model.Paginate(service.Page.Page, service.Page.Limit)).
 		Find(&list).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
