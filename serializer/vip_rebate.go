@@ -74,10 +74,40 @@ func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []mode
 			catsCol[item.GameVendorBrand.CategoryId][item.GameVendorBrand.ID] = len(ret.Categories[idx].Columns[idx2].Values) - 1
 		}
 	}
+	for idx := range ret.Categories {
+		col := VipRebateColumn{
+			Header: "primary",
+		}
+
+		// // based on actual data
+		// vipLvlMap := make(map[int64]int)
+		// for i := range ret.Categories[idx].Columns {
+		// 	for j := range ret.Categories[idx].Columns[i].Values {
+		// 		if vipIdx, exists := vipLvlMap[ret.Categories[idx].Columns[i].Values[j].VipLevel]; exists {
+		// 			col.Values[vipIdx].Value = max(col.Values[vipIdx].Value, ret.Categories[idx].Columns[i].Values[j].Value)
+		// 		} else {
+		// 			col.Values = append(col.Values, ret.Categories[idx].Columns[i].Values[j])
+		// 			vipLvlMap[ret.Categories[idx].Columns[i].Values[j].VipLevel] = len(col.Values) - 1
+		// 		}
+		// 	}
+		// }
+
+		// based on vip setting
+		col.Values = util.MapSlice(vips, func(input models.VIPRule) VipRebateColumnValue {
+			return VipRebateColumnValue{
+				VipLevel: input.VIPLevel,
+				Format:   "percentage",
+				Value:    input.RebateRate,
+			}
+		})
+		ret.Categories[idx].Columns = append(ret.Categories[idx].Columns, col)
+	}
+
+	// add cap
 	Cat := VipRebateCategory{
 		Header: "cap",
 		Columns: []VipRebateColumn{
-			{Header: "cap", Values: util.MapSlice(vips, func(input models.VIPRule) VipRebateColumnValue {
+			{Header: "primary", Values: util.MapSlice(vips, func(input models.VIPRule) VipRebateColumnValue {
 				return VipRebateColumnValue{
 					VipLevel: input.VIPLevel,
 					Format:   "currency",
