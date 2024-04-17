@@ -72,7 +72,7 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 	if loggedIn {
 		progress = ProgressByType(c, promotion, session, user.ID, now)
 		claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
-		reward = promotion.GetRewardDetails().GetReward(progress)
+		reward = RewardByType(c, promotion, session, user.ID, progress, now)
 	}
 	if claimStatus.HasClaimed {
 		v, err := model.VoucherGetByUserSession(c, user.ID, session.ID)

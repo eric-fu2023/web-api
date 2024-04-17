@@ -3,6 +3,7 @@ package promotion
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -18,10 +19,27 @@ import (
 
 func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward int64) {
 	switch p.Type {
-	case models.PromotionTypeVipReferral, models.PromotionTypeVipRebate:
-		//separate calculation
-	case models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
-	case models.PromotionTypeVipBirthdayB:
+	case models.PromotionTypeVipReferral:
+		oneDayBefore, err := getOneDayBeforeDateString(now)
+		if err != nil {
+			util.GetLoggerEntry(c).Error("getOneDayBeforeDateString error", err)
+			return
+		}
+
+		summaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
+			ReferrerIds:    []int64{userID},
+			HasBeenClaimed: []bool{false},
+			BetDateEnd:     oneDayBefore,
+		})
+		if err != nil {
+			util.GetLoggerEntry(c).Error("GetReferralAllianceSummaries error", err)
+			return
+		}
+
+		if len(summaries) == 0 {
+			return 0
+		}
+		return summaries[0].TotalReward
 
 	default:
 		reward = p.GetRewardDetails().GetReward(progress)
@@ -102,7 +120,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		//add money and insert voucher
 		// add cash order
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
-			err = CreateCashOrder(tx, voucher, p.Type, userID, rewardAmount)
+			err = CreateCashOrder(tx, voucher, p.Type, userID, rewardAmount, "")
 			if err != nil {
 				return err
 			}
@@ -127,6 +145,41 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		if err == nil {
 			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
 		}
+	case models.PromotionTypeVipReferral:
+		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
+			rewardRecords, err := ClaimReferralAllianceRewards(tx, userID, now)
+			if err != nil {
+				return fmt.Errorf("failed to claim rewards: %w", err)
+			}
+
+			var totalReward int64
+			for _, r := range rewardRecords {
+				totalReward += r.Amount
+			}
+
+			var rewardRecordIds []int64
+			for _, r := range rewardRecords {
+				rewardRecordIds = append(rewardRecordIds, r.ID)
+			}
+			cashOrderNotes := util.JSON(map[string]any{
+				"reward_record_ids": rewardRecordIds,
+			})
+
+			err = CreateCashOrder(tx, voucher, p.Type, userID, totalReward, cashOrderNotes)
+			if err != nil {
+				return fmt.Errorf("failed to create cash order: %w", err)
+			}
+
+			err = tx.Create(&voucher).Error
+			if err != nil {
+				return fmt.Errorf("failed to create voucher: %w", err)
+			}
+
+			return nil
+		})
+		if err == nil {
+			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+		}
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		//insert voucher only
 		err = model.DB.Create(&voucher).Error
@@ -134,7 +187,37 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	return
 }
 
-func CreateCashOrder(tx *gorm.DB, voucher models.Voucher, promoType, userId, rewardAmount int64) error {
+func ClaimReferralAllianceRewards(tx *gorm.DB, referrerId int64, now time.Time) ([]models.ReferralAllianceReward, error) {
+	oneDayBefore, err := getOneDayBeforeDateString(now)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get one day before date string: %w", err)
+	}
+
+	// Get reward records
+	cond := model.GetReferralAllianceRewardsCond{
+		ReferrerIds:    []int64{referrerId},
+		HasBeenClaimed: []bool{false},
+		BetDateEnd:     oneDayBefore,
+	}
+	rewardRecords, err := model.GetReferralAllianceRewards(cond)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get reward records: %w", err)
+	}
+
+	var ids []int64
+	for _, r := range rewardRecords {
+		ids = append(ids, r.ID)
+	}
+
+	err = model.ClaimReferralAllianceRewards(tx, ids, now)
+	if err != nil {
+		return nil, fmt.Errorf("failed to claim rewards: %w", err)
+	}
+
+	return rewardRecords, nil
+}
+
+func CreateCashOrder(tx *gorm.DB, voucher models.Voucher, promoType, userId, rewardAmount int64, notes string) error {
 	txType := promotionTxTypeMapping[promoType]
 	sum, err := model.UserSum{}.UpdateUserSumWithDB(tx,
 		userId,
@@ -146,13 +229,16 @@ func CreateCashOrder(tx *gorm.DB, voucher models.Voucher, promoType, userId, rew
 	if err != nil {
 		return err
 	}
+	if notes == "" {
+		notes = "dummy"
+	}
 	orderType := promotionOrderTypeMapping[promoType]
 	dummyOrder := models.CashOrder{
 		ID:                    uuid.NewString(),
 		UserId:                userId,
 		OrderType:             orderType,
 		Status:                models.CashOrderStatusSuccess,
-		Notes:                 "dummy",
+		Notes:                 models.EncryptedStr(notes),
 		AppliedCashInAmount:   rewardAmount,
 		ActualCashInAmount:    rewardAmount,
 		EffectiveCashInAmount: rewardAmount,
@@ -172,7 +258,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	status := models.VoucherStatusReady
 	isUsable := false
 	switch p.Type {
-	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB:
+	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeVipReferral:
 		status = models.VoucherStatusRedeemed
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		isUsable = true
@@ -266,4 +352,16 @@ func later(a time.Time, b time.Time) time.Time {
 		return b
 	}
 	return a
+}
+
+func getOneDayBeforeDateString(now time.Time) (string, error) {
+	tzOffsetStr, err := model.GetAppConfigWithCache("timezone", "offset_seconds")
+	if err != nil {
+		return "", fmt.Errorf("failed to get tz offset config: %w", err)
+	}
+	tzOffset, err := strconv.Atoi(tzOffsetStr)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse tz offset config: %w", err)
+	}
+	return now.In(time.FixedZone("", tzOffset)).AddDate(0, 0, -1).Format(time.DateOnly), nil
 }

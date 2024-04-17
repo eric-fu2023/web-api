@@ -83,7 +83,7 @@ func Claim(c context.Context, now time.Time, promotion models.Promotion, session
 		return
 	}
 	progress = ProgressByType(c, promotion, session, user.ID, now)
-	reward = promotion.GetRewardDetails().GetReward(progress)
+	reward = RewardByType(c, promotion, session, user.ID, progress, now)
 	template, err = model.VoucherTemplateGetByPromotion(c, promotion.ID)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)

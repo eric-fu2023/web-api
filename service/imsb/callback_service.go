@@ -135,7 +135,7 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 		if loss < rewardAmount {
 			rewardAmount = loss
 		}
-		err = promotion.CreateCashOrder(tx, voucher, voucher.PromotionType, userId, rewardAmount)
+		err = promotion.CreateCashOrder(tx, voucher, voucher.PromotionType, userId, rewardAmount, "")
 		if err != nil {
 			return
 		}
