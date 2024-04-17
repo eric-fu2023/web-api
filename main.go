@@ -64,7 +64,7 @@ func main() {
 		c.Start()
 		select {}
 	} else {
-		//task.CreateUserWallet([]int64{8, 9}, "USD") // to create wallets when a new game vendor is added
+		//task.CreateUserWallet([]int64{8, 9}, 1) // to create wallets when a new game vendor is added
 		//task.EncryptMobileAndEmail()
 		r := server.NewRouter()
 		pprof.Register(r)
