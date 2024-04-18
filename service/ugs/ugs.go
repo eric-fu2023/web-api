@@ -53,7 +53,7 @@ func (c UGS) CreateWallet(user model.User, currency string) (err error) {
 	return
 }
 
-func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, extra model.Extra) (err error) {
+func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
@@ -76,11 +76,12 @@ func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode strin
 			Amount:                amount,
 			BalanceBefore:         sum.Balance,
 			BalanceAfter:          sum.Balance + amount,
-			TransactionType:       ploutos.TransactionTypeFromUGS,
+			TransactionType:       ploutos.TransactionTypeFromGameIntegration,
 			Wager:                 0,
 			WagerBefore:           sum.RemainingWager,
 			WagerAfter:            sum.RemainingWager,
 			ExternalTransactionId: ptxid,
+			GameVendorId:          gameVendorId,
 		}
 		err = tx.Create(&transaction).Error
 		if err != nil {
@@ -94,7 +95,7 @@ func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode strin
 	return
 }
 
-func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, gameCode string, extra model.Extra) (balance int64, err error) {
+func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
@@ -111,11 +112,12 @@ func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, curre
 			Amount:                -1 * sum.Balance,
 			BalanceBefore:         sum.Balance,
 			BalanceAfter:          0,
-			TransactionType:       ploutos.TransactionTypeToUGS,
+			TransactionType:       ploutos.TransactionTypeToGameIntegration,
 			Wager:                 0,
 			WagerBefore:           sum.RemainingWager,
 			WagerAfter:            sum.RemainingWager,
 			ExternalTransactionId: ptxid,
+			GameVendorId:          gameVendorId,
 		}
 		err = tx.Create(&transaction).Error
 		if err != nil {

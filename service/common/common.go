@@ -155,11 +155,11 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 		BalanceBefore:        balance,
 		BalanceAfter:         newBalance,
 		ForeignTransactionId: obj.GetGameTransactionId(),
-		TransactionType:      obj.GetGameVendorId(),
 		Wager:                userSum.RemainingWager - remainingWager,
 		WagerBefore:          remainingWager,
 		WagerAfter:           userSum.RemainingWager,
 		IsAdjustment:         obj.IsAdjustment(),
+		GameVendorId:         obj.GetGameVendorId(),
 	}
 	err = tx.Save(&transaction).Error
 	if err != nil {
@@ -229,11 +229,11 @@ func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
 		BalanceBefore:        balance,
 		BalanceAfter:         newBalance,
 		ForeignTransactionId: obj.GetGameTransactionId(),
-		TransactionType:      obj.GetGameVendorId(),
 		Wager:                userSum.RemainingWager - remainingWager,
 		WagerBefore:          remainingWager,
 		WagerAfter:           userSum.RemainingWager,
 		IsAdjustment:         obj.IsAdjustment(),
+		GameVendorId:         obj.GetGameVendorId(),
 	}
 	err = tx.Save(&transaction).Error
 	if err != nil {

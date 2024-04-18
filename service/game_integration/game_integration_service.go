@@ -54,7 +54,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 			}
 			if lastPlayed.ID != 0 && lastPlayed.GameVendorId != int64(subGame.VendorId) { // transfer out from the game is needed
 				gameFrom := common.GameIntegration[lastPlayed.GameVendor.GameIntegrationId]
-				err = gameFrom.TransferFrom(tx, user, lastPlayed.ExternalCurrency, lastPlayed.GameVendor.GameCode, extra)
+				err = gameFrom.TransferFrom(tx, user, lastPlayed.ExternalCurrency, lastPlayed.GameVendor.GameCode, lastPlayed.GameVendorId, extra)
 				if err != nil {
 					return
 				}
@@ -71,7 +71,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 
 			var transferToBalance int64
 			if sum.Balance > 0 { // transfer in to the game is needed
-				transferToBalance, err = game.TransferTo(tx, user, sum, gvu.ExternalCurrency, subGame.GameVendor.GameCode, extra)
+				transferToBalance, err = game.TransferTo(tx, user, sum, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameVendor.ID, extra)
 				if err != nil {
 					return
 				}
