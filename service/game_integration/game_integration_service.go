@@ -105,7 +105,7 @@ func (service *GameCategoryListService) List(c *gin.Context) (r serializer.Respo
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	var categories []ploutos.GameCategory
 
-	if err = model.DB.Model(ploutos.GameCategory{}).Preload(`GameVendor`, "game_integration_id = 1").
+	if err = model.DB.Model(ploutos.GameCategory{}).Preload(`GameVendorBrand`).Preload(`GameVendorBrand.GameVendor`, "game_integration_id = 1").
 		Find(&categories).Error; err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
@@ -115,9 +115,9 @@ func (service *GameCategoryListService) List(c *gin.Context) (r serializer.Respo
 	for _, cat := range categories {
 		var subGameIds []int64
 		var gameId int64
-		if len(cat.GameVendor) > 0 {
-			for _, v := range cat.GameVendor {
-				model.DB.Model(ploutos.SubGameC{}).Select("id").Where("vendor_id = ?", v.ID).Where("game_code = ?", "lobby").Find(&gameId)
+		if len(cat.GameVendorBrand) > 0 {
+			for _, v := range cat.GameVendorBrand {
+				model.DB.Model(ploutos.SubGameC{}).Select("id").Where("vendor_id = ?", v.GameVendorId).Where("game_code = ? OR (game_code = ? AND vendor_id = 11)", "lobby", "200").Find(&gameId)
 				subGameIds = append(subGameIds, gameId)
 			}
 		}

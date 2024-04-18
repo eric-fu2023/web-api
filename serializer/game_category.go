@@ -1,24 +1,25 @@
 package serializer
 
 import (
+	"web-api/util/i18n"
+
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
-	"web-api/util/i18n"
 )
 
 type GameCategory struct {
-	Id     int64        `json:"category_id"`
-	Vendor []GameVendor `json:"vendor,omitempty"`
+	Id     int64             `json:"category_id"`
+	Vendor []GameVendorBrand `json:"vendor,omitempty"`
 }
 
 func BuildGameCategory(c *gin.Context, a ploutos.GameCategory, gameIds []int64) (b GameCategory) {
 	b = GameCategory{
 		Id: a.ID,
 	}
-	if len(a.GameVendor) > 0 {
-		for i, v := range a.GameVendor {
+	if len(a.GameVendorBrand) > 0 {
+		for i, v := range a.GameVendorBrand {
 			if len(gameIds) > i {
-				t := BuildGameVendor(v, gameIds[i])
+				t := BuildGameVendorBrandForCategory(v, gameIds[i])
 				b.Vendor = append(b.Vendor, t)
 			}
 		}
