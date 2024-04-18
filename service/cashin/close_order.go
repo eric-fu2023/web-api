@@ -8,6 +8,7 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/plugin/dbresolver"
 )
 
@@ -60,7 +61,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
 	// update cash order
 
-	err = txDB.Updates(newCashOrderState).Error
+	err = txDB.Omit(clause.Associations).Updates(newCashOrderState).Error
 	// modify user sum
 	if err != nil {
 		return
