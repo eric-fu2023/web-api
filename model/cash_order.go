@@ -62,10 +62,10 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBinding
 	}
 }
 
-func (CashOrder) GetPendingWithLockWithDB(orderID string, tx *gorm.DB) (c CashOrder, err error) {
+func (CashOrder) GetPendingOrPeApWithLockWithDB(orderID string, tx *gorm.DB) (c CashOrder, err error) {
 	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("id", orderID).
-		Where("status = 1").
+		Where("status in ?", []int64{models.CashOrderStatusPending, models.CashOrderStatusPendingApproval}).
 		First(&c).Error
 	return
 }
