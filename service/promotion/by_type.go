@@ -39,6 +39,16 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 		if len(summaries) == 0 {
 			return 0
 		}
+
+		vipRecord, err := model.GetVipWithDefault(c, userID)
+		if err != nil {
+			return
+		}
+		rewardCap := vipRecord.VipRule.ReferralCap
+
+		if summaries[0].TotalReward > rewardCap {
+			return rewardCap
+		}
 		return summaries[0].TotalReward
 
 	default:
@@ -152,9 +162,18 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 				return fmt.Errorf("failed to claim rewards: %w", err)
 			}
 
+			vipRecord, err := model.GetVipWithDefault(c, userID)
+			if err != nil {
+				return fmt.Errorf("failed to get vip record: %w", err)
+			}
+			rewardCap := vipRecord.VipRule.ReferralCap
+
 			var totalReward int64
 			for _, r := range rewardRecords {
 				totalReward += r.Amount
+			}
+			if totalReward > rewardCap {
+				totalReward = rewardCap
 			}
 
 			var rewardRecordIds []int64
