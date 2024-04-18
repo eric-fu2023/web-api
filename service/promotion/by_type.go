@@ -20,37 +20,7 @@ import (
 func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward int64) {
 	switch p.Type {
 	case models.PromotionTypeVipReferral:
-		oneDayBefore, err := getOneDayBeforeDateString(now)
-		if err != nil {
-			util.GetLoggerEntry(c).Error("getOneDayBeforeDateString error", err)
-			return
-		}
-
-		summaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
-			ReferrerIds:    []int64{userID},
-			HasBeenClaimed: []bool{false},
-			BetDateEnd:     oneDayBefore,
-		})
-		if err != nil {
-			util.GetLoggerEntry(c).Error("GetReferralAllianceSummaries error", err)
-			return
-		}
-
-		if len(summaries) == 0 {
-			return 0
-		}
-
-		vipRecord, err := model.GetVipWithDefault(c, userID)
-		if err != nil {
-			return
-		}
-		rewardCap := vipRecord.VipRule.ReferralCap
-
-		if summaries[0].TotalReward > rewardCap {
-			return rewardCap
-		}
-		return summaries[0].TotalReward
-
+		reward = rewardVipReferral(c, userID, now)
 	default:
 		reward = p.GetRewardDetails().GetReward(progress)
 	}
@@ -123,14 +93,15 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 	return
 }
 
-func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, rewardAmount, userID int64, now time.Time) (voucher models.Voucher, err error) {
-	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, now)
+func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, user model.User, rewardAmount int64, now time.Time) (voucher models.Voucher, err error) {
+	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, user.ID, now)
 	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeOneTimeDepB:
 		//add money and insert voucher
 		// add cash order
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
-			err = CreateCashOrder(tx, voucher, p.Type, userID, rewardAmount, "")
+			wagerChange := voucher.WagerMultiplier * rewardAmount
+			err = CreateCashOrder(tx, p.Type, user.ID, rewardAmount, wagerChange, "")
 			if err != nil {
 				return err
 			}
@@ -139,13 +110,13 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 				return err
 			}
 			if p.Type == models.PromotionTypeBeginnerB {
-				err = model.CreateUserAchievement(userID, model.UserAchievementIdFirstAppLoginReward)
+				err = model.CreateUserAchievement(user.ID, model.UserAchievementIdFirstAppLoginReward)
 				if err != nil {
 					return err
 				}
 			}
 			if p.Type == models.PromotionTypeOneTimeDepB {
-				err = model.CreateUserAchievement(userID, model.UserAchievementIdFirstDepositBonusReward)
+				err = model.CreateUserAchievement(user.ID, model.UserAchievementIdFirstDepositBonusReward)
 				if err != nil {
 					return err
 				}
@@ -153,51 +124,12 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			return nil
 		})
 		if err == nil {
-			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+			common.SendCashNotificationWithoutCurrencyId(user.ID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
 		}
 	case models.PromotionTypeVipReferral:
-		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
-			rewardRecords, err := ClaimReferralAllianceRewards(tx, userID, now)
-			if err != nil {
-				return fmt.Errorf("failed to claim rewards: %w", err)
-			}
-
-			vipRecord, err := model.GetVipWithDefault(c, userID)
-			if err != nil {
-				return fmt.Errorf("failed to get vip record: %w", err)
-			}
-			rewardCap := vipRecord.VipRule.ReferralCap
-
-			var totalReward int64
-			for _, r := range rewardRecords {
-				totalReward += r.Amount
-			}
-			if totalReward > rewardCap {
-				totalReward = rewardCap
-			}
-
-			var rewardRecordIds []int64
-			for _, r := range rewardRecords {
-				rewardRecordIds = append(rewardRecordIds, r.ID)
-			}
-			cashOrderNotes := util.JSON(map[string]any{
-				"reward_record_ids": rewardRecordIds,
-			})
-
-			err = CreateCashOrder(tx, voucher, p.Type, userID, totalReward, cashOrderNotes)
-			if err != nil {
-				return fmt.Errorf("failed to create cash order: %w", err)
-			}
-
-			err = tx.Create(&voucher).Error
-			if err != nil {
-				return fmt.Errorf("failed to create voucher: %w", err)
-			}
-
-			return nil
-		})
+		err = claimVoucherReferralVip(c, p, voucher, user, now)
 		if err == nil {
-			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+			common.SendCashNotificationWithoutCurrencyId(user.ID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
 		}
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		//insert voucher only
@@ -206,42 +138,12 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	return
 }
 
-func ClaimReferralAllianceRewards(tx *gorm.DB, referrerId int64, now time.Time) ([]models.ReferralAllianceReward, error) {
-	oneDayBefore, err := getOneDayBeforeDateString(now)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get one day before date string: %w", err)
-	}
-
-	// Get reward records
-	cond := model.GetReferralAllianceRewardsCond{
-		ReferrerIds:    []int64{referrerId},
-		HasBeenClaimed: []bool{false},
-		BetDateEnd:     oneDayBefore,
-	}
-	rewardRecords, err := model.GetReferralAllianceRewards(cond)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get reward records: %w", err)
-	}
-
-	var ids []int64
-	for _, r := range rewardRecords {
-		ids = append(ids, r.ID)
-	}
-
-	err = model.ClaimReferralAllianceRewards(tx, ids, now)
-	if err != nil {
-		return nil, fmt.Errorf("failed to claim rewards: %w", err)
-	}
-
-	return rewardRecords, nil
-}
-
-func CreateCashOrder(tx *gorm.DB, voucher models.Voucher, promoType, userId, rewardAmount int64, notes string) error {
+func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange int64, notes string) error {
 	txType := promotionTxTypeMapping[promoType]
 	sum, err := model.UserSum{}.UpdateUserSumWithDB(tx,
 		userId,
 		rewardAmount,
-		voucher.WagerMultiplier*rewardAmount,
+		wagerChange,
 		0,
 		txType,
 		"")
@@ -262,7 +164,7 @@ func CreateCashOrder(tx *gorm.DB, voucher models.Voucher, promoType, userId, rew
 		ActualCashInAmount:    rewardAmount,
 		EffectiveCashInAmount: rewardAmount,
 		BalanceBefore:         sum.Balance - rewardAmount,
-		WagerChange:           voucher.WagerMultiplier * rewardAmount,
+		WagerChange:           wagerChange,
 	}
 	err = tx.Create(&dummyOrder).Error
 	if err != nil {
@@ -357,6 +259,113 @@ func ValidateUsageDetailsByType(v models.Voucher, matchType int, odds float64, b
 		ret = true
 	}
 	return
+}
+
+func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward int64) {
+	oneDayBefore, err := getOneDayBeforeDateString(now)
+	if err != nil {
+		util.GetLoggerEntry(c).Error("getOneDayBeforeDateString error", err)
+		return
+	}
+
+	summaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
+		ReferrerIds:    []int64{userID},
+		HasBeenClaimed: []bool{false},
+		BetDateEnd:     oneDayBefore,
+	})
+	if err != nil {
+		util.GetLoggerEntry(c).Error("GetReferralAllianceSummaries error", err)
+		return
+	}
+
+	if len(summaries) == 0 {
+		return 0
+	}
+
+	vipRecord, err := model.GetVipWithDefault(c, userID)
+	if err != nil {
+		return
+	}
+	rewardCap := vipRecord.VipRule.ReferralCap
+
+	if summaries[0].TotalReward > rewardCap {
+		return rewardCap
+	}
+	return summaries[0].TotalReward
+}
+
+func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher models.Voucher, user model.User, now time.Time) error {
+	return model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
+		rewardRecords, err := claimReferralAllianceRewards(tx, user.ID, now)
+		if err != nil {
+			return fmt.Errorf("failed to claim rewards: %w", err)
+		}
+
+		vipRecord, err := model.GetVipWithDefault(c, user.ID)
+		if err != nil {
+			return fmt.Errorf("failed to get vip record: %w", err)
+		}
+		rewardCap := vipRecord.VipRule.ReferralCap
+
+		var totalReward int64
+		for _, r := range rewardRecords {
+			totalReward += r.Amount
+		}
+		if totalReward > rewardCap {
+			totalReward = rewardCap
+		}
+
+		var rewardRecordIds []int64
+		for _, r := range rewardRecords {
+			rewardRecordIds = append(rewardRecordIds, r.ID)
+		}
+		cashOrderNotes := util.JSON(map[string]any{
+			"reward_record_ids": rewardRecordIds,
+		})
+
+		wagerChange := user.ReferralWagerMultiplier * totalReward
+		err = CreateCashOrder(tx, p.Type, user.ID, totalReward, wagerChange, cashOrderNotes)
+		if err != nil {
+			return fmt.Errorf("failed to create cash order: %w", err)
+		}
+
+		err = tx.Create(&voucher).Error
+		if err != nil {
+			return fmt.Errorf("failed to create voucher: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func claimReferralAllianceRewards(tx *gorm.DB, referrerId int64, now time.Time) ([]models.ReferralAllianceReward, error) {
+	oneDayBefore, err := getOneDayBeforeDateString(now)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get one day before date string: %w", err)
+	}
+
+	// Get reward records
+	cond := model.GetReferralAllianceRewardsCond{
+		ReferrerIds:    []int64{referrerId},
+		HasBeenClaimed: []bool{false},
+		BetDateEnd:     oneDayBefore,
+	}
+	rewardRecords, err := model.GetReferralAllianceRewards(cond)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get reward records: %w", err)
+	}
+
+	var ids []int64
+	for _, r := range rewardRecords {
+		ids = append(ids, r.ID)
+	}
+
+	err = model.ClaimReferralAllianceRewards(tx, ids, now)
+	if err != nil {
+		return nil, fmt.Errorf("failed to claim rewards: %w", err)
+	}
+
+	return rewardRecords, nil
 }
 
 func earlier(a time.Time, b time.Time) time.Time {
