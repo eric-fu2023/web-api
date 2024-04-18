@@ -51,12 +51,12 @@ func BuildWithdrawOrder(p model.CashOrder) WithdrawOrder {
 }
 
 type GenericCashOrder struct {
-	OrderNo         string `json:"order_no"`
-	OrderStatus     string `json:"order_status"`
-	CreatedAt       int64  `json:"created_at"`
-	Amount          int64  `json:"amount"`
-	EffectiveAmount int64  `json:"effective_amount"`
-	OrderType       string `json:"order_type"`
+	OrderNo         string  `json:"order_no"`
+	OrderStatus     string  `json:"order_status"`
+	CreatedAt       int64   `json:"created_at"`
+	Amount          float64 `json:"amount"`
+	EffectiveAmount float64 `json:"effective_amount"`
+	OrderType       string  `json:"order_type"`
 	// Currency    string    `json:"currency"`
 	TypeDetail string  `json:"type_detail"`
 	Wager      float64 `json:"wager"`
@@ -76,8 +76,8 @@ func BuildGenericCashOrder(p model.CashOrder, i18n i18n.I18n) GenericCashOrder {
 		OrderNo:         p.ID,
 		OrderStatus:     consts.CashOrderStatus[p.Status],
 		CreatedAt:       p.CreatedAt.Unix(),
-		Amount:          amount / 100,
-		EffectiveAmount: effectiveAmount / 100,
+		Amount:          float64(amount) / 100,
+		EffectiveAmount: float64(effectiveAmount) / 100,
 		OrderType:       orderType,
 		TypeDetail:      detail,
 		Wager:           float64(p.WagerChange) / 100,
