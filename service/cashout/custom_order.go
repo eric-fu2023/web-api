@@ -93,5 +93,5 @@ func (svc CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err
 }
 
 func (s CustomOrderService) VerifyManualCashOut() bool {
-	return s.RequireReview && s.ReviewStatus == 1 && s.ApproveStatus == 1
+	return s.RequireReview && s.ReviewStatus == 1
 }
