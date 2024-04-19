@@ -121,7 +121,13 @@ func (service *GameCategoryListService) List(c *gin.Context) (r serializer.Respo
 				subGameIds = append(subGameIds, gameId)
 			}
 		}
-		data = append(data, serializer.BuildGameCategory(c, cat, subGameIds))
+
+		gameCategory := serializer.BuildGameCategory(c, cat, subGameIds)
+		// catering for frontend to not return categories without vendors & sports category
+		if gameCategory.Id == 0 || gameCategory.Id == 1 {
+			continue
+		}
+		data = append(data, gameCategory)
 	}
 	r = serializer.Response{
 		Data: data,

@@ -23,6 +23,8 @@ func BuildGameCategory(c *gin.Context, a ploutos.GameCategory, gameIds []int64) 
 				b.Vendor = append(b.Vendor, t)
 			}
 		}
+	} else {
+		return GameCategory{}
 	}
 	return
 }
