@@ -220,7 +220,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	isUsable := false
 	suffix := buildSuffixByType(c, p, userID)
 	switch p.Type {
-	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeVipReferral:
+	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeVipReferral,models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB, models.PromotionTypeVipBirthdayB:
 		status = models.VoucherStatusRedeemed
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		isUsable = true
