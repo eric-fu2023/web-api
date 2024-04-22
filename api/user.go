@@ -261,6 +261,16 @@ func UserRecallFund(c *gin.Context) {
 	}
 }
 
+func InternalRecallFund(c *gin.Context) {
+	var service service.InternalRecallFundService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Recall(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
 func UserRegister(c *gin.Context) {
 	var service service.UserRegisterService
 	if err := c.ShouldBindWith(&service, binding.Form); err == nil {

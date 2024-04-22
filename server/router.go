@@ -130,6 +130,7 @@ func NewRouter() *gin.Engine {
 		internal.POST("/withdraw-order/reject", middleware.RequestLogger("internal"), internal_api.RejectWithdrawal)
 		internal.POST("/withdraw-order/approve", middleware.RequestLogger("internal"), internal_api.ApproveWithdrawal)
 		internal.POST("/withdraw-order/insert", middleware.RequestLogger("internal"), internal_api.CustomOrder)
+		internal.PUT("/recall", middleware.RequestLogger("internal"), api.InternalRecallFund)
 	}
 
 	// middlewares order can't be changed
