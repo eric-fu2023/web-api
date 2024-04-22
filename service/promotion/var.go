@@ -19,21 +19,29 @@ const (
 )
 
 var promotionOrderTypeMapping = map[int64]int64{
-	models.PromotionTypeFirstDepB:   models.CashOrderTypeDepB,
-	models.PromotionTypeReDepB:      models.CashOrderTypeDepB,
-	models.PromotionTypeFirstDepIns: models.CashOrderTypeBetIns,
-	models.PromotionTypeReDepIns:    models.CashOrderTypeBetIns,
-	models.PromotionTypeBeginnerB:   models.CashOrderTypeBeginnerB,
-	models.PromotionTypeOneTimeDepB: models.CashOrderTypeDepB,
+	models.PromotionTypeFirstDepB:     models.CashOrderTypeDepB,
+	models.PromotionTypeReDepB:        models.CashOrderTypeDepB,
+	models.PromotionTypeFirstDepIns:   models.CashOrderTypeBetIns,
+	models.PromotionTypeReDepIns:      models.CashOrderTypeBetIns,
+	models.PromotionTypeBeginnerB:     models.CashOrderTypeBeginnerB,
+	models.PromotionTypeOneTimeDepB:   models.CashOrderTypeDepB,
+	models.PromotionTypeVipRebate:     models.CashOrderTypeVipRebate,
+	models.PromotionTypeVipBirthdayB:  models.CashOrderTypeVipBday,
+	models.PromotionTypeVipPromotionB: models.CashOrderTypeVipPromo,
+	models.PromotionTypeVipWeeklyB:    models.CashOrderTypeVipWeekly,
 }
 
 var promotionTxTypeMapping = map[int64]int64{
-	models.PromotionTypeFirstDepB:   models.TransactionTypeDepB,
-	models.PromotionTypeReDepB:      models.TransactionTypeDepB,
-	models.PromotionTypeFirstDepIns: models.TransactionTypeBetIns,
-	models.PromotionTypeReDepIns:    models.TransactionTypeBetIns,
-	models.PromotionTypeBeginnerB:   models.TransactionTypeBeginnerB,
-	models.PromotionTypeOneTimeDepB: models.TransactionTypeDepB,
+	models.PromotionTypeFirstDepB:     models.TransactionTypeDepB,
+	models.PromotionTypeReDepB:        models.TransactionTypeDepB,
+	models.PromotionTypeFirstDepIns:   models.TransactionTypeBetIns,
+	models.PromotionTypeReDepIns:      models.TransactionTypeBetIns,
+	models.PromotionTypeBeginnerB:     models.TransactionTypeBeginnerB,
+	models.PromotionTypeOneTimeDepB:   models.TransactionTypeDepB,
+	models.PromotionTypeVipRebate:     models.TransactionTypeVipRebate,
+	models.PromotionTypeVipBirthdayB:  models.TransactionTypeVipBdayB,
+	models.PromotionTypeVipPromotionB: models.TransactionTypeVipPromotionB,
+	models.PromotionTypeVipWeeklyB:    models.TransactionTypeVipWeeklyB,
 }
 
 var imMatchTypeMapping = map[int]int{

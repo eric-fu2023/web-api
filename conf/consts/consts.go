@@ -14,6 +14,11 @@ var (
 		2:  OrderTypeTopup,
 		3:  OrderTypeTopup,
 		4:  OrderTypeTopup,
+		5:  OrderTypeTopup,
+		6:  OrderTypeTopup,
+		7:  OrderTypeTopup,
+		8:  OrderTypeTopup,
+		9:  OrderTypeTopup,
 	}
 	OrderTypeDetailMap = map[int64]string{
 		-1: OrderTypeWithdraw,
@@ -21,6 +26,11 @@ var (
 		2:  OrderTypeDepositBonus,
 		3:  OrderTypeBetInsurance,
 		4:  OrderTypeBeginnerBonus,
+		5:  OrderTypeVipBday,
+		6:  OrderTypeVipPromo,
+		7:  OrderTypeVipWeekly,
+		8:  OrderTypeVipRebate,
+		9:  OrderTypeVipReferral,
 	}
 	Platform = map[string]int64{
 		"pc":      1,
@@ -409,6 +419,11 @@ const (
 	OrderTypeBetInsurance         = "bet_insurance"
 	OrderTypeBeginnerBonus        = "beginner_reward"
 	ConfigKeyTopupKycCheck string = "kyc_check_required"
+	OrderTypeVipBday              = "vip_bday"
+	OrderTypeVipPromo             = "vip_promo"
+	OrderTypeVipWeekly            = "vip_weekly"
+	OrderTypeVipRebate            = "vip_rebate"
+	OrderTypeVipReferral          = "vip_referral"
 	// FirstTopupMinimum      int64  = 10_00 //1000_00
 	// TopupMinimum           int64  = 5_00  //500_00
 	// TopupMax               int64  = 30000_00
@@ -424,6 +439,7 @@ const (
 	Notification_Type_Cash_Transaction  = "cash_transaction"
 	Notification_Type_Deposit_Bonus     = "deposit_bonus"
 	Notification_Type_Mobile_Reset      = "mobile_reset"
+	Notification_Type_Birthday_Bonus    = "birthday_bonus"
 
 	//DefaultBrand = 1001
 	//DefaultAgent = 1000001

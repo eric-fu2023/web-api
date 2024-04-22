@@ -2,9 +2,13 @@ package promotion
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
+	"sort"
 	"strconv"
 	"time"
+	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -12,13 +16,28 @@ import (
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/chenyahui/gin-cache/persist"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 )
 
+const (
+	birthdayBonusRewardCacheKey = "birthday_bonus_reward_cache_key"
+)
+
 func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward int64) {
 	switch p.Type {
+	case models.PromotionTypeVipBirthdayB:
+		err := cache.RedisStore.Get(birthdayBonusRewardCacheKey, &reward)
+		if errors.Is(err, persist.ErrCacheMiss) {
+			user := c.Value("user").(model.User)
+			date, _ := time.Parse(time.DateOnly, user.Birthday)
+			reward = getBirtdayReward(c, date, userID)
+		}
+	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
+		r := getSameDayVipRewardRecord(model.DB, userID, p.ID)
+		reward = r.Amount
 	case models.PromotionTypeVipReferral:
 		reward = rewardVipReferral(c, userID, now)
 	default:
@@ -74,6 +93,11 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 	claim.ClaimStart = s.ClaimStart.Unix()
 	claim.ClaimEnd = s.ClaimEnd.Unix()
 	switch p.Type {
+	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB, models.PromotionTypeVipBirthdayB:
+		v, err := model.VoucherGetByUniqueID(c, models.GenerateVoucherUniqueId(p.Type, p.ID, s.ID, userID, buildSuffixByType(c, p, userID)))
+		if err == nil && v.ID != 0 {
+			claim.HasClaimed = true
+		}
 	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
 		v, err := model.VoucherGetByUserSession(c, userID, s.ID)
 		if err == nil && v.ID != 0 {
@@ -131,6 +155,22 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		if err == nil {
 			common.SendCashNotificationWithoutCurrencyId(user.ID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
 		}
+	case models.PromotionTypeVipBirthdayB:
+		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
+			wagerChange := voucher.WagerMultiplier * rewardAmount
+			err = CreateCashOrder(tx, p.Type, user.ID, rewardAmount, wagerChange, "")
+			if err != nil {
+				return err
+			}
+			err = tx.Create(&voucher).Error
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		if err == nil {
+			common.SendCashNotificationWithoutCurrencyId(user.ID, consts.Notification_Type_Birthday_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+		}
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		//insert voucher only
 		err = model.DB.Create(&voucher).Error
@@ -178,6 +218,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	endAt := earlier(v.EndAt, v.GetExpiryTimeStamp(now, p.Timezone))
 	status := models.VoucherStatusReady
 	isUsable := false
+	suffix := buildSuffixByType(c, p, userID)
 	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeVipReferral:
 		status = models.VoucherStatusRedeemed
@@ -208,6 +249,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		// ReferenceID
 		// TransactionID
 	}
+	voucher.FillUniqueID(suffix)
 	return
 }
 
@@ -375,13 +417,6 @@ func earlier(a time.Time, b time.Time) time.Time {
 	return b
 }
 
-func later(a time.Time, b time.Time) time.Time {
-	if a.Before(b) {
-		return b
-	}
-	return a
-}
-
 func getOneDayBeforeDateString(now time.Time) (string, error) {
 	tzOffsetStr, err := model.GetAppConfigWithCache("timezone", "offset_seconds")
 	if err != nil {
@@ -392,4 +427,54 @@ func getOneDayBeforeDateString(now time.Time) (string, error) {
 		return "", fmt.Errorf("failed to parse tz offset config: %w", err)
 	}
 	return now.In(time.FixedZone("", tzOffset)).AddDate(0, 0, -1).Format(time.DateOnly), nil
+}
+
+func getSameDayVipRewardRecord(tx *gorm.DB, userID, prmotionID int64) models.VipRewardRecords {
+	r, _ := model.GetVipRewardRecord(tx, userID, prmotionID, Today0am().UTC())
+	return r
+}
+
+func getBirtdayReward(c context.Context, date time.Time, userID int64) (reward int64) {
+	today := Today0am()
+	if date.Month() != today.Month() || date.Day() != today.Day() {
+		reward = 0
+		cache.RedisStore.Set(birthdayBonusRewardCacheKey, reward, time.Until(today.Add(24*time.Hour)))
+		return
+	}
+	achs, _ := model.GetUserAchievements(userID, model.GetUserAchievementCond{AchievementIds: []int64{model.UserAchievementIdUpdateBirthday, model.UserAchievementIdSetBirthday}})
+	if len(achs) == 0 {
+		reward = 0
+		cache.RedisStore.Set(birthdayBonusRewardCacheKey, reward, time.Until(today.Add(24*time.Hour)))
+		return
+	}
+	sort.Slice(achs, func(i, j int) bool {
+		return achs[i].CreatedAt.Before(achs[j].CreatedAt)
+	})
+	v := os.Getenv("VIP_BIRTHDAY_REWARD_MATURE_DAYS")
+	days, _ := strconv.Atoi(v)
+	if achs[0].CreatedAt.After(Today0am().Add(-time.Duration(days) * 24 * time.Hour)) {
+		reward = 0
+		cache.RedisStore.Set(birthdayBonusRewardCacheKey, reward, time.Until(today.Add(24*time.Hour)))
+		return
+	}
+	vip, _ := model.GetVipWithDefault(c, userID)
+	reward = vip.VipRule.BirthdayBenefit
+	cache.RedisStore.Set(birthdayBonusRewardCacheKey, reward, time.Until(today.Add(24*time.Hour)))
+	return
+}
+
+func buildSuffixByType(c context.Context, p models.Promotion, userID int64) string {
+	today := Today0am()
+	suffix := ""
+	vip, _ := model.GetVipWithDefault(c, userID)
+	switch p.Type {
+	case models.PromotionTypeVipRebate:
+		suffix = fmt.Sprintf("date-%s", today.Format(time.DateOnly))
+	case models.PromotionTypeVipWeeklyB:
+	case models.PromotionTypeVipBirthdayB:
+		suffix = fmt.Sprintf("year-%d", today.Year())
+	case models.PromotionTypeVipPromotionB:
+		suffix = fmt.Sprintf("vip-%d", vip.VipRule.VIPLevel)
+	}
+	return suffix
 }
