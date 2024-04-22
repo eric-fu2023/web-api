@@ -46,6 +46,12 @@ var (
 		3: "mobile",
 		4: "mobile",
 	}
+	PlatformIdToGameVendorColumn = map[int64]string{
+		1: "web",
+		2: "h5",
+		3: "android",
+		4: "ios",
+	}
 	GameVendor = map[string]int64{
 		"fb":             1,
 		"saba":           2,

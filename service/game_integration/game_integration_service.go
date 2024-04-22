@@ -1,6 +1,8 @@
 package game_integration
 
 import (
+	"fmt"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -99,13 +101,19 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 }
 
 type GameCategoryListService struct {
+	Platform int64 `form:"platform" json:"platform" binding:"required"`
 }
 
 func (service *GameCategoryListService) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	var categories []ploutos.GameCategory
+	platform, ok := consts.PlatformIdToGameVendorColumn[service.Platform]
+	if !ok {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("invalid_platform"), err)
+		return
+	}
 
-	if err = model.DB.Model(ploutos.GameCategory{}).Preload(`GameVendorBrand`).Preload(`GameVendorBrand.GameVendor`, "game_integration_id = 1").
+	if err = model.DB.Model(ploutos.GameCategory{}).Preload(`GameVendorBrand`, fmt.Sprintf("status = 1 AND %s = 1", platform)).Preload(`GameVendorBrand.GameVendor`, "game_integration_id = 1").
 		Find(&categories).Error; err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
