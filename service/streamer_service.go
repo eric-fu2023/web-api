@@ -42,7 +42,7 @@ func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err 
 		streamer.ID = stream.StreamerId
 	}
 
-	if err = model.DB.Scopes(model.StreamerDefaultPreloads, model.StreamerWithLiveStream, model.StreamerWithGallery).First(&streamer).Error; err != nil {
+	if err = model.DB.Scopes(model.StreamerDefaultPreloads, model.StreamerWithLiveStream(service.IncludeUpcoming), model.StreamerWithGallery).First(&streamer).Error; err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("streamer_not_found"), err)
 		return
 	}
