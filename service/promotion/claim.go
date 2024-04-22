@@ -47,9 +47,9 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 	if err != nil {
 		switch err.Error() {
 		case "double_claim":
-			r = serializer.Err(c, p, serializer.CodeGeneralError, "Already Claimed", err)
+			r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("double_claim"), err)
 		case "unavailable_for_now":
-			r = serializer.Err(c, p, serializer.CodeGeneralError, "Unavailable for now", err)
+			r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("unavailable_for_now"), err)
 		case "nothing_to_claim":
 			r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("nothing_to_claim"), err)
 		default:

@@ -544,6 +544,8 @@ voucher_invalid: "Voucher is invalid."
 
 invalid_account_format: "Account format is invalid."
 nothing_to_claim: "Nothing is there to claim."
+unavailable_for_now: "Unavailable for now"
+double_claim: "Already Claimed"
 
 top-up: "Deposit"
 withdraw: "Withdraw"

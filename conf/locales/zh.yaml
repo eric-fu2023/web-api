@@ -544,6 +544,8 @@ voucher_invalid: "优惠券无效."
 
 invalid_account_format: "帐户格式无效."
 nothing_to_claim: "没有可领取的奖励."
+unavailable_for_now: "现在无法领取."
+double_claim: "无法重复领取."
 
 top-up: "存款"
 withdraw: "提款"
