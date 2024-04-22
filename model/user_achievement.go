@@ -9,11 +9,12 @@ import (
 )
 
 const (
-	UserAchievementIdFirstAppLoginTutorial     = 1
-	UserAchievementIdFirstAppLoginReward       = 2
-	UserAchievementIdFirstDepositBonusTutorial = 3
-	UserAchievementIdFirstDepositBonusReward   = 4
-	UserAchievementIdUpdateBirthday            = 5
+	UserAchievementIdFirstAppLoginTutorial     int64 = 1
+	UserAchievementIdFirstAppLoginReward       int64 = 2
+	UserAchievementIdFirstDepositBonusTutorial int64 = 3
+	UserAchievementIdFirstDepositBonusReward   int64 = 4
+	UserAchievementIdUpdateBirthday            int64 = 5
+	UserAchievementIdSetBirthday               int64 = 6
 )
 
 var (

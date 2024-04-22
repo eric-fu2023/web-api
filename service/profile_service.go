@@ -84,13 +84,18 @@ func (service *ProfileUpdateService) updateUser(user *model.User) (err error) {
 			user.Nickname = service.Nickname
 		}
 
+		// Need to record when the user sets and updates the birthday
 		if service.Birthday != "" && service.Birthday != user.Birthday {
-			if user.Birthday != "" { // if user has updated birthday before
-				err := model.CreateUserAchievementWithDB(tx, user.ID, model.UserAchievementIdUpdateBirthday)
-				if err != nil {
-					return fmt.Errorf("create birthday achievement: %w", err)
-				}
+			birthdayAchievementId := model.UserAchievementIdSetBirthday
+			if user.Birthday != "" {
+				birthdayAchievementId = model.UserAchievementIdUpdateBirthday
 			}
+
+			err := model.CreateUserAchievementWithDB(tx, user.ID, birthdayAchievementId)
+			if err != nil {
+				return fmt.Errorf("create birthday achievement: %w", err)
+			}
+
 			user.Birthday = service.Birthday
 		}
 
