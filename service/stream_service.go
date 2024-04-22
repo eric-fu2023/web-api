@@ -15,6 +15,7 @@ import (
 )
 
 type StreamService struct {
+	IncludeUpcoming     bool    `form:"include_upcoming" json:"include_upcoming"`
 	Category            string  `form:"category" json:"category"`
 	CategoryOrder       []int   // only for streamer recommends use
 	CategoryTypeOrder   []int   // only for streamer recommends use
@@ -70,7 +71,7 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 	}
 	var streams []ploutos.LiveStream
 	q := model.DB.Scopes(
-		model.StreamsOnlineSorted(categoryOrder, categoryTypeOrder),
+		model.StreamsOnlineSorted(categoryOrder, categoryTypeOrder, service.IncludeUpcoming),
 		model.ExcludeStreamers(service.ExcludedStreamerIds),
 		model.Paginate(service.Page.Page, service.Limit),
 		model.StreamsABStreamSource(isA)).

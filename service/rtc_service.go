@@ -62,7 +62,7 @@ func (service *RtcTokensService) Get(c *gin.Context) (r serializer.Response, err
 	}
 	var streams []model.Stream
 	var tokens []model.RtcTokenWithStreamerId
-	q := model.DB.Model(model.Stream{}).Scopes(model.StreamsOnlineSorted("", ""))
+	q := model.DB.Model(model.Stream{}).Scopes(model.StreamsOnlineSorted("", "", false))
 	if service.StreamerId != 0 {
 		q = q.Where(`users.id`, service.StreamerId)
 	}

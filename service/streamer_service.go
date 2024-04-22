@@ -9,10 +9,11 @@ import (
 )
 
 type StreamerService struct {
-	Id             int64 `form:"id" json:"id" binding:"required_without=MatchId"`
-	MatchId        int64 `form:"match_id" json:"match_id"`
-	SportId        int64 `form:"sport_id" json:"sport_id"`
-	RecommendCount int64 `form:"recommend_count" json:"recommend_count"`
+	Id              int64 `form:"id" json:"id" binding:"required_without=MatchId"`
+	MatchId         int64 `form:"match_id" json:"match_id"`
+	SportId         int64 `form:"sport_id" json:"sport_id"`
+	RecommendCount  int64 `form:"recommend_count" json:"recommend_count"`
+	IncludeUpcoming bool  `form:"include_upcoming" json:"include_upcoming"`
 }
 
 type StreamerWithRecommends struct {
@@ -28,7 +29,13 @@ func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err 
 		streamer.ID = service.Id
 	} else {
 		var stream ploutos.LiveStream
-		if err = model.DB.Scopes(model.StreamsByFbMatchIdSportId(service.MatchId, service.SportId)).First(&stream).Error; err != nil {
+		q := model.DB
+		if service.SportId == 0 { // for batace
+			q = q.Where(`match_id`, service.MatchId).Order(`live_streams.sort_factor DESC, live_streams.schedule_time`)
+		} else {
+			q = q.Scopes(model.StreamsByFbMatchIdSportId(service.MatchId, service.SportId))
+		}
+		if err = q.First(&stream).Error; err != nil {
 			r = serializer.Err(c, service, serializer.CodeNoStream, i18n.T("stream_not_found"), err)
 			return
 		}
@@ -68,6 +75,7 @@ func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err 
 				}
 			}
 			s := StreamService{
+				IncludeUpcoming:   service.IncludeUpcoming,
 				CategoryOrder:     categories,
 				CategoryTypeOrder: categoryTypes,
 			}

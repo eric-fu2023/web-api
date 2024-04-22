@@ -11,13 +11,13 @@ type Stream struct {
 	Match    *Match    `gorm:"references:MatchId;foreignKey:ID"`
 }
 
-func StreamsOnlineSorted(categoryOrder string, categoryTypeOrder string) func(db *gorm.DB) *gorm.DB {
+func StreamsOnlineSorted(categoryOrder string, categoryTypeOrder string, includeUpcoming bool) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		order := `sort_factor DESC, schedule_time DESC`
 		if len(categoryOrder) > 0 {
 			order = `(stream_category_id in ` + categoryOrder + `) DESC, (stream_category_type_id in ` + categoryTypeOrder + `) DESC, ` + order
 		}
-		return db.Scopes(StreamsOnline).Preload(`Match`).Joins(`INNER JOIN users ON users.id = live_streams.streamer_id AND users.enable = 1`).Order(order)
+		return db.Scopes(StreamsOnline(includeUpcoming)).Preload(`Match`).Joins(`INNER JOIN users ON users.id = live_streams.streamer_id AND users.enable = 1`).Order(order)
 	}
 }
 
@@ -30,8 +30,14 @@ func ExcludeStreamers(streamerIds []int64) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
-func StreamsOnline(db *gorm.DB) *gorm.DB {
-	return db.Where(`live_streams.status`, 2)
+func StreamsOnline(includeUpcoming bool) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		statuses := []int64{2}
+		if includeUpcoming {
+			statuses = append(statuses, 1)
+		}
+		return db.Where(`live_streams.status`, statuses)
+	}
 }
 
 func StreamsByFbMatchIdSportId(matchId int64, sportId int64) func(db *gorm.DB) *gorm.DB {
