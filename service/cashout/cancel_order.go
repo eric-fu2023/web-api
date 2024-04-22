@@ -32,7 +32,7 @@ func RevertCashOutOrder(c *gin.Context, orderNumber string, notes, remark string
 		newCashOrderState.Remark += remark
 		newCashOrderState.Status = newStatus
 		// update cash order
-		err = tx.Where("id", orderNumber).Updates(newCashOrderState).Error
+		err = tx.Omit(clause.Associations).Where("id", orderNumber).Updates(newCashOrderState).Error
 		if err != nil {
 			return
 		}

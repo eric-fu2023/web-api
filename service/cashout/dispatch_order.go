@@ -8,6 +8,7 @@ import (
 	"blgit.rfdev.tech/taya/payment-service/finpay"
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm/clause"
 )
 
 func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, accountBinding models.UserAccountBinding) (updatedCashOrder model.CashOrder, err error) {
@@ -39,7 +40,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			updatedCashOrder.Status = models.CashOrderStatusTransferring
 			updatedCashOrder.TransactionId = &data.TransferOrderNo
 			updatedCashOrder.Notes = models.EncryptedStr(util.JSON(data))
-			err = model.DB.Debug().WithContext(c).Updates(&updatedCashOrder).Error
+			err = model.DB.Debug().WithContext(c).Omit(clause.Associations).Updates(&updatedCashOrder).Error
 			if err != nil {
 				return
 			}
@@ -50,7 +51,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			}
 		} else if data.TransferOrderNo != "" {
 			updatedCashOrder.TransactionId = &data.TransferOrderNo
-			err = model.DB.Debug().WithContext(c).Updates(&updatedCashOrder).Error
+			err = model.DB.Debug().WithContext(c).Omit(clause.Associations).Updates(&updatedCashOrder).Error
 			if err != nil {
 				return
 			}
