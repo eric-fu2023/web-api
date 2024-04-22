@@ -99,7 +99,7 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 		StreamerId:   streamer.ID,
 		Status:       1, // default pending
 		ImgUrl:       mgStream.Thumb,
-		MgRoomId:     mgStream.RoomId,
+		MgRoomId:     &mgStream.RoomId,
 		ScheduleTime: time.Now(),
 	}
 	if mgStream.Srctp == 8 { // MatchId is FB id

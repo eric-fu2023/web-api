@@ -46,7 +46,7 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 		StreamCategoryTypeId: a.StreamCategoryTypeId,
 		Width:                a.Width,
 		Height:               a.Height,
-		MgRoomId:             a.MgRoomId,
+		MgRoomId:             *a.MgRoomId,
 	}
 	if a.ImgUrl != "" {
 		b.ImgUrl = Url(a.ImgUrl)
