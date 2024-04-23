@@ -509,6 +509,8 @@ notification_bet_settlement_title: "投注已结算"
 notification_bet_settlement: "您的投注已结算.去查看结果吧."
 notification_mobile_reset_title: "手机号重置成功"
 notification_mobile_reset: "您的手机号已成功重置."
+notification_mobile_add_title: "手机号设置成功"
+notification_mobile_add: "您的手机号已成功设置."
 
 negative_amount: "金额不能为负数"
 first_topup_amount: "首次充值金额应至少为 %d"

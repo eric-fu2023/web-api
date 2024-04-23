@@ -65,12 +65,18 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 					return
 				}
 			}
+			return
+		})
+		if err != nil {
+			util.Log().Error(`GAME INTEGRATION TRANSFER OUT ERROR: %v`, err)
+			return
+		}
+		err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 			var sum ploutos.UserSum
 			err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error
 			if err != nil {
 				return
 			}
-
 			var transferToBalance int64
 			if sum.Balance > 0 { // transfer in to the game is needed
 				transferToBalance, err = game.TransferTo(tx, user, sum, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameVendor.ID, extra)
@@ -89,7 +95,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 			return
 		})
 		if err != nil {
-			util.Log().Error(`game integration get url wallet transfers error: `, err)
+			util.Log().Error(`GAME INTEGRATION TRANSFER IN ERROR: %v`, err)
 			return
 		}
 	}(user, locale, subGame, game, gvu)
