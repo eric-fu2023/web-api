@@ -66,9 +66,11 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 	}
 	if a.Streamer != nil {
 		m := BuildStreamer(c, model.Streamer{
-			User:   *a.Streamer,
-			IsLive: true,
+			User: *a.Streamer,
 		})
+		if a.Status == 2 {
+			m.IsLive = true
+		}
 		b.Streamer = &m
 	}
 	return

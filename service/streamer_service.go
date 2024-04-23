@@ -48,7 +48,14 @@ func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err 
 	}
 
 	if len(streamer.LiveStreams) > 0 {
-		streamer.IsLive = true
+		var isLive bool
+		for _, s := range streamer.LiveStreams {
+			if s.Status == 2 {
+				isLive = true
+				break
+			}
+		}
+		streamer.IsLive = isLive
 	}
 	data := StreamerWithRecommends{
 		Streamer: serializer.BuildStreamer(c, streamer),
