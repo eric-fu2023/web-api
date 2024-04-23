@@ -29,6 +29,7 @@ var promotionOrderTypeMapping = map[int64]int64{
 	models.PromotionTypeVipBirthdayB:  models.CashOrderTypeVipBday,
 	models.PromotionTypeVipPromotionB: models.CashOrderTypeVipPromo,
 	models.PromotionTypeVipWeeklyB:    models.CashOrderTypeVipWeekly,
+	models.PromotionTypeVipReferral:   models.CashOrderTypeVipReferral,
 }
 
 var promotionTxTypeMapping = map[int64]int64{
@@ -42,6 +43,7 @@ var promotionTxTypeMapping = map[int64]int64{
 	models.PromotionTypeVipBirthdayB:  models.TransactionTypeVipBdayB,
 	models.PromotionTypeVipPromotionB: models.TransactionTypeVipPromotionB,
 	models.PromotionTypeVipWeeklyB:    models.TransactionTypeVipWeeklyB,
+	models.PromotionTypeVipReferral:   models.TransactionTypeVipReferral,
 }
 
 var imMatchTypeMapping = map[int]int{
