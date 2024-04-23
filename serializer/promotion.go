@@ -95,6 +95,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 		RewardType:             p.RewardType,
 		RewardDistributionType: p.RewardDistributionType,
 		Category:               p.Category,
+		Label:                  p.Label,
 	}
 }
 
