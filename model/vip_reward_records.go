@@ -11,7 +11,7 @@ import (
 
 func GetVipRewardRecord(tx *gorm.DB, userID int64, promoID int64, after time.Time) (models.VipRewardRecords, error) {
 	ret := models.VipRewardRecords{}
-	err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id").Where("promotion_id").Where("date >= ?", after).First(&ret).Error
+	err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id", userID).Where("promotion_id", promoID).Order("date").Where("date >= ?", after).First(&ret).Error
 	return ret, err
 }
 

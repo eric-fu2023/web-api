@@ -36,7 +36,7 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 			reward = getBirtdayReward(c, date, userID)
 		}
 	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
-		r := getSameDayVipRewardRecord(model.DB, userID, p.ID)
+		r := getSameDayVipRewardRecord(model.DB.Debug(), userID, p.ID)
 		reward = r.Amount
 	case models.PromotionTypeVipReferral:
 		reward = rewardVipReferral(c, userID, now)
@@ -117,15 +117,15 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 	return
 }
 
-func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, user model.User, rewardAmount int64, now time.Time) (voucher models.Voucher, err error) {
-	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, user.ID, now)
+func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, userID int64, rewardAmount int64, now time.Time) (voucher models.Voucher, err error) {
+	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, now)
 	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeOneTimeDepB:
 		//add money and insert voucher
 		// add cash order
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 			wagerChange := voucher.WagerMultiplier * rewardAmount
-			err = CreateCashOrder(tx, p.Type, user.ID, rewardAmount, wagerChange, "")
+			err = CreateCashOrder(tx, p.Type, userID, rewardAmount, wagerChange, "")
 			if err != nil {
 				return err
 			}
@@ -134,13 +134,13 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 				return err
 			}
 			if p.Type == models.PromotionTypeBeginnerB {
-				err = model.CreateUserAchievement(user.ID, model.UserAchievementIdFirstAppLoginReward)
+				err = model.CreateUserAchievement(userID, model.UserAchievementIdFirstAppLoginReward)
 				if err != nil {
 					return err
 				}
 			}
 			if p.Type == models.PromotionTypeOneTimeDepB {
-				err = model.CreateUserAchievement(user.ID, model.UserAchievementIdFirstDepositBonusReward)
+				err = model.CreateUserAchievement(userID, model.UserAchievementIdFirstDepositBonusReward)
 				if err != nil {
 					return err
 				}
@@ -148,17 +148,17 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			return nil
 		})
 		if err == nil {
-			common.SendCashNotificationWithoutCurrencyId(user.ID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
 		}
 	case models.PromotionTypeVipReferral:
-		err = claimVoucherReferralVip(c, p, voucher, user, now)
+		err = claimVoucherReferralVip(c, p, voucher, userID, now)
 		if err == nil {
-			common.SendCashNotificationWithoutCurrencyId(user.ID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
 		}
 	case models.PromotionTypeVipBirthdayB:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 			wagerChange := voucher.WagerMultiplier * rewardAmount
-			err = CreateCashOrder(tx, p.Type, user.ID, rewardAmount, wagerChange, "")
+			err = CreateCashOrder(tx, p.Type, userID, rewardAmount, wagerChange, "")
 			if err != nil {
 				return err
 			}
@@ -169,7 +169,28 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			return nil
 		})
 		if err == nil {
-			common.SendCashNotificationWithoutCurrencyId(user.ID, consts.Notification_Type_Birthday_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Birthday_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+		}
+	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
+		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
+			wagerChange := voucher.WagerMultiplier * rewardAmount
+			err = CreateCashOrder(tx, p.Type, userID, rewardAmount, wagerChange, "")
+			if err != nil {
+				return err
+			}
+			err = tx.Create(&voucher).Error
+			if err != nil {
+				return err
+			}
+			rcd := getSameDayVipRewardRecord(tx, userID, p.ID)
+			err = tx.Model(&rcd).Update("status", 2).Error
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		if err == nil {
+			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Birthday_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
 		}
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		//insert voucher only
@@ -220,7 +241,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	isUsable := false
 	suffix := buildSuffixByType(c, p, userID)
 	switch p.Type {
-	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeVipReferral,models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB, models.PromotionTypeVipBirthdayB:
+	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeVipReferral, models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB, models.PromotionTypeVipBirthdayB:
 		status = models.VoucherStatusRedeemed
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		isUsable = true
@@ -336,14 +357,15 @@ func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward i
 	return summaries[0].TotalReward
 }
 
-func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher models.Voucher, user model.User, now time.Time) error {
+func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher models.Voucher, userID int64, now time.Time) error {
+	user := c.Value("user").(model.User)
 	return model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
-		rewardRecords, err := claimReferralAllianceRewards(tx, user.ID, now)
+		rewardRecords, err := claimReferralAllianceRewards(tx, userID, now)
 		if err != nil {
 			return fmt.Errorf("failed to claim rewards: %w", err)
 		}
 
-		vipRecord, err := model.GetVipWithDefault(c, user.ID)
+		vipRecord, err := model.GetVipWithDefault(c, userID)
 		if err != nil {
 			return fmt.Errorf("failed to get vip record: %w", err)
 		}
