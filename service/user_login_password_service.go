@@ -4,17 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 	"os"
 	"strings"
 	"time"
+
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -39,6 +41,7 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 
 	mobileHash := serializer.MobileEmailHash(service.Mobile)
 	emailHash := serializer.MobileEmailHash(service.Email)
+	fmt.Println("next" + service.Username)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 

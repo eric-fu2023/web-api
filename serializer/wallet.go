@@ -17,8 +17,12 @@ func BuildWallet(a ploutos.GameVendorUser) (b Wallet) {
 		Balance:      util.MoneyFloat(a.Balance),
 		IsLastPlayed: a.IsLastPlayed,
 	}
-	if a.GameVendor != nil && a.GameVendor.GameVendorBrand != nil {
+
+	if a.GameVendor != nil {
 		b.GameCode = a.GameVendor.GameCode
+	}
+
+	if a.GameVendor.GameVendorBrand != nil {
 		b.Name = a.GameVendor.GameVendorBrand.Name
 	}
 	return

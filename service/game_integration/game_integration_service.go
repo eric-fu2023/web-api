@@ -10,14 +10,15 @@ import (
 	"web-api/util/i18n"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type GetUrlService struct {
-	GameId   int64 `form:"game_id" json:"game_id" binding:"required"`
-	Platform int64 `form:"platform" json:"platform" binding:"required"`
+	SubGameId int64 `form:"game_id" json:"game_id" binding:"required"`
+	Platform  int64 `form:"platform" json:"platform" binding:"required"`
 }
 
 func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err error) {
@@ -26,7 +27,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 	user := c.MustGet("user").(model.User)
 
 	var subGame ploutos.SubGameC
-	err = model.DB.Preload(`GameVendor`).Where(`id`, service.GameId).First(&subGame).Error
+	err = model.DB.Preload(`GameVendor`).Where(`id`, service.SubGameId).First(&subGame).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
@@ -51,6 +52,8 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 			var lastPlayed ploutos.GameVendorUser
 			err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload(`GameVendor`).Where(`user_id`, user.ID).Where(`is_last_played`, true).
 				Order(`updated_at DESC`).Limit(1).Find(&lastPlayed).Error
+
+			// FIXME check if need !errors.Is(err, gorm.ErrRecordNotFound)
 			if err != nil {
 				return
 			}

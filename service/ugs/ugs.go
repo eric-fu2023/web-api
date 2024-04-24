@@ -1,15 +1,16 @@
 package ugs
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"web-api/cache"
 	"web-api/model"
 	"web-api/util"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
-const IntegrationIdUGS = 1
 const (
 	TransferStatusFailed  = 0
 	TransferStatusSuccess = 1
@@ -23,14 +24,13 @@ var PlatformMapping = map[int64]int64{
 	4: 2, // ios
 }
 
-type UGS struct {
-}
+type UGS struct{}
 
 func (c UGS) CreateWallet(user model.User, currency string) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
 		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id`).
-			Where(`game_vendor.game_integration_id`, IntegrationIdUGS).Find(&gameVendors).Error
+			Where(`game_vendor.game_integration_id`, util.IntegrationIdUGS).Find(&gameVendors).Error
 		if err != nil {
 			return
 		}
@@ -63,7 +63,7 @@ func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode strin
 	if err != nil {
 		return
 	}
-	util.Log().Info("GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", IntegrationIdUGS, user.ID, balance, status, ptxid)
+	util.Log().Info("UGS GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", util.IntegrationIdUGS, user.ID, balance, status, ptxid)
 	if status == TransferStatusSuccess && balance > 0 && ptxid != "" {
 		var sum ploutos.UserSum
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error
@@ -105,7 +105,7 @@ func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, curre
 	if err != nil {
 		return
 	}
-	util.Log().Info("GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", IntegrationIdUGS, user.ID, util.MoneyFloat(sum.Balance), status, ptxid)
+	util.Log().Info("UGS GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", util.IntegrationIdUGS, user.ID, util.MoneyFloat(sum.Balance), status, ptxid)
 	if status == TransferStatusSuccess && ptxid != "" {
 		transaction := ploutos.Transaction{
 			UserId:                user.ID,

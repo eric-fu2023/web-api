@@ -1,10 +1,12 @@
 package task
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"fmt"
 	"sync"
+
 	"web-api/model"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 func CreateUserWallet(gameVendorIds []int64, gameIntegrationId int64) {
@@ -66,4 +68,30 @@ func CreateUserWallet(gameVendorIds []int64, gameIntegrationId int64) {
 		}
 	}
 	wg.Wait()
+}
+
+func CreateUserWalletForUser(gameVendorIds []int64, currency string, userIds ...int64) {
+	if len(userIds) != 1 {
+		fmt.Println("len(userIds) != 1")
+		return
+	}
+	userId := userIds[0]
+
+	for _, gameVendorId := range gameVendorIds {
+		var gameVendorUser ploutos.GameVendorUser
+		rows := model.DB.Where(`user_id`, userId).Where(`game_vendor_id`, gameVendorId).First(&gameVendorUser).RowsAffected
+		if rows > 0 {
+			continue
+		}
+		gameVendorUser = ploutos.GameVendorUser{
+			GameVendorId:     gameVendorId,
+			UserId:           userId,
+			ExternalCurrency: currency,
+		}
+		err := model.DB.Create(&gameVendorUser).Error
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
 }

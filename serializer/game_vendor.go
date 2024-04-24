@@ -14,7 +14,7 @@ type GameVendor struct {
 	Status     int64  `json:"status"`
 }
 
-func BuildGameVendor(a ploutos.GameVendor, gameId int64) (b GameVendor) {
+func BuildGameVendor(a ploutos.GameVendorBrand, gameId int64) (b GameVendor) {
 	b = GameVendor{
 		ID:         a.ID,
 		Name:       a.Name,

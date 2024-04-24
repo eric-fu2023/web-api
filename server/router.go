@@ -302,6 +302,7 @@ func NewRouter() *gin.Engine {
 					sg.POST("/place_order", stream_game_api.PlaceOrder)
 				}
 
+				// integration TODO:GAMEINTEGRATIONIMONE
 				integration := user.Group("/game")
 				{
 					integration.GET("/url", game_integration_api.GetUrl)

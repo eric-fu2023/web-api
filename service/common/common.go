@@ -200,7 +200,9 @@ func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
 		return
 	}
 	newBalance := balance + obj.GetAmount()
+	fmt.Printf("DebugLog1234: GameVendorId=%d, newBalance=%d\n", obj.GetGameVendorId(), newBalance)
 	newRemainingWager := remainingWager
+	fmt.Printf("DebugLog1234: GameVendorId=%d, remainingWager=%d\n", obj.GetGameVendorId(), remainingWager)
 	betAmount, betExists, w, e := calWager(obj, remainingWager)
 	if e == nil {
 		newRemainingWager = w
@@ -257,35 +259,35 @@ func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
 
 func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betExists bool, newWager int64, err error) {
 	newWager = originalWager
-	fmt.Println("DebugLog1234: originalWager 1", originalWager)
-	fmt.Println("DebugLog1234: newWager 1", newWager)
+	fmt.Printf("DebugLog1234: GameVendorId=%d, originalWager1=%d\n", obj.GetGameVendorId(), originalWager)
+	fmt.Printf("DebugLog1234: GameVendorId=%d, newWager1=%d\n", obj.GetGameVendorId(), newWager)
 
 	multiplier, exists := obj.GetWagerMultiplier()
+	fmt.Printf("DebugLog1234: GameVendorId=%d, multiplier=%d\n", obj.GetGameVendorId(), multiplier)
+	fmt.Printf("DebugLog1234: GameVendorId=%d, multiplierExists=%t\n", obj.GetGameVendorId(), exists)
 	if !exists {
 		return
 	}
-	fmt.Println("DebugLog1234: multiplier", multiplier)
-	fmt.Println("DebugLog1234: multiplier exists", exists)
 
 	betAmount, betExists = obj.GetBetAmount()
+	fmt.Printf("DebugLog1234: GameVendorId=%d, betAmount=%d\n", obj.GetGameVendorId(), betAmount)
+	fmt.Printf("DebugLog1234: GameVendorId=%d, betAmountExists=%t\n", obj.GetGameVendorId(), betExists)
 	if !betExists {
 		return
 	}
-	fmt.Println("DebugLog1234: betAmount", betAmount)
-	fmt.Println("DebugLog1234: betAmount exists", betExists)
 
 	absBetAmount := abs(betAmount)
 	wager := abs(absBetAmount - abs(obj.GetAmount()))
-	fmt.Println("DebugLog1234: obj.GetAmount", obj.GetAmount())
-	fmt.Println("DebugLog1234: wager", wager)
+	fmt.Printf("DebugLog1234: GameVendorId=%d, obj.GetAmount=%d\n", obj.GetGameVendorId(), obj.GetAmount())
+	fmt.Printf("DebugLog1234: GameVendorId=%d, wager=%d\n", obj.GetGameVendorId(), wager)
 
 	if wager > absBetAmount {
 		wager = absBetAmount
 	}
 	newWager = originalWager + (multiplier * wager)
-	fmt.Println("DebugLog1234: originalWager 2", originalWager)
-	fmt.Println("DebugLog1234: newWager 2", newWager)
-	fmt.Println("")
+	fmt.Printf("DebugLog1234: GameVendorId=%d, originalWager2=%d\n", obj.GetGameVendorId(), originalWager)
+	fmt.Printf("DebugLog1234: GameVendorId=%d, newWager2=%d\n", obj.GetGameVendorId(), newWager)
+	fmt.Printf("\n")
 
 	if newWager < 0 {
 		newWager = 0

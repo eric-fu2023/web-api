@@ -1,25 +1,34 @@
 package util
 
 import (
-	"blgit.rfdev.tech/taya/game-service/common"
+	"os"
+	"web-api/conf/consts"
+
+	gameservicecommon "blgit.rfdev.tech/taya/game-service/common"
 	"blgit.rfdev.tech/taya/game-service/dc"
 	"blgit.rfdev.tech/taya/game-service/fb"
+	"blgit.rfdev.tech/taya/game-service/imone"
 	"blgit.rfdev.tech/taya/game-service/imsb"
 	"blgit.rfdev.tech/taya/game-service/saba"
 	"blgit.rfdev.tech/taya/game-service/ugs"
-	"os"
-	"web-api/conf/consts"
+)
+
+const (
+	IntegrationIdUGS   = 1
+	IntegrationIdImOne = 2
 )
 
 var (
-	TayaFactory fb.FB
-	FBFactory   fb.FB
-	SabaFactory saba.Saba
-	DCFactory   dc.Dc
-	IMFactory   imsb.IM
-	UgsFactory  ugs.UGS
+	TayaFactory  fb.FB
+	FBFactory    fb.FB
+	SabaFactory  saba.Saba
+	DCFactory    dc.Dc
+	IMFactory    imsb.IM
+	UgsFactory   ugs.UGS
+	ImOneFactory func() *imone.ImOne
 )
-var VendorIdToGameClient = make(map[int64]common.TransferWalletInterface)
+
+var VendorIdToGameClient = make(map[int64]gameservicecommon.TransferWalletInterface)
 
 func InitTayaFactory() {
 	TayaFactory = fb.FB{
@@ -73,4 +82,12 @@ func InitUgsFactory() {
 		ClientId:     os.Getenv("GAME_UGS_CLIENT_ID"),
 		ClientSecret: os.Getenv("GAME_UGS_CLIENT_SECRET"),
 	}
+}
+
+// InitImOneFactory TODO:GAMEINTEGRATIONIMONE
+func InitImOneFactory() {
+	baseUrl := os.Getenv("GAME_IMONE_BASE_URL")                // baseUrl
+	merchantCode := os.Getenv("GAME_IMONE_BASE_MERCHANT_CODE") // merchantCode
+
+	ImOneFactory = imone.NewFactory(baseUrl, merchantCode)
 }

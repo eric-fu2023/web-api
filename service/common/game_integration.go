@@ -1,14 +1,19 @@
 package common
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"gorm.io/gorm"
 	"web-api/model"
+	"web-api/service/imone"
 	"web-api/service/ugs"
+	"web-api/util"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"gorm.io/gorm"
 )
 
 var GameIntegration = map[int64]GameIntegrationInterface{
-	1: ugs.UGS{},
+	util.IntegrationIdUGS:   ugs.UGS{},
+	util.IntegrationIdImOne: &imone.ImOne{}, // TODO:GAMEINTEGRATIONIMONE
 }
 
 type GameIntegrationInterface interface {

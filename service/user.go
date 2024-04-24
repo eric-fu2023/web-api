@@ -1,15 +1,13 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"gorm.io/plugin/dbresolver"
+	"log"
 	"os"
 	"strings"
 	"time"
+
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -17,10 +15,17 @@ import (
 	"web-api/service/dc"
 	"web-api/service/dollar_jackpot"
 	"web-api/service/fb"
+	"web-api/service/imone"
 	"web-api/service/imsb"
 	"web-api/service/saba"
 	"web-api/service/stream_game"
 	"web-api/service/taya"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 var (
@@ -33,6 +38,7 @@ var (
 		"imsb":           &imsb.UserRegister{},
 		"dollar_jackpot": &dollar_jackpot.UserRegister{},
 		"stream_game":    &stream_game.UserRegister{},
+		"imone":          &imone.ImOne{}, // InitImOneFactory TODO:GAMEINTEGRATIONIMONE
 	}
 )
 
@@ -63,6 +69,8 @@ func CreateNewUser(user *model.User, referralCode string) (err error) {
 }
 
 func CreateUser(user *model.User) (err error) {
+	log.Printf("Create User arg %d", user.ID)
+
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&user).Error
 		if err != nil {
@@ -101,6 +109,7 @@ func CreateUser(user *model.User) (err error) {
 		var integrationCurrencies []ploutos.CurrencyGameIntegration
 		err = tx.Where(`currency_id`, user.CurrencyId).Find(&integrationCurrencies).Error
 		if err != nil {
+			log.Println("Where(`currency_id`, user.CurrencyId) not exist", user.CurrencyId)
 			tx2.Rollback()
 			return ErrEmptyCurrencyId
 		}
@@ -118,8 +127,12 @@ func CreateUser(user *model.User) (err error) {
 		}
 		for _, gi := range gameIntegrations {
 			currency, exists := inteCurrMap[gi.ID]
+			log.Printf("CreateWallet game.integration.id %d currency %s", gi.ID, currency)
+
 			if !exists {
 				tx2.Rollback()
+
+				log.Println(" := inteCurrMap[gi.ID] not exist ", gi.ID)
 				return ErrEmptyCurrencyId
 			}
 			err = common.GameIntegration[gi.ID].CreateWallet(*user, currency)
