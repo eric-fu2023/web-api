@@ -66,7 +66,10 @@ func BuildGenericCashOrder(p model.CashOrder, i18n i18n.I18n) GenericCashOrder {
 	amount := p.AppliedCashInAmount
 	effectiveAmount := p.EffectiveCashInAmount
 	orderType := consts.OrderTypeMap[p.OrderType]
-	detail := i18n.T(consts.OrderTypeDetailMap[p.OrderType])
+	detail := i18n.T(consts.OrderOperationTypeDetailMap[p.OperationType])
+	if p.OperationType == 0 {
+		detail = i18n.T(consts.OrderTypeDetailMap[p.OrderType])
+	}
 	if p.OrderType < 0 {
 		amount = p.AppliedCashOutAmount
 		effectiveAmount = p.EffectiveCashOutAmount
