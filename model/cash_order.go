@@ -33,7 +33,7 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 }
 
 func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingID int64, remark string, reviewRequired bool, ip string) CashOrder {
-	var orderStatus int64 = 1
+	var orderStatus int64 = models.CashOrderStatusPendingRiskCheck
 	var approveStatus int64
 	var reviewStatus int64
 	if reviewRequired {

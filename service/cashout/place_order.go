@@ -151,12 +151,12 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		notifyBackendWithdraw(cashOrder.ID)
 		return
 	}
-	cashOrder, err = DispatchOrder(c, cashOrder, user, accountBinding)
-	if err != nil {
-		r = serializer.EnsureErr(c, err, r)
-		return
-	}
-	r.Data = serializer.BuildWithdrawOrder(cashOrder)
+	// cashOrder, err = DispatchOrder(c, cashOrder, user, accountBinding)
+	// if err != nil {
+	// 	r = serializer.EnsureErr(c, err, r)
+	// 	return
+	// }
+	// r.Data = serializer.BuildWithdrawOrder(cashOrder)
 	return
 }
 
