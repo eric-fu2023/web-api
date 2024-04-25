@@ -2,7 +2,6 @@ package imone
 
 import (
 	"errors"
-	"log"
 
 	"web-api/conf/consts"
 	"web-api/model"
@@ -20,16 +19,13 @@ func (c *ImOne) CreateUser(user model.User, currency string) error {
 		ExternalUserId:   user.Username,
 		ExternalCurrency: currency,
 	}
-	log.Printf("(c *ImOne) CreateUser() inserting gv user ... %+v", gvu)
 	err := model.DB.Save(&gvu).Error
 	if err != nil {
-		log.Printf("(c *ImOne) CreateUser() inserting gv user !ok err: %+v isDup %t", err, errors.Is(err, gorm.ErrDuplicatedKey))
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			err = c.VendorRegisterError()
 		}
 		return err
 	}
-	log.Printf("(c *ImOne) CreateUser() inserting gv user .ok %+v", gvu)
 
 	return util.ImOneFactory().CreateUser(user.IdAsString(), currency, user.Password, "")
 }
@@ -52,12 +48,10 @@ func (c *ImOne) CreateWallet(user model.User, currency string) (err error) {
 				ExternalCurrency: currency,
 			}
 
-			log.Printf("(c *ImOne) CreateWallet() inserting gv user ... %+v", gvu)
 			err = tx.Create(&gvu).Error
 			if err != nil {
 				return
 			}
-			log.Printf("(c *ImOne) CreateWallet() inserting gv user .ok %+v", gvu)
 		}
 		return
 	})
@@ -68,7 +62,6 @@ func (c *ImOne) CreateWallet(user model.User, currency string) (err error) {
 }
 
 func (c *ImOne) GetGameBalance(user model.User, currency, gameCode string, _ model.Extra) (balance int64, _err error) {
-	log.Printf("(c *ImOne) GetGameBalance args curr %s gameCode %s extra: <not shown>", currency, gameCode)
 	productWalletCode, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
 
 	if !exist {
@@ -81,6 +74,5 @@ func (c *ImOne) GetGameBalance(user model.User, currency, gameCode string, _ mod
 		return 0, errors.Join(errors.New("ImOne get balance error"), err)
 	}
 
-	log.Println("GetGameBalance end")
 	return util.MoneyInt(balanceFloat), nil
 }

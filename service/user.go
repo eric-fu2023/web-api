@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -69,8 +68,6 @@ func CreateNewUser(user *model.User, referralCode string) (err error) {
 }
 
 func CreateUser(user *model.User) (err error) {
-	log.Printf("Create User arg %d", user.ID)
-
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&user).Error
 		if err != nil {
@@ -109,7 +106,6 @@ func CreateUser(user *model.User) (err error) {
 		var integrationCurrencies []ploutos.CurrencyGameIntegration
 		err = tx.Where(`currency_id`, user.CurrencyId).Find(&integrationCurrencies).Error
 		if err != nil {
-			log.Println("Where(`currency_id`, user.CurrencyId) not exist", user.CurrencyId)
 			tx2.Rollback()
 			return ErrEmptyCurrencyId
 		}
@@ -127,12 +123,8 @@ func CreateUser(user *model.User) (err error) {
 		}
 		for _, gi := range gameIntegrations {
 			currency, exists := inteCurrMap[gi.ID]
-			log.Printf("CreateWallet game.integration.id %d currency %s", gi.ID, currency)
-
 			if !exists {
 				tx2.Rollback()
-
-				log.Println(" := inteCurrMap[gi.ID] not exist ", gi.ID)
 				return ErrEmptyCurrencyId
 			}
 			err = common.GameIntegration[gi.ID].CreateWallet(*user, currency)

@@ -41,7 +41,6 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 
 	mobileHash := serializer.MobileEmailHash(service.Mobile)
 	emailHash := serializer.MobileEmailHash(service.Email)
-	fmt.Println("next" + service.Username)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 

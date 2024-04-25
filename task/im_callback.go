@@ -48,12 +48,6 @@ func ProcessImUpdateBalance() {
 						continue
 					}
 
-					fmt.Println("DebugLog1234: Request.ActionId", data.ActionId)
-					fmt.Println("DebugLog1234: Request.MemberCode", data.MemberCode)
-					fmt.Println("DebugLog1234: Request.WagerNo", data.WagerNo)
-					fmt.Println("DebugLog1234: Request.TransactionAmount", data.TransactionAmount)
-					fmt.Println("DebugLog1234: Request.SourceWallet", data.SourceWallet)
-
 					err = common.ProcessImUpdateBalanceTransaction(&imsb.Callback{Request: data})
 					if err != nil {
 						util.Log().Error("Task:ProcessImUpdateBalance error", err, data)

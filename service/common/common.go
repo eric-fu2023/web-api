@@ -200,9 +200,7 @@ func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
 		return
 	}
 	newBalance := balance + obj.GetAmount()
-	fmt.Printf("DebugLog1234: GameVendorId=%d, newBalance=%d\n", obj.GetGameVendorId(), newBalance)
 	newRemainingWager := remainingWager
-	fmt.Printf("DebugLog1234: GameVendorId=%d, remainingWager=%d\n", obj.GetGameVendorId(), remainingWager)
 	betAmount, betExists, w, e := calWager(obj, remainingWager)
 	if e == nil {
 		newRemainingWager = w
@@ -259,35 +257,24 @@ func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
 
 func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betExists bool, newWager int64, err error) {
 	newWager = originalWager
-	fmt.Printf("DebugLog1234: GameVendorId=%d, originalWager1=%d\n", obj.GetGameVendorId(), originalWager)
-	fmt.Printf("DebugLog1234: GameVendorId=%d, newWager1=%d\n", obj.GetGameVendorId(), newWager)
 
 	multiplier, exists := obj.GetWagerMultiplier()
-	fmt.Printf("DebugLog1234: GameVendorId=%d, multiplier=%d\n", obj.GetGameVendorId(), multiplier)
-	fmt.Printf("DebugLog1234: GameVendorId=%d, multiplierExists=%t\n", obj.GetGameVendorId(), exists)
 	if !exists {
 		return
 	}
 
 	betAmount, betExists = obj.GetBetAmount()
-	fmt.Printf("DebugLog1234: GameVendorId=%d, betAmount=%d\n", obj.GetGameVendorId(), betAmount)
-	fmt.Printf("DebugLog1234: GameVendorId=%d, betAmountExists=%t\n", obj.GetGameVendorId(), betExists)
 	if !betExists {
 		return
 	}
 
 	absBetAmount := abs(betAmount)
 	wager := abs(absBetAmount - abs(obj.GetAmount()))
-	fmt.Printf("DebugLog1234: GameVendorId=%d, obj.GetAmount=%d\n", obj.GetGameVendorId(), obj.GetAmount())
-	fmt.Printf("DebugLog1234: GameVendorId=%d, wager=%d\n", obj.GetGameVendorId(), wager)
 
 	if wager > absBetAmount {
 		wager = absBetAmount
 	}
 	newWager = originalWager + (multiplier * wager)
-	fmt.Printf("DebugLog1234: GameVendorId=%d, originalWager2=%d\n", obj.GetGameVendorId(), originalWager)
-	fmt.Printf("DebugLog1234: GameVendorId=%d, newWager2=%d\n", obj.GetGameVendorId(), newWager)
-	fmt.Printf("\n")
 
 	if newWager < 0 {
 		newWager = 0

@@ -65,14 +65,10 @@ func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
 }
 
 func (c *Callback) GetBetAmount() (amount int64, exists bool) {
-	fmt.Println("DebugLog1234:ActionId:", c.Request.ActionId)
 	actionId := 1003
 	if c.Request.ActionId == 1003 {
 		actionId = 0
 	}
-
-	fmt.Println("DebugLog1234:WagerNo:", c.Transaction.WagerNo)
-	fmt.Println("DebugLog1234:actionId:", actionId)
 
 	e := model.DB.Clauses(dbresolver.Use("txConn")).Model(ploutos.ImTransaction{}).Select(`transaction_amount`).
 		Where(`wager_no`, c.Transaction.WagerNo).Where(`action_id`, actionId).Order(`id`).First(&amount).Error

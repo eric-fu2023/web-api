@@ -18,11 +18,6 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 	client := util.ImOneFactory()
 
 	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
-	//
-	//gameCodeI, err := strconv.ParseUint(gameVendorId, 10, 16)
-	//if err != nil {
-	//	return err
-	//}
 
 	balance, err := client.GetWalletBalance(user.IdAsString(), productWallet)
 	if err != nil {
