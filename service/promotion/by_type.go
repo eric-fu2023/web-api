@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 	"time"
 	"web-api/cache"
@@ -458,30 +457,20 @@ func getSameDayVipRewardRecord(tx *gorm.DB, userID, prmotionID int64) models.Vip
 
 func getBirtdayReward(c context.Context, date time.Time, userID int64) (reward int64) {
 	today := Today0am()
+	defer func() {
+		cache.RedisStore.Set(birthdayBonusRewardCacheKey, reward, time.Until(today.Add(24*time.Hour)))
+	}()
 	if date.Month() != today.Month() || date.Day() != today.Day() {
-		reward = 0
-		cache.RedisStore.Set(birthdayBonusRewardCacheKey, reward, time.Until(today.Add(24*time.Hour)))
 		return
 	}
-	achs, _ := model.GetUserAchievements(userID, model.GetUserAchievementCond{AchievementIds: []int64{model.UserAchievementIdUpdateBirthday, model.UserAchievementIdSetBirthday}})
-	if len(achs) == 0 {
-		reward = 0
-		cache.RedisStore.Set(birthdayBonusRewardCacheKey, reward, time.Until(today.Add(24*time.Hour)))
-		return
-	}
-	sort.Slice(achs, func(i, j int) bool {
-		return achs[i].CreatedAt.Before(achs[j].CreatedAt)
-	})
+	user := c.Value("user").(model.User)
 	v := os.Getenv("VIP_BIRTHDAY_REWARD_MATURE_DAYS")
 	days, _ := strconv.Atoi(v)
-	if achs[0].CreatedAt.After(Today0am().Add(-time.Duration(days) * 24 * time.Hour)) {
-		reward = 0
-		cache.RedisStore.Set(birthdayBonusRewardCacheKey, reward, time.Until(today.Add(24*time.Hour)))
+	if user.CreatedAt.After(Today0am().Add(-time.Duration(days) * 24 * time.Hour)) {
 		return
 	}
 	vip, _ := model.GetVipWithDefault(c, userID)
 	reward = vip.VipRule.BirthdayBenefit
-	cache.RedisStore.Set(birthdayBonusRewardCacheKey, reward, time.Until(today.Add(24*time.Hour)))
 	return
 }
 
