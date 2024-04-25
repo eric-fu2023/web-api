@@ -46,15 +46,16 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 	}
 	user := model.User{
 		User: ploutos.User{
-			Username:               service.Username,
-			Password:               string(bytes),
-			BrandId:                int64(brandId),
-			AgentId:                agent.ID,
-			CurrencyId:             service.CurrencyId,
-			Status:                 1,
-			Role:                   1, // default role user
-			RegistrationIp:         c.ClientIP(),
-			RegistrationDeviceUuid: deviceInfo.Uuid,
+			Username:                service.Username,
+			Password:                string(bytes),
+			BrandId:                 int64(brandId),
+			AgentId:                 agent.ID,
+			CurrencyId:              service.CurrencyId,
+			Status:                  1,
+			Role:                    1, // default role user
+			RegistrationIp:          c.ClientIP(),
+			RegistrationDeviceUuid:  deviceInfo.Uuid,
+			ReferralWagerMultiplier: 1,
 		},
 	}
 	genNickname(&user)
