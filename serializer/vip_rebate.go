@@ -42,36 +42,36 @@ func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []mode
 			Format:   "percentage",
 			Value:    item.RebateRate,
 		}
-		if idx, ok := cats[item.GameVendorBrand.CategoryId]; ok {
-			if idx2, ok := catsCol[item.GameVendorBrand.CategoryId][item.GameVendorBrand.ID]; ok {
+		if idx, ok := cats[item.GameVendor.CategoryId]; ok {
+			if idx2, ok := catsCol[item.GameVendor.CategoryId][item.GameVendor.ID]; ok {
 				ret.Categories[idx].Columns[idx2].Values = append(ret.Categories[idx].Columns[idx2].Values, Val)
 			} else {
 				Col := VipRebateColumn{
-					Header:       item.GameVendorBrand.Name,
+					Header:       item.GameVendor.Name,
 					GameVendorId: item.GameVendorId,
 				}
 				ret.Categories[idx].Columns = append(ret.Categories[idx].Columns, Col)
 				idx2 = len(ret.Categories[idx].Columns) - 1
 				ret.Categories[idx].Columns[idx2].Values = append(ret.Categories[idx].Columns[idx2].Values, Val)
-				catsCol[item.GameVendorBrand.CategoryId][item.GameVendorBrand.ID] = idx2
+				catsCol[item.GameVendor.CategoryId][item.GameVendor.ID] = idx2
 			}
 		} else {
 			Cat := VipRebateCategory{
-				Header:     item.GameVendorBrand.GameCategory.Name,
-				CategoryId: item.GameVendorBrand.CategoryId,
+				Header:     item.GameVendor.GameCategory.Name,
+				CategoryId: item.GameVendor.CategoryId,
 			}
 			ret.Categories = append(ret.Categories, Cat)
 			idx = len(ret.Categories) - 1
-			cats[item.GameVendorBrand.CategoryId] = idx
-			catsCol[item.GameVendorBrand.CategoryId] = make(map[int64]int)
+			cats[item.GameVendor.CategoryId] = idx
+			catsCol[item.GameVendor.CategoryId] = make(map[int64]int)
 			Col := VipRebateColumn{
-				Header:       item.GameVendorBrand.Name,
+				Header:       item.GameVendor.Name,
 				GameVendorId: item.GameVendorId,
 			}
 			ret.Categories[idx].Columns = append(ret.Categories[idx].Columns, Col)
 			idx2 := len(ret.Categories[idx].Columns) - 1
 			ret.Categories[idx].Columns[idx2].Values = append(ret.Categories[idx].Columns[idx2].Values, Val)
-			catsCol[item.GameVendorBrand.CategoryId][item.GameVendorBrand.ID] = len(ret.Categories[idx].Columns[idx2].Values) - 1
+			catsCol[item.GameVendor.CategoryId][item.GameVendor.ID] = len(ret.Categories[idx].Columns[idx2].Values) - 1
 		}
 	}
 	for idx := range ret.Categories {
