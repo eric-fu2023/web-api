@@ -17,7 +17,7 @@ var defaultLocale string
 
 func InitLocale() {
 	i18nDefault = make(map[string]i18n.I18n)
-	defaultLocale = os.Getenv("LANGUAGE")
+	defaultLocale = os.Getenv("PLATFORM_LANGUAGE")
 	util.Log().Info("default language: %s\n", defaultLocale)
 
 	files, err := os.ReadDir("conf/locales/")
