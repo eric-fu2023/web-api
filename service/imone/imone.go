@@ -13,7 +13,7 @@ import (
 var ErrImOneRegister = errors.New("register user with imone failed")
 var ErrOthers = errors.New("imone create user failed")
 
-type _userRegistration interface {
+type _userRegistrar interface {
 	CreateUser(model.User, string) error
 	VendorRegisterError() error
 	OthersError() error
@@ -28,7 +28,7 @@ type _gameUserInterface interface {
 }
 
 type imoner interface {
-	_userRegistration
+	_userRegistrar
 	_gameUserInterface
 }
 

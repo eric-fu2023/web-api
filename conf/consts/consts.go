@@ -89,7 +89,8 @@ var (
 		"imsb":           5,
 		"dollar_jackpot": 6,
 		"stream_game":    7,
-		"imone":          10,
+		"imslot":         11,
+		"impt":           10,
 	}
 	WebSocketMessageType = map[string]int64{
 		"text":       1,

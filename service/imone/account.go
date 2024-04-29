@@ -3,7 +3,6 @@ package imone
 import (
 	"errors"
 
-	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/util"
 
@@ -13,29 +12,26 @@ import (
 )
 
 func (c *ImOne) CreateUser(user model.User, currency string) error {
-	gvu := ploutos.GameVendorUser{
-		GameVendorId:     consts.GameVendor["imone"],
-		UserId:           user.ID,
-		ExternalUserId:   user.Username,
-		ExternalCurrency: currency,
+	err := c.createImOneUserAndDbWallet(user, currency)
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
+		err = c.VendorRegisterError()
 	}
-	err := model.DB.Save(&gvu).Error
+	return err
+}
+
+func (c *ImOne) CreateWallet(user model.User, currency string) error {
+	return c.createImOneUserAndDbWallet(user, currency)
+}
+
+func (c *ImOne) createImOneUserAndDbWallet(user model.User, currency string) error {
+	err := util.ImOneFactory().CreateUser(user.IdAsString(), currency, user.Password, "")
 	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			err = c.VendorRegisterError()
-		}
 		return err
 	}
 
-	return util.ImOneFactory().CreateUser(user.IdAsString(), currency, user.Password, "")
-}
-
-// CreateWallet in db
-// TODO check if wallets are created on imone user creation
-func (c *ImOne) CreateWallet(user model.User, currency string) (err error) {
-	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+	return model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
-		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id`).
+		err = tx.Model(ploutos.GameVendor{}).
 			Where(`game_vendor.game_integration_id`, util.IntegrationIdImOne).Find(&gameVendors).Error
 		if err != nil {
 			return
@@ -55,10 +51,6 @@ func (c *ImOne) CreateWallet(user model.User, currency string) (err error) {
 		}
 		return
 	})
-	if err != nil {
-		return
-	}
-	return
 }
 
 func (c *ImOne) GetGameBalance(user model.User, currency, gameCode string, _ model.Extra) (balance int64, _err error) {

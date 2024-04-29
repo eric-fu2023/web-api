@@ -27,5 +27,5 @@ func (c *ImOne) GetGameUrl(user model.User, _, gameCode, subGameCode string, _ i
 	}
 
 	client := util.ImOneFactory()
-	return client.LaunchFreeGame(subGameCode, extra.Locale, extra.Ip, productWalletCode, "")
+	return client.NewLaunchMobileGame(subGameCode, extra.Locale, extra.Ip, productWalletCode, "")
 }
