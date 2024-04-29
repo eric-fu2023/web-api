@@ -7,8 +7,8 @@ toolchain go1.21.1
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240429040145-f5ba85d5aad9
-	blgit.rfdev.tech/taya/payment-service v0.0.0-20240429092717-a5fbb0229eaf
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240426094908-49990ba629c1
+	blgit.rfdev.tech/taya/payment-service v0.0.0-20240429024439-1595eaace2f5
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240430090205-9d12fbd7b781
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240327071634-698e840139e1
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
@@ -45,7 +45,7 @@ require (
 	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.2
-	gorm.io/gorm v1.25.9
+	gorm.io/gorm v1.25.10
 	gorm.io/plugin/dbresolver v1.4.1
 )
 

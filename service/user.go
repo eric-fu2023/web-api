@@ -37,8 +37,8 @@ var (
 		"imsb":           &imsb.UserRegister{},
 		"dollar_jackpot": &dollar_jackpot.UserRegister{},
 		"stream_game":    &stream_game.UserRegister{},
-		"impt":           &imone.ImOne{}, // InitImOneFactory TODO:GAMEINTEGRATIONIMONE
-		"imslot":         &imone.ImOne{}, // InitImOneFactory TODO:GAMEINTEGRATIONIMONE
+		"impt":           &imone.ImOne{},
+		"imslot":         &imone.ImOne{},
 	}
 )
 

@@ -84,10 +84,10 @@ func InitUgsFactory() {
 	}
 }
 
-// InitImOneFactory TODO:GAMEINTEGRATIONIMONE
 func InitImOneFactory() {
 	baseUrl := os.Getenv("GAME_IMONE_BASE_URL")                // baseUrl
 	merchantCode := os.Getenv("GAME_IMONE_BASE_MERCHANT_CODE") // merchantCode
+	prefix := os.Getenv("GAME_IMONE_BASE_PLAYER_PREFIX")       // merchantCode
 
-	ImOneFactory = imone.NewFactory(baseUrl, merchantCode)
+	ImOneFactory = imone.NewFactory(baseUrl, merchantCode, imone.NewDefaultPlayer(prefix))
 }

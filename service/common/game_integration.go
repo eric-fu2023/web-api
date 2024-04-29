@@ -13,7 +13,7 @@ import (
 
 var GameIntegration = map[int64]GameIntegrationInterface{
 	util.IntegrationIdUGS:   ugs.UGS{},
-	util.IntegrationIdImOne: &imone.ImOne{}, // TODO:GAMEINTEGRATIONIMONE
+	util.IntegrationIdImOne: &imone.ImOne{},
 }
 
 type GameIntegrationInterface interface {
