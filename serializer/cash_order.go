@@ -17,6 +17,7 @@ type TopupOrder struct {
 	TopupDataType    *string `json:"topup_data_type"`
 	RedirectUrl      string  `json:"redirect_url"`
 	Html             string  `json:"html"`
+	WalletAddress    string  `json:"wallet_address"`
 }
 
 func BuildPaymentOrder(p finpay.PaymentOrderRespData) TopupOrder {
@@ -29,6 +30,7 @@ func BuildPaymentOrder(p finpay.PaymentOrderRespData) TopupOrder {
 		TopupDataType:    &p.PaymentDataType,
 		RedirectUrl:      os.Getenv("FINPAY_REDIRECT_URL"),
 		Html:             p.GetHtml(),
+		WalletAddress:    p.GetWallet(),
 	}
 }
 

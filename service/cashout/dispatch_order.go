@@ -44,7 +44,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			if err != nil {
 				return
 			}
-		} else if data.IsFailed() {
+		} else if data.IsFailed() || errors.Is(err, finpay.ErrorGateway) {
 			updatedCashOrder, err = RevertCashOutOrder(c, updatedCashOrder.ID, util.JSON(data), "Request Failed", models.CashOrderStatusFailed, model.DB)
 			if err != nil {
 				return

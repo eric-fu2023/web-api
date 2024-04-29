@@ -1,6 +1,7 @@
 package cashin
 
 import (
+	"encoding/json"
 	"errors"
 	"web-api/model"
 	"web-api/serializer"
@@ -92,9 +93,12 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	case "finpay":
 		config := method.GetFinpayConfig()
 		var data finpay.PaymentOrderRespData
+		extraBytes := config.TypeExtra
+		extraMap := make(map[string]any)
+		json.Unmarshal(extraBytes, &extraMap)
 		switch config.Type {
 		default:
-			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username)
+			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username, config.TypeExtra)
 			if err != nil {
 				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
