@@ -2,6 +2,7 @@ package referral
 
 import (
 	"github.com/gin-gonic/gin"
+	"os"
 	"time"
 	"web-api/model"
 	"web-api/serializer"
@@ -48,10 +49,65 @@ func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r seria
 		return serializer.GeneralErr(c, err), err
 	}
 
-	return serializer.Response{
-		Data: map[string]any{
+	var data map[string]any
+
+	// TODO!Jh remove mocked data for testing
+	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
+		type RewardRecord struct {
+			GameCategoryName string  `json:"game_category_name"`
+			ReferrerReward   float64 `json:"referrer_reward"`
+		}
+		type RewardRecordDay struct {
+			Date          string  `json:"date"`
+			TotalReward   float64 `json:"total_reward"`
+			ClaimedReward float64 `json:"claimed_reward"`
+			RewardRecords []RewardRecord
+		}
+
+		rewardRecordsDay := []RewardRecordDay{
+			{
+				Date:          "2024-04-04",
+				TotalReward:   308.0,
+				ClaimedReward: 108.0,
+				RewardRecords: []RewardRecord{
+					{
+						GameCategoryName: "体育",
+						ReferrerReward:   200.0,
+					},
+					{
+						GameCategoryName: "真人",
+						ReferrerReward:   58.0,
+					},
+					{
+						GameCategoryName: "电竞",
+						ReferrerReward:   50.0,
+					},
+				},
+			},
+			{
+				Date:          "2024-04-05",
+				TotalReward:   245.0,
+				ClaimedReward: 125.0,
+				RewardRecords: []RewardRecord{
+					{
+						GameCategoryName: "Slots",
+						ReferrerReward:   245.0,
+					},
+				},
+			},
+		}
+
+		data = map[string]any{
+			"reward_records_day": rewardRecordsDay,
+		}
+	} else {
+		data = map[string]any{
 			"reward_records": serializer.BuildReferralAllianceRewards(c, rewardRecords),
-		},
-		Msg: i18n.T("success"),
+		}
+	}
+
+	return serializer.Response{
+		Data: data,
+		Msg:  i18n.T("success"),
 	}, nil
 }
