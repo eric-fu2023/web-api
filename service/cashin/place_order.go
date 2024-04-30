@@ -19,14 +19,15 @@ type TopUpOrderService struct {
 }
 
 func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, err error) {
-	brand := c.MustGet(`_brand`).(int)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
-	method, err := model.CashMethod{}.GetByID(c, s.MethodID, brand)
+	method, err := model.CashMethod{}.GetByIDWithChannel(c, s.MethodID)
 	if err != nil {
 		return
 	}
+	channel := GetNextChannel(method.CashMethodChannel)
+	stats := channel.Stats
 
 	amountDecimal, err := decimal.NewFromString(s.Amount)
 	if err != nil {
@@ -84,14 +85,25 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		return
 	}
 	var transactionID string
-	switch method.Gateway {
+	switch channel.Gateway {
 	default:
 		err = errors.New("unsupported method")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	case "finpay":
-		config := method.GetFinpayConfig()
+		config := channel.GetFinpayConfig()
 		var data finpay.PaymentOrderRespData
+		defer func() {
+			result := "success"
+			if errors.Is(err, finpay.ErrorGateway) {
+				result = "gateway_failed"
+			}
+			if data.IsFailed() {
+				result = "failed"
+			}
+			_ = model.IncrementStats(stats, result)
+
+		}()
 
 		switch config.Type {
 		default:
