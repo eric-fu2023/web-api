@@ -17,7 +17,7 @@ func UsernameValidation(fl validator.FieldLevel) bool {
 
 	hasRestricted := false
 	for _, char := range str {
-		if (char < 'a' || 'z' < char) && (char < '0' || '9' < char) {
+		if (char < 'a' || 'z' < char) && (char < 'A' || 'Z' < char) && (char < '0' || '9' < char) {
 			hasRestricted = true
 			break
 		}
