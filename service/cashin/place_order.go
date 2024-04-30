@@ -1,7 +1,6 @@
 package cashin
 
 import (
-	"encoding/json"
 	"errors"
 	"web-api/model"
 	"web-api/serializer"
@@ -93,9 +92,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	case "finpay":
 		config := method.GetFinpayConfig()
 		var data finpay.PaymentOrderRespData
-		extraBytes := config.TypeExtra
-		extraMap := make(map[string]any)
-		json.Unmarshal(extraBytes, &extraMap)
+
 		switch config.Type {
 		default:
 			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username, config.TypeExtra)
@@ -157,7 +154,6 @@ func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64, meth
 	// 	}
 	// }
 
-	return
 }
 
 func processCashInMethod(m model.CashMethod) (err error) {
