@@ -58,10 +58,10 @@ func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r seria
 			ReferrerReward   float64 `json:"referrer_reward"`
 		}
 		type RewardRecordDay struct {
-			Date          string  `json:"date"`
-			TotalReward   float64 `json:"total_reward"`
-			ClaimedReward float64 `json:"claimed_reward"`
-			RewardRecords []RewardRecord
+			Date          string         `json:"date"`
+			TotalReward   float64        `json:"total_reward"`
+			ClaimedReward float64        `json:"claimed_reward"`
+			RewardRecords []RewardRecord `json:"reward_records"`
 		}
 
 		rewardRecordsDay := []RewardRecordDay{
@@ -90,7 +90,7 @@ func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r seria
 				ClaimedReward: 125.0,
 				RewardRecords: []RewardRecord{
 					{
-						GameCategoryName: "Slots",
+						GameCategoryName: "电竞",
 						ReferrerReward:   245.0,
 					},
 				},
