@@ -25,6 +25,7 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	brandId := c.MustGet("_brand").(int)
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
+	service.Code = strings.ToUpper(strings.TrimSpace(service.Code))
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("GetDeviceInfo error: %s", err.Error())
