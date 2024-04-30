@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"encoding/json"
 	"os"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -10,18 +11,21 @@ import (
 )
 
 type TopupOrder struct {
-	TopupOrderNo     string  `json:"topup_order_no"`
-	TopupOrderStatus string  `json:"topup_order_status"`
-	OrderNumber      string  `json:"order_number"`
-	TopupData        *string `json:"topup_data"`
-	TopupDataType    *string `json:"topup_data_type"`
-	RedirectUrl      string  `json:"redirect_url"`
-	Html             string  `json:"html"`
-	WalletAddress    string  `json:"wallet_address"`
+	TopupOrderNo     string          `json:"topup_order_no"`
+	TopupOrderStatus string          `json:"topup_order_status"`
+	OrderNumber      string          `json:"order_number"`
+	TopupData        *string         `json:"topup_data"`
+	TopupDataType    *string         `json:"topup_data_type"`
+	RedirectUrl      string          `json:"redirect_url"`
+	Html             string          `json:"html"`
+	WalletAddress    string          `json:"wallet_address"`
+	BankCardInfo     json.RawMessage `json:"bank_card_info"`
 }
 
 func BuildPaymentOrder(p finpay.PaymentOrderRespData) TopupOrder {
 	d := p.GetUrl()
+	b := p.GetBankInfo()
+	bytes, _ := json.Marshal(b)
 	return TopupOrder{
 		TopupOrderNo:     p.PaymentOrderNo,
 		TopupOrderStatus: p.PaymentOrderStatus,
@@ -31,6 +35,7 @@ func BuildPaymentOrder(p finpay.PaymentOrderRespData) TopupOrder {
 		RedirectUrl:      os.Getenv("FINPAY_REDIRECT_URL"),
 		Html:             p.GetHtml(),
 		WalletAddress:    p.GetWallet(),
+		BankCardInfo:     json.RawMessage(bytes),
 	}
 }
 
