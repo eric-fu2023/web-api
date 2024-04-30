@@ -134,7 +134,8 @@ func (service *GameCategoryListService) List(c *gin.Context) (r serializer.Respo
 		var gameId int64
 		if len(cat.GameVendorBrand) > 0 {
 			for _, v := range cat.GameVendorBrand {
-				model.DB.Model(ploutos.SubGameC{}).Select("id").Where("vendor_id = ?", v.GameVendorId).Where("game_code = ? OR (game_code = ? AND vendor_id = 11)", "lobby", "200").Find(&gameId)
+				// temporary hardcode, will change later
+				model.DB.Model(ploutos.SubGameC{}).Select("id").Where("vendor_id = ?", v.GameVendorId).Where("game_code = ? OR (game_code = ? AND vendor_id = 11) OR (game_code = ? AND vendor_id = 12) OR (game_code = ? AND vendor_id = 13)", "lobby", "200", "8", "0").Find(&gameId)
 				subGameIds = append(subGameIds, gameId)
 			}
 		}
