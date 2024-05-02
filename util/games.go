@@ -2,6 +2,7 @@ package util
 
 import (
 	"os"
+
 	"web-api/conf/consts"
 
 	gameservicecommon "blgit.rfdev.tech/taya/game-service/common"
@@ -85,9 +86,9 @@ func InitUgsFactory() {
 }
 
 func InitImOneFactory() {
-	baseUrl := os.Getenv("GAME_IMONE_BASE_URL")                // baseUrl
-	merchantCode := os.Getenv("GAME_IMONE_BASE_MERCHANT_CODE") // merchantCode
-	prefix := os.Getenv("GAME_IMONE_BASE_PLAYER_PREFIX")       // merchantCode
+	baseUrl := os.Getenv("GAME_IMONE_BASE_URL")
+	merchantCode := os.Getenv("GAME_IMONE_MERCHANT_CODE")
+	prefix := os.Getenv("GAME_IMONE_PLAYER_PREFIX")
 
 	ImOneFactory = imone.NewFactory(baseUrl, merchantCode, imone.NewDefaultPlayer(prefix))
 }

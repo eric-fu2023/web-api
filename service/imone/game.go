@@ -17,5 +17,5 @@ func (c *ImOne) GetGameUrl(user model.User, _, gameCode, subGameCode string, _ i
 	productWalletCode := tayaGameCodeToImOneWalletCodeMapping[gameCode]
 
 	client := util.ImOneFactory()
-	return client.NewLaunchMobileGame(subGameCode, extra.Locale, extra.Ip, productWalletCode, "")
+	return client.NewLaunchMobileGame(subGameCode, extra.Locale, extra.Ip, productWalletCode, "", user.IdAsString())
 }
