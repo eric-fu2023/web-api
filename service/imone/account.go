@@ -2,6 +2,7 @@ package imone
 
 import (
 	"errors"
+	"log"
 
 	"web-api/model"
 	"web-api/util"
@@ -23,11 +24,15 @@ func (c *ImOne) CreateUser(user model.User, currency string) error {
 }
 
 func (c *ImOne) CreateWallet(user model.User, currency string) error {
+	log.Printf("CreateWallet User: %+v\n", user)
 	return c.createImOneUserAndDbWallet(user, currency)
 }
 
+const defaultPassword = "qq123456"
+
 func (c *ImOne) createImOneUserAndDbWallet(user model.User, currency string) error {
-	err := util.ImOneFactory().CreateUser(user.IdAsString(), currency, user.Password, "")
+	// FIXME password to be derived from user instead of default value
+	err := util.ImOneFactory().CreateUser(user.IdAsString(), currency, defaultPassword, "")
 	if err != nil {
 		return err
 	}
