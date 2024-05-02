@@ -15,6 +15,7 @@ const (
 	UserAchievementIdFirstDepositBonusReward   int64 = 4
 	UserAchievementIdUpdateBirthday            int64 = 5
 	UserAchievementIdSetBirthday               int64 = 6
+	UserAchievementIdReferralAllianceTutorial  int64 = 7
 )
 
 var (

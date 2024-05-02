@@ -14,6 +14,7 @@ var (
 	isAchievementWhitelisted = map[int64]bool{
 		model.UserAchievementIdFirstAppLoginTutorial:     true,
 		model.UserAchievementIdFirstDepositBonusTutorial: true,
+		model.UserAchievementIdReferralAllianceTutorial:  true,
 	}
 )
 
