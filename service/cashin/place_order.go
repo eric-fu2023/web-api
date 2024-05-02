@@ -2,8 +2,10 @@ package cashin
 
 import (
 	"errors"
+	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/exchange"
 	"web-api/util"
 	"web-api/util/i18n"
 
@@ -68,6 +70,12 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	// 	r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("kyc_get_failed"), err)
 	// 	return
 	// }
+	var exchangeClient exchange.OkxClient
+	er, err := exchangeClient.GetExchangeRate(c, method.Currency, conf.GetCfg().DefaultCurrency)
+	if err != nil {
+		r = serializer.EnsureErr(c, err, r)
+		return
+	}
 	var userSum model.UserSum
 	userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
 	if err != nil {
@@ -79,7 +87,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		amount,
 		userSum.Balance,
 		GetWagerFromAmount(amount, DefaultWager),
-		c.ClientIP())
+		c.ClientIP(), method.Currency, er.ExchangeRate, er.AdjustedExchangeRate)
 	if err = model.DB.Debug().WithContext(c).Create(&cashOrder).Error; err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
@@ -104,17 +112,17 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 			_ = model.IncrementStats(stats, result)
 
 		}()
-
+		cashinAmount := int64(float64(cashOrder.AppliedCashInAmount) * er.AdjustedExchangeRate)
 		switch config.Type {
 		default:
-			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username, config.TypeExtra)
+			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username, config.TypeExtra)
 			if err != nil {
 				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 				return
 			}
 		case "TRC20":
-			data, err = finpay.FinpayClient{}.PlaceDefaultCoinPalOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, user.Username)
+			data, err = finpay.FinpayClient{}.PlaceDefaultCoinPalOrderV1(c, cashinAmount, 1, cashOrder.ID, user.Username)
 			if err != nil {
 				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)

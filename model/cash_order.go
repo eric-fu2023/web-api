@@ -15,7 +15,7 @@ type CashOrder struct {
 	ploutos.CashOrder
 }
 
-func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, ip string) CashOrder {
+func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) CashOrder {
 	return CashOrder{
 		ploutos.CashOrder{
 			ID:                  ploutos.GenerateCashInOrderNo(),
@@ -27,7 +27,10 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 			BalanceBefore:       balanceBefore,
 			WagerChange:         wagerChange,
 			//Notes:, update later
-			Ip: ip,
+			CurrencyCode:         currency,
+			ExchangeRate:         exchangerRate,
+			ExchangeRateAdjusted: exchangerRateAdjusted,
+			Ip:                   ip,
 		},
 	}
 }

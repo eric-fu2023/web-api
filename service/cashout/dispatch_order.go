@@ -2,7 +2,9 @@ package cashout
 
 import (
 	"errors"
+	"web-api/conf"
 	"web-api/model"
+	"web-api/service/exchange"
 	"web-api/util"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
@@ -23,16 +25,22 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 	if err != nil {
 		return
 	}
+	var exchangeClient exchange.OkxClient
+	er, err := exchangeClient.GetExchangeRate(c, conf.GetCfg().DefaultCurrency, method.Currency)
+	if err != nil {
+		return
+	}
 	switch method.Gateway {
 	case "finpay":
 		config := method.GetFinpayConfig()
 		var data finpay.TransferOrderResponse
+		cashoutAmount := int64(float64(updatedCashOrder.AppliedCashOutAmount) * er.AdjustedExchangeRate)
 		switch config.Type {
 		case "BANK_CARD":
 			bankInfo := accountBinding.GetBankInfo()
-			data, err = finpay.FinpayClient{}.DefaultBankCardCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, method.Currency, string(accountBinding.AccountNumber), string(accountBinding.AccountName), bankInfo.BankBranchName, bankInfo.BankCode, bankInfo.BankName, user.Username)
+			data, err = finpay.FinpayClient{}.DefaultBankCardCashOutV1(c, cashoutAmount, updatedCashOrder.ID, method.Currency, string(accountBinding.AccountNumber), string(accountBinding.AccountName), bankInfo.BankBranchName, bankInfo.BankCode, bankInfo.BankName, user.Username)
 		case "TRC20":
-			data, err = finpay.FinpayClient{}.DefaultTRC20CashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, string(accountBinding.AccountNumber), string(accountBinding.AccountName), user.Username)
+			data, err = finpay.FinpayClient{}.DefaultTRC20CashOutV1(c, cashoutAmount, updatedCashOrder.ID, string(accountBinding.AccountNumber), string(accountBinding.AccountName), user.Username)
 			// default:
 			// 	data, err = finpay.FinpayClient{}.DefaultCashOutV1(c, updatedCashOrder.AppliedCashOutAmount, updatedCashOrder.ID, updatedCashOrder.Account, updatedCashOrder.AccountName, config.IfCode, config.BankName, config.Type)
 		}
