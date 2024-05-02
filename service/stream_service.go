@@ -84,7 +84,7 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 	if err = q.Find(&streams).Error; err != nil {
 		return
 	}
-	if service.Page.Page == 1 {
+	if service.Page.Page == 1 && service.Category == "" {
 		var selectedStreams []ploutos.LiveStream
 		err = model.DB.Model(ploutos.LiveStream{}).Preload(`Streamer`).Preload(`Streamer.UserAgoraInfo`).
 			Where(`stream_source`, []int64{888}).Where(`status`, 2).Find(&selectedStreams).Error
@@ -92,11 +92,14 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 			return
 		}
 		if len(selectedStreams) > 0 {
-			//index := len(streams) - 1
+			ind := len(streams) - 1
+			if len(streams) > 4 {
+				ind = 3
+			}
 			var subStreams []ploutos.LiveStream
-			subStreams = append(subStreams, streams[:3]...)
+			subStreams = append(subStreams, streams[:ind]...)
 			subStreams = append(subStreams, selectedStreams...)
-			subStreams = append(subStreams, streams[3:]...)
+			subStreams = append(subStreams, streams[ind:]...)
 			streams = subStreams
 		}
 	}
