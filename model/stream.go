@@ -21,6 +21,15 @@ func StreamsOnlineSorted(categoryOrder string, categoryTypeOrder string, include
 	}
 }
 
+func ExcludeStreamSource(streamerSources []int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if len(streamerSources) > 0 {
+			db = db.Where(`stream_source NOT IN ?`, streamerSources)
+		}
+		return db
+	}
+}
+
 func ExcludeStreamers(streamerIds []int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		if len(streamerIds) > 0 {

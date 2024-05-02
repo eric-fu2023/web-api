@@ -19,6 +19,7 @@ type UserRegisterService struct {
 	Password   string `form:"password" json:"password" binding:"required,password"`
 	CurrencyId int64  `form:"currency_id" json:"currency_id" binding:"required"`
 	Code       string `form:"code" json:"code"`
+	Channel    string `form:"channel" json:"channel"`
 }
 
 func (service *UserRegisterService) Register(c *gin.Context) serializer.Response {
@@ -57,6 +58,7 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 			RegistrationIp:          c.ClientIP(),
 			RegistrationDeviceUuid:  deviceInfo.Uuid,
 			ReferralWagerMultiplier: 1,
+			Channel:                 service.Channel,
 		},
 	}
 	genNickname(&user)

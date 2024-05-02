@@ -73,6 +73,7 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 	q := model.DB.Scopes(
 		model.StreamsOnlineSorted(categoryOrder, categoryTypeOrder, service.IncludeUpcoming),
 		model.ExcludeStreamers(service.ExcludedStreamerIds),
+		model.ExcludeStreamSource([]int64{888}),
 		model.Paginate(service.Page.Page, service.Limit),
 		model.StreamsABStreamSource(isA)).
 		Preload(`Streamer`).
@@ -82,6 +83,22 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 	}
 	if err = q.Find(&streams).Error; err != nil {
 		return
+	}
+	if service.Page.Page == 1 {
+		var selectedStreams []ploutos.LiveStream
+		err = model.DB.Model(ploutos.LiveStream{}).Preload(`Streamer`).Preload(`Streamer.UserAgoraInfo`).
+			Where(`stream_source`, []int64{888}).Where(`status`, 2).Find(&selectedStreams).Error
+		if err != nil {
+			return
+		}
+		if len(selectedStreams) > 0 {
+			//index := len(streams) - 1
+			var subStreams []ploutos.LiveStream
+			subStreams = append(subStreams, streams[:3]...)
+			subStreams = append(subStreams, selectedStreams...)
+			subStreams = append(subStreams, streams[3:]...)
+			streams = subStreams
+		}
 	}
 	for _, stream := range streams {
 		r = append(r, serializer.BuildStream(c, stream))
