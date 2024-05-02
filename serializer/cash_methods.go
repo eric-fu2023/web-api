@@ -6,16 +6,18 @@ import (
 )
 
 type CashMethod struct {
-	ID             int64  `json:"id"`
-	Name           string `json:"name"`
-	IconURL        string `json:"icon_url"`
-	MethodType     string `json:"method_type"`
-	BaseURL        string `json:"base_url"`
-	CallbackURL    string `json:"callback_url"`
-	AccountType    string `json:"account_type"`
-	MinAmount      int64  `json:"min_amount"`
-	MaxAmount      int64  `json:"max_amount"`
-	DefaultOptions []int  `json:"default_options"`
+	ID                  int64  `json:"id"`
+	Name                string `json:"name"`
+	IconURL             string `json:"icon_url"`
+	MethodType          string `json:"method_type"`
+	BaseURL             string `json:"base_url"`
+	CallbackURL         string `json:"callback_url"`
+	AccountType         string `json:"account_type"`
+	MinAmount           int64  `json:"min_amount"`
+	MaxAmount           int64  `json:"max_amount"`
+	DefaultOptions      []int  `json:"default_options"`
+	Currency            string `json:"currency"`
+	AccountNameRequired bool   `json:"account_name_required"`
 }
 
 func BuildCashMethod(a model.CashMethod) CashMethod {
@@ -36,5 +38,7 @@ func BuildCashMethod(a model.CashMethod) CashMethod {
 		DefaultOptions: util.MapSlice(a.DefaultOptions, func(a int32) int {
 			return int(a) / 100
 		}),
+		Currency:            a.Currency,
+		AccountNameRequired: a.Currency == "CNY",
 	}
 }
