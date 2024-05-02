@@ -20,6 +20,8 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 	if err != nil {
 		return
 	}
+	channel := model.GetNextChannel(method.CashMethodChannel)
+	stats := channel.Stats
 	err = processCashOutMethod(method)
 	if err != nil {
 		return
@@ -29,10 +31,21 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 	if err != nil {
 		return
 	}
-	switch method.Gateway {
+	switch channel.Gateway {
 	case "finpay":
-		config := method.GetFinpayConfig()
+		config := channel.GetFinpayConfig()
 		var data finpay.TransferOrderResponse
+		defer func() {
+			result := "success"
+			if errors.Is(err, finpay.ErrorGateway) {
+				result = "gateway_failed"
+			}
+			if data.IsFailed() {
+				result = "failed"
+			}
+			_ = model.IncrementStats(stats, result)
+
+		}()
 		cashoutAmount := int64(float64(updatedCashOrder.AppliedCashOutAmount) * er.AdjustedExchangeRate)
 		switch config.Type {
 		case "BANK_CARD":

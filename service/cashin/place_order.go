@@ -29,7 +29,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	if err != nil {
 		return
 	}
-	channel := GetNextChannel(method.CashMethodChannel)
+	channel := model.GetNextChannel(method.CashMethodChannel)
 	stats := channel.Stats
 
 	amountDecimal, err := decimal.NewFromString(s.Amount)
