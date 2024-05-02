@@ -8,7 +8,7 @@ import (
 
 func CalculateSortFactor() {
 	var streams []ploutos.LiveStream
-	if e := model.DB.Model(ploutos.LiveStream{}).Scopes(model.StreamsOnline).Preload(`Streamer`).Find(&streams).Error; e != nil {
+	if e := model.DB.Model(ploutos.LiveStream{}).Scopes(model.StreamsOnline(false)).Preload(`Streamer`).Find(&streams).Error; e != nil {
 		util.Log().Error("sort factor calculation error: ", e)
 		return
 	}

@@ -48,7 +48,7 @@ func (service *ProfileUpdateService) Update(c *gin.Context) serializer.Response 
 func (service *ProfileUpdateService) validate(c *gin.Context, user model.User) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
-	if service.Birthday != "" {
+	if service.Birthday != "" && service.Birthday != user.Birthday {
 		_, err := time.Parse(time.DateOnly, service.Birthday)
 		if err != nil {
 			return serializer.ParamErr(c, service, fmt.Sprintf(i18n.T("kyc_invalid_birthday"), service.Birthday), err)
@@ -84,13 +84,18 @@ func (service *ProfileUpdateService) updateUser(user *model.User) (err error) {
 			user.Nickname = service.Nickname
 		}
 
-		if service.Birthday != "" {
-			if user.Birthday != "" { // if user has updated birthday before
-				err := model.CreateUserAchievementWithDB(tx, user.ID, model.UserAchievementIdUpdateBirthday)
-				if err != nil {
-					return fmt.Errorf("create birthday achievement: %w", err)
-				}
+		// Need to record when the user sets and updates the birthday
+		if service.Birthday != "" && service.Birthday != user.Birthday {
+			birthdayAchievementId := model.UserAchievementIdSetBirthday
+			if user.Birthday != "" {
+				birthdayAchievementId = model.UserAchievementIdUpdateBirthday
 			}
+
+			err := model.CreateUserAchievementWithDB(tx, user.ID, birthdayAchievementId)
+			if err != nil {
+				return fmt.Errorf("create birthday achievement: %w", err)
+			}
+
 			user.Birthday = service.Birthday
 		}
 

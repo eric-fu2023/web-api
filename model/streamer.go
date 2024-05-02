@@ -12,10 +12,12 @@ type Streamer struct {
 	UserTags []ploutos.UserTag `gorm:"many2many:user_tag_conns;foreignKey:ID;joinForeignKey:UserId;References:ID;joinReferences:UserTagId"`
 }
 
-func StreamerWithLiveStream(db *gorm.DB) *gorm.DB {
-	return db.Where(`users.role`, consts.UserRole["streamer"]).Where(`users.enable`, 1).Preload(`LiveStreams`, func(db *gorm.DB) *gorm.DB {
-		return db.Scopes(StreamsOnline)
-	}).Preload(`LiveStreams.Match`)
+func StreamerWithLiveStream(includeUpcoming bool) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(`users.role`, consts.UserRole["streamer"]).Where(`users.enable`, 1).Preload(`LiveStreams`, func(db *gorm.DB) *gorm.DB {
+			return db.Scopes(StreamsOnline(includeUpcoming))
+		}).Preload(`LiveStreams.Match`)
+	}
 }
 
 func StreamerWithGallery(db *gorm.DB) *gorm.DB {

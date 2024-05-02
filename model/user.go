@@ -1,18 +1,21 @@
 package model
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"math"
 	"os"
 	"strconv"
 	"time"
+
 	"web-api/util"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -31,6 +34,10 @@ const (
 	Inactive     string = "inactive"
 	Suspend      string = "suspend"
 )
+
+func (user *User) IdAsString() string {
+	return strconv.FormatInt(user.ID, 10)
+}
 
 func (user *User) GenToken() (tokenString string, err error) {
 	days, _ := strconv.Atoi(os.Getenv("TOKEN_EXPIRED_DAYS"))

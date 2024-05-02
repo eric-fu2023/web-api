@@ -8,6 +8,7 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/plugin/dbresolver"
 )
 
@@ -35,13 +36,13 @@ import (
 func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes string, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
 	var newCashOrderState model.CashOrder
 	err = txDB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
-		newCashOrderState, err = model.CashOrder{}.GetPendingWithLockWithDB(orderNumber, tx)
+		newCashOrderState, err = model.CashOrder{}.GetPendingOrPeApWithLockWithDB(orderNumber, tx)
 		if err != nil {
 			return
 		}
 		newCashOrderState.ActualCashInAmount = actualAmount
 		newCashOrderState.BonusCashInAmount = bonusAmount
-		newCashOrderState.EffectiveCashInAmount = actualAmount + bonusAmount
+		newCashOrderState.EffectiveCashInAmount = newCashOrderState.AppliedCashInAmount + bonusAmount
 		newCashOrderState.Notes = models.EncryptedStr(notes)
 		newCashOrderState.WagerChange += additionalWagerChange
 		newCashOrderState.Status = 2
@@ -60,7 +61,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
 	// update cash order
 
-	err = txDB.Updates(newCashOrderState).Error
+	err = txDB.Omit(clause.Associations).Updates(newCashOrderState).Error
 	// modify user sum
 	if err != nil {
 		return

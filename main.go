@@ -2,20 +2,22 @@ package main
 
 import (
 	"context"
-	"github.com/gin-contrib/pprof"
-	"github.com/robfig/cron/v3"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
 	"web-api/conf"
 	"web-api/model"
 	"web-api/server"
 	"web-api/task"
 	websocketTask "web-api/task/websocket"
 	"web-api/websocket"
+
+	"github.com/gin-contrib/pprof"
+	"github.com/robfig/cron/v3"
 )
 
 var runTask bool
@@ -42,6 +44,7 @@ func main() {
 		go task.ProcessTayaSyncTransaction()
 		go task.ProcessSabaSettle()
 		go task.ProcessImUpdateBalance()
+		go task.ConsumeMgStreams()
 		if os.Getenv("MQTT_ADDRESS") != "" { // mqtt tasks
 			go task.UpdateOnlineStatus()
 			go task.UpdateUnsubscribed()
@@ -64,7 +67,8 @@ func main() {
 		c.Start()
 		select {}
 	} else {
-		//task.CreateUserWallet([]int64{8, 9}, "USD") // to create wallets when a new game vendor is added
+		//task.CreateUserWallet([]int64{8, 9}, 1) // to create wallets when a new game vendor is added
+		// task.CreateUserWalletForUser([]int64{10}, "INR", 2233) // to create wallets when a new game vendor is added
 		//task.EncryptMobileAndEmail()
 		r := server.NewRouter()
 		pprof.Register(r)

@@ -25,7 +25,7 @@ type PromotionClaim struct {
 }
 
 func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error) {
-	now := time.Now()
+	now := time.Now().UTC()
 	brand := c.MustGet(`_brand`).(int)
 	user := c.MustGet("user").(model.User)
 	deviceInfo, _ := util.GetDeviceInfo(c)
@@ -43,13 +43,13 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
-	voucher, err := Claim(c, now, promotion, session, user)
+	voucher, err := Claim(c, now, promotion, session, user.ID)
 	if err != nil {
 		switch err.Error() {
 		case "double_claim":
-			r = serializer.Err(c, p, serializer.CodeGeneralError, "Already Claimed", err)
+			r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("double_claim"), err)
 		case "unavailable_for_now":
-			r = serializer.Err(c, p, serializer.CodeGeneralError, "Unavailable for now", err)
+			r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("unavailable_for_now"), err)
 		case "nothing_to_claim":
 			r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("nothing_to_claim"), err)
 		default:
@@ -61,8 +61,8 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 	return
 }
 
-func Claim(c context.Context, now time.Time, promotion models.Promotion, session models.PromotionSession, user model.User) (voucher models.Voucher, err error) {
-	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userPromotionSessionClaimKey, user.ID, session.ID), redsync.WithExpiry(5*time.Second))
+func Claim(c context.Context, now time.Time, promotion models.Promotion, session models.PromotionSession, userID int64) (voucher models.Voucher, err error) {
+	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userPromotionSessionClaimKey, userID, session.ID), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()
 	defer mutex.Unlock()
 	var (
@@ -71,7 +71,7 @@ func Claim(c context.Context, now time.Time, promotion models.Promotion, session
 		claimStatus serializer.ClaimStatus
 		template    models.VoucherTemplate
 	)
-	claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
+	claimStatus = ClaimStatusByType(c, promotion, session, userID, now)
 	if claimStatus.HasClaimed {
 		err = errors.New("double_claim")
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "Already Claimed", err)
@@ -82,8 +82,8 @@ func Claim(c context.Context, now time.Time, promotion models.Promotion, session
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "Unavailable for now", err)
 		return
 	}
-	progress = ProgressByType(c, promotion, session, user.ID, now)
-	reward = promotion.GetRewardDetails().GetReward(progress)
+	progress = ProgressByType(c, promotion, session, userID, now)
+	reward = RewardByType(c, promotion, session, userID, progress, now)
 	template, err = model.VoucherTemplateGetByPromotion(c, promotion.ID)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -94,7 +94,7 @@ func Claim(c context.Context, now time.Time, promotion models.Promotion, session
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("nothing_to_claim"), err)
 		return
 	}
-	voucher, err = ClaimVoucherByType(c, promotion, session, template, reward, user.ID, now)
+	voucher, err = ClaimVoucherByType(c, promotion, session, template, userID, reward, now)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return

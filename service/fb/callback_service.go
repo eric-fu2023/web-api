@@ -91,12 +91,20 @@ func (c *Callback) IsAdjustment() bool {
 }
 
 func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExists bool) (err error) {
-	if c.Transaction.RelatedId == "" {
-		return
-	}
 	if c.Transaction.TransferType != "WIN" || !betExists || betAmount <= c.Transaction.Amount {
 		return
 	}
+
+	var fbTx ploutos.FbTransaction
+	err = model.DB.Clauses(dbresolver.Use("txConn")).Where(`business_id`, c.Transaction.BusinessId).Where(`transfer_type`, `BET`).
+		Order(`id`).First(&fbTx).Error
+	if err != nil {
+		return
+	}
+	if fbTx.RelatedId == "" {
+		return
+	}
+
 	err = model.DB.Clauses(dbresolver.Use("txConn")).Transaction(func(tx *gorm.DB) (err error) {
 		voucherId, err := strconv.ParseInt(c.Transaction.RelatedId, 10, 64)
 		if err != nil {
@@ -144,7 +152,8 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 		if loss < rewardAmount {
 			rewardAmount = loss
 		}
-		err = promotion.CreateCashOrder(tx, voucher, voucher.PromotionType, userId, rewardAmount)
+		wagerChange := voucher.WagerMultiplier * rewardAmount
+		err = promotion.CreateCashOrder(tx, voucher.PromotionType, userId, rewardAmount, wagerChange, "")
 		if err != nil {
 			return
 		}

@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"encoding/json"
 	"os"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -10,17 +11,21 @@ import (
 )
 
 type TopupOrder struct {
-	TopupOrderNo     string  `json:"topup_order_no"`
-	TopupOrderStatus string  `json:"topup_order_status"`
-	OrderNumber      string  `json:"order_number"`
-	TopupData        *string `json:"topup_data"`
-	TopupDataType    *string `json:"topup_data_type"`
-	RedirectUrl      string  `json:"redirect_url"`
-	Html             string  `json:"html"`
+	TopupOrderNo     string          `json:"topup_order_no"`
+	TopupOrderStatus string          `json:"topup_order_status"`
+	OrderNumber      string          `json:"order_number"`
+	TopupData        *string         `json:"topup_data"`
+	TopupDataType    *string         `json:"topup_data_type"`
+	RedirectUrl      string          `json:"redirect_url"`
+	Html             string          `json:"html"`
+	WalletAddress    string          `json:"wallet_address"`
+	BankCardInfo     json.RawMessage `json:"bank_card_info"`
 }
 
 func BuildPaymentOrder(p finpay.PaymentOrderRespData) TopupOrder {
 	d := p.GetUrl()
+	b := p.GetBankInfo()
+	bytes, _ := json.Marshal(b)
 	return TopupOrder{
 		TopupOrderNo:     p.PaymentOrderNo,
 		TopupOrderStatus: p.PaymentOrderStatus,
@@ -29,6 +34,8 @@ func BuildPaymentOrder(p finpay.PaymentOrderRespData) TopupOrder {
 		TopupDataType:    &p.PaymentDataType,
 		RedirectUrl:      os.Getenv("FINPAY_REDIRECT_URL"),
 		Html:             p.GetHtml(),
+		WalletAddress:    p.GetWallet(),
+		BankCardInfo:     json.RawMessage(bytes),
 	}
 }
 
@@ -51,12 +58,12 @@ func BuildWithdrawOrder(p model.CashOrder) WithdrawOrder {
 }
 
 type GenericCashOrder struct {
-	OrderNo         string `json:"order_no"`
-	OrderStatus     string `json:"order_status"`
-	CreatedAt       int64  `json:"created_at"`
-	Amount          int64  `json:"amount"`
-	EffectiveAmount int64  `json:"effective_amount"`
-	OrderType       string `json:"order_type"`
+	OrderNo         string  `json:"order_no"`
+	OrderStatus     string  `json:"order_status"`
+	CreatedAt       int64   `json:"created_at"`
+	Amount          float64 `json:"amount"`
+	EffectiveAmount float64 `json:"effective_amount"`
+	OrderType       string  `json:"order_type"`
 	// Currency    string    `json:"currency"`
 	TypeDetail string  `json:"type_detail"`
 	Wager      float64 `json:"wager"`
@@ -66,7 +73,10 @@ func BuildGenericCashOrder(p model.CashOrder, i18n i18n.I18n) GenericCashOrder {
 	amount := p.AppliedCashInAmount
 	effectiveAmount := p.EffectiveCashInAmount
 	orderType := consts.OrderTypeMap[p.OrderType]
-	detail := i18n.T(consts.OrderTypeDetailMap[p.OrderType])
+	detail := i18n.T(consts.OrderOperationTypeDetailMap[p.OperationType])
+	if p.OperationType == 0 {
+		detail = i18n.T(consts.OrderTypeDetailMap[p.OrderType])
+	}
 	if p.OrderType < 0 {
 		amount = p.AppliedCashOutAmount
 		effectiveAmount = p.EffectiveCashOutAmount
@@ -76,8 +86,8 @@ func BuildGenericCashOrder(p model.CashOrder, i18n i18n.I18n) GenericCashOrder {
 		OrderNo:         p.ID,
 		OrderStatus:     consts.CashOrderStatus[p.Status],
 		CreatedAt:       p.CreatedAt.Unix(),
-		Amount:          amount / 100,
-		EffectiveAmount: effectiveAmount / 100,
+		Amount:          float64(amount) / 100,
+		EffectiveAmount: float64(effectiveAmount) / 100,
 		OrderType:       orderType,
 		TypeDetail:      detail,
 		Wager:           float64(p.WagerChange) / 100,

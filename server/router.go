@@ -130,6 +130,8 @@ func NewRouter() *gin.Engine {
 		internal.POST("/withdraw-order/reject", middleware.RequestLogger("internal"), internal_api.RejectWithdrawal)
 		internal.POST("/withdraw-order/approve", middleware.RequestLogger("internal"), internal_api.ApproveWithdrawal)
 		internal.POST("/withdraw-order/insert", middleware.RequestLogger("internal"), internal_api.CustomOrder)
+		internal.PUT("/recall", middleware.RequestLogger("internal"), api.InternalRecallFund)
+		internal.POST("/promotions/batch-claim", middleware.RequestLogger("internal"), internal_api.InternalPromotion)
 	}
 
 	// middlewares order can't be changed
@@ -180,6 +182,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/stream_game", stream_game_api.StreamGame)
 		v1.GET("/stream_games", middleware.Cache(10*time.Minute, false), stream_game_api.StreamGameList)
 		v1.GET("/game_categories", middleware.Cache(5*time.Minute, false), game_integration_api.GameCategoryList)
+		v1.GET("/sub_games", middleware.Cache(5*time.Minute, false), game_integration_api.SubGames)
 
 		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute, false), promotion_api.GetCoverList)
 		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
@@ -267,7 +270,7 @@ func NewRouter() *gin.Engine {
 				user.POST("/feedback", api.FeedbackAdd)
 
 				user.GET("/vip-status", api.VipGet)
-				user.GET("/vip-rebate-details", api.VipLoadRebateRule)
+				user.GET("/vip-rebate-details", middleware.Cache(5*time.Minute, false), api.VipLoadRebateRule)
 
 				taya := user.Group("/taya")
 				{

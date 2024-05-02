@@ -1,15 +1,12 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"gorm.io/plugin/dbresolver"
 	"os"
 	"strings"
 	"time"
+
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -17,10 +14,17 @@ import (
 	"web-api/service/dc"
 	"web-api/service/dollar_jackpot"
 	"web-api/service/fb"
+	"web-api/service/imone"
 	"web-api/service/imsb"
 	"web-api/service/saba"
 	"web-api/service/stream_game"
 	"web-api/service/taya"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 var (
@@ -33,6 +37,8 @@ var (
 		"imsb":           &imsb.UserRegister{},
 		"dollar_jackpot": &dollar_jackpot.UserRegister{},
 		"stream_game":    &stream_game.UserRegister{},
+		"impt":           &imone.ImOne{},
+		"imslot":         &imone.ImOne{},
 	}
 )
 

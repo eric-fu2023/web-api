@@ -14,6 +14,11 @@ var (
 		2:  OrderTypeTopup,
 		3:  OrderTypeTopup,
 		4:  OrderTypeTopup,
+		5:  OrderTypeTopup,
+		6:  OrderTypeTopup,
+		7:  OrderTypeTopup,
+		8:  OrderTypeTopup,
+		9:  OrderTypeTopup,
 	}
 	OrderTypeDetailMap = map[int64]string{
 		-1: OrderTypeWithdraw,
@@ -21,7 +26,31 @@ var (
 		2:  OrderTypeDepositBonus,
 		3:  OrderTypeBetInsurance,
 		4:  OrderTypeBeginnerBonus,
+		5:  OrderTypeVipBday,
+		6:  OrderTypeVipPromo,
+		7:  OrderTypeVipWeekly,
+		8:  OrderTypeVipRebate,
+		9:  OrderTypeVipReferral,
 	}
+	OrderOperationTypeDetailMap = map[int64]string{
+		1000: OrderOperationTypeSystemAdjust,
+		2000: OrderOperationTypeGameAdjust,
+		3000: OrderOperationTypeCashInAdjust,
+		4000: OrderOperationTypeBonus,
+		4001: OrderOperationTypeVipUpgrade,
+		4002: OrderOperationTypeWeeklyBonus,
+		4003: OrderOperationTypeBirthdayBonus,
+		4004: OrderOperationTypeAgentBonus,
+		4005: OrderOperationTypePromoteBonus,
+		4006: OrderOperationTypeDepositBonus,
+		4007: OrderOperationTypeEventBonus,
+		4008: OrderOperationTypeReset,
+		4009: OrderOperationTypeReferralBonus,
+		4010: OrderOperationTypeCashOutBonus,
+		5000: OrderOperationTypeMakeUpOrder,
+		6000: OrderOperationTypeWithdrawalReversal,
+	}
+
 	Platform = map[string]int64{
 		"pc":      1,
 		"h5":      2,
@@ -46,6 +75,12 @@ var (
 		3: "mobile",
 		4: "mobile",
 	}
+	PlatformIdToGameVendorColumn = map[int64]string{
+		1: "web",
+		2: "h5",
+		3: "android",
+		4: "ios",
+	}
 	GameVendor = map[string]int64{
 		"fb":             1,
 		"saba":           2,
@@ -54,6 +89,8 @@ var (
 		"imsb":           5,
 		"dollar_jackpot": 6,
 		"stream_game":    7,
+		"imslot":         11,
+		"impt":           10,
 	}
 	WebSocketMessageType = map[string]int64{
 		"text":       1,
@@ -393,16 +430,37 @@ var (
 )
 
 const (
-	CorrelationHeader             = "X-Correlation-ID"
-	LogKey                        = "logger"
-	CorrelationKey                = "correlation_id"
-	StdTimeFormat                 = "2006-01-02 15:04:05"
-	OrderTypeTopup                = "top-up"
-	OrderTypeWithdraw             = "withdraw"
-	OrderTypeDepositBonus         = "deposit_bonus"
-	OrderTypeBetInsurance         = "bet_insurance"
-	OrderTypeBeginnerBonus        = "beginner_reward"
-	ConfigKeyTopupKycCheck string = "kyc_check_required"
+	CorrelationHeader                           = "X-Correlation-ID"
+	LogKey                                      = "logger"
+	CorrelationKey                              = "correlation_id"
+	StdTimeFormat                               = "2006-01-02 15:04:05"
+	OrderTypeTopup                              = "top-up"
+	OrderTypeWithdraw                           = "withdraw"
+	OrderTypeDepositBonus                       = "deposit_bonus"
+	OrderTypeBetInsurance                       = "bet_insurance"
+	OrderTypeBeginnerBonus                      = "beginner_reward"
+	ConfigKeyTopupKycCheck               string = "kyc_check_required"
+	OrderTypeVipBday                            = "vip_bday"
+	OrderTypeVipPromo                           = "vip_promo"
+	OrderTypeVipWeekly                          = "vip_weekly"
+	OrderTypeVipRebate                          = "vip_rebate"
+	OrderTypeVipReferral                        = "vip_referral"
+	OrderOperationTypeSystemAdjust              = "system_adjust"
+	OrderOperationTypeGameAdjust                = "game_adjust"
+	OrderOperationTypeCashInAdjust              = "cash_in_adjust"
+	OrderOperationTypeBonus                     = "bonus"
+	OrderOperationTypeVipUpgrade                = "vip_upgrade_bonus"
+	OrderOperationTypeWeeklyBonus               = "weekly_bonus"
+	OrderOperationTypeBirthdayBonus             = "birthday_bonus"
+	OrderOperationTypeAgentBonus                = "agent_bonus"
+	OrderOperationTypePromoteBonus              = "promote_bonus"
+	OrderOperationTypeDepositBonus              = "deposit_bonus"
+	OrderOperationTypeEventBonus                = "event_bonus"
+	OrderOperationTypeReset                     = "reset"
+	OrderOperationTypeReferralBonus             = "referral_bonus"
+	OrderOperationTypeCashOutBonus              = "cash_out_bonus"
+	OrderOperationTypeMakeUpOrder               = "make_up_order"
+	OrderOperationTypeWithdrawalReversal        = "withdrawal_reversal"
 	// FirstTopupMinimum      int64  = 10_00 //1000_00
 	// TopupMinimum           int64  = 5_00  //500_00
 	// TopupMax               int64  = 30000_00
@@ -418,6 +476,7 @@ const (
 	Notification_Type_Cash_Transaction  = "cash_transaction"
 	Notification_Type_Deposit_Bonus     = "deposit_bonus"
 	Notification_Type_Mobile_Reset      = "mobile_reset"
+	Notification_Type_Birthday_Bonus    = "birthday_bonus"
 
 	//DefaultBrand = 1001
 	//DefaultAgent = 1000001

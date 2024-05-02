@@ -50,7 +50,7 @@ func (service *UserSetMobileService) Set(c *gin.Context) serializer.Response {
 		return serializer.DBErr(c, service, i18n.T("password_update_failed"), err)
 	}
 
-	common.SendNotification(user.ID, consts.Notification_Type_Mobile_Reset, i18n.T("notification_mobile_reset_title"), i18n.T("notification_mobile_reset"))
+	common.SendNotification(user.ID, consts.Notification_Type_Mobile_Reset, i18n.T("notification_mobile_add_title"), i18n.T("notification_mobile_add"))
 
 	return serializer.Response{
 		Msg: i18n.T("success"),

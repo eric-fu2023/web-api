@@ -41,7 +41,7 @@ func (service *UserFollowingListService) List(c *gin.Context) (r serializer.Resp
 
 	var followings []ploutos.UserFollowing
 	err = model.DB.Preload(`Streamer`, func(db *gorm.DB) *gorm.DB {
-		return db.Scopes(model.StreamerWithLiveStream)
+		return db.Scopes(model.StreamerWithLiveStream(false))
 	}).Scopes(model.UserFollowingsByUserId(user.ID)).Find(&followings).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)

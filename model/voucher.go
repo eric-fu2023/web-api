@@ -18,6 +18,11 @@ func AmountReplace(original string, amount float64) string {
 	})
 }
 
+func VoucherGetByUniqueID(c context.Context, uniqueID string) (v models.Voucher, err error) {
+	err = DB.WithContext(c).Where("unique_id", uniqueID).First(&v).Error
+	return
+}
+
 func VoucherGetByUserSession(c context.Context, userID int64, promotionSessionID int64) (v models.Voucher, err error) {
 	err = DB.Debug().WithContext(c).Where("user_id", userID).Where("promotion_session_id", promotionSessionID).Order("created_at desc").First(&v).Error
 	return

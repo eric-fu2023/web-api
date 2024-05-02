@@ -31,6 +31,8 @@ const NOTIFICATION_WITHDRAWAL_FAILED_TITLE = "NOTIFICATION_WITHDRAWAL_FAILED_TIT
 const NOTIFICATION_WITHDRAWAL_FAILED = "NOTIFICATION_WITHDRAWAL_FAILED"
 const NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE = "NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE"
 const NOTIFICATION_DEPOSIT_BONUS_SUCCESS = "NOTIFICATION_DEPOSIT_BONUS_SUCCESS"
+const NOTIFICATION_BIRTHDAY_BONUS_SUCCESS_TITLE = "NOTIFICATION_BIRTHDAY_BONUS_SUCCESS_TITLE"
+const NOTIFICATION_BIRTHDAY_BONUS_SUCCESS = "NOTIFICATION_BIRTHDAY_BONUS_SUCCESS"
 
 var (
 	ErrInsuffientBalance     = errors.New("insufficient balance or invalid transaction")
@@ -155,11 +157,11 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 		BalanceBefore:        balance,
 		BalanceAfter:         newBalance,
 		ForeignTransactionId: obj.GetGameTransactionId(),
-		TransactionType:      obj.GetGameVendorId(),
 		Wager:                userSum.RemainingWager - remainingWager,
 		WagerBefore:          remainingWager,
 		WagerAfter:           userSum.RemainingWager,
 		IsAdjustment:         obj.IsAdjustment(),
+		GameVendorId:         obj.GetGameVendorId(),
 	}
 	err = tx.Save(&transaction).Error
 	if err != nil {
@@ -231,11 +233,11 @@ func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
 		BalanceBefore:        balance,
 		BalanceAfter:         newBalance,
 		ForeignTransactionId: obj.GetGameTransactionId(),
-		TransactionType:      obj.GetGameVendorId(),
 		Wager:                userSum.RemainingWager - remainingWager,
 		WagerBefore:          remainingWager,
 		WagerAfter:           userSum.RemainingWager,
 		IsAdjustment:         obj.IsAdjustment(),
+		GameVendorId:         obj.GetGameVendorId(),
 	}
 	err = tx.Save(&transaction).Error
 	if err != nil {
@@ -257,8 +259,6 @@ func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
 
 func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betExists bool, newWager int64, err error) {
 	newWager = originalWager
-	fmt.Printf("DebugLog1234: GameVendorId=%d, originalWager1=%d\n", obj.GetGameVendorId(), originalWager)
-	fmt.Printf("DebugLog1234: GameVendorId=%d, newWager1=%d\n", obj.GetGameVendorId(), newWager)
 
 	multiplier, exists := obj.GetWagerMultiplier()
 	fmt.Printf("DebugLog1234: GameVendorId=%d, multiplier=%d\n", obj.GetGameVendorId(), multiplier)
@@ -276,16 +276,11 @@ func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betE
 
 	absBetAmount := abs(betAmount)
 	wager := abs(absBetAmount - abs(obj.GetAmount()))
-	fmt.Printf("DebugLog1234: GameVendorId=%d, obj.GetAmount=%d\n", obj.GetGameVendorId(), obj.GetAmount())
-	fmt.Printf("DebugLog1234: GameVendorId=%d, wager=%d\n", obj.GetGameVendorId(), wager)
 
 	if wager > absBetAmount {
 		wager = absBetAmount
 	}
 	newWager = originalWager + (multiplier * wager)
-	fmt.Printf("DebugLog1234: GameVendorId=%d, originalWager2=%d\n", obj.GetGameVendorId(), originalWager)
-	fmt.Printf("DebugLog1234: GameVendorId=%d, newWager2=%d\n", obj.GetGameVendorId(), newWager)
-	fmt.Printf("\n")
 
 	if newWager < 0 {
 		newWager = 0

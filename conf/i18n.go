@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"web-api/util"
 	"web-api/util/i18n"
 
 	yaml "gopkg.in/yaml.v2"
@@ -16,7 +17,8 @@ var defaultLocale string
 
 func InitLocale() {
 	i18nDefault = make(map[string]i18n.I18n)
-	defaultLocale = os.Getenv("LANGUAGE")
+	defaultLocale = os.Getenv("PLATFORM_LANGUAGE")
+	util.Log().Info("default language: %s\n", defaultLocale)
 
 	files, err := os.ReadDir("conf/locales/")
 	if err != nil {
@@ -29,6 +31,7 @@ func InitLocale() {
 		i17on.LoadLanguages(lang)
 		i18nDefault[lang] = i17on
 	}
+	util.Log().Info("language map: %#v\n", i18nDefault)
 }
 
 func GetDefaultLocale() string {

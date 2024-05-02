@@ -1,15 +1,16 @@
 package ugs
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"web-api/cache"
 	"web-api/model"
 	"web-api/util"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
-const IntegrationIdUGS = 1
 const (
 	TransferStatusFailed  = 0
 	TransferStatusSuccess = 1
@@ -23,14 +24,13 @@ var PlatformMapping = map[int64]int64{
 	4: 2, // ios
 }
 
-type UGS struct {
-}
+type UGS struct{}
 
 func (c UGS) CreateWallet(user model.User, currency string) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
 		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id`).
-			Where(`game_vendor.game_integration_id`, IntegrationIdUGS).Find(&gameVendors).Error
+			Where(`game_vendor.game_integration_id`, util.IntegrationIdUGS).Find(&gameVendors).Error
 		if err != nil {
 			return
 		}
@@ -53,17 +53,17 @@ func (c UGS) CreateWallet(user model.User, currency string) (err error) {
 	return
 }
 
-func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, lang, gameCode, ip string) (err error) {
+func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
 	}
 	client := util.UgsFactory.NewClient(cache.RedisClient)
-	balance, status, ptxid, err := client.TransferOut(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser)
+	balance, status, ptxid, err := client.TransferOut(user.ID, user.Username, currency, extra.Locale, gameCode, extra.Ip, isTestUser)
 	if err != nil {
 		return
 	}
-	util.Log().Info("GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", IntegrationIdUGS, user.ID, balance, status, ptxid)
+	util.Log().Info("UGS GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", util.IntegrationIdUGS, user.ID, balance, status, ptxid)
 	if status == TransferStatusSuccess && balance > 0 && ptxid != "" {
 		var sum ploutos.UserSum
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error
@@ -76,11 +76,12 @@ func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, lang, gameCode
 			Amount:                amount,
 			BalanceBefore:         sum.Balance,
 			BalanceAfter:          sum.Balance + amount,
-			TransactionType:       ploutos.TransactionTypeFromUGS,
+			TransactionType:       ploutos.TransactionTypeFromGameIntegration,
 			Wager:                 0,
 			WagerBefore:           sum.RemainingWager,
 			WagerAfter:            sum.RemainingWager,
 			ExternalTransactionId: ptxid,
+			GameVendorId:          gameVendorId,
 		}
 		err = tx.Create(&transaction).Error
 		if err != nil {
@@ -94,28 +95,29 @@ func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, lang, gameCode
 	return
 }
 
-func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, lang, gameCode, ip string) (balance int64, err error) {
+func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
 	}
 	client := util.UgsFactory.NewClient(cache.RedisClient)
-	status, ptxid, err := client.TransferIn(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser, util.MoneyFloat(sum.Balance))
+	status, ptxid, err := client.TransferIn(user.ID, user.Username, currency, extra.Locale, gameCode, extra.Ip, isTestUser, util.MoneyFloat(sum.Balance))
 	if err != nil {
 		return
 	}
-	util.Log().Info("GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", IntegrationIdUGS, user.ID, util.MoneyFloat(sum.Balance), status, ptxid)
+	util.Log().Info("UGS GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", util.IntegrationIdUGS, user.ID, util.MoneyFloat(sum.Balance), status, ptxid)
 	if status == TransferStatusSuccess && ptxid != "" {
 		transaction := ploutos.Transaction{
 			UserId:                user.ID,
 			Amount:                -1 * sum.Balance,
 			BalanceBefore:         sum.Balance,
 			BalanceAfter:          0,
-			TransactionType:       ploutos.TransactionTypeToUGS,
+			TransactionType:       ploutos.TransactionTypeToGameIntegration,
 			Wager:                 0,
 			WagerBefore:           sum.RemainingWager,
 			WagerAfter:            sum.RemainingWager,
 			ExternalTransactionId: ptxid,
+			GameVendorId:          gameVendorId,
 		}
 		err = tx.Create(&transaction).Error
 		if err != nil {
@@ -130,23 +132,23 @@ func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, curre
 	return
 }
 
-func (c UGS) GetGameUrl(user model.User, currency, lang, gameCode, subGameCode, ip string, platform int64) (url string, err error) {
+func (c UGS) GetGameUrl(user model.User, currency, gameCode, subGameCode string, platform int64, extra model.Extra) (url string, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
 	}
 	client := util.UgsFactory.NewClient(cache.RedisClient)
-	url, err = client.GetGameUrl(user.ID, user.Username, currency, lang, gameCode, subGameCode, ip, PlatformMapping[platform], isTestUser)
+	url, err = client.GetGameUrl(user.ID, user.Username, currency, extra.Locale, gameCode, subGameCode, extra.Ip, PlatformMapping[platform], isTestUser)
 	return
 }
 
-func (c UGS) GetGameBalance(user model.User, currency, lang, gameCode, ip string) (balance int64, err error) {
+func (c UGS) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
 	}
 	client := util.UgsFactory.NewClient(cache.RedisClient)
-	balanceFloat, err := client.GetGameBalance(user.ID, user.Username, currency, lang, gameCode, ip, isTestUser)
+	balanceFloat, err := client.GetGameBalance(user.ID, user.Username, currency, extra.Locale, gameCode, extra.Ip, isTestUser)
 	if err != nil {
 		return
 	}

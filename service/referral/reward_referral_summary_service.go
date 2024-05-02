@@ -43,10 +43,10 @@ func (service *RewardReferralSummaryService) Get(c *gin.Context) (r serializer.R
 		return serializer.GeneralErr(c, err), err
 	}
 
-	cond := model.GetReferralAllianceSummaryCond{ReferralIds: []int64{service.ReferralId}}
-	summaries, err := model.GetReferralAllianceSummary(cond)
+	cond := model.GetReferralAllianceSummaryCond{ReferralIds: []int64{service.ReferralId}, HasBeenClaimed: []bool{true}}
+	summaries, err := model.GetReferralAllianceSummaries(cond)
 	if err != nil {
-		util.GetLoggerEntry(c).Errorf("GetReferralAllianceSummary error: %s", err.Error())
+		util.GetLoggerEntry(c).Errorf("GetReferralAllianceSummaries error: %s", err.Error())
 		return serializer.GeneralErr(c, err), err
 	}
 	summary := model.ReferralAllianceSummary{}

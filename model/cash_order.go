@@ -15,7 +15,7 @@ type CashOrder struct {
 	ploutos.CashOrder
 }
 
-func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, ip string) CashOrder {
+func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) CashOrder {
 	return CashOrder{
 		ploutos.CashOrder{
 			ID:                  ploutos.GenerateCashInOrderNo(),
@@ -27,13 +27,16 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 			BalanceBefore:       balanceBefore,
 			WagerChange:         wagerChange,
 			//Notes:, update later
-			Ip: ip,
+			CurrencyCode:         currency,
+			ExchangeRate:         exchangerRate,
+			ExchangeRateAdjusted: exchangerRateAdjusted,
+			Ip:                   ip,
 		},
 	}
 }
 
 func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingID int64, remark string, reviewRequired bool, ip string) CashOrder {
-	var orderStatus int64 = 1
+	var orderStatus int64 = models.CashOrderStatusPendingRiskCheck
 	var approveStatus int64
 	var reviewStatus int64
 	if reviewRequired {
@@ -62,10 +65,10 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBinding
 	}
 }
 
-func (CashOrder) GetPendingWithLockWithDB(orderID string, tx *gorm.DB) (c CashOrder, err error) {
+func (CashOrder) GetPendingOrPeApWithLockWithDB(orderID string, tx *gorm.DB) (c CashOrder, err error) {
 	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("id", orderID).
-		Where("status = 1").
+		Where("status in ?", []int64{models.CashOrderStatusPending, models.CashOrderStatusPendingApproval}).
 		First(&c).Error
 	return
 }

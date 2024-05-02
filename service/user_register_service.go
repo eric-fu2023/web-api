@@ -19,12 +19,14 @@ type UserRegisterService struct {
 	Password   string `form:"password" json:"password" binding:"required,password"`
 	CurrencyId int64  `form:"currency_id" json:"currency_id" binding:"required"`
 	Code       string `form:"code" json:"code"`
+	Channel    string `form:"channel" json:"channel"`
 }
 
 func (service *UserRegisterService) Register(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	brandId := c.MustGet("_brand").(int)
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
+	service.Code = strings.ToUpper(strings.TrimSpace(service.Code))
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("GetDeviceInfo error: %s", err.Error())
@@ -46,15 +48,17 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 	}
 	user := model.User{
 		User: ploutos.User{
-			Username:               service.Username,
-			Password:               string(bytes),
-			BrandId:                int64(brandId),
-			AgentId:                agent.ID,
-			CurrencyId:             service.CurrencyId,
-			Status:                 1,
-			Role:                   1, // default role user
-			RegistrationIp:         c.ClientIP(),
-			RegistrationDeviceUuid: deviceInfo.Uuid,
+			Username:                service.Username,
+			Password:                string(bytes),
+			BrandId:                 int64(brandId),
+			AgentId:                 agent.ID,
+			CurrencyId:              service.CurrencyId,
+			Status:                  1,
+			Role:                    1, // default role user
+			RegistrationIp:          c.ClientIP(),
+			RegistrationDeviceUuid:  deviceInfo.Uuid,
+			ReferralWagerMultiplier: 1,
+			Channel:                 service.Channel,
 		},
 	}
 	genNickname(&user)

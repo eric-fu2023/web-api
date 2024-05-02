@@ -122,11 +122,12 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		// new user
 		user = model.User{
 			User: ploutos.User{
-				CountryCode:            service.CountryCode,
-				Status:                 1,
-				Role:                   1, // default role user
-				RegistrationIp:         c.ClientIP(),
-				RegistrationDeviceUuid: deviceInfo.Uuid,
+				CountryCode:             service.CountryCode,
+				Status:                  1,
+				Role:                    1, // default role user
+				RegistrationIp:          c.ClientIP(),
+				RegistrationDeviceUuid:  deviceInfo.Uuid,
+				ReferralWagerMultiplier: 1,
 			},
 			Email:  ploutos.EncryptedStr(service.Email),
 			Mobile: ploutos.EncryptedStr(service.Mobile),

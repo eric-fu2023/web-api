@@ -43,11 +43,12 @@ func (service *RewardReferralsService) List(c *gin.Context) (r serializer.Respon
 		referralIds = append(referralIds, rd.ReferralId)
 	}
 
-	rewardSummaries, err := model.GetReferralAllianceSummary(model.GetReferralAllianceSummaryCond{
-		ReferralIds: referralIds,
+	rewardSummaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
+		ReferralIds:    referralIds,
+		HasBeenClaimed: []bool{true},
 	})
 	if err != nil {
-		util.GetLoggerEntry(c).Errorf("GetReferralAllianceSummary error: %s", err.Error())
+		util.GetLoggerEntry(c).Errorf("GetReferralAllianceSummaries error: %s", err.Error())
 		return serializer.GeneralErr(c, err), err
 	}
 

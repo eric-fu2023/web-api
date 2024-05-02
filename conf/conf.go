@@ -52,6 +52,7 @@ func Init() {
 	util.InitDcFactory()
 	util.InitImFactory()
 	util.InitUgsFactory()
+	util.InitImOneFactory()
 
 	util.InitFCMFactory()
 	model.InitShengWang()

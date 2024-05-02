@@ -2,8 +2,10 @@ package cashin
 
 import (
 	"errors"
+	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/exchange"
 	"web-api/util"
 	"web-api/util/i18n"
 
@@ -19,14 +21,15 @@ type TopUpOrderService struct {
 }
 
 func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, err error) {
-	brand := c.MustGet(`_brand`).(int)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
-	method, err := model.CashMethod{}.GetByID(c, s.MethodID, brand)
+	method, err := model.CashMethod{}.GetByIDWithChannel(c, s.MethodID)
 	if err != nil {
 		return
 	}
+	channel := GetNextChannel(method.CashMethodChannel)
+	stats := channel.Stats
 
 	amountDecimal, err := decimal.NewFromString(s.Amount)
 	if err != nil {
@@ -67,6 +70,12 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	// 	r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("kyc_get_failed"), err)
 	// 	return
 	// }
+	var exchangeClient exchange.OkxClient
+	er, err := exchangeClient.GetExchangeRate(c, conf.GetCfg().DefaultCurrency, method.Currency)
+	if err != nil {
+		r = serializer.EnsureErr(c, err, r)
+		return
+	}
 	var userSum model.UserSum
 	userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
 	if err != nil {
@@ -78,30 +87,42 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		amount,
 		userSum.Balance,
 		GetWagerFromAmount(amount, DefaultWager),
-		c.ClientIP())
+		c.ClientIP(), method.Currency, er.ExchangeRate, er.AdjustedExchangeRate)
 	if err = model.DB.Debug().WithContext(c).Create(&cashOrder).Error; err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
 	var transactionID string
-	switch method.Gateway {
+	switch channel.Gateway {
 	default:
 		err = errors.New("unsupported method")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	case "finpay":
-		config := method.GetFinpayConfig()
+		config := channel.GetFinpayConfig()
 		var data finpay.PaymentOrderRespData
+		defer func() {
+			result := "success"
+			if errors.Is(err, finpay.ErrorGateway) {
+				result = "gateway_failed"
+			}
+			if data.IsFailed() {
+				result = "failed"
+			}
+			_ = model.IncrementStats(stats, result)
+
+		}()
+		cashinAmount := int64(float64(cashOrder.AppliedCashInAmount) * er.AdjustedExchangeRate)
 		switch config.Type {
 		default:
-			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username)
+			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username, config.TypeExtra)
 			if err != nil {
 				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 				return
 			}
 		case "TRC20":
-			data, err = finpay.FinpayClient{}.PlaceDefaultCoinPalOrderV1(c, cashOrder.AppliedCashInAmount, 1, cashOrder.ID, user.Username)
+			data, err = finpay.FinpayClient{}.PlaceDefaultCoinPalOrderV1(c, cashinAmount, 1, cashOrder.ID, user.Username)
 			if err != nil {
 				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
@@ -153,7 +174,6 @@ func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64, meth
 	// 	}
 	// }
 
-	return
 }
 
 func processCashInMethod(m model.CashMethod) (err error) {

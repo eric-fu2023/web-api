@@ -68,6 +68,12 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 
 	var reviewRequired bool = false
 	var cashOrder model.CashOrder
+	vip, err := model.GetVipWithDefault(c, user.ID)
+	if err != nil {
+		return
+	}
+	rule := vip.VipRule
+
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, user.ID), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()
 	// check withdrawable
@@ -94,13 +100,8 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		// Get vip level from somewhere else
 		// check vip
 		// check cash out rules
-		var vipLevel int64 = 0
-		var rule model.CashOutRule
+		// var rule model.CashOutRule
 		var txns []model.Transaction
-		rule, err = model.CashOutRule{}.Get(vipLevel)
-		if err != nil {
-			return
-		}
 
 		timeFrom := time.Now().Truncate(24 * time.Hour)
 		txns, err = model.Transaction{}.ListTxRecord(c, user.ID, &timeFrom, nil)
@@ -109,7 +110,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		}
 		totalOut, payoutCount := CalTxDetails(txns)
 		var msg string
-		reviewRequired, msg = rule.OK(amount, payoutCount+1, totalOut+amount, user.GetTagIDList())
+		reviewRequired, msg = vipRuleOK(rule, payoutCount, amount, totalOut)
 
 		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance, s.AccountBindingID, msg, reviewRequired, c.ClientIP())
 		err = tx.Create(&cashOrder).Error
@@ -151,12 +152,12 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		notifyBackendWithdraw(cashOrder.ID)
 		return
 	}
-	cashOrder, err = DispatchOrder(c, cashOrder, user, accountBinding)
-	if err != nil {
-		r = serializer.EnsureErr(c, err, r)
-		return
-	}
-	r.Data = serializer.BuildWithdrawOrder(cashOrder)
+	// cashOrder, err = DispatchOrder(c, cashOrder, user, accountBinding)
+	// if err != nil {
+	// 	r = serializer.EnsureErr(c, err, r)
+	// 	return
+	// }
+	// r.Data = serializer.BuildWithdrawOrder(cashOrder)
 	return
 }
 
@@ -194,3 +195,24 @@ func VerifyCashMethod(c *gin.Context, id, amount int64) (err error) {
 var (
 	ErrCashMethodNotAvailable = errors.New("cash method limit exceeded")
 )
+
+func vipRuleOK(rule models.VIPRule, payoutCount, amount, totalAmount int64) (bool, string) {
+	if amount > rule.WithdrawAmount {
+		return true, formatMsg("max single withdraw amount exceeded")
+	}
+	if payoutCount > rule.WithdrawCount {
+		return true, formatMsg("max daily withdraw count exceeded")
+	}
+	if totalAmount > rule.WithdrawAmountTotal {
+		return true, formatMsg("max daily withdraw amount exceeded")
+	}
+	// pending check
+	// if c.PayoutDoubleConfirmationRequired && amount > c.PayoutDoubleConfirmationAmount {
+	// 	return true, formatMsg("double confirmation triggered")
+	// }
+	return false, ""
+}
+
+func formatMsg(msg string) string {
+	return fmt.Sprintf("VIP withdraw rule: %s \n ", msg)
+}

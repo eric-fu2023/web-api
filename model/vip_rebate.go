@@ -7,6 +7,6 @@ import (
 )
 
 func LoadVipRebateRules(c context.Context) (ret []models.VipRebateRule, err error) {
-	err = DB.Debug().Preload("GameVendorBrand.GameCategory").Order("game_vendor_id").Order("vip_level").Find(&ret).Error
+	err = DB.Preload("GameVendor.GameCategory").Order("game_vendor_id").Order("vip_level").Find(&ret).Error
 	return
 }
