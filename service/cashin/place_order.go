@@ -71,7 +71,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	// 	return
 	// }
 	var exchangeClient exchange.OkxClient
-	er, err := exchangeClient.GetExchangeRate(c, method.Currency, conf.GetCfg().DefaultCurrency)
+	er, err := exchangeClient.GetExchangeRate(c, conf.GetCfg().DefaultCurrency, method.Currency)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return

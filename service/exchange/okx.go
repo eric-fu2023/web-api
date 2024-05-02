@@ -8,6 +8,10 @@ import (
 	"web-api/conf"
 )
 
+const (
+	RedisExchangeRateKey = "OKX_EXCHANGE_RATE:%s-%s"
+)
+
 type OkxClient struct{}
 
 func (k OkxClient) GetExchangeRate(c context.Context, sourceCurrency, destCurrency string) (ExchangeRates, error) {
