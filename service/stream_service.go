@@ -84,10 +84,14 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 	if err = q.Find(&streams).Error; err != nil {
 		return
 	}
-	if service.Page.Page == 1 && service.Category == "" {
+	if service.Page.Page == 1 {
 		var selectedStreams []ploutos.LiveStream
-		err = model.DB.Model(ploutos.LiveStream{}).Preload(`Streamer`).Preload(`Streamer.UserAgoraInfo`).
-			Where(`stream_source`, []int64{888}).Where(`status`, 2).Find(&selectedStreams).Error
+		qq := model.DB.Model(ploutos.LiveStream{}).Preload(`Streamer`).Preload(`Streamer.UserAgoraInfo`).
+			Where(`stream_source`, []int64{888}).Where(`status`, 2)
+		if len(categories) > 0 {
+			qq = qq.Where(`stream_category_id`, categories)
+		}
+		err = qq.Find(&selectedStreams).Error
 		if err != nil {
 			return
 		}
