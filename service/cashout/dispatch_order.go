@@ -2,7 +2,6 @@ package cashout
 
 import (
 	"errors"
-	"web-api/conf"
 	"web-api/model"
 	"web-api/service/exchange"
 	"web-api/util"
@@ -26,7 +25,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 		return
 	}
 	var exchangeClient exchange.OkxClient
-	er, err := exchangeClient.GetExchangeRate(c, conf.GetCfg().DefaultCurrency, method.Currency)
+	er, err := exchangeClient.GetExchangeRate(c, method.Currency, false)
 	if err != nil {
 		return
 	}

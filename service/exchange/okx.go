@@ -14,8 +14,9 @@ const (
 
 type OkxClient struct{}
 
-func (k OkxClient) GetExchangeRate(c context.Context, sourceCurrency, destCurrency string) (ExchangeRates, error) {
-	if sourceCurrency == destCurrency || (sourceCurrency == USD && destCurrency == USDT) || (sourceCurrency == USDT && destCurrency == USD) {
+func (k OkxClient) GetExchangeRate(c context.Context, destCurrency string, isCashIn bool) (ExchangeRates, error) {
+	sourceCurrency := conf.GetCfg().DefaultCurrency
+	if (destCurrency == USDT && sourceCurrency == USD) || destCurrency == sourceCurrency {
 		return ExchangeRates{
 			ExchangeRate:         1,
 			AdjustedExchangeRate: 1,
@@ -36,8 +37,12 @@ func (k OkxClient) GetExchangeRate(c context.Context, sourceCurrency, destCurren
 		return ExchangeRates{}, err
 	}
 	ret := ExchangeRates{
-		ExchangeRate:         rate,
-		AdjustedExchangeRate: rate * (1 - conf.GetCfg().ExchangeAdjustment),
+		ExchangeRate: rate,
+	}
+	if isCashIn {
+		ret.AdjustedExchangeRate = rate * (1 + conf.GetCfg().ExchangeAdjustment)
+	} else {
+		ret.AdjustedExchangeRate = rate * (1 - conf.GetCfg().ExchangeAdjustment)
 	}
 	return ret, nil
 }

@@ -1,8 +1,8 @@
 package cashin
 
 import (
+	"encoding/json"
 	"errors"
-	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/exchange"
@@ -16,8 +16,9 @@ import (
 )
 
 type TopUpOrderService struct {
-	Amount   string `form:"amount" json:"amount"`
-	MethodID int64  `form:"method_id" json:"method_id"`
+	Amount          string `form:"amount" json:"amount"`
+	MethodID        int64  `form:"method_id" json:"method_id"`
+	BankAccountName string `form:"bank_account_name" json:"bank_account_name"`
 }
 
 func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, err error) {
@@ -71,7 +72,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	// 	return
 	// }
 	var exchangeClient exchange.OkxClient
-	er, err := exchangeClient.GetExchangeRate(c, conf.GetCfg().DefaultCurrency, method.Currency)
+	er, err := exchangeClient.GetExchangeRate(c, method.Currency, true)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
@@ -116,6 +117,17 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		switch config.Type {
 		default:
 			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username, config.TypeExtra)
+			if err != nil {
+				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
+				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+				return
+			}
+		case "BANK_CARD", "BANK_CARD_H5":
+			extra := map[string]string{
+				"bankAccountName": s.BankAccountName,
+			}
+			raw, _ := json.Marshal(extra)
+			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username, json.RawMessage(raw))
 			if err != nil {
 				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
