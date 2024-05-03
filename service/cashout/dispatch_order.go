@@ -13,10 +13,9 @@ import (
 )
 
 func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, accountBinding models.UserAccountBinding) (updatedCashOrder model.CashOrder, err error) {
-	brand := c.MustGet(`_brand`).(int)
 
 	updatedCashOrder = cashOrder
-	method, err := model.CashMethod{}.GetByID(c, cashOrder.CashMethodId, brand)
+	method, err := model.CashMethod{}.GetByIDWithChannel(c, cashOrder.CashMethodId)
 	if err != nil {
 		return
 	}
