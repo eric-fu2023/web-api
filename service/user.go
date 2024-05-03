@@ -14,7 +14,6 @@ import (
 	"web-api/service/dc"
 	"web-api/service/dollar_jackpot"
 	"web-api/service/fb"
-	"web-api/service/imone"
 	"web-api/service/imsb"
 	"web-api/service/saba"
 	"web-api/service/stream_game"
@@ -37,8 +36,6 @@ var (
 		"imsb":           &imsb.UserRegister{},
 		"dollar_jackpot": &dollar_jackpot.UserRegister{},
 		"stream_game":    &stream_game.UserRegister{},
-		"impt":           &imone.ImOne{},
-		"imslot":         &imone.ImOne{},
 	}
 )
 

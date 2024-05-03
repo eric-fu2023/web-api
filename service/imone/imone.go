@@ -1,23 +1,12 @@
 package imone
 
 import (
-	"errors"
-
 	"web-api/model"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
 )
-
-var ErrImOneRegister = errors.New("register user with imone failed")
-var ErrOthers = errors.New("imone create user failed")
-
-type _userRegistrar interface {
-	CreateUser(model.User, string) error
-	VendorRegisterError() error
-	OthersError() error
-}
 
 type _gameUserInterface interface {
 	CreateWallet(model.User, string) error
@@ -28,19 +17,10 @@ type _gameUserInterface interface {
 }
 
 type imoner interface {
-	_userRegistrar
 	_gameUserInterface
 }
 
 type ImOne struct {
-}
-
-func (c *ImOne) VendorRegisterError() error {
-	return ErrImOneRegister
-}
-
-func (c *ImOne) OthersError() error {
-	return ErrOthers
 }
 
 var _ imoner = &ImOne{}

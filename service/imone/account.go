@@ -7,24 +7,12 @@ import (
 	"web-api/model"
 	"web-api/util"
 
-	imonegameservice "blgit.rfdev.tech/taya/game-service/imone"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
 )
 
-func (c *ImOne) CreateUser(user model.User, currency string) error {
-	err := c.createImOneUserAndDbWallet(user, currency)
-
-	if errors.As(err, &imonegameservice.ErrCreateUserAlreadyExists{}) || errors.Is(err, gorm.ErrDuplicatedKey) {
-		err = c.VendorRegisterError()
-	}
-
-	return err
-}
-
 func (c *ImOne) CreateWallet(user model.User, currency string) error {
-	log.Printf("CreateWallet User: %+v\n", user)
 	return c.createImOneUserAndDbWallet(user, currency)
 }
 
