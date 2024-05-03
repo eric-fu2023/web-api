@@ -271,6 +271,7 @@ func NewRouter() *gin.Engine {
 
 				user.GET("/vip-status", api.VipGet)
 				user.GET("/vip-rebate-details", middleware.Cache(5*time.Minute, false), api.VipLoadRebateRule)
+				user.GET("/vip-referral-alliance-reward-details", middleware.Cache(5*time.Minute, false), api.VipLoadReferralAllianceRewardRule)
 
 				taya := user.Group("/taya")
 				{
