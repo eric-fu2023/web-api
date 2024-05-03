@@ -20,7 +20,7 @@ func (CashMethod) GetByID(c *gin.Context, id int64, brandID int) (item CashMetho
 
 func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform string, brandID int) (list []CashMethod, err error) {
 	var t []CashMethod
-	q := DB.Debug().Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
+	q := DB.Preload("CashMethodChannel", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
 	if withdrawOnly {
 		q = q.Where("method_type < 0")
 	}
@@ -29,6 +29,9 @@ func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform st
 	}
 	err = q.Order("sort desc").Find(&t).Error
 	for i := range t {
+		if len(t[i].CashMethodChannel) == 0 {
+			continue
+		}
 		if t[i].IsSupportedPlatform(platform) {
 			list = append(list, t[i])
 		}
@@ -89,7 +92,6 @@ func IncrementStats(stats models.CashMethodStats, result string) error {
 	err := DB.Debug().Exec(fmt.Sprintf("update cash_method_stats set called = called + 1, %s = %s + 1 where id = ?", field, field), stats.ID).Error
 	return err
 }
-
 
 func GetNextChannel(list []models.CashMethodChannel) models.CashMethodChannel {
 	distribution := map[int64]int64{}
