@@ -59,7 +59,7 @@ func (c *ImOne) GetGameBalance(user model.User, currency, gameCode string, extra
 	}
 
 	client := util.ImOneFactory()
-	balanceFloat, err := client.GetWalletBalance(user.Username, productWalletCode)
+	balanceFloat, err := client.GetWalletBalance(user.IdAsString(), productWalletCode)
 	if err != nil {
 		return 0, errors.Join(errors.New("ImOne get balance error"), err)
 	}
