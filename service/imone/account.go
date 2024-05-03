@@ -62,7 +62,8 @@ func (c *ImOne) createImOneUserAndDbWallet(user model.User, currency string) err
 	})
 }
 
-func (c *ImOne) GetGameBalance(user model.User, currency, gameCode string, _ model.Extra) (balance int64, _err error) {
+func (c *ImOne) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, _err error) {
+	log.Printf("(c *ImOne) GetGameBalance user %+v currency %+v gameCode %+v extra %+v\n", user, currency, gameCode, extra)
 	productWalletCode, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
 
 	if !exist {
