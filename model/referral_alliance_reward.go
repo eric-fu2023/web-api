@@ -8,10 +8,11 @@ import (
 )
 
 type ReferralAllianceSummary struct {
-	ReferrerId  int64
-	ReferralId  int64
-	RecordCount int64
-	TotalReward int64
+	ReferrerId      int64
+	ReferralId      int64
+	RecordCount     int64
+	TotalReward     int64
+	ClaimableReward int64
 }
 
 type GetReferralAllianceSummaryCond struct {
@@ -23,7 +24,7 @@ type GetReferralAllianceSummaryCond struct {
 
 func GetReferralAllianceSummaries(cond GetReferralAllianceSummaryCond) ([]ReferralAllianceSummary, error) {
 	db := DB.Table(ploutos.ReferralAllianceReward{}.TableName())
-	selectFields := []string{"COUNT(*) AS record_count", "SUM(amount) AS total_reward"}
+	selectFields := []string{"COUNT(*) AS record_count", "SUM(amount) AS total_reward", "SUM(claimable_amount) AS claimable_reward"}
 
 	if len(cond.ReferrerIds) > 0 {
 		db = db.Where("referrer_id IN ?", cond.ReferrerIds)

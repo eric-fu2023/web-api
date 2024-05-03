@@ -2,7 +2,6 @@ package referral
 
 import (
 	"github.com/gin-gonic/gin"
-	"os"
 	"time"
 	"web-api/model"
 	"web-api/serializer"
@@ -35,7 +34,8 @@ func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r seria
 	}
 
 	cond := model.GetReferralAllianceRewardsCond{
-		ReferralIds: []int64{service.ReferralId},
+		ReferralIds:    []int64{service.ReferralId},
+		HasBeenClaimed: []bool{true},
 	}
 	if service.RecordTimeStart > 0 {
 		cond.BetDateStart = time.Unix(service.RecordTimeStart, 0).Format(time.DateOnly)
@@ -49,65 +49,10 @@ func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r seria
 		return serializer.GeneralErr(c, err), err
 	}
 
-	var data map[string]any
-
-	// TODO!Jh remove mocked data for testing
-	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
-		type RewardRecord struct {
-			GameCategoryName string  `json:"game_category_name"`
-			ReferrerReward   float64 `json:"referrer_reward"`
-		}
-		type RewardRecordDay struct {
-			Date          string         `json:"date"`
-			TotalReward   float64        `json:"total_reward"`
-			ClaimedReward float64        `json:"claimed_reward"`
-			RewardRecords []RewardRecord `json:"reward_records"`
-		}
-
-		rewardRecordsDay := []RewardRecordDay{
-			{
-				Date:          "2024-04-04",
-				TotalReward:   308.6,
-				ClaimedReward: 108.0,
-				RewardRecords: []RewardRecord{
-					{
-						GameCategoryName: "体育",
-						ReferrerReward:   200.3,
-					},
-					{
-						GameCategoryName: "真人",
-						ReferrerReward:   58.2,
-					},
-					{
-						GameCategoryName: "电竞",
-						ReferrerReward:   50.1,
-					},
-				},
-			},
-			{
-				Date:          "2024-04-05",
-				TotalReward:   245.5,
-				ClaimedReward: 125.5,
-				RewardRecords: []RewardRecord{
-					{
-						GameCategoryName: "电竞",
-						ReferrerReward:   245.5,
-					},
-				},
-			},
-		}
-
-		data = map[string]any{
-			"reward_records_day": rewardRecordsDay,
-		}
-	} else {
-		data = map[string]any{
-			"reward_records": serializer.BuildReferralAllianceRewards(c, rewardRecords),
-		}
-	}
-
 	return serializer.Response{
-		Data: data,
-		Msg:  i18n.T("success"),
+		Data: map[string]any{
+			"reward_records_day": serializer.BuildReferralAllianceRewards(c, rewardRecords),
+		},
+		Msg: i18n.T("success"),
 	}, nil
 }
