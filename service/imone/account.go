@@ -7,6 +7,7 @@ import (
 	"web-api/model"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/game-service/imone"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
@@ -18,10 +19,11 @@ func (c *ImOne) CreateWallet(user model.User, currency string) error {
 
 const defaultPassword = "qq123456"
 
+// skips duplicate error on insert.
 func (c *ImOne) createImOneUserAndDbWallet(user model.User, currency string) error {
 	// FIXME password to be derived from user instead of default value
 	err := util.ImOneFactory().CreateUser(user.IdAsString(), currency, defaultPassword, "")
-	if err != nil {
+	if err != nil && !errors.As(err, &imone.ErrCreateUserAlreadyExists{}) {
 		return err
 	}
 
@@ -42,7 +44,7 @@ func (c *ImOne) createImOneUserAndDbWallet(user model.User, currency string) err
 			}
 
 			err = tx.Create(&gvu).Error
-			if err != nil {
+			if err != nil && !errors.Is(err, gorm.ErrDuplicatedKey) {
 				return
 			}
 		}

@@ -24,46 +24,52 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 		return err
 	}
 
+	switch {
+	case balance == 0:
+		return nil
+	case balance < 0:
+		return errors.New("insufficient imone wallet balance")
+	}
+
 	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, -1*balance, time.Now())
 	if err != nil {
 		return err
 	}
 
 	util.Log().Info("ImOne GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIdImOne, user.ID, balance, ptxid)
-	if balance > 0 && ptxid != "" {
-		var sum ploutos.UserSum
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error; err != nil {
-			return err
-		}
-		amount := util.MoneyInt(balance)
-		transaction := ploutos.Transaction{
-			UserId:                user.ID,
-			Amount:                amount,
-			BalanceBefore:         sum.Balance,
-			BalanceAfter:          sum.Balance + amount,
-			TransactionType:       ploutos.TransactionTypeFromGameIntegration,
-			Wager:                 0,
-			WagerBefore:           sum.RemainingWager,
-			WagerAfter:            sum.RemainingWager,
-			ExternalTransactionId: ptxid,
-			GameVendorId:          gameVendorId,
-		}
-		err = tx.Create(&transaction).Error
-		if err != nil {
-			return err
-		}
-		err = tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`balance`, gorm.Expr(`balance + ?`, amount)).Error
-		if err != nil {
-			return err
-		}
+	var sum ploutos.UserSum
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error; err != nil {
+		return err
 	}
+	amount := util.MoneyInt(balance)
+	transaction := ploutos.Transaction{
+		UserId:                user.ID,
+		Amount:                amount,
+		BalanceBefore:         sum.Balance,
+		BalanceAfter:          sum.Balance + amount,
+		TransactionType:       ploutos.TransactionTypeFromGameIntegration,
+		Wager:                 0,
+		WagerBefore:           sum.RemainingWager,
+		WagerAfter:            sum.RemainingWager,
+		ExternalTransactionId: ptxid,
+		GameVendorId:          gameVendorId,
+	}
+	err = tx.Create(&transaction).Error
+	if err != nil {
+		return err
+	}
+	err = tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`balance`, gorm.Expr(`balance + ?`, amount)).Error
 	return err
 }
 
 func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, _ model.Extra) (_transferredBalance int64, _err error) {
-	if sum.Balance < 0 {
-		return 0, errors.New("ImOne::TransferTo negative balance")
+	switch {
+	case sum.Balance == 0:
+		return 0, nil
+	case sum.Balance < 0:
+		return 0, errors.New("ImOne::TransferTo not allowed to transfer negative sum")
 	}
+
 	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
 
 	client := util.ImOneFactory()
