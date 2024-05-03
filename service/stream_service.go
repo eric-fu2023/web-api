@@ -96,9 +96,13 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 			return
 		}
 		if len(selectedStreams) > 0 {
-			ind := len(streams) - 1
-			if len(streams) > 4 {
-				ind = 3
+			var ind int
+			if len(streams) > 0 {
+				if len(streams) > 4 {
+					ind = 3
+				} else {
+					ind = len(streams) - 1
+				}
 			}
 			var subStreams []ploutos.LiveStream
 			subStreams = append(subStreams, streams[:ind]...)
