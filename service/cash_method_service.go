@@ -44,7 +44,7 @@ func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err
 		r.Data = util.MapSlice(list, serializer.Modifier(serializer.BuildCashMethod, func(cm serializer.CashMethod) serializer.CashMethod {
 			firstTopup, err := model.FirstTopup(c, user.ID)
 			if err != nil || len(firstTopup.ID) == 0 {
-				cm.MinAmount = conf.GetCfg().WithdrawMinNoDeposit / 100
+				cm.MinAmount = max(conf.GetCfg().WithdrawMinNoDeposit/100, cm.MinAmount)
 			}
 			return cm
 		}))
