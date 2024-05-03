@@ -77,7 +77,7 @@ func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _c
 	if err != nil {
 		return 0, err
 	}
-	util.Log().Info("ImOne GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", util.IntegrationIdImOne, user.ID, util.MoneyFloat(sum.Balance), ptxid)
+	util.Log().Info("ImOne GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIdImOne, user.ID, util.MoneyFloat(sum.Balance), ptxid)
 	if ptxid != "" {
 		transaction := ploutos.Transaction{
 			UserId:                user.ID,
