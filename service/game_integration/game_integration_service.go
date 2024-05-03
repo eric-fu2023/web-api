@@ -53,7 +53,6 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 			err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload(`GameVendor`).Where(`user_id`, user.ID).Where(`is_last_played`, true).
 				Order(`updated_at DESC`).Limit(1).Find(&lastPlayed).Error
 
-			// FIXME check if need !errors.Is(err, gorm.ErrRecordNotFound)
 			if err != nil {
 				return
 			}

@@ -20,6 +20,7 @@ type PromotionCover struct {
 	RewardDistributionType int64           `json:"reward_distribution_type"`
 	Category               int64           `json:"category"`
 	Label                  int64           `json:"label"`
+	IsVipAssociated        bool            `json:"is_vip_associated"`
 }
 
 type PromotionDetail struct {
@@ -40,6 +41,7 @@ type PromotionDetail struct {
 	Reward                 float64           `json:"reward"`
 	ClaimStatus            ClaimStatus       `json:"claim_status"`
 	Voucher                Voucher           `json:"voucher"`
+	IsVipAssociated        bool              `json:"is_vip_associated"`
 }
 
 type ClaimStatus struct {
@@ -96,6 +98,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 		RewardDistributionType: p.RewardDistributionType,
 		Category:               p.Category,
 		Label:                  p.Label,
+		IsVipAssociated:        p.VipAssociated,
 	}
 }
 
@@ -124,6 +127,7 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		Reward:                 float64(reward) / 100,
 		Voucher:                v,
 		Category:               p.Category,
+		IsVipAssociated:        p.VipAssociated,
 	}
 }
 
