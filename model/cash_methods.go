@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"web-api/util"
 
@@ -19,8 +20,11 @@ func (CashMethod) GetByID(c *gin.Context, id int64, brandID int) (item CashMetho
 }
 
 func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform string, brandID int) (list []CashMethod, err error) {
+	u, _ := c.Get("user")
+	user, _ := u.(User)
+
 	var t []CashMethod
-	q := DB.Debug().Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
+	q := DB.Preload("CashMethodChannel", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
 	if withdrawOnly {
 		q = q.Where("method_type < 0")
 	}
@@ -29,6 +33,10 @@ func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform st
 	}
 	err = q.Order("sort desc").Find(&t).Error
 	for i := range t {
+		chns := FilterChannelByVip(c, user, t[i].CashMethodChannel)
+		if len(chns) == 0 {
+			continue
+		}
 		if t[i].IsSupportedPlatform(platform) {
 			list = append(list, t[i])
 		}
@@ -90,7 +98,6 @@ func IncrementStats(stats models.CashMethodStats, result string) error {
 	return err
 }
 
-
 func GetNextChannel(list []models.CashMethodChannel) models.CashMethodChannel {
 	distribution := map[int64]int64{}
 	var weightTotal int64 = 0
@@ -111,4 +118,18 @@ func GetNextChannel(list []models.CashMethodChannel) models.CashMethodChannel {
 		}
 	}
 	return list[0]
+}
+
+func FilterChannelByVip(c context.Context, user User, chns []models.CashMethodChannel) []models.CashMethodChannel {
+	ret := []models.CashMethodChannel{}
+	vip, _ := GetVipWithDefault(c, user.ID)
+	for _, ch := range chns {
+		for _, lvl := range ch.VipLevels {
+			if vip.VipRule.VIPLevel == int64(lvl) {
+				ret = append(ret, ch)
+				break
+			}
+		}
+	}
+	return ret
 }

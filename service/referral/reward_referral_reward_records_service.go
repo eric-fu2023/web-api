@@ -67,31 +67,31 @@ func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r seria
 		rewardRecordsDay := []RewardRecordDay{
 			{
 				Date:          "2024-04-04",
-				TotalReward:   308.0,
+				TotalReward:   308.6,
 				ClaimedReward: 108.0,
 				RewardRecords: []RewardRecord{
 					{
 						GameCategoryName: "体育",
-						ReferrerReward:   200.0,
+						ReferrerReward:   200.3,
 					},
 					{
 						GameCategoryName: "真人",
-						ReferrerReward:   58.0,
+						ReferrerReward:   58.2,
 					},
 					{
 						GameCategoryName: "电竞",
-						ReferrerReward:   50.0,
+						ReferrerReward:   50.1,
 					},
 				},
 			},
 			{
 				Date:          "2024-04-05",
-				TotalReward:   245.0,
-				ClaimedReward: 125.0,
+				TotalReward:   245.5,
+				ClaimedReward: 125.5,
 				RewardRecords: []RewardRecord{
 					{
 						GameCategoryName: "电竞",
-						ReferrerReward:   245.0,
+						ReferrerReward:   245.5,
 					},
 				},
 			},

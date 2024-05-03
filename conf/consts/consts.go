@@ -166,6 +166,7 @@ var (
 		5: "Failed",
 		6: "Pending",
 		7: "Failed",
+		8: "Pending", // pending risk check
 	}
 	CountryISO = map[string]string{
 		"1":   "PH",
