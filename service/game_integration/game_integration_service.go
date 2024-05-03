@@ -41,7 +41,13 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 
 	game := common.GameIntegration[subGame.GameVendor.GameIntegrationId]
 	extra := model.Extra{Locale: locale, Ip: c.ClientIP()}
+	fmt.Println("user:", user)
+	fmt.Println("gvu:", gvu)
+	fmt.Println("subGame:", subGame)
+	fmt.Println("service.Platform:", service.Platform)
+	fmt.Println("extra:", extra)
 	url, err := game.GetGameUrl(user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
+	fmt.Println("URL:", url)
 	if err != nil {
 		return
 	}
