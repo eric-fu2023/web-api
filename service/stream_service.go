@@ -86,7 +86,8 @@ func (service *StreamService) list(c *gin.Context) (r []serializer.Stream, err e
 	}
 	if service.Page.Page == 1 {
 		var selectedStreams []ploutos.LiveStream
-		qq := model.DB.Model(ploutos.LiveStream{}).Preload(`Streamer`).Preload(`Streamer.UserAgoraInfo`).
+		qq := model.DB.Model(ploutos.LiveStream{}).Scopes(model.StreamsABStreamSource(isA)).
+			Preload(`Streamer`).Preload(`Streamer.UserAgoraInfo`).
 			Where(`stream_source`, []int64{888}).Where(`status`, 2)
 		if len(categories) > 0 {
 			qq = qq.Where(`stream_category_id`, categories)
