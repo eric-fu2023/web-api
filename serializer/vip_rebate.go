@@ -2,8 +2,10 @@ package serializer
 
 import (
 	"encoding/json"
-	"github.com/gin-gonic/gin"
+	"web-api/conf"
 	"web-api/util"
+
+	"github.com/gin-gonic/gin"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 )
@@ -106,7 +108,7 @@ func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []mode
 
 	// add cap
 	Cat := VipRebateCategory{
-		Header: "cap",
+		Header: conf.GetI18N(conf.GetDefaultLocale()).T("cap"),
 		Columns: []VipRebateColumn{
 			{Header: "primary", Values: util.MapSlice(vips, func(input models.VIPRule) VipRebateColumnValue {
 				return VipRebateColumnValue{
