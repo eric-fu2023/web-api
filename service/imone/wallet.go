@@ -2,19 +2,18 @@ package imone
 
 import (
 	"errors"
-	"time"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"web-api/model"
 	"web-api/util"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // TransferFrom
-func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, _ model.Extra) error {
+func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) error {
 	client := util.ImOneFactory()
 
 	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
@@ -31,7 +30,7 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 		return errors.New("insufficient imone wallet balance")
 	}
 
-	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, -1*balance, time.Now())
+	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, -1*balance, util.NowGMT8())
 	if err != nil {
 		return err
 	}
@@ -62,7 +61,7 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 	return err
 }
 
-func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, _ model.Extra) (_transferredBalance int64, _err error) {
+func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
 	switch {
 	case sum.Balance == 0:
 		return 0, nil
@@ -73,7 +72,7 @@ func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _c
 	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
 
 	client := util.ImOneFactory()
-	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, util.MoneyFloat(sum.Balance), time.Now())
+	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, util.MoneyFloat(sum.Balance), util.NowGMT8())
 	if err != nil {
 		return 0, err
 	}

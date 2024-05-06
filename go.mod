@@ -39,7 +39,7 @@ require (
 	go.mongodb.org/mongo-driver v1.11.2
 	golang.org/x/crypto v0.22.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
-	golang.org/x/sys v0.19.0
+	golang.org/x/sys v0.20.0
 	golang.org/x/text v0.14.0
 	google.golang.org/api v0.156.0
 	gopkg.in/go-playground/validator.v8 v8.18.2
