@@ -28,21 +28,47 @@ func BuildReferralAllianceReferralSummary(referral model.User, vip ploutos.VipRe
 }
 
 type ReferralAllianceReward struct {
-	Date             string  `json:"date"`
 	GameCategoryName string  `json:"game_category_name"`
 	ReferrerReward   float64 `json:"referrer_reward"`
 }
 
-func BuildReferralAllianceRewards(c *gin.Context, rewardRecords []ploutos.ReferralAllianceReward) []ReferralAllianceReward {
-	var resp []ReferralAllianceReward
+type ReferralAllianceRewardDay struct {
+	Date          string                   `json:"date"`
+	TotalReward   float64                  `json:"total_reward"`
+	ClaimedReward float64                  `json:"claimed_reward"`
+	RewardRecords []ReferralAllianceReward `json:"reward_records"`
+}
+
+func BuildReferralAllianceRewards(c *gin.Context, rewardRecords []ploutos.ReferralAllianceReward) []ReferralAllianceRewardDay {
+	// group by date
+	var dateMap = make(map[string][]ploutos.ReferralAllianceReward)
 	for _, r := range rewardRecords {
-		resp = append(resp, ReferralAllianceReward{
-			Date:             r.BetDate,
-			GameCategoryName: FormatGameCategoryName(c, r.GameCategoryID),
-			ReferrerReward:   float64(r.Amount) / 100,
+		dateMap[r.BetDate] = append(dateMap[r.BetDate], r)
+	}
+
+	var rewardsDay []ReferralAllianceRewardDay
+	for betDate, dbRewards := range dateMap {
+		var claimableSum int64 = 0
+		var totalRewardSum int64 = 0
+		var resRewards []ReferralAllianceReward
+		for _, r := range dbRewards {
+			claimableSum += r.ClaimableAmount
+			totalRewardSum += r.Amount
+			resRewards = append(resRewards, ReferralAllianceReward{
+				GameCategoryName: FormatGameCategoryName(c, r.GameCategoryID),
+				ReferrerReward:   float64(r.Amount) / 100,
+			})
+		}
+
+		rewardsDay = append(rewardsDay, ReferralAllianceRewardDay{
+			Date:          betDate,
+			TotalReward:   float64(totalRewardSum) / 100,
+			ClaimedReward: float64(claimableSum) / 100,
+			RewardRecords: resRewards,
 		})
 	}
-	return resp
+
+	return rewardsDay
 }
 
 type ReferralAllianceReferral struct {

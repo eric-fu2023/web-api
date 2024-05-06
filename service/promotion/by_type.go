@@ -344,16 +344,7 @@ func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward i
 		return 0
 	}
 
-	vipRecord, err := model.GetVipWithDefault(c, userID)
-	if err != nil {
-		return
-	}
-	rewardCap := vipRecord.VipRule.ReferralCap
-
-	if summaries[0].TotalReward > rewardCap {
-		return rewardCap
-	}
-	return summaries[0].TotalReward
+	return summaries[0].ClaimableReward
 }
 
 func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher models.Voucher, userID int64, now time.Time) error {
@@ -364,18 +355,9 @@ func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher mode
 			return fmt.Errorf("failed to claim rewards: %w", err)
 		}
 
-		vipRecord, err := model.GetVipWithDefault(c, userID)
-		if err != nil {
-			return fmt.Errorf("failed to get vip record: %w", err)
-		}
-		rewardCap := vipRecord.VipRule.ReferralCap
-
-		var totalReward int64
+		var totalClaimable int64
 		for _, r := range rewardRecords {
-			totalReward += r.Amount
-		}
-		if totalReward > rewardCap {
-			totalReward = rewardCap
+			totalClaimable += r.ClaimableAmount
 		}
 
 		var rewardRecordIds []int64
@@ -386,8 +368,8 @@ func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher mode
 			"reward_record_ids": rewardRecordIds,
 		})
 
-		wagerChange := user.ReferralWagerMultiplier * totalReward
-		err = CreateCashOrder(tx, p.Type, user.ID, totalReward, wagerChange, cashOrderNotes)
+		wagerChange := user.ReferralWagerMultiplier * totalClaimable
+		err = CreateCashOrder(tx, p.Type, user.ID, totalClaimable, wagerChange, cashOrderNotes)
 		if err != nil {
 			return fmt.Errorf("failed to create cash order: %w", err)
 		}

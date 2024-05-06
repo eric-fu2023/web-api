@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"os"
 
 	"web-api/conf/consts"
@@ -87,12 +88,40 @@ func InitUgsFactory() {
 	}
 }
 
+// ImonePlayer FIXME: move to relevant pkg
+type ImonePlayer struct {
+	BaseId string
+	Prefix string
+}
+
+func (p ImonePlayer) Token() string {
+	//TODO implement me
+	return ""
+}
+
+func (p ImonePlayer) SetToken(token string) {
+	//TODO implement me
+}
+
+func (p ImonePlayer) Id() string {
+	return p.Prefix + fmt.Sprintf("%08s", p.BaseId)
+}
+
+func NewPlayer(prefix string) func(string) imone.Playable {
+	return func(baseId string) imone.Playable {
+		return &ImonePlayer{
+			BaseId: baseId,
+			Prefix: prefix,
+		}
+	}
+}
+
 func InitImOneFactory() {
 	baseUrl := os.Getenv("GAME_IMONE_BASE_URL")
 	merchantCode := os.Getenv("GAME_IMONE_MERCHANT_CODE")
 	prefix := os.Getenv("GAME_IMONE_PLAYER_PREFIX")
 
-	ImOneFactory = imone.NewFactory(baseUrl, merchantCode, imone.NewDefaultPlayer(prefix))
+	ImOneFactory = imone.NewFactory(baseUrl, merchantCode, NewPlayer(prefix))
 }
 
 func InitEvoFactory() {

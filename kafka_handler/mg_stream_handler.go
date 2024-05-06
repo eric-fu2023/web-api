@@ -21,6 +21,7 @@ const ConsumerGroupIdMgStream = "rf_stream_getter"
 var (
 	errInvalidTopic = errors.New("invalid topic name")
 	errValueEmpty   = errors.New("invalid msg value")
+	errNotGame      = errors.New("data doesn't contain 'VS' and is not a game")
 )
 
 type MgStreamHandler struct {
@@ -78,6 +79,9 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 	err := json.Unmarshal(msg.Value, &mgStream)
 	if err != nil {
 		return err
+	}
+	if !strings.Contains(mgStream.Title, "VS") {
+		return errNotGame
 	}
 	var streamer ploutos.User
 	err = model.DB.Where(`username`, fmt.Sprintf(`mg-streamer-%v`, mgStream.UserNickname)).Where(`role`, consts.UserRole["streamer"]).Find(&streamer).Error

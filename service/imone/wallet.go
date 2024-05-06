@@ -2,36 +2,44 @@ package imone
 
 import (
 	"errors"
-	"time"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
+	"fmt"
 
 	"web-api/model"
 	"web-api/util"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // TransferFrom
-func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, _ model.Extra) error {
+func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) error {
 	client := util.ImOneFactory()
 
 	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
-
+	fmt.Printf("(c *ImOne) TransferFrom %d\n", productWallet)
 	balance, err := client.GetWalletBalance(user.IdAsString(), productWallet)
+	fmt.Printf("(c *ImOne) TransferFrom  balance %f \n", balance)
+
 	if err != nil {
 		return err
 	}
 
 	switch {
 	case balance == 0:
+		fmt.Printf("(c *ImOne) TransferFrom  balance== %f. returning \n", balance)
 		return nil
 	case balance < 0:
 		return errors.New("insufficient imone wallet balance")
 	}
 
-	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, -1*balance, time.Now())
+	now, err := util.NowGMT8()
+	if err != nil {
+		return err
+	}
+
+	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, -1*balance, now)
 	if err != nil {
 		return err
 	}
@@ -62,7 +70,7 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 	return err
 }
 
-func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, _ model.Extra) (_transferredBalance int64, _err error) {
+func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
 	switch {
 	case sum.Balance == 0:
 		return 0, nil
@@ -73,7 +81,13 @@ func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _c
 	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
 
 	client := util.ImOneFactory()
-	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, util.MoneyFloat(sum.Balance), time.Now())
+
+	now, err := util.NowGMT8()
+	if err != nil {
+		return 0, err
+	}
+
+	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, util.MoneyFloat(sum.Balance), now)
 	if err != nil {
 		return 0, err
 	}

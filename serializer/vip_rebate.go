@@ -2,7 +2,10 @@ package serializer
 
 import (
 	"encoding/json"
+	"web-api/conf"
 	"web-api/util"
+
+	"github.com/gin-gonic/gin"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 )
@@ -101,6 +104,50 @@ func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []mode
 		// 	}
 		// })
 		ret.Categories[idx].Columns = append(ret.Categories[idx].Columns, col)
+	}
+
+	// add cap
+	Cat := VipRebateCategory{
+		Header: conf.GetI18N(conf.GetDefaultLocale()).T("cap"),
+		Columns: []VipRebateColumn{
+			{Header: "primary", Values: util.MapSlice(vips, func(input models.VIPRule) VipRebateColumnValue {
+				return VipRebateColumnValue{
+					VipLevel: input.VIPLevel,
+					Format:   "currency",
+					Value:    float64(input.RebateCap / 100),
+				}
+			})},
+		},
+	}
+	ret.Categories = append(ret.Categories, Cat)
+	return ret
+}
+
+// BuildVipReferralDetails builds the vip referral details response
+// list is sorted by game_category_id ASC, vip_level ASC
+func BuildVipReferralDetails(c *gin.Context, list []models.VipReferralAllianceRule, desc string, vips []models.VIPRule) (ret VipRebateDetails) {
+	bytes := []byte(desc)
+	_ = json.Unmarshal(bytes, &ret.Description)
+	var currentGameCategoryId int64 = 0
+	for _, item := range list {
+		// Init new column
+		if item.GameCategoryId != currentGameCategoryId {
+			ret.Categories = append(ret.Categories, VipRebateCategory{
+				Header:     FormatGameCategoryName(c, item.GameCategoryId),
+				CategoryId: item.GameCategoryId,
+				Columns: []VipRebateColumn{{
+					Header: "primary",
+				}},
+			})
+			currentGameCategoryId = item.GameCategoryId
+		}
+		// Add row
+		catIdx := len(ret.Categories) - 1
+		ret.Categories[catIdx].Columns[0].Values = append(ret.Categories[catIdx].Columns[0].Values, VipRebateColumnValue{
+			VipLevel: item.VipLevel,
+			Format:   "percentage",
+			Value:    item.RebateRate,
+		})
 	}
 
 	// add cap

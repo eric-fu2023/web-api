@@ -25,12 +25,6 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
-	method, err := model.CashMethod{}.GetByIDWithChannel(c, s.MethodID)
-	if err != nil {
-		return
-	}
-	channel := model.GetNextChannel(model.FilterChannelByVip(c, user, method.CashMethodChannel))
-	stats := channel.Stats
 
 	amountDecimal, err := decimal.NewFromString(s.Amount)
 	if err != nil {
@@ -38,6 +32,14 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		return
 	}
 	amount := amountDecimal.IntPart() * 100
+
+	method, err := model.CashMethod{}.GetByIDWithChannel(c, s.MethodID)
+	if err != nil {
+		return
+	}
+	channel := model.GetNextChannel(model.FilterByAmount(c, amount, model.FilterChannelByVip(c, user, method.CashMethodChannel)))
+	stats := channel.Stats
+
 	r, err = s.verifyCashInAmount(c, amount, method)
 	if err != nil {
 		return
