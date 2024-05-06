@@ -107,7 +107,10 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 		ScheduleTime: time.Now(),
 	}
 	if mgStream.Srctp == 8 { // MatchId is FB id
-		stream.MatchId = mgStream.MatchId
+		var match ploutos.Match
+		if e := model.DB.Where(`match_id`, mgStream.MatchId).First(&match).Error; e == nil {
+			stream.MatchId = match.ID
+		}
 	} else {
 		stream.MatchId = SearchFBMatch(mgStream.Title, mgStream.League)
 	}
@@ -153,5 +156,5 @@ func SearchFBMatch(title, league string) int64 {
 		return 0
 	}
 	fmt.Println("Mapping with FB match successful")
-	return match.MatchId
+	return match.ID
 }
