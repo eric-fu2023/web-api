@@ -18,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/logger"
 )
 
 type GetUrlService struct {
@@ -99,10 +100,18 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 			util.Log().Info(`GAME INTEGRATION TRANSFER OUT OK ctx %v`, ctx.Value("reqtime"))
 		}
 		err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+			tx.Logger = tx.Logger.LogMode(logger.Info)
+			defer func() {
+				log.Printf("tx.Error Transfer In %v \n", tx.Error)
+			}()
 			var sum ploutos.UserSum
+			util.Log().Info(`GAME INTEGRATION TRANSFER IN getting sum... user id %s ctx %v`, user.ID, ctx.Value("reqtime"))
 			err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error
 			if err != nil {
+				util.Log().Error(`GAME INTEGRATION TRANSFER IN getting sum ERROR... err %v user id %s ctx %v`, err, user.ID, ctx.Value("reqtime"))
 				return
+			} else {
+				util.Log().Info(`GAME INTEGRATION TRANSFER IN getting sum OK... err %v user id %s ctx %v`, err, user.ID, ctx.Value("reqtime"))
 			}
 			var transferToBalance int64
 			if sum.Balance > 0 { // transfer in to the game is needed
