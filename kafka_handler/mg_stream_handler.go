@@ -24,6 +24,16 @@ var (
 	errNotGame      = errors.New("data doesn't contain 'VS' and is not a game")
 )
 
+var sportsCategoryTypeMapping = map[int64]int64{
+	1: 1, // sports
+	3: 1, // sports
+}
+
+var sportsCategoryMapping = map[int64]int64{
+	1: 1, // football
+	3: 2, // basketball
+}
+
 type MgStreamHandler struct {
 	Topic   string
 	GroupId string
@@ -110,9 +120,11 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 		var match ploutos.Match
 		if e := model.DB.Where(`match_id`, mgStream.MatchId).First(&match).Error; e == nil {
 			stream.MatchId = match.ID
+			stream.StreamCategoryTypeId = sportsCategoryTypeMapping[match.SportId]
+			stream.StreamCategoryId = sportsCategoryMapping[match.SportId]
 		}
 	} else {
-		stream.MatchId = SearchFBMatch(mgStream.Title, mgStream.League)
+		stream.MatchId, stream.StreamCategoryTypeId, stream.StreamCategoryId = SearchFBMatch(mgStream.Title, mgStream.League)
 	}
 	if mgStream.OnlineTime != 0 {
 		stream.Status = 2
@@ -141,11 +153,11 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 	return nil
 }
 
-func SearchFBMatch(title, league string) int64 {
+func SearchFBMatch(title, league string) (int64, int64, int64) {
 	title = strings.ToUpper(title)
 	teams := strings.Split(title, "VS")
 	if len(teams) != 2 {
-		return 0
+		return 0, 0, 0
 	}
 	home := strings.TrimSpace(teams[0])
 	away := strings.TrimSpace(teams[1])
@@ -153,8 +165,8 @@ func SearchFBMatch(title, league string) int64 {
 	var match ploutos.Match
 	err := model.DB.Where(`home_name_cn`, home).Where(`away_name_cn`, away).Where(`league_name_cn`, league).Order(`open_time DESC`).First(&match).Error
 	if err != nil {
-		return 0
+		return 0, 0, 0
 	}
 	fmt.Println("Mapping with FB match successful")
-	return match.ID
+	return match.ID, sportsCategoryTypeMapping[match.SportId], sportsCategoryMapping[match.SportId]
 }
