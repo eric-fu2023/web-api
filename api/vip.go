@@ -35,3 +35,13 @@ func VipLoadRebateRule(c *gin.Context) {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
+
+func VipLoadReferralAllianceRewardRule(c *gin.Context) {
+	var service service.VipReferralAllianceRewardRulesService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Load(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}

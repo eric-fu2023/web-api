@@ -23,3 +23,12 @@ func GetAppConfigWithCache(name, key string) (string, error) {
 	appConfigCache[name][key] = value
 	return value, nil
 }
+
+func GetAppConfig(name, key string) (string, error) {
+	var value string
+	err := DB.Table("app_configs").Select("value").Where("name", name).Where("key", key).Scan(&value).Error
+	if err != nil {
+		return "", err
+	}
+	return value, nil
+}
