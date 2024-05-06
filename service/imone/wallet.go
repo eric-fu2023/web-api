@@ -2,6 +2,7 @@ package imone
 
 import (
 	"errors"
+	"fmt"
 
 	"web-api/model"
 	"web-api/util"
@@ -17,20 +18,28 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 	client := util.ImOneFactory()
 
 	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
-
+	fmt.Printf("(c *ImOne) TransferFrom %d\n", productWallet)
 	balance, err := client.GetWalletBalance(user.IdAsString(), productWallet)
+	fmt.Printf("(c *ImOne) TransferFrom  balance %f \n", balance)
+
 	if err != nil {
 		return err
 	}
 
 	switch {
 	case balance == 0:
+		fmt.Printf("(c *ImOne) TransferFrom  balance== %f. returning \n", balance)
 		return nil
 	case balance < 0:
 		return errors.New("insufficient imone wallet balance")
 	}
 
-	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, -1*balance, util.NowGMT8())
+	now, err := util.NowGMT8()
+	if err != nil {
+		return err
+	}
+
+	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, -1*balance, now)
 	if err != nil {
 		return err
 	}
@@ -72,7 +81,13 @@ func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _c
 	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
 
 	client := util.ImOneFactory()
-	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, util.MoneyFloat(sum.Balance), util.NowGMT8())
+
+	now, err := util.NowGMT8()
+	if err != nil {
+		return 0, err
+	}
+
+	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, util.MoneyFloat(sum.Balance), now)
 	if err != nil {
 		return 0, err
 	}
