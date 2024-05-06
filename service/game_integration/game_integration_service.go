@@ -1,7 +1,11 @@
 package game_integration
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"time"
+
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -14,11 +18,23 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/logger"
 )
 
 type GetUrlService struct {
 	SubGameId int64 `form:"game_id" json:"game_id" binding:"required"`
 	Platform  int64 `form:"platform" json:"platform" binding:"required"`
+}
+
+func templogtransfer(ch chan bool, msg string, ctx context.Context) {
+	for {
+		select {
+		case <-ch:
+			return
+		case <-time.After(5 * time.Second):
+			log.Println(msg+" ...", ctx.Value("reqtime"))
+		}
+	}
 }
 
 func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err error) {
@@ -48,6 +64,14 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 	go func(user model.User, lang string, subGame ploutos.SubGameC, game common.GameIntegrationInterface, gvu ploutos.GameVendorUser) {
 		model.GlobalWaitGroup.Add(1)
 		defer model.GlobalWaitGroup.Done()
+
+		ctx := context.WithValue(context.Background(), "reqtime", time.Now().UnixMilli())
+
+		ch := make(chan bool)
+		go templogtransfer(ch, fmt.Sprintf("資金周轉... user: %s", user.User.Username), ctx)
+		defer func() {
+			ch <- true
+		}()
 		err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 			var lastPlayed ploutos.GameVendorUser
 			err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload(`GameVendor`).Where(`user_id`, user.ID).Where(`is_last_played`, true).
@@ -70,14 +94,24 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 			return
 		})
 		if err != nil {
-			util.Log().Error(`GAME INTEGRATION TRANSFER OUT ERROR: %v`, err)
+			util.Log().Error(`GAME INTEGRATION TRANSFER OUT ERROR: %v ctx %v`, err, ctx.Value("reqtime"))
 			return
+		} else {
+			util.Log().Info(`GAME INTEGRATION TRANSFER OUT OK ctx %v`, ctx.Value("reqtime"))
 		}
 		err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+			tx.Logger = tx.Logger.LogMode(logger.Info)
+			defer func() {
+				log.Printf("tx.Error Transfer In %v \n", tx.Error)
+			}()
 			var sum ploutos.UserSum
+			util.Log().Info(`GAME INTEGRATION TRANSFER IN getting sum... user id %s ctx %v`, user.ID, ctx.Value("reqtime"))
 			err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error
 			if err != nil {
+				util.Log().Error(`GAME INTEGRATION TRANSFER IN getting sum ERROR... err %v user id %s ctx %v`, err, user.ID, ctx.Value("reqtime"))
 				return
+			} else {
+				util.Log().Info(`GAME INTEGRATION TRANSFER IN getting sum OK... err %v user id %s ctx %v`, err, user.ID, ctx.Value("reqtime"))
 			}
 			var transferToBalance int64
 			if sum.Balance > 0 { // transfer in to the game is needed
@@ -97,8 +131,10 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 			return
 		})
 		if err != nil {
-			util.Log().Error(`GAME INTEGRATION TRANSFER IN ERROR: %v`, err)
+			util.Log().Error(`GAME INTEGRATION TRANSFER IN ERROR: %v %v`, err, ctx.Value("reqtime"))
 			return
+		} else {
+			util.Log().Info(`GAME INTEGRATION TRANSFER IN OK ctx %v`, ctx.Value("reqtime"))
 		}
 	}(user, locale, subGame, game, gvu)
 

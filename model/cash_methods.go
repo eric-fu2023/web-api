@@ -133,3 +133,13 @@ func FilterChannelByVip(c context.Context, user User, chns []models.CashMethodCh
 	}
 	return ret
 }
+
+func FilterByAmount(c context.Context, amount int64, chns []models.CashMethodChannel) []models.CashMethodChannel {
+	ret := []models.CashMethodChannel{}
+	for _, ch := range chns {
+		if amount < ch.MaxAmount && amount > ch.MinAmount {
+			ret = append(ret, ch)
+		}
+	}
+	return ret
+}
