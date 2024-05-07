@@ -19,7 +19,7 @@ type GetReferralAllianceSummaryCond struct {
 	ReferrerIds    []int64
 	ReferralIds    []int64
 	HasBeenClaimed []bool
-	BetDateEnd     string
+	RewardMonthEnd string
 }
 
 func GetReferralAllianceSummaries(cond GetReferralAllianceSummaryCond) ([]ReferralAllianceSummary, error) {
@@ -39,23 +39,24 @@ func GetReferralAllianceSummaries(cond GetReferralAllianceSummaryCond) ([]Referr
 	if len(cond.HasBeenClaimed) > 0 {
 		db = db.Where("has_been_claimed IN ?", cond.HasBeenClaimed)
 	}
-	if cond.BetDateEnd != "" {
-		db = db.Where("bet_date <= ?", cond.BetDateEnd)
+	if cond.RewardMonthEnd != "" {
+		db = db.Where("reward_month <= ?", cond.RewardMonthEnd)
 	}
 
 	var res []ReferralAllianceSummary
 	err := db.Table(ploutos.ReferralAllianceReward{}.TableName()).
 		Select(selectFields).
+		Where("reward_month != ''"). // filter out old data TODO remove this after a while
 		Find(&res).Error
 	return res, err
 }
 
 type GetReferralAllianceRewardsCond struct {
-	ReferrerIds    []int64
-	ReferralIds    []int64
-	HasBeenClaimed []bool
-	BetDateStart   string
-	BetDateEnd     string
+	ReferrerIds      []int64
+	ReferralIds      []int64
+	HasBeenClaimed   []bool
+	RewardMonthStart string
+	RewardMonthEnd   string
 }
 
 func GetReferralAllianceRewards(cond GetReferralAllianceRewardsCond) ([]ploutos.ReferralAllianceReward, error) {
@@ -70,15 +71,18 @@ func GetReferralAllianceRewards(cond GetReferralAllianceRewardsCond) ([]ploutos.
 	if len(cond.HasBeenClaimed) > 0 {
 		db = db.Where("has_been_claimed IN ?", cond.HasBeenClaimed)
 	}
-	if cond.BetDateStart != "" {
-		db = db.Where("bet_date >= ?", cond.BetDateStart)
+	if cond.RewardMonthStart != "" {
+		db = db.Where("reward_month >= ?", cond.RewardMonthStart)
 	}
-	if cond.BetDateEnd != "" {
-		db = db.Where("bet_date <= ?", cond.BetDateEnd)
+	if cond.RewardMonthEnd != "" {
+		db = db.Where("reward_month <= ?", cond.RewardMonthEnd)
 	}
 
 	var rewards []ploutos.ReferralAllianceReward
-	err := db.Order("bet_date DESC").Find(&rewards).Error
+	err := db.
+		Where("reward_month != ''"). // filter out old data TODO remove this after a while
+		Order("reward_month DESC").
+		Find(&rewards).Error
 	return rewards, err
 }
 

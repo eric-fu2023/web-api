@@ -435,6 +435,7 @@ const (
 	LogKey                                      = "logger"
 	CorrelationKey                              = "correlation_id"
 	StdTimeFormat                               = "2006-01-02 15:04:05"
+	StdMonthFormat                              = "2006-01"
 	OrderTypeTopup                              = "top-up"
 	OrderTypeWithdraw                           = "withdraw"
 	OrderTypeDepositBonus                       = "deposit_bonus"

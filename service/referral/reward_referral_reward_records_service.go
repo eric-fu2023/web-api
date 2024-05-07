@@ -1,8 +1,11 @@
 package referral
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"strconv"
 	"time"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -38,11 +41,22 @@ func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r seria
 		HasBeenClaimed: []bool{true},
 	}
 	if service.RecordTimeStart > 0 {
-		cond.BetDateStart = time.Unix(service.RecordTimeStart, 0).Format(time.DateOnly)
+		monthStartStr, err := service.getMonthString(time.Unix(service.RecordTimeStart, 0))
+		if err != nil {
+			util.GetLoggerEntry(c).Errorf("getMonthString start error: %s", err.Error())
+			return serializer.GeneralErr(c, err), err
+		}
+		cond.RewardMonthStart = monthStartStr
 	}
 	if service.RecordTimeEnd > 0 {
-		cond.BetDateEnd = time.Unix(service.RecordTimeEnd, 0).Format(time.DateOnly)
+		monthEndStr, err := service.getMonthString(time.Unix(service.RecordTimeEnd, 0))
+		if err != nil {
+			util.GetLoggerEntry(c).Errorf("getMonthString end error: %s", err.Error())
+			return serializer.GeneralErr(c, err), err
+		}
+		cond.RewardMonthEnd = monthEndStr
 	}
+
 	rewardRecords, err := model.GetReferralAllianceRewards(cond)
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("GetReferralAllianceRewards error: %s", err.Error())
@@ -51,8 +65,21 @@ func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r seria
 
 	return serializer.Response{
 		Data: map[string]any{
-			"reward_records_day": serializer.BuildReferralAllianceRewards(c, rewardRecords),
+			"reward_records_month": serializer.BuildReferralAllianceRewards(c, rewardRecords),
 		},
 		Msg: i18n.T("success"),
 	}, nil
+}
+
+func (service *RewardReferralRewardRecordsService) getMonthString(t time.Time) (string, error) {
+	tzOffsetStr, err := model.GetAppConfigWithCache("timezone", "offset_seconds")
+	if err != nil {
+		return "", fmt.Errorf("failed to get tz offset config: %w", err)
+	}
+	tzOffset, err := strconv.Atoi(tzOffsetStr)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse tz offset config: %w", err)
+	}
+
+	return t.In(time.FixedZone("", tzOffset)).Format(consts.StdMonthFormat), nil
 }

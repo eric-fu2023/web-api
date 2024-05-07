@@ -324,27 +324,42 @@ func ValidateUsageDetailsByType(v models.Voucher, matchType int, odds float64, b
 }
 
 func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward int64) {
-	oneDayBefore, err := getOneDayBeforeDateString(now)
+	// Check from 1 month ago
+	oneMonthBefore, err := getLastMonthString(now)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("getOneDayBeforeDateString error", err)
+		util.GetLoggerEntry(c).Error("getLastMonthString error", err)
 		return
 	}
 
 	summaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
 		ReferrerIds:    []int64{userID},
 		HasBeenClaimed: []bool{false},
-		BetDateEnd:     oneDayBefore,
+		RewardMonthEnd: oneMonthBefore, // TODO!Jh verify that we dont need this
 	})
 	if err != nil {
 		util.GetLoggerEntry(c).Error("GetReferralAllianceSummaries error", err)
 		return
 	}
 
-	if len(summaries) == 0 {
+	// If there are available rewards from last month and before, display that
+	if len(summaries) > 0 {
+		return summaries[0].ClaimableReward
+	}
+
+	// If there are no available rewards from last month and before, display current month's
+	currentSummaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
+		ReferrerIds:    []int64{userID},
+		HasBeenClaimed: []bool{false},
+	})
+	if err != nil {
+		util.GetLoggerEntry(c).Error("GetReferralAllianceSummaries error", err)
+		return
+	}
+	if len(currentSummaries) == 0 {
 		return 0
 	}
 
-	return summaries[0].ClaimableReward
+	return currentSummaries[0].ClaimableReward
 }
 
 func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher models.Voucher, userID int64, now time.Time) error {
@@ -374,6 +389,7 @@ func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher mode
 			return fmt.Errorf("failed to create cash order: %w", err)
 		}
 
+		// The
 		err = tx.Create(&voucher).Error
 		if err != nil {
 			return fmt.Errorf("failed to create voucher: %w", err)
@@ -384,16 +400,16 @@ func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher mode
 }
 
 func claimReferralAllianceRewards(tx *gorm.DB, referrerId int64, now time.Time) ([]models.ReferralAllianceReward, error) {
-	oneDayBefore, err := getOneDayBeforeDateString(now)
+	oneMonthBefore, err := getLastMonthString(now)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get one day before date string: %w", err)
+		return nil, fmt.Errorf("getLastMonthString: %w", err)
 	}
 
 	// Get reward records
 	cond := model.GetReferralAllianceRewardsCond{
 		ReferrerIds:    []int64{referrerId},
 		HasBeenClaimed: []bool{false},
-		BetDateEnd:     oneDayBefore,
+		RewardMonthEnd: oneMonthBefore,
 	}
 	rewardRecords, err := model.GetReferralAllianceRewards(cond)
 	if err != nil {
@@ -420,7 +436,7 @@ func earlier(a time.Time, b time.Time) time.Time {
 	return b
 }
 
-func getOneDayBeforeDateString(now time.Time) (string, error) {
+func getLastMonthString(t time.Time) (string, error) {
 	tzOffsetStr, err := model.GetAppConfigWithCache("timezone", "offset_seconds")
 	if err != nil {
 		return "", fmt.Errorf("failed to get tz offset config: %w", err)
@@ -429,7 +445,9 @@ func getOneDayBeforeDateString(now time.Time) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to parse tz offset config: %w", err)
 	}
-	return now.In(time.FixedZone("", tzOffset)).AddDate(0, 0, -1).Format(time.DateOnly), nil
+
+	timeTz := t.In(time.FixedZone("", tzOffset))
+	return util.LastDayOfPreviousMonth(timeTz).Format(consts.StdMonthFormat), nil
 }
 
 func getSameDayVipRewardRecord(tx *gorm.DB, userID, prmotionID int64) models.VipRewardRecords {

@@ -32,22 +32,22 @@ type ReferralAllianceReward struct {
 	ReferrerReward   float64 `json:"referrer_reward"`
 }
 
-type ReferralAllianceRewardDay struct {
-	Date          string                   `json:"date"`
+type ReferralAllianceRewardMonth struct {
+	Month         string                   `json:"month"`
 	TotalReward   float64                  `json:"total_reward"`
 	ClaimedReward float64                  `json:"claimed_reward"`
 	RewardRecords []ReferralAllianceReward `json:"reward_records"`
 }
 
-func BuildReferralAllianceRewards(c *gin.Context, rewardRecords []ploutos.ReferralAllianceReward) []ReferralAllianceRewardDay {
-	// group by date
-	var dateMap = make(map[string][]ploutos.ReferralAllianceReward)
+func BuildReferralAllianceRewards(c *gin.Context, rewardRecords []ploutos.ReferralAllianceReward) []ReferralAllianceRewardMonth {
+	// group by month
+	var monthMap = make(map[string][]ploutos.ReferralAllianceReward)
 	for _, r := range rewardRecords {
-		dateMap[r.BetDate] = append(dateMap[r.BetDate], r)
+		monthMap[r.RewardMonth] = append(monthMap[r.RewardMonth], r)
 	}
 
-	var rewardsDay []ReferralAllianceRewardDay
-	for betDate, dbRewards := range dateMap {
+	var rewardsMonth []ReferralAllianceRewardMonth
+	for rewardMonth, dbRewards := range monthMap {
 		var claimableSum int64 = 0
 		var totalRewardSum int64 = 0
 		var resRewards []ReferralAllianceReward
@@ -60,15 +60,15 @@ func BuildReferralAllianceRewards(c *gin.Context, rewardRecords []ploutos.Referr
 			})
 		}
 
-		rewardsDay = append(rewardsDay, ReferralAllianceRewardDay{
-			Date:          betDate,
+		rewardsMonth = append(rewardsMonth, ReferralAllianceRewardMonth{
+			Month:         rewardMonth,
 			TotalReward:   float64(totalRewardSum) / 100,
 			ClaimedReward: float64(claimableSum) / 100,
 			RewardRecords: resRewards,
 		})
 	}
 
-	return rewardsDay
+	return rewardsMonth
 }
 
 type ReferralAllianceReferral struct {
