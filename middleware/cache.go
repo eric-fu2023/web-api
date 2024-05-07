@@ -19,6 +19,9 @@ func Cache(duration time.Duration, needAbCache bool) gin.HandlerFunc {
 				prefix += fmt.Sprintf(`%d`, vv)
 			}
 		}
+		if v, exists := c.Get("_channel"); exists {
+			prefix += fmt.Sprintf(`%s`, v)
+		}
 		//if v, exists := c.Get("_agent"); exists {
 		//	if vv, ok := v.(int); ok {
 		//		prefix += fmt.Sprintf(`_%d`, vv)

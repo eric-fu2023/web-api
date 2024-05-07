@@ -14,7 +14,10 @@ const (
 )
 
 func (c *ImOne) GetGameUrl(user model.User, _, gameCode, subGameCode string, _ int64, extra model.Extra) (string, error) {
-	productWalletCode := tayaGameCodeToImOneWalletCodeMapping[gameCode]
+	productWalletCode, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
+	if !exist {
+		return "", ErrGameCodeMapping
+	}
 
 	client := util.ImOneFactory()
 	return client.NewLaunchMobileGame(subGameCode, extra.Locale, extra.Ip, productWalletCode, "", user.IdAsString())

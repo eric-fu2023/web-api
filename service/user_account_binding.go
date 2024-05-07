@@ -24,9 +24,6 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}
-	if err != nil {
-		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
-	}
 
 	return serializer.Response{
 		Data: util.MapSlice(list, func(a model.UserAccountBinding) serializer.UserAccountBinding {
@@ -48,6 +45,8 @@ type AddWithdrawAccountService struct {
 	BankCode       string `form:"bank_code" json:"bank_code"`
 	BankBranchName string `form:"bank_branch_name" json:"bank_branch_name"`
 	BankName       string `form:"bank_name" json:"bank_name"`
+	FirstName      string `form:"first_name" json:"first_name"`
+	LastName       string `form:"last_name" json:"last_name"`
 }
 
 func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, err error) {
@@ -74,7 +73,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 		UserAccountBinding: models.UserAccountBinding{
 			UserID:        user.ID,
 			CashMethodID:  s.MethodID,
-			AccountName:   models.EncryptedStr(s.AccountName),
+			AccountName:   models.EncryptedStr(s.FirstName + " " + s.LastName),
 			AccountNumber: models.EncryptedStr(s.AccountNo),
 			IsActive:      true,
 		},
@@ -83,6 +82,8 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 		BankCode:       s.BankCode,
 		BankBranchName: s.BankBranchName,
 		BankName:       s.BankName,
+		FirstName:      s.FirstName,
+		LastName:       s.LastName,
 	})
 	err = accountBinding.AddToDb()
 	if err != nil {
