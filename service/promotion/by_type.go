@@ -334,7 +334,7 @@ func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward i
 	summaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
 		ReferrerIds:    []int64{userID},
 		HasBeenClaimed: []bool{false},
-		RewardMonthEnd: oneMonthBefore, // TODO!Jh verify that we dont need this
+		RewardMonthEnd: oneMonthBefore,
 	})
 	if err != nil {
 		util.GetLoggerEntry(c).Error("GetReferralAllianceSummaries error", err)
