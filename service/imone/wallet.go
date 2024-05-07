@@ -1,10 +1,6 @@
 package imone
 
 import (
-	"errors"
-	"fmt"
-	"log"
-
 	"web-api/model"
 	"web-api/util"
 
@@ -18,10 +14,11 @@ import (
 func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) error {
 	client := util.ImOneFactory()
 
-	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
-	fmt.Printf("(c *ImOne) TransferFrom %d\n", productWallet)
+	productWallet, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
+	if !exist {
+		return ErrGameCodeMapping
+	}
 	balance, err := client.GetWalletBalance(user.IdAsString(), productWallet)
-	fmt.Printf("(c *ImOne) TransferFrom  balance %f \n", balance)
 
 	if err != nil {
 		return err
@@ -29,10 +26,9 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 
 	switch {
 	case balance == 0:
-		fmt.Printf("(c *ImOne) TransferFrom  balance== %f. returning \n", balance)
 		return nil
 	case balance < 0:
-		return errors.New("insufficient imone wallet balance")
+		return ErrInsufficientImoneWalletBalance
 	}
 
 	now, err := util.NowGMT8()
@@ -45,7 +41,6 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 		return err
 	}
 
-	util.Log().Info("ImOne GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIdImOne, user.ID, balance, ptxid)
 	var sum ploutos.UserSum
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error; err != nil {
 		return err
@@ -72,20 +67,16 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 }
 
 func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
-	log.Println("func (c *ImOne) TransferTo ...")
 	switch {
 	case sum.Balance == 0:
-		log.Println("func (c *ImOne) TransferTo balance is zero. returning")
 		return 0, nil
 	case sum.Balance < 0:
-		log.Println("func (c *ImOne) TransferTo balance is negative. returning")
-		return 0, errors.New("ImOne::TransferTo not allowed to transfer negative sum")
+		return 0, ErrTransferNegativeBalance
 	}
 
 	productWallet, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
-	log.Printf("func (c *ImOne) TransferTo productWallet = %d\n", productWallet)
 	if !exist {
-		return 0, errors.New("unknown gamecode")
+		return 0, ErrGameCodeMapping
 	}
 
 	client := util.ImOneFactory()
@@ -94,12 +85,12 @@ func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _c
 	if err != nil {
 		return 0, err
 	}
-	log.Printf("func (c *ImOne) call site: TransferTo calling PerformTransfer...  = %d\n", productWallet)
+
 	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, util.MoneyFloat(sum.Balance), now)
 	if err != nil {
 		return 0, err
 	}
-	util.Log().Info("ImOne GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIdImOne, user.ID, util.MoneyFloat(sum.Balance), ptxid)
+
 	if ptxid != "" {
 		transaction := ploutos.Transaction{
 			UserId:                user.ID,

@@ -2,7 +2,6 @@ package imone
 
 import (
 	"errors"
-	"log"
 
 	"web-api/model"
 	"web-api/util"
@@ -53,17 +52,15 @@ func (c *ImOne) createImOneUserAndDbWallet(user model.User, currency string) err
 }
 
 func (c *ImOne) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, _err error) {
-	log.Printf("(c *ImOne) GetGameBalance user %+v currency %+v gameCode %+v extra %+v\n", user, currency, gameCode, extra)
 	productWalletCode, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
-
 	if !exist {
-		return 0, errors.New("unknown game code")
+		return 0, ErrGameCodeMapping
 	}
 
 	client := util.ImOneFactory()
 	balanceFloat, err := client.GetWalletBalance(user.IdAsString(), productWalletCode)
 	if err != nil {
-		return 0, errors.Join(errors.New("ImOne get balance error"), err)
+		return 0, errors.Join(ErrGetBalance, err)
 	}
 
 	return util.MoneyInt(balanceFloat), nil
