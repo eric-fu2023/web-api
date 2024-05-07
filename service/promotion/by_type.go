@@ -343,7 +343,7 @@ func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward i
 
 	// If there are available rewards from last month and before, display that
 	if len(summaries) > 0 {
-		return summaries[0].ClaimableReward
+		return util.Max(summaries[0].ClaimableReward, 0) // return 0 if negative
 	}
 
 	// If there are no available rewards from last month and before, display current month's
@@ -359,7 +359,7 @@ func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward i
 		return 0
 	}
 
-	return currentSummaries[0].ClaimableReward
+	return util.Max(currentSummaries[0].ClaimableReward, 0) // return 0 if negative
 }
 
 func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher models.Voucher, userID int64, now time.Time) error {
@@ -375,21 +375,23 @@ func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher mode
 			totalClaimable += r.ClaimableAmount
 		}
 
-		var rewardRecordIds []int64
-		for _, r := range rewardRecords {
-			rewardRecordIds = append(rewardRecordIds, r.ID)
-		}
-		cashOrderNotes := util.JSON(map[string]any{
-			"reward_record_ids": rewardRecordIds,
-		})
+		if totalClaimable > 0 {
+			var rewardRecordIds []int64
+			for _, r := range rewardRecords {
+				rewardRecordIds = append(rewardRecordIds, r.ID)
+			}
+			cashOrderNotes := util.JSON(map[string]any{
+				"reward_record_ids": rewardRecordIds,
+			})
 
-		wagerChange := user.ReferralWagerMultiplier * totalClaimable
-		err = CreateCashOrder(tx, p.Type, user.ID, totalClaimable, wagerChange, cashOrderNotes)
-		if err != nil {
-			return fmt.Errorf("failed to create cash order: %w", err)
+			wagerChange := user.ReferralWagerMultiplier * totalClaimable
+			err = CreateCashOrder(tx, p.Type, user.ID, totalClaimable, wagerChange, cashOrderNotes)
+			if err != nil {
+				return fmt.Errorf("failed to create cash order: %w", err)
+			}
 		}
 
-		// The
+		voucher.Amount = util.Max(totalClaimable, voucher.Amount)
 		err = tx.Create(&voucher).Error
 		if err != nil {
 			return fmt.Errorf("failed to create voucher: %w", err)
