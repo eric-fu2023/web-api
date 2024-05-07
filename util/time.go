@@ -30,9 +30,10 @@ type _locations struct {
 
 func (l *_locations) Get(name string) (*time.Location, error) {
 	l.lock.RLock()
-	defer l.lock.RUnlock()
+	loc := l.m[name]
+	l.lock.RUnlock()
 
-	if loc := l.m[name]; loc != nil {
+	if loc != nil {
 		return loc, nil
 	}
 
