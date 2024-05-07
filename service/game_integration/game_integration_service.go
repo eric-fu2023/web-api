@@ -72,13 +72,16 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 		ch := make(chan bool)
 		go templogtransfer(ch, fmt.Sprintf("資金周轉... user: %s", user.User.Username), ctxlog)
 		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("transfer in panic err %+v", err)
+			}
 			ch <- true
 		}()
 
 		err = model.DB.Transaction(func(_tx *gorm.DB) (err error) {
-			log.Printf(" Transfer Out %v \n", _tx.Error)
+			log.Printf(" Transfer Out \n")
 			defer func() {
-				log.Printf(" Transfer Out returned%v \n", _tx.Error)
+				log.Printf(" Transfer Out return err%v tx err %v \n", err, _tx.Error)
 			}()
 			var lastPlayed ploutos.GameVendorUser
 			err = _tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload(`GameVendor`).Where(`user_id`, user.ID).Where(`is_last_played`, true).
@@ -106,6 +109,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 		} else {
 			util.Log().Info(`GAME INTEGRATION TRANSFER OUT OK ctxlog %v`, ctxlog.Value("reqtime"))
 		}
+
 		err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 			tx.Logger = tx.Logger.LogMode(logger.Info)
 			defer func() {
@@ -118,15 +122,20 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 				util.Log().Error(`GAME INTEGRATION TRANSFER IN getting sum ERROR... err %v user id %s ctx %v`, err, user.ID, ctxlog.Value("reqtime"))
 				return
 			} else {
-				util.Log().Info(`GAME INTEGRATION TRANSFER IN getting sum OK... err %v user id %s ctx %v`, err, user.ID, ctxlog.Value("reqtime"))
+				util.Log().Info(`GAME INTEGRATION TRANSFER IN getting sum OK... err %v user id %+v %s ctx %v`, err, user, ctxlog.Value("reqtime"))
 			}
 			var transferToBalance int64
+
 			if sum.Balance > 0 { // transfer in to the game is needed
+				util.Log().Info(`GAME INTEGRATION TRANSFER IN calling game.Transfer`)
+
 				transferToBalance, err = game.TransferTo(tx, user, sum, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameVendor.ID, extra)
 				if err != nil {
 					return
 				}
 			}
+
+			util.Log().Info(`GAME INTEGRATION TRANSFER IN tx.Model(ploutos.GameVendorUser{}).Where('game_vendor_id', subGame.GameVendor.ID=%d).Where('user_id', user.ID=%d).Updates(map[string]interface{}{"balance": gorm.Expr('balance + ?'', transferToBalance=%d), "is_last_played": true})`, subGame.GameVendor.ID, user.ID, transferToBalance)
 			err = tx.Model(ploutos.GameVendorUser{}).Where(`game_vendor_id`, subGame.GameVendor.ID).Where(`user_id`, user.ID).Updates(map[string]interface{}{"balance": gorm.Expr(`balance + ?`, transferToBalance), "is_last_played": true}).Error
 			if err != nil {
 				return
