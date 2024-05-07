@@ -44,6 +44,7 @@ type PromotionDetail struct {
 	Voucher                Voucher           `json:"voucher"`
 	IsVipAssociated        bool              `json:"is_vip_associated"`
 	DisplayOnly            bool              `json:"display_only"`
+	Extra                  any               `json:"extra"`
 }
 
 type ClaimStatus struct {
@@ -105,7 +106,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, v Voucher, cl ClaimStatus) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, v Voucher, cl ClaimStatus, extra any) PromotionDetail {
 	raw := json.RawMessage(p.Image)
 	m := make(map[string]string)
 	json.Unmarshal(raw, &m)
@@ -113,6 +114,7 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 	if len(image) == 0 {
 		image = m["h5"]
 	}
+
 	return PromotionDetail{
 		ID:                     p.ID,
 		Name:                   p.Name,
@@ -132,6 +134,7 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		Category:               p.Category,
 		IsVipAssociated:        p.VipAssociated,
 		DisplayOnly:            p.DisplayOnly,
+		Extra:                  extra,
 	}
 }
 
