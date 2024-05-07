@@ -73,7 +73,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 		UserAccountBinding: models.UserAccountBinding{
 			UserID:        user.ID,
 			CashMethodID:  s.MethodID,
-			AccountName:   models.EncryptedStr(s.FirstName + " " + s.LastName),
+			AccountName:   models.EncryptedStr(s.AccountName),
 			AccountNumber: models.EncryptedStr(s.AccountNo),
 			IsActive:      true,
 		},
