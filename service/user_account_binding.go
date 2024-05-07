@@ -24,9 +24,6 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}
-	if err != nil {
-		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
-	}
 
 	return serializer.Response{
 		Data: util.MapSlice(list, func(a model.UserAccountBinding) serializer.UserAccountBinding {
@@ -85,6 +82,8 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 		BankCode:       s.BankCode,
 		BankBranchName: s.BankBranchName,
 		BankName:       s.BankName,
+		FirstName:      s.FirstName,
+		LastName:       s.LastName,
 	})
 	err = accountBinding.AddToDb()
 	if err != nil {
