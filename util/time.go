@@ -66,3 +66,8 @@ func NowGMT8() (time.Time, error) {
 	}
 	return now.In(loc), nil
 }
+
+func LastDayOfPreviousMonth(t time.Time) time.Time {
+	y, m, _ := t.Date()
+	return time.Date(y, m, 0, 0, 0, 0, 0, t.Location())
+}

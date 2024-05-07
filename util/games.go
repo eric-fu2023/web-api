@@ -16,8 +16,9 @@ import (
 )
 
 const (
-	IntegrationIdUGS   = 1
-	IntegrationIdImOne = 2
+	IntegrationIdUGS              = 1
+	IntegrationIdImOne            = 2
+	IntegrationIdEvoUnimplemented = 3
 )
 
 var (

@@ -32,6 +32,7 @@ func (service *RewardSummaryService) Get(c *gin.Context) (r serializer.Response,
 	if len(summaries) > 0 {
 		summary = summaries[0]
 	}
+	totalReward := util.Max(summary.TotalReward, 0)
 
 	type Response struct {
 		ReferralCount     int64   `json:"referral_count"`
@@ -42,7 +43,7 @@ func (service *RewardSummaryService) Get(c *gin.Context) (r serializer.Response,
 	respData := Response{
 		ReferralCount:     referralCount,
 		RewardRecordCount: summary.RecordCount,
-		TotalReward:       float64(summary.TotalReward) / 100,
+		TotalReward:       float64(totalReward) / 100,
 	}
 
 	return serializer.Response{

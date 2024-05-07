@@ -3,6 +3,7 @@ package imone
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"web-api/model"
 	"web-api/util"
@@ -71,14 +72,21 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 }
 
 func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
+	log.Println("func (c *ImOne) TransferTo ...")
 	switch {
 	case sum.Balance == 0:
+		log.Println("func (c *ImOne) TransferTo balance is zero. returning")
 		return 0, nil
 	case sum.Balance < 0:
+		log.Println("func (c *ImOne) TransferTo balance is negative. returning")
 		return 0, errors.New("ImOne::TransferTo not allowed to transfer negative sum")
 	}
 
-	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
+	productWallet, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
+	log.Printf("func (c *ImOne) TransferTo productWallet = %d\n", productWallet)
+	if !exist {
+		return 0, errors.New("unknown gamecode")
+	}
 
 	client := util.ImOneFactory()
 
@@ -86,7 +94,7 @@ func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _c
 	if err != nil {
 		return 0, err
 	}
-
+	log.Printf("func (c *ImOne) call site: TransferTo calling PerformTransfer...  = %d\n", productWallet)
 	ptxid, err := client.PerformTransfer(user.IdAsString(), productWallet, util.MoneyFloat(sum.Balance), now)
 	if err != nil {
 		return 0, err

@@ -152,7 +152,7 @@ func BuildVipReferralDetails(c *gin.Context, list []models.VipReferralAllianceRu
 
 	// add cap
 	Cat := VipRebateCategory{
-		Header: "cap",
+		Header: conf.GetI18N(conf.GetDefaultLocale()).T("cap"),
 		Columns: []VipRebateColumn{
 			{Header: "primary", Values: util.MapSlice(vips, func(input models.VIPRule) VipRebateColumnValue {
 				return VipRebateColumnValue{

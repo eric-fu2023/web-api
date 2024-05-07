@@ -17,13 +17,15 @@ type ReferralAllianceReferralSummary struct {
 }
 
 func BuildReferralAllianceReferralSummary(referral model.User, vip ploutos.VipRecord, rewardSummary model.ReferralAllianceSummary) ReferralAllianceReferralSummary {
+	totalReward := util.Max(rewardSummary.TotalReward, 0)
+
 	return ReferralAllianceReferralSummary{
 		ReferralId:  referral.ID,
 		Nickname:    referral.Nickname,
 		Avatar:      Url(referral.Avatar),
 		VipId:       vip.VipRule.ID,
 		JoinTime:    referral.CreatedAt.Unix(),
-		TotalReward: float64(rewardSummary.TotalReward) / 100,
+		TotalReward: float64(totalReward) / 100,
 	}
 }
 
@@ -32,22 +34,22 @@ type ReferralAllianceReward struct {
 	ReferrerReward   float64 `json:"referrer_reward"`
 }
 
-type ReferralAllianceRewardDay struct {
-	Date          string                   `json:"date"`
+type ReferralAllianceRewardMonth struct {
+	Month         string                   `json:"month"`
 	TotalReward   float64                  `json:"total_reward"`
 	ClaimedReward float64                  `json:"claimed_reward"`
 	RewardRecords []ReferralAllianceReward `json:"reward_records"`
 }
 
-func BuildReferralAllianceRewards(c *gin.Context, rewardRecords []ploutos.ReferralAllianceReward) []ReferralAllianceRewardDay {
-	// group by date
-	var dateMap = make(map[string][]ploutos.ReferralAllianceReward)
+func BuildReferralAllianceRewards(c *gin.Context, rewardRecords []ploutos.ReferralAllianceReward) []ReferralAllianceRewardMonth {
+	// group by month
+	var monthMap = make(map[string][]ploutos.ReferralAllianceReward)
 	for _, r := range rewardRecords {
-		dateMap[r.BetDate] = append(dateMap[r.BetDate], r)
+		monthMap[r.RewardMonth] = append(monthMap[r.RewardMonth], r)
 	}
 
-	var rewardsDay []ReferralAllianceRewardDay
-	for betDate, dbRewards := range dateMap {
+	var rewardsMonth []ReferralAllianceRewardMonth
+	for rewardMonth, dbRewards := range monthMap {
 		var claimableSum int64 = 0
 		var totalRewardSum int64 = 0
 		var resRewards []ReferralAllianceReward
@@ -60,15 +62,18 @@ func BuildReferralAllianceRewards(c *gin.Context, rewardRecords []ploutos.Referr
 			})
 		}
 
-		rewardsDay = append(rewardsDay, ReferralAllianceRewardDay{
-			Date:          betDate,
+		totalRewardSum = util.Max(totalRewardSum, 0)
+		claimableSum = util.Max(claimableSum, 0)
+
+		rewardsMonth = append(rewardsMonth, ReferralAllianceRewardMonth{
+			Month:         rewardMonth,
 			TotalReward:   float64(totalRewardSum) / 100,
 			ClaimedReward: float64(claimableSum) / 100,
 			RewardRecords: resRewards,
 		})
 	}
 
-	return rewardsDay
+	return rewardsMonth
 }
 
 type ReferralAllianceReferral struct {
@@ -103,13 +108,15 @@ func BuildReferralAllianceReferrals(
 			continue
 		}
 
+		referrerReward := util.Max(rs.TotalReward, 0)
+
 		resp = append(resp, ReferralAllianceReferral{
 			Id:             rd.Referral.ID,
 			Nickname:       rd.Referral.Nickname,
 			Avatar:         Url(rd.Referral.Avatar),
 			VipId:          rd.ReferralVipRecord.VipRule.ID,
 			JoinTime:       rd.Referral.CreatedAt.Unix(),
-			ReferrerReward: float64(rs.TotalReward) / 100,
+			ReferrerReward: float64(referrerReward) / 100,
 		})
 	}
 	return resp
