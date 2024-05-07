@@ -22,6 +22,7 @@ var (
 	errInvalidTopic = errors.New("invalid topic name")
 	errValueEmpty   = errors.New("invalid msg value")
 	errNotGame      = errors.New("data doesn't contain 'VS' and is not a game")
+	errExclusion    = errors.New("nickname contains excluded keyword")
 )
 
 var sportsCategoryTypeMapping = map[int64]int64{
@@ -92,6 +93,11 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 	}
 	if !strings.Contains(mgStream.Title, "VS") {
 		return errNotGame
+	}
+	for _, s := range []string{"红队", "蓝队", "奇异果"} {
+		if strings.Contains(mgStream.UserNickname, s) {
+			return errExclusion
+		}
 	}
 	var streamer ploutos.User
 	err = model.DB.Where(`username`, fmt.Sprintf(`mg-streamer-%v`, mgStream.UserNickname)).Where(`role`, consts.UserRole["streamer"]).Find(&streamer).Error
