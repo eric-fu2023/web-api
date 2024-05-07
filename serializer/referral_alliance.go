@@ -17,13 +17,15 @@ type ReferralAllianceReferralSummary struct {
 }
 
 func BuildReferralAllianceReferralSummary(referral model.User, vip ploutos.VipRecord, rewardSummary model.ReferralAllianceSummary) ReferralAllianceReferralSummary {
+	totalReward := util.Max(rewardSummary.TotalReward, 0)
+
 	return ReferralAllianceReferralSummary{
 		ReferralId:  referral.ID,
 		Nickname:    referral.Nickname,
 		Avatar:      Url(referral.Avatar),
 		VipId:       vip.VipRule.ID,
 		JoinTime:    referral.CreatedAt.Unix(),
-		TotalReward: float64(rewardSummary.TotalReward) / 100,
+		TotalReward: float64(totalReward) / 100,
 	}
 }
 
@@ -59,6 +61,9 @@ func BuildReferralAllianceRewards(c *gin.Context, rewardRecords []ploutos.Referr
 				ReferrerReward:   float64(r.Amount) / 100,
 			})
 		}
+
+		totalRewardSum = util.Max(totalRewardSum, 0)
+		claimableSum = util.Max(claimableSum, 0)
 
 		rewardsMonth = append(rewardsMonth, ReferralAllianceRewardMonth{
 			Month:         rewardMonth,
@@ -103,13 +108,15 @@ func BuildReferralAllianceReferrals(
 			continue
 		}
 
+		referrerReward := util.Max(rs.TotalReward, 0)
+
 		resp = append(resp, ReferralAllianceReferral{
 			Id:             rd.Referral.ID,
 			Nickname:       rd.Referral.Nickname,
 			Avatar:         Url(rd.Referral.Avatar),
 			VipId:          rd.ReferralVipRecord.VipRule.ID,
 			JoinTime:       rd.Referral.CreatedAt.Unix(),
-			ReferrerReward: float64(rs.TotalReward) / 100,
+			ReferrerReward: float64(referrerReward) / 100,
 		})
 	}
 	return resp
