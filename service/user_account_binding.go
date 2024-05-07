@@ -79,7 +79,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 		},
 	}
 
-	if method.AccountType == "paypal_email" && len(accountBinding.AccountName) == 0 {
+	if method.AccountType == "paypal_email" {
 		accountBinding.AccountName = "pa pl"
 	}
 
