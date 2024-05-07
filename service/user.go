@@ -125,13 +125,18 @@ func CreateUser(user *model.User) (err error) {
 				tx2.Rollback()
 				return ErrEmptyCurrencyId
 			}
-			err = common.GameIntegration[gi.ID].CreateWallet(*user, currency)
+
+			integratedGame, found := common.GameIntegration[gi.ID]
+			if !found {
+				return errors.New(fmt.Sprintf("integrated game id %d not found", gi.ID))
+			}
+
+			err = integratedGame.CreateWallet(*user, currency)
 			if err != nil {
 				tx2.Rollback()
 				return
 			}
 		}
-
 		// TODO: might remove in the future
 		var currencies []ploutos.CurrencyGameVendor
 		err = tx.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
@@ -167,7 +172,6 @@ func CreateUser(user *model.User) (err error) {
 		tx2.Commit()
 		return
 	})
-
 	return
 }
 

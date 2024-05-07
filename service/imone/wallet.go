@@ -78,7 +78,10 @@ func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _c
 		return 0, errors.New("ImOne::TransferTo not allowed to transfer negative sum")
 	}
 
-	productWallet := tayaGameCodeToImOneWalletCodeMapping[gameCode]
+	productWallet, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
+	if !exist {
+		return 0, errors.New("unknown gamecode")
+	}
 
 	client := util.ImOneFactory()
 
