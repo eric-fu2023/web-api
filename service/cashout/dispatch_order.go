@@ -3,6 +3,7 @@ package cashout
 import (
 	"errors"
 	"web-api/model"
+	"web-api/service/common"
 	"web-api/service/exchange"
 	"web-api/util"
 
@@ -30,6 +31,13 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 	if err != nil {
 		return
 	}
+	defer func() {
+		go func() {
+			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(cashOrder.UserId, model.DB)
+			common.SendUserSumSocketMsg(cashOrder.UserId, userSum.UserSum)
+		}()
+	}()
+
 	switch channel.Gateway {
 	case "finpay":
 		config := channel.GetFinpayConfig()

@@ -4,6 +4,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/cashout"
+	"web-api/service/common"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
@@ -36,6 +37,10 @@ func (s CashOutOrderService) Reject(c *gin.Context) (r serializer.Response, err 
 		r = serializer.GeneralErr(c, err)
 		return
 	}
+	go func() {
+		userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(cashOrder.UserId, model.DB)
+		common.SendUserSumSocketMsg(cashOrder.UserId, userSum.UserSum)
+	}()
 	r.Data = "Success"
 	return
 }

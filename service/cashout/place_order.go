@@ -8,6 +8,7 @@ import (
 	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
 
@@ -73,6 +74,12 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		return
 	}
 	rule := vip.VipRule
+	defer func() {
+		go func() {
+			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
+			common.SendUserSumSocketMsg(user.ID, userSum.UserSum)
+		}()
+	}()
 
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWithdrawLockKey, user.ID), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()
