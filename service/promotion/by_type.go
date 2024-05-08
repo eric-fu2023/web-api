@@ -2,6 +2,7 @@ package promotion
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -198,6 +199,34 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	return
 }
 
+func ExtraByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (extra any) {
+	switch p.Type {
+	case models.PromotionTypeVipReferral:
+		// Get next session's reward - actually just records that cannot be claimed yet
+		summaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
+			ReferrerIds:     []int64{userID},
+			HasBeenClaimed:  []bool{false},
+			CanClaimAfterGt: sql.NullTime{Time: now, Valid: true},
+		})
+		if err != nil {
+			util.GetLoggerEntry(c).Error("GetReferralAllianceSummaries error", err)
+			return nil
+		}
+
+		referralExtra := struct {
+			NextSessionReward float64
+		}{}
+		if len(summaries) == 0 {
+			referralExtra.NextSessionReward = 0
+		} else {
+			referralExtra.NextSessionReward = float64(util.Max(summaries[0].ClaimableReward, 0)) / 100
+		}
+		extra = referralExtra
+	}
+
+	return
+}
+
 func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange int64, notes string) error {
 	txType := promotionTxTypeMapping[promoType]
 	sum, err := model.UserSum{}.UpdateUserSumWithDB(tx,
@@ -324,42 +353,21 @@ func ValidateUsageDetailsByType(v models.Voucher, matchType int, odds float64, b
 }
 
 func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward int64) {
-	// Check from 1 month ago
-	oneMonthBefore, err := getLastMonthString(now)
-	if err != nil {
-		util.GetLoggerEntry(c).Error("getLastMonthString error", err)
-		return
-	}
-
 	summaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
-		ReferrerIds:    []int64{userID},
-		HasBeenClaimed: []bool{false},
-		RewardMonthEnd: oneMonthBefore,
+		ReferrerIds:      []int64{userID},
+		HasBeenClaimed:   []bool{false},
+		CanClaimAfterLte: sql.NullTime{Time: now, Valid: true},
 	})
 	if err != nil {
 		util.GetLoggerEntry(c).Error("GetReferralAllianceSummaries error", err)
 		return
 	}
 
-	// If there are available rewards from last month and before, display that
-	if len(summaries) > 0 {
-		return util.Max(summaries[0].ClaimableReward, 0) // return 0 if negative
-	}
-
-	// If there are no available rewards from last month and before, display current month's
-	currentSummaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
-		ReferrerIds:    []int64{userID},
-		HasBeenClaimed: []bool{false},
-	})
-	if err != nil {
-		util.GetLoggerEntry(c).Error("GetReferralAllianceSummaries error", err)
-		return
-	}
-	if len(currentSummaries) == 0 {
+	if len(summaries) == 0 {
 		return 0
 	}
 
-	return util.Max(currentSummaries[0].ClaimableReward, 0) // return 0 if negative
+	return util.Max(summaries[0].ClaimableReward, 0) // return 0 if negative
 }
 
 func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher models.Voucher, userID int64, now time.Time) error {
@@ -375,23 +383,20 @@ func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher mode
 			totalClaimable += r.ClaimableAmount
 		}
 
-		if totalClaimable > 0 {
-			var rewardRecordIds []int64
-			for _, r := range rewardRecords {
-				rewardRecordIds = append(rewardRecordIds, r.ID)
-			}
-			cashOrderNotes := util.JSON(map[string]any{
-				"reward_record_ids": rewardRecordIds,
-			})
+		var rewardRecordIds []int64
+		for _, r := range rewardRecords {
+			rewardRecordIds = append(rewardRecordIds, r.ID)
+		}
+		cashOrderNotes := util.JSON(map[string]any{
+			"reward_record_ids": rewardRecordIds,
+		})
 
-			wagerChange := user.ReferralWagerMultiplier * totalClaimable
-			err = CreateCashOrder(tx, p.Type, user.ID, totalClaimable, wagerChange, cashOrderNotes)
-			if err != nil {
-				return fmt.Errorf("failed to create cash order: %w", err)
-			}
+		wagerChange := user.ReferralWagerMultiplier * totalClaimable
+		err = CreateCashOrder(tx, p.Type, user.ID, totalClaimable, wagerChange, cashOrderNotes)
+		if err != nil {
+			return fmt.Errorf("failed to create cash order: %w", err)
 		}
 
-		voucher.Amount = util.Max(totalClaimable, voucher.Amount)
 		err = tx.Create(&voucher).Error
 		if err != nil {
 			return fmt.Errorf("failed to create voucher: %w", err)
@@ -402,16 +407,11 @@ func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher mode
 }
 
 func claimReferralAllianceRewards(tx *gorm.DB, referrerId int64, now time.Time) ([]models.ReferralAllianceReward, error) {
-	oneMonthBefore, err := getLastMonthString(now)
-	if err != nil {
-		return nil, fmt.Errorf("getLastMonthString: %w", err)
-	}
-
 	// Get reward records
 	cond := model.GetReferralAllianceRewardsCond{
-		ReferrerIds:    []int64{referrerId},
-		HasBeenClaimed: []bool{false},
-		RewardMonthEnd: oneMonthBefore,
+		ReferrerIds:      []int64{referrerId},
+		HasBeenClaimed:   []bool{false},
+		CanClaimAfterLte: sql.NullTime{Time: now, Valid: true},
 	}
 	rewardRecords, err := model.GetReferralAllianceRewards(cond)
 	if err != nil {

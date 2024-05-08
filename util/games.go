@@ -8,6 +8,7 @@ import (
 
 	gameservicecommon "blgit.rfdev.tech/taya/game-service/common"
 	"blgit.rfdev.tech/taya/game-service/dc"
+	"blgit.rfdev.tech/taya/game-service/evo"
 	"blgit.rfdev.tech/taya/game-service/fb"
 	"blgit.rfdev.tech/taya/game-service/imone"
 	"blgit.rfdev.tech/taya/game-service/imsb"
@@ -16,9 +17,9 @@ import (
 )
 
 const (
-	IntegrationIdUGS              = 1
-	IntegrationIdImOne            = 2
-	IntegrationIdEvoUnimplemented = 3
+	IntegrationIdUGS   = 1
+	IntegrationIdImOne = 2
+	IntegrationIdEvo   = 3
 )
 
 var (
@@ -28,6 +29,7 @@ var (
 	DCFactory    dc.Dc
 	IMFactory    imsb.IM
 	UgsFactory   ugs.UGS
+	EvoFactory   evo.EVO
 	ImOneFactory func() *imone.ImOne
 )
 
@@ -121,4 +123,15 @@ func InitImOneFactory() {
 	prefix := os.Getenv("GAME_IMONE_PLAYER_PREFIX")
 
 	ImOneFactory = imone.NewFactory(baseUrl, merchantCode, NewPlayer(prefix))
+}
+
+func InitEvoFactory() {
+	EvoFactory = evo.EVO{
+		Host:                  os.Getenv("GAME_EVO_HOST"),
+		CasinoId:              os.Getenv("GAME_EVO_CASINO_ID"),
+		UA2Token:              os.Getenv("GAME_EVO_UA2_TOKEN"),
+		ECToken:               os.Getenv("GAME_EVO_EC_TOKEN"),
+		GameHistoryApiToken:   os.Getenv("GAME_EVO_HISTORY_API_TOKEN"),
+		ExternalLobbyApiToken: os.Getenv("GAME_EVO_LOBBY_API_TOKEN"),
+	}
 }
