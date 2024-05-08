@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, accountBinding models.UserAccountBinding) (updatedCashOrder model.CashOrder, err error) {
+func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, accountBinding models.UserAccountBinding, retryable bool) (updatedCashOrder model.CashOrder, err error) {
 
 	updatedCashOrder = cashOrder
 	method, err := model.CashMethod{}.GetByIDWithChannel(c, cashOrder.CashMethodId)
@@ -71,6 +71,8 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			if err != nil {
 				return
 			}
+		} else if retryable {
+			return
 		} else if data.IsFailed() || errors.Is(err, finpay.ErrorGateway) {
 			updatedCashOrder, err = RevertCashOutOrder(c, updatedCashOrder.ID, util.JSON(data), "Request Failed", models.CashOrderStatusFailed, model.DB)
 			if err != nil {

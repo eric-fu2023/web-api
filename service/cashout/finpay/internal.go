@@ -12,6 +12,7 @@ import (
 
 type CashOutOrderService struct {
 	OrderNumber string `form:"order_number" json:"order_number" binding:"required"`
+	Retryable   bool   `form:"retryable" json:"retryable"`
 	// ActualAmount int64  `form:"actual_amount" json:"actual_amount" binding:"required"`
 	// BonusAmount  int64  `form:"bonus_amount" json:"bonus_amount"`
 	// WagerChange  int64  `form:"wager_change" json:"wager_change"`
@@ -55,7 +56,7 @@ func (s CashOutOrderService) Approve(c *gin.Context) (r serializer.Response, err
 		return
 	}
 
-	cashOrder, err = cashout.DispatchOrder(c, cashOrder, user, cashOrder.UserAccountBinding)
+	cashOrder, err = cashout.DispatchOrder(c, cashOrder, user, cashOrder.UserAccountBinding, s.Retryable)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return r, err
