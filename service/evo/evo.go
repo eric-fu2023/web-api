@@ -26,10 +26,10 @@ func (e EVO) GetGameUrl(user model.User, currency, gameCode, subGameCode string,
 
 	uuid := uuid.NewString()
 
-	response, err := client.GetGameUrl(uuid, "en-GB", user.IdAsString(), currency, "1.233.1", extra.Ip)
+	response, err := client.GetGameUrl(uuid, "en-GB", user.IdAsString(), currency, "1.233.1", extra.Ip, subGameCode)
 
 	if err != nil {
-		log.Printf("Error getting evo game url, err: ", err)
+		log.Printf("Error getting evo game url, err: %v ", err.Error())
 	}
 
 	url = os.Getenv("GAME_EVO_HOST") + response.EntryEmebedded
