@@ -2,6 +2,7 @@ package util
 
 import (
 	"github.com/go-playground/validator/v10"
+	"strings"
 )
 
 func UsernameValidation(fl validator.FieldLevel) bool {
@@ -71,4 +72,14 @@ func specialCharacter(char rune) bool {
 		}
 	}
 	return false
+}
+
+func FormatCountryCode(countryCode string) string {
+	if len(strings.TrimSpace(countryCode)) == 0 {
+		return countryCode
+	}
+	if strings.HasPrefix(countryCode, "+") {
+		return countryCode
+	}
+	return "+" + countryCode
 }

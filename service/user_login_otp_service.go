@@ -29,6 +29,7 @@ type UserOtpVerificationService struct {
 func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
+	s.CountryCode = util.FormatCountryCode(s.CountryCode)
 	s.Mobile = strings.TrimPrefix(s.Mobile, "0")
 
 	var user model.User
@@ -73,6 +74,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	service.Email = strings.ToLower(service.Email)
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 
+	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
 	mobileHash := serializer.MobileEmailHash(service.Mobile)
 	emailHash := serializer.MobileEmailHash(service.Email)

@@ -11,11 +11,12 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
 type UserSetPasswordService struct {
-	CountryCode string `form:"country_code" json:"country_code" validate:"omitempty,startswith=+"`
+	CountryCode string `form:"country_code" json:"country_code" validate:"omitempty"`
 	Mobile      string `form:"mobile" json:"mobile" validate:"omitempty,number"`
 	Password    string `form:"password" json:"password" binding:"required,password"`
 	Otp         string `form:"otp" json:"otp" binding:"required"`
@@ -24,6 +25,7 @@ type UserSetPasswordService struct {
 func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
+	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
 
 	var user model.User
