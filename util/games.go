@@ -19,6 +19,7 @@ import (
 const (
 	IntegrationIdUGS   = 1
 	IntegrationIdImOne = 2
+	IntegrationIdEvo   = 3
 )
 
 var (

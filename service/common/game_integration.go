@@ -2,6 +2,7 @@ package common
 
 import (
 	"web-api/model"
+	"web-api/service/evo"
 	"web-api/service/imone"
 	"web-api/service/ugs"
 	"web-api/util"
@@ -14,6 +15,7 @@ import (
 var GameIntegration = map[int64]GameIntegrationInterface{
 	util.IntegrationIdUGS:   ugs.UGS{},
 	util.IntegrationIdImOne: &imone.ImOne{},
+	util.IntegrationIdEvo:   evo.EVO{},
 }
 
 type GameIntegrationInterface interface {
