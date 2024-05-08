@@ -72,6 +72,14 @@ func (c *Callback) GetAmount() int64 {
 }
 
 func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
+	var txn ploutos.FbTransaction
+	rows := model.DB.Clauses(dbresolver.Use("txConn")). // for re-settle without rollback
+								Where(`business_id`, c.Transaction.BusinessId).
+								Where(`amount`, 0).
+								Where(`transfer_type`, `WIN`).Order(`id`).Find(&txn).RowsAffected
+	if rows > 0 {
+		return
+	}
 	value, exists = FbTransferTypeCalculateWager[c.Transaction.TransferType]
 	return
 }

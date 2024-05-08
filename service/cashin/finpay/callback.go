@@ -4,7 +4,6 @@ import (
 	"errors"
 	"web-api/model"
 	"web-api/service/cashin"
-	"web-api/service/common"
 	"web-api/util"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
@@ -33,14 +32,7 @@ func (s *FinpayPaymentCallback) Handle(c *gin.Context) (err error) {
 	// update user_sum
 	// create transaction history
 	// }
-	var order model.CashOrder
-	defer func() {
-		go func() {
-			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(order.UserId, model.DB)
-			common.SendUserSumSocketMsg(order.UserId, userSum.UserSum)
-		}()
-	}()
-	order, err = cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, 10000)
+	_, err = cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, 10000)
 	if err != nil {
 		return
 	}

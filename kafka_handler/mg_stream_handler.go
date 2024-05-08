@@ -2,11 +2,13 @@ package kafka_handler
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/IBM/sarama"
 	"gorm.io/gorm/clause"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -156,6 +158,9 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 	if err != nil {
 		return err
 	}
+	if mgStream.OfflineTime != 0 && stream.ID != 0 {
+		go CallEndLiveApi(stream.ID)
+	}
 	return nil
 }
 
@@ -175,4 +180,24 @@ func SearchFBMatch(title, league string) (int64, int64, int64) {
 	}
 	fmt.Println("Mapping with FB match successful")
 	return match.ID, sportsCategoryTypeMapping[match.SportId], sportsCategoryMapping[match.SportId]
+}
+
+func CallEndLiveApi(id int64) (err error) {
+	apiUrl := os.Getenv("BACKEND_INTERNAL_BASE_URL") + "/internal/liveStream/endLiveStream"
+	params, err := json.Marshal(map[string]int64{
+		"id": id,
+	})
+	if err != nil {
+		return
+	}
+	request, err := http.NewRequest("POST", apiUrl, bytes.NewBuffer(params))
+	request.Header = http.Header{
+		"Content-Type": []string{"application/json; charset=UTF-8"},
+	}
+	client := &http.Client{}
+	_, err = client.Do(request)
+	if err != nil {
+		return
+	}
+	return
 }
