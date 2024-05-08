@@ -9,7 +9,7 @@ require (
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240507094721-c24114a06658
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240507084236-83682073b06e
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240507103132-ffebbf6afe12
-	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240507073132-402d952aca7c
+	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240508045431-76ae7ba2e3a8
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
 	github.com/IBM/sarama v1.43.1
