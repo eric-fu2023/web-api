@@ -2,14 +2,22 @@ package service
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redsync/redsync/v4"
 	"gorm.io/gorm"
 	"sync"
+	"time"
+	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
+)
+
+const (
+	userWalletRecallKey = "user_wallet_recall_lock:%d"
 )
 
 type WalletService struct {
@@ -109,6 +117,9 @@ func (service *InternalRecallFundService) Recall(c *gin.Context) (r serializer.R
 }
 
 func recall(user model.User, force bool, locale, ip string) (userSum ploutos.UserSum, err error) {
+	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWalletRecallKey, user.ID), redsync.WithExpiry(50*time.Second))
+	mutex.Lock()
+	defer mutex.Unlock()
 	err = model.DB.Where(`user_id`, user.ID).First(&userSum).Error
 	if err != nil {
 		return
