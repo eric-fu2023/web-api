@@ -78,6 +78,11 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 			IsActive:      true,
 		},
 	}
+
+	if method.AccountType == "paypal_email" {
+		accountBinding.AccountName = "pa pl"
+	}
+
 	accountBinding.SetBankInfo(models.BankInfo{
 		BankCode:       s.BankCode,
 		BankBranchName: s.BankBranchName,

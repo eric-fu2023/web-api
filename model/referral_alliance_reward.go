@@ -16,10 +16,12 @@ type ReferralAllianceSummary struct {
 }
 
 type GetReferralAllianceSummaryCond struct {
-	ReferrerIds    []int64
-	ReferralIds    []int64
-	HasBeenClaimed []bool
-	RewardMonthEnd string
+	ReferrerIds      []int64
+	ReferralIds      []int64
+	HasBeenClaimed   []bool
+	RewardMonthEnd   string
+	CanClaimAfterLte sql.NullTime
+	CanClaimAfterGt  sql.NullTime
 }
 
 func GetReferralAllianceSummaries(cond GetReferralAllianceSummaryCond) ([]ReferralAllianceSummary, error) {
@@ -42,6 +44,12 @@ func GetReferralAllianceSummaries(cond GetReferralAllianceSummaryCond) ([]Referr
 	if cond.RewardMonthEnd != "" {
 		db = db.Where("reward_month <= ?", cond.RewardMonthEnd)
 	}
+	if cond.CanClaimAfterLte.Valid {
+		db = db.Where("can_claim_after <= ?", cond.CanClaimAfterLte.Time)
+	}
+	if cond.CanClaimAfterGt.Valid {
+		db = db.Where("can_claim_after > ?", cond.CanClaimAfterGt)
+	}
 
 	var res []ReferralAllianceSummary
 	err := db.Table(ploutos.ReferralAllianceReward{}.TableName()).
@@ -57,6 +65,7 @@ type GetReferralAllianceRewardsCond struct {
 	HasBeenClaimed   []bool
 	RewardMonthStart string
 	RewardMonthEnd   string
+	CanClaimAfterLte sql.NullTime
 }
 
 func GetReferralAllianceRewards(cond GetReferralAllianceRewardsCond) ([]ploutos.ReferralAllianceReward, error) {
@@ -76,6 +85,9 @@ func GetReferralAllianceRewards(cond GetReferralAllianceRewardsCond) ([]ploutos.
 	}
 	if cond.RewardMonthEnd != "" {
 		db = db.Where("reward_month <= ?", cond.RewardMonthEnd)
+	}
+	if cond.CanClaimAfterLte.Valid {
+		db = db.Where("can_claim_after <= ?", cond.CanClaimAfterLte)
 	}
 
 	var rewards []ploutos.ReferralAllianceReward

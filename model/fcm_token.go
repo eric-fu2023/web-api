@@ -2,8 +2,10 @@ package model
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"web-api/util"
 )
@@ -32,29 +34,64 @@ func getFcmTokens(userIds []int64) ([]FcmToken, error) {
 	return fcmTokens, err
 }
 
-func UpsertFcmToken(c *gin.Context, userId int64, Uuid, fcmToken string) error {
+func UpsertFcmToken(c *gin.Context, userId int64, uuid, fcmToken string) error {
 	if fcmToken == "" {
-		err := DB.Where("user_id", userId).Where("uuid", Uuid).Delete(&FcmToken{}).Error
+		err := DB.Where("user_id", userId).Where("uuid", uuid).Delete(&FcmToken{}).Error
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("Delete FCM token error: %s", err.Error())
 		}
 		return err
 	}
 
-	ft := FcmToken{
-		FcmToken: ploutos.FcmToken{
-			UserId: userId,
-			Uuid:   Uuid,
-			Token:  fcmToken,
-		},
-	}
-	// Insert or Update on Conflict
-	err := DB.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "uuid"}},
-		DoUpdates: clause.AssignmentColumns([]string{"user_id", "token", "deleted_at"}),
-	}).Create(&ft).Error
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		// Get existing
+		var existing FcmToken
+		err := tx.Unscoped().
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Table(FcmToken{}.TableName()).
+			Where("uuid = ?", uuid).
+			First(&existing).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			util.GetLoggerEntry(c).Errorf("Get existing FCM token error: %s", err.Error())
+			return err
+		}
+
+		// Update if there is existing
+		if err == nil {
+			err = tx.Unscoped().Model(&FcmToken{}).Where("id", existing.ID).
+				Updates(map[string]any{
+					"user_id":    userId,
+					"token":      fcmToken,
+					"deleted_at": nil,
+				}).Error
+			if err != nil {
+				util.GetLoggerEntry(c).Errorf("Update FCM token error: %s", err.Error())
+				return err
+			}
+			return nil
+		}
+
+		// Create
+		ft := FcmToken{
+			FcmToken: ploutos.FcmToken{
+				UserId: userId,
+				Uuid:   uuid,
+				Token:  fcmToken,
+			},
+		}
+
+		err = tx.Create(&ft).Error
+		if err != nil {
+			util.GetLoggerEntry(c).Errorf("Create FCM token error: %s", err.Error())
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		util.GetLoggerEntry(c).Errorf("Insert or update FCM token error: %s", err.Error())
+		util.GetLoggerEntry(c).Errorf("Transaction error: %s", err.Error())
+		return err
 	}
+
 	return err
 }

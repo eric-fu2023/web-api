@@ -64,6 +64,9 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			updatedCashOrder.Status = models.CashOrderStatusTransferring
 			updatedCashOrder.TransactionId = &data.TransferOrderNo
 			updatedCashOrder.Notes = models.EncryptedStr(util.JSON(data))
+			updatedCashOrder.CurrencyCode = method.Currency
+			updatedCashOrder.ExchangeRate = er.ExchangeRate
+			updatedCashOrder.ExchangeRateAdjusted = er.AdjustedExchangeRate
 			err = model.DB.Debug().WithContext(c).Omit(clause.Associations).Updates(&updatedCashOrder).Error
 			if err != nil {
 				return

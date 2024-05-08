@@ -157,7 +157,7 @@ func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64, meth
 	// u, _ := c.Get("user")
 	// user := u.(model.User)
 
-	if amount < 0 {
+	if amount < 0 || amount > method.MaxAmount || amount < method.MinAmount {
 		err = errors.New("illegal amount")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("negative_amount"), err)
 		return

@@ -60,7 +60,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		minAmount = conf.GetCfg().WithdrawMinNoDeposit / 100
 	}
 
-	if amount < minAmount {
+	if amount < minAmount || amount > method.MaxAmount {
 		err = errors.New("illegal amount")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("min_withdraw_unmet"), float64(minAmount)/100), err)
 		return
