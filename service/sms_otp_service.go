@@ -24,7 +24,7 @@ var (
 )
 
 type SmsOtpService struct {
-	CountryCode string `form:"country_code" json:"country_code" binding:"required,startswith=+"`
+	CountryCode string `form:"country_code" json:"country_code" binding:"required"`
 	Mobile      string `form:"mobile" json:"mobile" binding:"required,number"`
 	CheckUser   bool   `form:"check_user" json:"check_user"`
 	Action      string `form:"action" json:"action" binding:"required"`
@@ -38,6 +38,10 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 	//if err != nil {
 	//	return serializer.Err(c, service, serializer.CodeCaptchaInvalid, i18n.T("invalid_captcha"), nil)
 	//}
+
+	if service.CountryCode[:1] != "+" {
+		service.CountryCode = "+" + service.CountryCode
+	}
 
 	if service.Mobile[:1] == "0" {
 		service.Mobile = service.Mobile[1:]
