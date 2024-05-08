@@ -51,15 +51,16 @@ func (s *GetTokenService) Get(c *gin.Context) (r serializer.Response, err error)
 		}
 		user = model.User{
 			User: ploutos.User{
-				Username:               s.Username,
-				BrandId:                s.BrandId,
-				AgentId:                agent.ID,
-				CurrencyId:             s.CurrencyId,
-				Nickname:               s.Nickname,
-				Status:                 1,
-				Role:                   1,
-				RegistrationIp:         s.Ip,
-				RegistrationDeviceUuid: s.DeviceUuid,
+				Username:                s.Username,
+				BrandId:                 s.BrandId,
+				AgentId:                 agent.ID,
+				CurrencyId:              s.CurrencyId,
+				Nickname:                s.Nickname,
+				Status:                  1,
+				Role:                    1,
+				RegistrationIp:          s.Ip,
+				RegistrationDeviceUuid:  s.DeviceUuid,
+				ReferralWagerMultiplier: 1,
 			},
 		}
 		if s.Pin != "" {
@@ -69,6 +70,7 @@ func (s *GetTokenService) Get(c *gin.Context) (r serializer.Response, err error)
 			}
 			user.SecondaryPassword = string(bytes)
 		}
+		user.CreateWithDB(model.DB)
 		err = service.CreateUser(&user)
 		if err != nil {
 			r = serializer.Err(c, s, serializer.CodeDBError, "adding new user failed", err)

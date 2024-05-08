@@ -18,7 +18,7 @@ var orderType = map[int64][]int64{
 type OrderListService struct {
 	Type      int64  `form:"type" json:"type" binding:"required"`
 	IsParlay  bool   `form:"is_parlay" json:"is_parlay"`
-	IsSettled bool   `form:"is_settled" json:"is_settled"`
+	IsSettled *bool  `form:"is_settled" json:"is_settled"`
 	Start     string `form:"start" json:"start" binding:"required"`
 	End       string `form:"end" json:"end" binding:"required"`
 	common.Page
@@ -53,7 +53,7 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 
 	statuses := []int64{2, 5}
 	sumStatuses := statuses
-	if service.IsSettled {
+	if service.IsSettled != nil && *service.IsSettled {
 		sumStatuses = []int64{5}
 	}
 	types := orderType[service.Type]

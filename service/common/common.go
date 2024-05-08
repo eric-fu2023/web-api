@@ -261,16 +261,8 @@ func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betE
 	newWager = originalWager
 
 	multiplier, exists := obj.GetWagerMultiplier()
-	fmt.Printf("DebugLog1234: GameVendorId=%d, multiplier=%d\n", obj.GetGameVendorId(), multiplier)
-	fmt.Printf("DebugLog1234: GameVendorId=%d, multiplierExists=%t\n", obj.GetGameVendorId(), exists)
-	if !exists {
-		return
-	}
-
 	betAmount, betExists = obj.GetBetAmount()
-	fmt.Printf("DebugLog1234: GameVendorId=%d, betAmount=%d\n", obj.GetGameVendorId(), betAmount)
-	fmt.Printf("DebugLog1234: GameVendorId=%d, betAmountExists=%t\n", obj.GetGameVendorId(), betExists)
-	if !betExists {
+	if !exists || !betExists {
 		return
 	}
 
