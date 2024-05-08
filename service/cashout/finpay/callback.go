@@ -4,7 +4,6 @@ import (
 	"errors"
 	"web-api/model"
 	"web-api/service/cashout"
-	"web-api/service/common"
 	"web-api/util"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
@@ -22,18 +21,11 @@ func (s *FinpayTransferCallback) Handle(c *gin.Context) (err error) {
 		return
 	}
 	defer model.CashOrder{}.MarkCallbackAt(c, s.MerchantOrderNo, model.DB)
-	var order model.CashOrder
-	defer func() {
-		go func() {
-			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(order.UserId, model.DB)
-			common.SendUserSumSocketMsg(order.UserId, userSum.UserSum)
-		}()
-	}()
 
 	if s.IsSucess() {
-		order, err = cashout.CloseCashOutOrder(c, s.MerchantOrderNo, int64(s.Amount), 0, 0, util.JSON(s), "", model.DB)
+		_, err = cashout.CloseCashOutOrder(c, s.MerchantOrderNo, int64(s.Amount), 0, 0, util.JSON(s), "", model.DB)
 	} else if s.IsFailed() {
-		order, err = cashout.RevertCashOutOrder(c, s.MerchantOrderNo, util.JSON(s), "refund", models.CashOrderStatusFailed, model.DB)
+		_, err = cashout.RevertCashOutOrder(c, s.MerchantOrderNo, util.JSON(s), "refund", models.CashOrderStatusFailed, model.DB)
 	}
 	if err != nil {
 		return

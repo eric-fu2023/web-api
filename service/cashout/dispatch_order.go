@@ -31,12 +31,6 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 	if err != nil {
 		return
 	}
-	defer func() {
-		go func() {
-			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(cashOrder.UserId, model.DB)
-			common.SendUserSumSocketMsg(cashOrder.UserId, userSum.UserSum)
-		}()
-	}()
 
 	switch channel.Gateway {
 	case "finpay":
@@ -76,6 +70,11 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			updatedCashOrder.ExchangeRate = er.ExchangeRate
 			updatedCashOrder.ExchangeRateAdjusted = er.AdjustedExchangeRate
 			err = model.DB.Debug().WithContext(c).Omit(clause.Associations).Updates(&updatedCashOrder).Error
+			go func() {
+				userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(cashOrder.UserId, model.DB)
+				common.SendUserSumSocketMsg(cashOrder.UserId, userSum.UserSum, "withdraw_pending")
+			}()
+
 			if err != nil {
 				return
 			}

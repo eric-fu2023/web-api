@@ -176,7 +176,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	}
 
 	//SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
-	SendUserSumSocketMsg(gpu.UserId, userSum)
+	SendUserSumSocketMsg(gpu.UserId, userSum, "bet")
 
 	return
 }
@@ -252,7 +252,7 @@ func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
 	}
 
 	//SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
-	SendUserSumSocketMsg(gpu.UserId, userSum)
+	SendUserSumSocketMsg(gpu.UserId, userSum, "bet")
 
 	return
 }
@@ -372,7 +372,7 @@ func SendCashNotificationWithoutCurrencyId(userId int64, notificationType string
 	}()
 }
 
-func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum) {
+func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string) {
 	go func() {
 		conn := websocket.Connection{}
 		conn.Connect(os.Getenv("WS_NOTIFICATION_URL"), os.Getenv("WS_NOTIFICATION_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
@@ -384,6 +384,7 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum) {
 					msg := websocket.BalanceUpdateMessage{
 						Room:            serializer.UserSignature(userId),
 						Event:           "balance_change",
+						Cause:           cause,
 						Balance:         float64(userSum.Balance) / 100,
 						RemainingWager:  float64(userSum.RemainingWager) / 100,
 						MaxWithdrawable: float64(userSum.MaxWithdrawable) / 100,
