@@ -10,11 +10,12 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
 type UserSetMobileService struct {
-	CountryCode string `form:"country_code" json:"country_code" binding:"required,startswith=+"`
+	CountryCode string `form:"country_code" json:"country_code" binding:"required"`
 	Mobile      string `form:"mobile" json:"mobile" binding:"required,number"`
 	Otp         string `form:"otp" json:"otp" binding:"required"`
 }
@@ -23,6 +24,7 @@ func (service *UserSetMobileService) Set(c *gin.Context) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	user := c.MustGet("user").(model.User)
 	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
+	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 
 	userKeys := []string{service.CountryCode + service.Mobile}
 	otp, err := cache.GetOtpByUserKeys(c, consts.SmsOtpActionSetMobile, userKeys)

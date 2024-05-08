@@ -38,6 +38,7 @@ type UserLoginPasswordService struct {
 func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Response {
 	service.Email = strings.ToLower(service.Email)
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
+	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 
 	mobileHash := serializer.MobileEmailHash(service.Mobile)
 	emailHash := serializer.MobileEmailHash(service.Email)

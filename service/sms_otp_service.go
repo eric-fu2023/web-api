@@ -39,10 +39,7 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 	//	return serializer.Err(c, service, serializer.CodeCaptchaInvalid, i18n.T("invalid_captcha"), nil)
 	//}
 
-	if service.CountryCode[:1] != "+" {
-		service.CountryCode = "+" + service.CountryCode
-	}
-
+	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 	if service.Mobile[:1] == "0" {
 		service.Mobile = service.Mobile[1:]
 	}
