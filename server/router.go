@@ -26,6 +26,7 @@ import (
 func NewRouter() *gin.Engine {
 	r := gin.New()
 
+	r.Use(gin.Recovery())
 	r.Use(middleware.CorrelationID())
 	r.Use(middleware.ErrorLogStatus())
 
