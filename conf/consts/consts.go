@@ -481,6 +481,7 @@ const (
 	Notification_Type_Weekly_Bonus        = "weekly_bonus"
 	Notification_Type_Rebate              = "rebate"
 	Notification_Type_Vip_Promotion       = "vip_promotion"
+	Notification_Type_Referral_Alliance   = "referral_alliance"
 
 	//DefaultBrand = 1001
 	//DefaultAgent = 1000001

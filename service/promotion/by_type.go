@@ -154,7 +154,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	case models.PromotionTypeVipReferral:
 		err = claimVoucherReferralVip(c, p, voucher, userID, now)
 		if err == nil {
-			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+			common.SendNotification(userID, consts.Notification_Type_Referral_Alliance, conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_REFERRAL_ALLIANCE_TITLE), conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_REFERRAL_ALLIANCE))
 		}
 	case models.PromotionTypeVipBirthdayB:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
