@@ -467,16 +467,20 @@ const (
 	WithdrawMethodLimit = 5
 	StackTraceKey       = "stack_trace"
 
-	Notification_Type_User_Registration = "user_registration"
-	Notification_Type_Password_Reset    = "password_reset"
-	Notification_Type_Pin_Reset         = "pin_reset"
-	Notification_Type_Kyc               = "kyc"
-	Notification_Type_Bet_Placement     = "bet_transaction"
-	Notification_Type_Bet_Settlement    = "bet_settlement"
-	Notification_Type_Cash_Transaction  = "cash_transaction"
-	Notification_Type_Deposit_Bonus     = "deposit_bonus"
-	Notification_Type_Mobile_Reset      = "mobile_reset"
-	Notification_Type_Birthday_Bonus    = "birthday_bonus"
+	Notification_Type_User_Registration   = "user_registration"
+	Notification_Type_Password_Reset      = "password_reset"
+	Notification_Type_Pin_Reset           = "pin_reset"
+	Notification_Type_Kyc                 = "kyc"
+	Notification_Type_Bet_Placement       = "bet_transaction"
+	Notification_Type_Bet_Settlement      = "bet_settlement"
+	Notification_Type_Cash_Transaction    = "cash_transaction"
+	Notification_Type_Deposit_Bonus       = "deposit_bonus"
+	Notification_Type_Mobile_Reset        = "mobile_reset"
+	Notification_Type_Birthday_Bonus      = "birthday_bonus"
+	Notification_Type_Vip_Promotion_Bonus = "vip_promotion_bonus"
+	Notification_Type_Weekly_Bonus        = "weekly_bonus"
+	Notification_Type_Rebate              = "rebate"
+	Notification_Type_Vip_Promotion       = "vip_promotion"
 
 	//DefaultBrand = 1001
 	//DefaultAgent = 1000001
