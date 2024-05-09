@@ -151,6 +151,9 @@ type AppUpdateService struct {
 }
 
 func (service *AppUpdateService) Get(c *gin.Context) (r serializer.Response, err error) {
+	if service.Version == "1.0.11" {
+		return
+	}
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	brandId := c.MustGet("_brand").(int)
 	channel := c.MustGet("_channel").(string)
