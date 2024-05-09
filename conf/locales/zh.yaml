@@ -493,8 +493,8 @@ file_upload_error: "文件无法上传."
 
 err_insufficient_withdrawable: "可提取金额不足"
 
-notification_welcome_title: "欢迎来到 Taya！"
-notification_welcome: "感谢您注册！开始探索我们的服务，完善您的个人资料，并开始您在这里的旅程！"
+notification_welcome_title: "欢迎加入aha娱乐！"
+notification_welcome: "欢迎加入aha娱乐！您的账号已成功注册。立即开始您的游戏体验吧！"
 notification_password_reset_title: "密码重置成功"
 notification_password_reset: "您的密码已成功重置."
 notification_pin_reset_title: "PIN 重置成功"
