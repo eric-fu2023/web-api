@@ -214,7 +214,7 @@ func ExtraByType(c context.Context, p models.Promotion, s models.PromotionSessio
 		}
 
 		referralExtra := struct {
-			NextSessionReward float64
+			NextSessionReward float64 `json:"next_session_reward"`
 		}{}
 		if len(summaries) == 0 {
 			referralExtra.NextSessionReward = 0
