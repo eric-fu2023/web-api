@@ -7,7 +7,7 @@ toolchain go1.21.1
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240509031107-fbfa52ca4d03
-	blgit.rfdev.tech/taya/payment-service v0.0.0-20240507084236-83682073b06e
+	blgit.rfdev.tech/taya/payment-service v0.0.0-20240510085704-ccac03d332c0
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240510031412-c95fce7be727
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240508045431-76ae7ba2e3a8
 	firebase.google.com/go/v4 v4.12.1

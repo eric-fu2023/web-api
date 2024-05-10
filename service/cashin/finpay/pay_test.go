@@ -13,7 +13,7 @@ func TestCrypto(t *testing.T) {
 	godotenv.Load("../../../.env")
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 
-	data, err := finpay.FinpayClient{}.PlaceDefaultCoinPalOrderV1(c, 20000, 1, "testestest1", "")
+	data, err := finpay.FinpayClient{}.PlaceDefaultCoinPalOrderV1(c, 20000, 1, 1, "testestest1", "")
 	t.Log(err)
 	t.Log(data)
 	t.Error(1)

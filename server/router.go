@@ -139,6 +139,8 @@ func NewRouter() *gin.Engine {
 	// middlewares order can't be changed
 	r.Use(middleware.Cors())
 	r.GET("/ts", api.Ts)
+	r.GET("/finpay_redirect", api.FinpayRedirect)
+	r.POST("/finpay_redirect", api.FinpayRedirect)
 	captcha := r.Group("/captcha")
 	{
 		captcha.POST("/get", api.CaptchaGet)

@@ -1,13 +1,16 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/eclipse/paho.golang/paho"
 	"github.com/gin-gonic/gin"
 	validator "gopkg.in/go-playground/validator.v8"
 	"time"
 	"web-api/conf"
 	"web-api/serializer"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -29,6 +32,29 @@ func Ts(c *gin.Context) {
 		Code: 0,
 		Data: time.Now().Unix(),
 	})
+}
+
+func FinpayRedirect(c *gin.Context) {
+	data := map[string]any{}
+	c.MultipartForm()
+	for key, value := range c.Request.PostForm {
+		data[key] = value[0]
+	}
+	for key, value := range c.Request.URL.Query() {
+		data[key] = value[0]
+	}
+	j, _ := json.Marshal(data)
+	if v, exists := data["user_id"]; exists {
+		if vv, ok := v.(string); ok && vv != "" {
+			pb := &paho.Publish{
+				Topic:   fmt.Sprintf(`finpay_redirect/user/%s`, vv),
+				QoS:     byte(1),
+				Payload: j,
+			}
+			util.MQTTClient.Publish(context.Background(), pb)
+		}
+	}
+	c.JSON(200, nil)
 }
 
 func Heartbeat(c *gin.Context) {
