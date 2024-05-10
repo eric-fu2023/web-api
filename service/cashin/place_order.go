@@ -118,7 +118,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		cashinAmount := int64(float64(cashOrder.AppliedCashInAmount) * er.AdjustedExchangeRate)
 		switch config.Type {
 		default:
-			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username, "", config.TypeExtra)
+			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, user.ID, cashOrder.ID, config.Type, method.Currency, user.Username, "", config.TypeExtra)
 			if err != nil {
 				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
@@ -129,7 +129,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 				"bankAccountName": s.BankAccountName,
 			}
 			raw, _ := json.Marshal(extra)
-			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, cashOrder.ID, config.Type, method.Currency, user.Username, "", json.RawMessage(raw))
+			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, user.ID, cashOrder.ID, config.Type, method.Currency, user.Username, "", json.RawMessage(raw))
 			if err != nil {
 				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.PaymentOrderNo)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
