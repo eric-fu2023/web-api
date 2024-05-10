@@ -40,11 +40,11 @@ func FormatGameCategoryName(c *gin.Context, id int64) string {
 		return i18n.T("game_category_name_sports")
 	case ploutos.GameCategoryIdLive:
 		return i18n.T("game_category_name_live")
-	case ploutos.GameCategoryIdElectronic:
-		return i18n.T("game_category_name_electronic")
+	case ploutos.GameCategoryIdEGames:
+		return i18n.T("game_category_name_egames")
 	case ploutos.GameCategoryIdCard:
 		return i18n.T("game_category_name_card")
-	case ploutos.GameCategoryIdEsports:
+	case ploutos.GameCategoryIdESports:
 		return i18n.T("game_category_name_esports")
 	case ploutos.GameCategoryIdLottery:
 		return i18n.T("game_category_name_lottery")

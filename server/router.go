@@ -26,6 +26,7 @@ import (
 func NewRouter() *gin.Engine {
 	r := gin.New()
 
+	r.Use(gin.Recovery())
 	r.Use(middleware.CorrelationID())
 	r.Use(middleware.ErrorLogStatus())
 
@@ -132,11 +133,14 @@ func NewRouter() *gin.Engine {
 		internal.POST("/withdraw-order/insert", middleware.RequestLogger("internal"), internal_api.CustomOrder)
 		internal.PUT("/recall", middleware.RequestLogger("internal"), api.InternalRecallFund)
 		internal.POST("/promotions/batch-claim", middleware.RequestLogger("internal"), internal_api.InternalPromotion)
+		internal.POST("/notification-push", middleware.RequestLogger("internal"), internal_api.Notification)
 	}
 
 	// middlewares order can't be changed
 	r.Use(middleware.Cors())
 	r.GET("/ts", api.Ts)
+	r.GET("/finpay_redirect", api.FinpayRedirect)
+	r.POST("/finpay_redirect", api.FinpayRedirect)
 	captcha := r.Group("/captcha")
 	{
 		captcha.POST("/get", api.CaptchaGet)

@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 	"web-api/cache"
+	"web-api/conf"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -153,7 +154,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	case models.PromotionTypeVipReferral:
 		err = claimVoucherReferralVip(c, p, voucher, userID, now)
 		if err == nil {
-			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+			common.SendNotification(userID, consts.Notification_Type_Referral_Alliance, conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_REFERRAL_ALLIANCE_TITLE), conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_REFERRAL_ALLIANCE))
 		}
 	case models.PromotionTypeVipBirthdayB:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
@@ -169,7 +170,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			return nil
 		})
 		if err == nil {
-			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Birthday_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+			common.SendNotification(userID, consts.Notification_Type_Birthday_Bonus, conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_BIRTHDAY_BONUS_SUCCESS_TITLE), conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_BIRTHDAY_BONUS_SUCCESS))
 		}
 	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
@@ -190,7 +191,22 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			return nil
 		})
 		if err == nil {
-			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Birthday_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
+			var nType, title, text string
+			switch p.Type {
+			case models.PromotionTypeVipRebate:
+				nType = consts.Notification_Type_Rebate
+				title = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_REBATE_TITLE)
+				text = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_REBATE)
+			case models.PromotionTypeVipPromotionB:
+				nType = consts.Notification_Type_Vip_Promotion_Bonus
+				title = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_VIP_PROMOTION_BONUS_TITLE)
+				text = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_VIP_PROMOTION_BONUS)
+			case models.PromotionTypeVipWeeklyB:
+				nType = consts.Notification_Type_Weekly_Bonus
+				title = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_WEEKLY_BONUS_TITLE)
+				text = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_WEEKLY_BONUS)
+			}
+			common.SendNotification(userID, nType, title, text)
 		}
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		//insert voucher only

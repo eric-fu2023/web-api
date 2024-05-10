@@ -52,7 +52,9 @@ func (e EVO) GetGameUrl(user model.User, currency, gameCode, subGameCode string,
 	client := util.EvoFactory.NewClient()
 
 	uuid := uuid.NewString()
-	response, err := client.GetGameUrl(uuid, extra.Locale, user.IdAsString(), currency, "1", extra.Ip, subGameCode)
+	currentTimeMillis := time.Now().UnixNano() / int64(time.Millisecond)
+	currentTimeMillisString := strconv.FormatInt(currentTimeMillis, 10)
+	response, err := client.GetGameUrl(uuid, extra.Locale, user.IdAsString(), currency, user.IdAsString()+"_"+currentTimeMillisString, extra.Ip, subGameCode)
 
 	if err != nil {
 		log.Printf("Error getting evo game url, err: %v ", err.Error())
