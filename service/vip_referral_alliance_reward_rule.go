@@ -22,7 +22,7 @@ func (v VipReferralAllianceRewardRulesService) Load(c *gin.Context) (r serialize
 		r = serializer.Err(c, "", serializer.CodeGeneralError, "", err)
 		return
 	}
-	desc, err := model.GetAppConfig("referral_alliance", "rules")
+	desc, err := model.GetAppConfig("referral_alliance", "vip_details_description")
 	if err != nil {
 		r = serializer.Err(c, "", serializer.CodeGeneralError, "", err)
 		return
