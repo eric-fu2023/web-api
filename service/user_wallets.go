@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
-	"gorm.io/gorm"
 	"sync"
 	"time"
 	"web-api/cache"
@@ -130,30 +129,38 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 		if err != nil {
 			return
 		}
-		tx := model.DB.Begin()
 		var wg sync.WaitGroup
 		for _, g := range gvu {
 			if g.GameVendor.GameIntegrationId == 0 {
 				continue
 			}
 			wg.Add(1)
-			go func(tx *gorm.DB, g ploutos.GameVendorUser) {
+			go func(g ploutos.GameVendorUser) {
 				defer wg.Done()
+				tx := model.DB.Begin()
 				extra := model.Extra{Locale: locale, Ip: ip}
 				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(tx, user, g.ExternalCurrency, g.GameVendor.GameCode, g.GameVendorId, extra)
 				if err != nil {
 					util.Log().Error("GAME INTEGRATION RECALL ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error())
 					return
 				}
-				err = tx.Model(ploutos.GameVendorUser{}).Where(`id`, g.ID).Updates(map[string]interface{}{"balance": 0, "is_last_played": false}).Error
-				if err != nil {
-					util.Log().Error("GAME INTEGRATION RECALL DB UPDATE ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error())
-					return
+				var maxRetries = 3
+				for i := 0; i < maxRetries; i++ {
+					err = tx.Model(ploutos.GameVendorUser{}).Where(`id`, g.ID).Updates(map[string]interface{}{"balance": 0, "is_last_played": false}).Error
+					if err != nil {
+						util.Log().Error("GAME INTEGRATION RECALL DB UPDATE ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error())
+						if i == maxRetries-1 {
+							return
+						}
+						time.Sleep(200 * time.Millisecond)
+						continue
+					}
+					break
 				}
-			}(tx, g)
+				tx.Commit()
+			}(g)
 		}
 		wg.Wait()
-		tx.Commit()
 		err = model.DB.Where(`user_id`, user.ID).First(&userSum).Error
 		if err != nil {
 			return
