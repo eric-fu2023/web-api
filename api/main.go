@@ -54,7 +54,7 @@ func FinpayRedirect(c *gin.Context) {
 			util.MQTTClient.Publish(context.Background(), pb)
 		}
 	}
-	c.JSON(200, nil)
+	c.Status(200)
 }
 
 func Heartbeat(c *gin.Context) {
