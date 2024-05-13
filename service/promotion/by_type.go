@@ -24,13 +24,13 @@ import (
 )
 
 const (
-	birthdayBonusRewardCacheKey = "birthday_bonus_reward_cache_key"
+	birthdayBonusRewardCacheKey = "birthday_bonus_reward_cache_key:%d"
 )
 
 func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward int64) {
 	switch p.Type {
 	case models.PromotionTypeVipBirthdayB:
-		err := cache.RedisStore.Get(birthdayBonusRewardCacheKey, &reward)
+		err := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
 		if errors.Is(err, persist.ErrCacheMiss) {
 			user := c.Value("user").(model.User)
 			date, _ := time.Parse(time.DateOnly, user.Birthday)
