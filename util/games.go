@@ -30,7 +30,7 @@ var (
 	IMFactory    imsb.IM
 	UgsFactory   ugs.UGS
 	EvoFactory   evo.EVO
-	ImOneFactory func() *imone.ImOne
+	ImOneFactory func() imone.GeneralApi
 )
 
 var VendorIdToGameClient = make(map[int64]gameservicecommon.TransferWalletInterface)
@@ -122,7 +122,7 @@ func InitImOneFactory() {
 	merchantCode := os.Getenv("GAME_IMONE_MERCHANT_CODE")
 	prefix := os.Getenv("GAME_IMONE_PLAYER_PREFIX")
 
-	ImOneFactory = imone.NewFactory(baseUrl, merchantCode, NewPlayer(prefix))
+	ImOneFactory = imone.NewGeneralService(baseUrl, merchantCode, NewPlayer(prefix))
 }
 
 func InitEvoFactory() {
