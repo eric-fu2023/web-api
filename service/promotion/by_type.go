@@ -290,6 +290,21 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		isUsable = true
 	}
+	wagerMultiplier := v.WagerMultiplier
+	switch p.Type {
+	case models.PromotionTypeVipRebate:
+		vip, _ := model.GetVipWithDefault(c, userID)
+		wagerMultiplier = vip.VipRule.BirthdayBenefitWagerMultiplier
+	case models.PromotionTypeVipPromotionB:
+		vip, _ := model.GetVipWithDefault(c, userID)
+		wagerMultiplier = vip.VipRule.PromotionBenefitWagerMultiplier
+	case models.PromotionTypeVipWeeklyB:
+		vip, _ := model.GetVipWithDefault(c, userID)
+		wagerMultiplier = vip.VipRule.WeeklyBenefitWagerMultiplier
+	case models.PromotionTypeVipBirthdayB:
+		vip, _ := model.GetVipWithDefault(c, userID)
+		wagerMultiplier = vip.VipRule.BirthdayBenefitWagerMultiplier
+	}
 
 	voucher = models.Voucher{
 
@@ -307,7 +322,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		PromotionID:        p.ID,
 		UsageDetails:       v.UsageDetails,
 		Image:              v.Image,
-		WagerMultiplier:    v.WagerMultiplier,
+		WagerMultiplier:    wagerMultiplier,
 		PromotionSessionID: s.ID,
 		IsUsable:           isUsable,
 		// ReferenceType
