@@ -22,7 +22,7 @@ type RoomMessage struct {
 }
 
 func (a RoomMessage) Send(conn *Connection) (err error) {
-	event := "room"
+	event := "room_system"
 	if a.SocketId != "" {
 		event = "room_socket"
 	}

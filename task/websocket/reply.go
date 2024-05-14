@@ -69,7 +69,7 @@ func welcomeToRoom(conn *websocket.Connection, message string) {
 				coll := model.MongoDB.Collection("room_message")
 				filter := bson.M{"room": room, "deleted_at": nil}
 				opts := options.Find()
-				opts.SetLimit(20)
+				opts.SetLimit(50)
 				opts.SetSort(bson.D{{"timestamp", -1}, {"_id", -1}})
 				ctx := context.TODO()
 				cursor, err := coll.Find(ctx, filter, opts)
