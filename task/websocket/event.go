@@ -15,7 +15,7 @@ import (
 
 func Event(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
 	c := cron.New(cron.WithSeconds())
-	c.AddFunc("0 */2 * * * *", func() {
+	c.AddFunc("0 */5 * * * *", func() {
 		sendEvent(conn, ctx, cancelFunc)
 	})
 	c.Start()
