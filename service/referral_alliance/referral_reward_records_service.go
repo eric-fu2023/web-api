@@ -1,4 +1,4 @@
-package referral
+package referral_alliance
 
 import (
 	"fmt"
@@ -12,13 +12,13 @@ import (
 	"web-api/util/i18n"
 )
 
-type RewardReferralRewardRecordsService struct {
+type ReferralRewardRecordsService struct {
 	ReferralId      int64 `form:"referral_id"  binding:"required"`
 	RecordTimeStart int64 `form:"record_time_start"`
 	RecordTimeEnd   int64 `form:"record_time_end"`
 }
 
-func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r serializer.Response, err error) {
+func (service *ReferralRewardRecordsService) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
@@ -71,7 +71,7 @@ func (service *RewardReferralRewardRecordsService) List(c *gin.Context) (r seria
 	}, nil
 }
 
-func (service *RewardReferralRewardRecordsService) getMonthString(t time.Time) (string, error) {
+func (service *ReferralRewardRecordsService) getMonthString(t time.Time) (string, error) {
 	tzOffsetStr, err := model.GetAppConfigWithCache("timezone", "offset_seconds")
 	if err != nil {
 		return "", fmt.Errorf("failed to get tz offset config: %w", err)

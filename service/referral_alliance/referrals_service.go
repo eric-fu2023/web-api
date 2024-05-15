@@ -1,4 +1,4 @@
-package referral
+package referral_alliance
 
 import (
 	"database/sql"
@@ -9,12 +9,12 @@ import (
 	"web-api/util"
 )
 
-type RewardReferralsService struct {
+type ReferralsService struct {
 	JoinTimeStart int64 `form:"join_time_start"`
 	JoinTimeEnd   int64 `form:"join_time_end"`
 }
 
-func (service *RewardReferralsService) List(c *gin.Context) (r serializer.Response, err error) {
+func (service *ReferralsService) List(c *gin.Context) (r serializer.Response, err error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 

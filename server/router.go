@@ -13,7 +13,7 @@ import (
 	internal_api "web-api/api/internalapi"
 	"web-api/api/mock"
 	promotion_api "web-api/api/promotion"
-	referral_api "web-api/api/referral"
+	referral_alliance_api "web-api/api/referral_alliance"
 	saba_api "web-api/api/saba"
 	stream_game_api "web-api/api/stream_game"
 	taya_api "web-api/api/taya"
@@ -219,6 +219,11 @@ func NewRouter() *gin.Engine {
 			dj.GET("/winners", dollar_jackpot_api.DollarJackpotWinners)
 		}
 
+		referralAlliance := v1.Group("/referral/alliance")
+		{
+			referralAlliance.GET("rankings", middleware.CheckAuth(), referral_alliance_api.GetRankings)
+		}
+
 		auth := v1.Group("/user")
 		{
 			userWithoutBrand := auth.Group("")
@@ -351,10 +356,10 @@ func NewRouter() *gin.Engine {
 
 				referralAlliance := user.Group("/referral/alliance")
 				{
-					referralAlliance.GET("/summary", referral_api.GetRewardSummary)
-					referralAlliance.GET("/referrals", referral_api.ListRewardReferrals)
-					referralAlliance.GET("/referral_summary", referral_api.GetRewardReferralSummary)
-					referralAlliance.GET("/referral_reward_records", referral_api.GetRewardReferralRewardRecords)
+					referralAlliance.GET("/summary", referral_alliance_api.GetSummary)
+					referralAlliance.GET("/referrals", referral_alliance_api.ListReferrals)
+					referralAlliance.GET("/referral_summary", referral_alliance_api.GetReferralSummary)
+					referralAlliance.GET("/referral_reward_records", referral_alliance_api.GetReferralRewardRecords)
 				}
 			}
 		}

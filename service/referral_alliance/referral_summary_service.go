@@ -1,4 +1,4 @@
-package referral
+package referral_alliance
 
 import (
 	"github.com/gin-gonic/gin"
@@ -8,11 +8,11 @@ import (
 	"web-api/util/i18n"
 )
 
-type RewardReferralSummaryService struct {
+type ReferralSummaryService struct {
 	ReferralId int64 `form:"referral_id" json:"referral_id" binding:"required"`
 }
 
-func (service *RewardReferralSummaryService) Get(c *gin.Context) (r serializer.Response, err error) {
+func (service *ReferralSummaryService) Get(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)

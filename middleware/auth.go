@@ -101,6 +101,10 @@ func doAuth(c *gin.Context, getUser bool, checkBrand bool) (err error) {
 			}
 		}
 		c.Set("user", user)
+
+		if user.Locale != c.MustGet("_locale").(string) {
+			go model.DB.Model(&user).Update(`locale`, c.MustGet("_locale").(string))
+		}
 	}
 	return
 }

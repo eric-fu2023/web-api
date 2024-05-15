@@ -1,13 +1,13 @@
-package referral
+package referral_alliance
 
 import (
 	"github.com/gin-gonic/gin"
 	"web-api/api"
-	"web-api/service/referral"
+	"web-api/service/referral_alliance"
 )
 
-func GetRewardSummary(c *gin.Context) {
-	var service referral.RewardSummaryService
+func GetSummary(c *gin.Context) {
+	var service referral_alliance.SummaryService
 	if err := c.ShouldBind(&service); err == nil {
 		res, e := service.Get(c)
 		c.JSON(200, res)
@@ -19,8 +19,8 @@ func GetRewardSummary(c *gin.Context) {
 	}
 }
 
-func ListRewardReferrals(c *gin.Context) {
-	var service referral.RewardReferralsService
+func ListReferrals(c *gin.Context) {
+	var service referral_alliance.ReferralsService
 	if err := c.ShouldBind(&service); err == nil {
 		res, e := service.List(c)
 		c.JSON(200, res)
@@ -32,8 +32,8 @@ func ListRewardReferrals(c *gin.Context) {
 	}
 }
 
-func GetRewardReferralSummary(c *gin.Context) {
-	var service referral.RewardReferralSummaryService
+func GetReferralSummary(c *gin.Context) {
+	var service referral_alliance.ReferralSummaryService
 	if err := c.ShouldBind(&service); err == nil {
 		res, e := service.Get(c)
 		c.JSON(200, res)
@@ -45,10 +45,23 @@ func GetRewardReferralSummary(c *gin.Context) {
 	}
 }
 
-func GetRewardReferralRewardRecords(c *gin.Context) {
-	var service referral.RewardReferralRewardRecordsService
+func GetReferralRewardRecords(c *gin.Context) {
+	var service referral_alliance.ReferralRewardRecordsService
 	if err := c.ShouldBind(&service); err == nil {
 		res, e := service.List(c)
+		c.JSON(200, res)
+		if e != nil {
+			c.Abort()
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
+
+func GetRankings(c *gin.Context) {
+	var service referral_alliance.RankingsService
+	if err := c.ShouldBind(&service); err == nil {
+		res, e := service.Get(c)
 		c.JSON(200, res)
 		if e != nil {
 			c.Abort()

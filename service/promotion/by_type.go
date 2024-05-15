@@ -24,13 +24,13 @@ import (
 )
 
 const (
-	birthdayBonusRewardCacheKey = "birthday_bonus_reward_cache_key"
+	birthdayBonusRewardCacheKey = "birthday_bonus_reward_cache_key:%d"
 )
 
 func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward int64) {
 	switch p.Type {
 	case models.PromotionTypeVipBirthdayB:
-		err := cache.RedisStore.Get(birthdayBonusRewardCacheKey, &reward)
+		err := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
 		if errors.Is(err, persist.ErrCacheMiss) {
 			user := c.Value("user").(model.User)
 			date, _ := time.Parse(time.DateOnly, user.Birthday)
@@ -290,6 +290,21 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
 		isUsable = true
 	}
+	wagerMultiplier := v.WagerMultiplier
+	switch p.Type {
+	case models.PromotionTypeVipRebate:
+		vip, _ := model.GetVipWithDefault(c, userID)
+		wagerMultiplier = vip.VipRule.BirthdayBenefitWagerMultiplier
+	case models.PromotionTypeVipPromotionB:
+		vip, _ := model.GetVipWithDefault(c, userID)
+		wagerMultiplier = vip.VipRule.PromotionBenefitWagerMultiplier
+	case models.PromotionTypeVipWeeklyB:
+		vip, _ := model.GetVipWithDefault(c, userID)
+		wagerMultiplier = vip.VipRule.WeeklyBenefitWagerMultiplier
+	case models.PromotionTypeVipBirthdayB:
+		vip, _ := model.GetVipWithDefault(c, userID)
+		wagerMultiplier = vip.VipRule.BirthdayBenefitWagerMultiplier
+	}
 
 	voucher = models.Voucher{
 
@@ -307,7 +322,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		PromotionID:        p.ID,
 		UsageDetails:       v.UsageDetails,
 		Image:              v.Image,
-		WagerMultiplier:    v.WagerMultiplier,
+		WagerMultiplier:    wagerMultiplier,
 		PromotionSessionID: s.ID,
 		IsUsable:           isUsable,
 		// ReferenceType
@@ -476,7 +491,7 @@ func getSameDayVipRewardRecord(tx *gorm.DB, userID, prmotionID int64) models.Vip
 func getBirtdayReward(c context.Context, date time.Time, userID int64) (reward int64) {
 	today := Today0am()
 	defer func() {
-		cache.RedisStore.Set(birthdayBonusRewardCacheKey, reward, time.Until(today.Add(24*time.Hour)))
+		cache.RedisStore.Set(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), reward, time.Until(today.Add(24*time.Hour)))
 	}()
 	if date.Month() != today.Month() || date.Day() != today.Day() {
 		return

@@ -1,4 +1,4 @@
-package referral
+package referral_alliance
 
 import (
 	"github.com/gin-gonic/gin"
@@ -8,9 +8,9 @@ import (
 	"web-api/util/i18n"
 )
 
-type RewardSummaryService struct{}
+type SummaryService struct{}
 
-func (service *RewardSummaryService) Get(c *gin.Context) (r serializer.Response, err error) {
+func (service *SummaryService) Get(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
