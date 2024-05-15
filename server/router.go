@@ -221,7 +221,7 @@ func NewRouter() *gin.Engine {
 
 		referralAlliance := v1.Group("/referral/alliance")
 		{
-			referralAlliance.GET("", middleware.CheckAuth(), referral_alliance_api.GetRankings)
+			referralAlliance.GET("rankings", middleware.CheckAuth(), referral_alliance_api.GetRankings)
 		}
 
 		auth := v1.Group("/user")
