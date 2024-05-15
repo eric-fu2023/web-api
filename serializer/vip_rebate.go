@@ -33,7 +33,7 @@ type VipRebateDetails struct {
 	Description []map[string]any    `json:"description"`
 }
 
-func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []models.VIPRule) (ret VipRebateDetails) {
+func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []models.VIPRule, lang string) (ret VipRebateDetails) {
 	bytes := []byte(desc)
 	_ = json.Unmarshal(bytes, &ret.Description)
 	// get category column
@@ -108,7 +108,7 @@ func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []mode
 
 	// add cap
 	Cat := VipRebateCategory{
-		Header: conf.GetI18N(conf.GetDefaultLocale()).T("cap"),
+		Header: conf.GetI18N(lang).T("cap"),
 		Columns: []VipRebateColumn{
 			{Header: "primary", Values: util.MapSlice(vips, func(input models.VIPRule) VipRebateColumnValue {
 				return VipRebateColumnValue{
@@ -125,7 +125,7 @@ func BuildVipRebateDetails(list []models.VipRebateRule, desc string, vips []mode
 
 // BuildVipReferralDetails builds the vip referral details response
 // list is sorted by game_category_id ASC, vip_level ASC
-func BuildVipReferralDetails(c *gin.Context, list []models.VipReferralAllianceRule, desc string, vips []models.VIPRule) (ret VipRebateDetails) {
+func BuildVipReferralDetails(c *gin.Context, list []models.VipReferralAllianceRule, desc string, vips []models.VIPRule, lang string) (ret VipRebateDetails) {
 	bytes := []byte(desc)
 	_ = json.Unmarshal(bytes, &ret.Description)
 	var currentGameCategoryId int64 = 0
@@ -152,7 +152,7 @@ func BuildVipReferralDetails(c *gin.Context, list []models.VipReferralAllianceRu
 
 	// add cap
 	Cat := VipRebateCategory{
-		Header: conf.GetI18N(conf.GetDefaultLocale()).T("cap"),
+		Header: conf.GetI18N(lang).T("cap"),
 		Columns: []VipRebateColumn{
 			{Header: "primary", Values: util.MapSlice(vips, func(input models.VIPRule) VipRebateColumnValue {
 				return VipRebateColumnValue{

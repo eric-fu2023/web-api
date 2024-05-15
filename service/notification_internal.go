@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"web-api/conf"
 	"web-api/conf/consts"
+	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 
@@ -22,11 +23,12 @@ type InternalNotificationPushRequest struct {
 
 func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Response) {
 	var notificationType, title, text string
+	lang := model.GetUserLang(p.UserID)
 	switch p.Type {
 	case vipPromoteNote:
 		notificationType = consts.Notification_Type_Vip_Promotion
-		title = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_VIP_PROMOTION_TITLE)
-		text = fmt.Sprintf(conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_VIP_PROMOTION), p.Params["vip_level"])
+		title = conf.GetI18N(lang).T(common.NOTIFICATION_VIP_PROMOTION_TITLE)
+		text = fmt.Sprintf(conf.GetI18N(lang).T(common.NOTIFICATION_VIP_PROMOTION), p.Params["vip_level"])
 	}
 	common.SendNotification(p.UserID, notificationType, title, text)
 	r.Data = "Success"

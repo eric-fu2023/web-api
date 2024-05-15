@@ -123,3 +123,9 @@ func generateReferralCode(userId int64) string {
 
 	return referralCode
 }
+
+func GetUserLang(userId int64) string {
+	var user User
+	DB.First(&user)
+	return user.Locale[:2]
+}

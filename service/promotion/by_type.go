@@ -120,6 +120,8 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 
 func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, userID int64, rewardAmount int64, now time.Time) (voucher models.Voucher, err error) {
 	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, now)
+	lang := model.GetUserLang(userID)
+
 	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeOneTimeDepB:
 		//add money and insert voucher
@@ -154,7 +156,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	case models.PromotionTypeVipReferral:
 		err = claimVoucherReferralVip(c, p, voucher, userID, now)
 		if err == nil {
-			common.SendNotification(userID, consts.Notification_Type_Referral_Alliance, conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_REFERRAL_ALLIANCE_TITLE), conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_REFERRAL_ALLIANCE))
+			common.SendNotification(userID, consts.Notification_Type_Referral_Alliance, conf.GetI18N(lang).T(common.NOTIFICATION_REFERRAL_ALLIANCE_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_REFERRAL_ALLIANCE))
 		}
 	case models.PromotionTypeVipBirthdayB:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
@@ -170,7 +172,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			return nil
 		})
 		if err == nil {
-			common.SendNotification(userID, consts.Notification_Type_Birthday_Bonus, conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_BIRTHDAY_BONUS_SUCCESS_TITLE), conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_BIRTHDAY_BONUS_SUCCESS))
+			common.SendNotification(userID, consts.Notification_Type_Birthday_Bonus, conf.GetI18N(lang).T(common.NOTIFICATION_BIRTHDAY_BONUS_SUCCESS_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_BIRTHDAY_BONUS_SUCCESS))
 		}
 	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
@@ -195,16 +197,16 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			switch p.Type {
 			case models.PromotionTypeVipRebate:
 				nType = consts.Notification_Type_Rebate
-				title = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_REBATE_TITLE)
-				text = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_REBATE)
+				title = conf.GetI18N(lang).T(common.NOTIFICATION_REBATE_TITLE)
+				text = conf.GetI18N(lang).T(common.NOTIFICATION_REBATE)
 			case models.PromotionTypeVipPromotionB:
 				nType = consts.Notification_Type_Vip_Promotion_Bonus
-				title = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_VIP_PROMOTION_BONUS_TITLE)
-				text = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_VIP_PROMOTION_BONUS)
+				title = conf.GetI18N(lang).T(common.NOTIFICATION_VIP_PROMOTION_BONUS_TITLE)
+				text = conf.GetI18N(lang).T(common.NOTIFICATION_VIP_PROMOTION_BONUS)
 			case models.PromotionTypeVipWeeklyB:
 				nType = consts.Notification_Type_Weekly_Bonus
-				title = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_WEEKLY_BONUS_TITLE)
-				text = conf.GetI18N(conf.GetDefaultLocale()).T(common.NOTIFICATION_WEEKLY_BONUS)
+				title = conf.GetI18N(lang).T(common.NOTIFICATION_WEEKLY_BONUS_TITLE)
+				text = conf.GetI18N(lang).T(common.NOTIFICATION_WEEKLY_BONUS)
 			}
 			common.SendNotification(userID, nType, title, text)
 		}
