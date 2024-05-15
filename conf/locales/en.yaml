@@ -617,3 +617,6 @@ NOTIFICATION_VIP_PROMOTION_TITLE: "vip promotion"
 NOTIFICATION_VIP_PROMOTION: "vip promotion success %s"
 NOTIFICATION_REFERRAL_ALLIANCE_TITLE: "Referral Alliance Reward Received!"
 NOTIFICATION_REFERRAL_ALLIANCE: "Congratulations on receiving a Referral Alliance Reward! You have successfully claimed your reward."
+
+chat_welcome_message: "Welcome to AHA Entertainment! Enjoy real-time interaction with others. Please keep this chat positive and respectful. 😊\nPlease note that some comments in this live broadcast have been filtered to enhance the community experience."
+chat_welcome_name: "System"

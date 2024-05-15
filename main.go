@@ -9,11 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"web-api/task"
-
 	"web-api/conf"
 	"web-api/model"
 	"web-api/server"
+	"web-api/task"
 	websocketTask "web-api/task/websocket"
 	"web-api/websocket"
 

@@ -617,3 +617,6 @@ NOTIFICATION_VIP_PROMOTION_TITLE: "VIP成功"
 NOTIFICATION_VIP_PROMOTION: "恭喜您成功升级为VIP【 %s 】！🌟"
 NOTIFICATION_REFERRAL_ALLIANCE_TITLE: "恭喜您获得共赢奖励！"
 NOTIFICATION_REFERRAL_ALLIANCE: "恭喜您获得共赢奖励！您的共赢奖励已成功领取。"
+
+chat_welcome_message: "欢迎来到 AHA娱乐！ 享受与他人的实时互动。 请保持此聊天积极且尊重。 玩得开心！ 😊\n请注意，本次直播中的一些评论已被过滤，以增强社区的体验。"
+chat_welcome_name: "系统"

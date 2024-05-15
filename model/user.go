@@ -91,7 +91,7 @@ func (user *User) UpdateLoginInfo(c *gin.Context, loginTime time.Time) error {
 }
 
 func (user *User) CreateWithDB(tx *gorm.DB) error {
-	if err := tx.Create(&user).Error; err != nil {
+	if err := tx.Omit(`Locale`).Create(&user).Error; err != nil {
 		return fmt.Errorf("create user: %w", err)
 	}
 	user.ReferralCode = generateReferralCode(user.ID)

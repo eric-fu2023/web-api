@@ -67,7 +67,7 @@ func CreateNewUser(user *model.User, referralCode string) (err error) {
 
 func CreateUser(user *model.User) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Save(&user).Error
+		err = tx.Omit(`Locale`).Save(&user).Error
 		if err != nil {
 			return
 		}
