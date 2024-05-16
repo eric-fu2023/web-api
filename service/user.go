@@ -45,133 +45,140 @@ var (
 
 func CreateNewUser(user *model.User, referralCode string) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = user.CreateWithDB(tx)
-		if err != nil {
-			return fmt.Errorf("create with db: %w", err)
-		}
+		err = CreateNewUserWithDB(user, referralCode, tx)
+		return
+	})
+	return
+}
 
-		// Link referral
-		if referralCode == "" {
-			return tx.Commit().Error
-		}
+func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (err error) {
+	err = user.CreateWithDB(tx)
+	if err != nil {
+		return fmt.Errorf("create with db: %w", err)
+	}
 
+	if referralCode != "" {
 		err = model.LinkReferralWithDB(tx, user.ID, referralCode)
 		if err != nil {
 			return fmt.Errorf("link referral with db: %w", err)
 		}
+	}
 
-		return nil
-	})
 	return nil
 }
 
 func CreateUser(user *model.User) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Save(&user).Error
-		if err != nil {
-			return
-		}
-
-		userSum := ploutos.UserSum{
-			UserId: user.ID,
-		}
-		tx2 := model.DB.Clauses(dbresolver.Use("txConn")).Begin()
-		err = tx2.Error
-		if err != nil {
-			return
-		}
-		err = tx2.Create(&userSum).Error
-		if err != nil {
-			tx2.Rollback()
-			return
-		}
-
-		userCounter := ploutos.UserCounter{
-			UserId: user.ID,
-		}
-		err = tx.Create(&userCounter).Error
-		if err != nil {
-			tx2.Rollback()
-			return
-		}
-
-		err = tx.Model(ploutos.User{}).Where(`id`, user.ID).Update(`setup_completed_at`, time.Now()).Error
-		if err != nil {
-			tx2.Rollback()
-			return
-		}
-
-		var integrationCurrencies []ploutos.CurrencyGameIntegration
-		err = tx.Where(`currency_id`, user.CurrencyId).Find(&integrationCurrencies).Error
-		if err != nil {
-			tx2.Rollback()
-			return ErrEmptyCurrencyId
-		}
-
-		inteCurrMap := make(map[int64]string)
-		for _, cur := range integrationCurrencies {
-			inteCurrMap[cur.GameIntegrationId] = cur.Value
-		}
-
-		var gameIntegrations []ploutos.GameIntegration
-		err = tx.Model(ploutos.GameIntegration{}).Find(&gameIntegrations).Error
-		if err != nil {
-			tx2.Rollback()
-			return
-		}
-		for _, gi := range gameIntegrations {
-			currency, exists := inteCurrMap[gi.ID]
-			if !exists {
-				tx2.Rollback()
-				return ErrEmptyCurrencyId
-			}
-
-			integratedGame, found := common.GameIntegration[gi.ID]
-			if !found {
-				return errors.New(fmt.Sprintf("integrated game id %d not found", gi.ID))
-			}
-
-			err = integratedGame.CreateWallet(*user, currency)
-			if err != nil {
-				tx2.Rollback()
-				return
-			}
-		}
-		// TODO: might remove in the future
-		var currencies []ploutos.CurrencyGameVendor
-		err = tx.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
-		if err != nil {
-			tx2.Rollback()
-			return ErrEmptyCurrencyId
-		}
-
-		currMap := make(map[int64]string)
-		for _, cur := range currencies {
-			currMap[cur.GameVendorId] = cur.Value
-		}
-
-		games := strings.Split(os.Getenv("GAMES_REGISTERED_FOR_NEW_USER"), ",")
-		for _, g := range games {
-			if g == "" {
-				continue
-			}
-			currency, exists := currMap[consts.GameVendor[g]]
-			if !exists {
-				tx2.Rollback()
-				return ErrEmptyCurrencyId
-			}
-			game := GameVendorUserRegisterStruct[g]
-			e := game.CreateUser(*user, currency)
-			if e != nil && !errors.Is(e, game.VendorRegisterError()) { // if create vendor user failed, can proceed safely. when user first enter the game, it will retry
-				tx2.Rollback()
-				return fmt.Errorf("%w: %w", game.OthersError(), e)
-			}
-		}
-		// TODO: END
-
-		tx2.Commit()
+		err = CreateUserWithDB(user, tx)
 		return
 	})
+	return
+}
+
+func CreateUserWithDB(user *model.User, tx *gorm.DB) (err error) {
+	err = tx.Save(&user).Error
+	if err != nil {
+		return
+	}
+
+	userSum := ploutos.UserSum{
+		UserId: user.ID,
+	}
+	tx2 := model.DB.Clauses(dbresolver.Use("txConn")).Begin()
+	err = tx2.Error
+	if err != nil {
+		return
+	}
+	err = tx2.Create(&userSum).Error
+	if err != nil {
+		tx2.Rollback()
+		return
+	}
+
+	userCounter := ploutos.UserCounter{
+		UserId: user.ID,
+	}
+	err = tx.Create(&userCounter).Error
+	if err != nil {
+		tx2.Rollback()
+		return
+	}
+
+	err = tx.Model(ploutos.User{}).Where(`id`, user.ID).Update(`setup_completed_at`, time.Now()).Error
+	if err != nil {
+		tx2.Rollback()
+		return
+	}
+
+	var integrationCurrencies []ploutos.CurrencyGameIntegration
+	err = tx.Where(`currency_id`, user.CurrencyId).Find(&integrationCurrencies).Error
+	if err != nil {
+		tx2.Rollback()
+		return ErrEmptyCurrencyId
+	}
+
+	inteCurrMap := make(map[int64]string)
+	for _, cur := range integrationCurrencies {
+		inteCurrMap[cur.GameIntegrationId] = cur.Value
+	}
+
+	var gameIntegrations []ploutos.GameIntegration
+	err = tx.Model(ploutos.GameIntegration{}).Find(&gameIntegrations).Error
+	if err != nil {
+		tx2.Rollback()
+		return
+	}
+	for _, gi := range gameIntegrations {
+		currency, exists := inteCurrMap[gi.ID]
+		if !exists {
+			tx2.Rollback()
+			return ErrEmptyCurrencyId
+		}
+
+		integratedGame, found := common.GameIntegration[gi.ID]
+		if !found {
+			return errors.New(fmt.Sprintf("integrated game id %d not found", gi.ID))
+		}
+
+		err = integratedGame.CreateWallet(*user, currency)
+		if err != nil {
+			tx2.Rollback()
+			return
+		}
+	}
+	// TODO: might remove in the future
+	var currencies []ploutos.CurrencyGameVendor
+	err = tx.Where(`currency_id`, user.CurrencyId).Find(&currencies).Error
+	if err != nil {
+		tx2.Rollback()
+		return ErrEmptyCurrencyId
+	}
+
+	currMap := make(map[int64]string)
+	for _, cur := range currencies {
+		currMap[cur.GameVendorId] = cur.Value
+	}
+
+	games := strings.Split(os.Getenv("GAMES_REGISTERED_FOR_NEW_USER"), ",")
+	for _, g := range games {
+		if g == "" {
+			continue
+		}
+		currency, exists := currMap[consts.GameVendor[g]]
+		if !exists {
+			tx2.Rollback()
+			return ErrEmptyCurrencyId
+		}
+		game := GameVendorUserRegisterStruct[g]
+		e := game.CreateUser(*user, currency)
+		if e != nil && !errors.Is(e, game.VendorRegisterError()) { // if create vendor user failed, can proceed safely. when user first enter the game, it will retry
+			tx2.Rollback()
+			return fmt.Errorf("%w: %w", game.OthersError(), e)
+		}
+	}
+	// TODO: END
+
+	tx2.Commit()
 	return
 }
 
