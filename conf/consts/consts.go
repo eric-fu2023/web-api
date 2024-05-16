@@ -468,6 +468,7 @@ const (
 	Notification_Type_Cash_Transaction    = "cash_transaction"
 	Notification_Type_Deposit_Bonus       = "deposit_bonus"
 	Notification_Type_Mobile_Reset        = "mobile_reset"
+	Notification_Type_Email_Reset         = "email_reset"
 	Notification_Type_Birthday_Bonus      = "birthday_bonus"
 	Notification_Type_Vip_Promotion_Bonus = "vip_promotion_bonus"
 	Notification_Type_Weekly_Bonus        = "weekly_bonus"
@@ -483,4 +484,5 @@ const (
 	SmsOtpActionSetPassword          = "set_password"
 	SmsOtpActionSetSecondaryPassword = "set_secondary_password"
 	SmsOtpActionSetMobile            = "set_mobile"
+	SmsOtpActionSetEmail             = "set_email"
 )

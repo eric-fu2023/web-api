@@ -263,6 +263,7 @@ func NewRouter() *gin.Engine {
 
 				user.PUT("/secondary-password", api.UserSetSecondaryPassword)
 				user.PUT("/mobile", api.UserSetMobile)
+				user.PUT("/email", api.UserSetEmail)
 
 				user.GET("/orders", api.OrderList)
 				user.GET("/recent_games", api.UserRecentGameList)

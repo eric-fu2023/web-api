@@ -231,6 +231,16 @@ func UserSetMobile(c *gin.Context) {
 	}
 }
 
+func UserSetEmail(c *gin.Context) {
+	var service service.UserSetEmailService
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
+		res := service.Set(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
 func UserCounters(c *gin.Context) {
 	var service service.CounterService
 	if err := c.ShouldBind(&service); err == nil {
