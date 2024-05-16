@@ -1,13 +1,10 @@
 package kafka_handler
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/IBM/sarama"
-	"gorm.io/gorm/clause"
 	"net/http"
 	"os"
 	"strconv"
@@ -16,6 +13,9 @@ import (
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/util"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/IBM/sarama"
 )
 
 const ConsumerGroupIdMgStream = "rf_stream_getter"
@@ -116,13 +116,18 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 			return err
 		}
 	}
-	stream := ploutos.LiveStream{
-		Title:        mgStream.Title,
-		StreamerId:   streamer.ID,
-		Status:       1, // default pending
-		ImgUrl:       mgStream.Thumb,
-		MgRoomId:     &mgStream.RoomId,
-		ScheduleTime: time.Now(),
+	var stream ploutos.LiveStream
+	err = model.DB.Where(`mg_room_id`, mgStream.RoomId).Find(&stream).Error
+	if err != nil {
+		return err
+	}
+	stream.Title = mgStream.Title
+	stream.StreamerId = streamer.ID
+	stream.ImgUrl = mgStream.Thumb
+	stream.MgRoomId = &mgStream.RoomId
+	stream.ScheduleTime = time.Now()
+	if stream.ID == 0 {
+		stream.Status = 1 // default pending
 	}
 	if mgStream.Srctp == 8 { // MatchId is FB id
 		var match ploutos.Match
@@ -132,7 +137,7 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 			stream.StreamCategoryId = sportsCategoryMapping[match.SportId]
 		}
 	} else {
-		stream.MatchId, stream.StreamCategoryTypeId, stream.StreamCategoryId = SearchFBMatch(mgStream.Title, mgStream.League)
+		//stream.MatchId, stream.StreamCategoryTypeId, stream.StreamCategoryId = SearchFBMatch(mgStream.Title, mgStream.League)
 	}
 	if mgStream.OnlineTime != 0 {
 		stream.Status = 2
@@ -151,10 +156,7 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 		stream.Status = 3
 		stream.OfflineAt = time.Unix(mgStream.OfflineTime, 0)
 	}
-	err = model.DB.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "mg_room_id"}},
-		UpdateAll: true,
-	}).Create(&stream).Error
+	err = model.DB.Save(&stream).Error
 	if err != nil {
 		return err
 	}
