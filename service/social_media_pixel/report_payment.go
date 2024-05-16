@@ -61,7 +61,7 @@ func reportPaymentTikTok(ctx context.Context, configDetails ConfigDetails, payme
 				"value": %.2f,	
                 "contents": [
                     {
-                        "content_name": "CompletePayment"
+                        "content_name": "CompletePayment",
 						"content_id": "%d"
                     }
                 ]
