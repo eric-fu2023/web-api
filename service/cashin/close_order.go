@@ -1,9 +1,12 @@
 package cashin
 
 import (
+	"context"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+	"web-api/service/social_media_pixel"
+	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
@@ -54,6 +57,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 	})
 	if err == nil {
 		go HandlePromotion(c.Copy(), newCashOrderState)
+		go HandleSmPixelReporting(c.Copy(), newCashOrderState)
 	}
 	return
 }
@@ -82,4 +86,20 @@ func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.Cash
 	common.SendCashNotificationWithoutCurrencyId(newCashOrderState.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_DEPOSIT_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_SUCCESS, newCashOrderState.AppliedCashInAmount)
 	common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "deposit_success")
 	return
+}
+
+func HandleSmPixelReporting(c context.Context, order model.CashOrder) {
+	// Get user
+	var user model.User
+	if err := model.DB.Where(`id`, order.UserId).First(&user).Error; err != nil {
+		util.GetLoggerEntry(c).Error("get user error", err)
+		return
+	}
+	paymentDetails := social_media_pixel.PaymentDetails{
+		Currency:     "USD",
+		Value:        order.AppliedCashInAmount,
+		CashMethodId: order.CashMethodId,
+	}
+
+	social_media_pixel.ReportPayment(c, user, paymentDetails)
 }
