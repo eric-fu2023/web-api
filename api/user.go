@@ -95,6 +95,16 @@ func EmailOtp(c *gin.Context) {
 	}
 }
 
+func WhatsAppOtp(c *gin.Context) {
+	var service service.WhatsAppOtpService
+	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
+		res := service.GetWhatsApp(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
 func UserLoginOtp(c *gin.Context) {
 	var service service.UserLoginOtpService
 	if err := c.ShouldBindWith(&service, binding.Form); err == nil {

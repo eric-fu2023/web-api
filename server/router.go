@@ -163,6 +163,7 @@ func NewRouter() *gin.Engine {
 		// no cache routes
 		v1.POST("/sms_otp", api.SmsOtp)
 		v1.POST("/email_otp", api.EmailOtp)
+		v1.POST("/whatsapp_otp", api.WhatsAppOtp)
 		v1.POST("/login_otp", api.UserLoginOtp)
 		v1.POST("/login_password", api.UserLoginPassword)
 		v1.POST("/password", middleware.CheckAuth(), api.UserSetPassword)

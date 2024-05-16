@@ -2,7 +2,7 @@ package service
 
 import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	smsutil "blgit.rfdev.tech/zhibo/utilities/sms"
+	whatsapputil "blgit.rfdev.tech/zhibo/utilities/whatsapp"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -18,12 +18,7 @@ import (
 	"web-api/util/i18n"
 )
 
-var (
-	errReachedOtpLimit = errors.New("reached otp limit")
-	errOtpAlreadySent  = errors.New("otp has already been sent")
-)
-
-type SmsOtpService struct {
+type WhatsAppOtpService struct {
 	CountryCode string `form:"country_code" json:"country_code" binding:"required"`
 	Mobile      string `form:"mobile" json:"mobile" binding:"required,number"`
 	CheckUser   bool   `form:"check_user" json:"check_user"`
@@ -31,13 +26,10 @@ type SmsOtpService struct {
 	//common.Captcha
 }
 
-func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
-	i18n := c.MustGet("i18n").(i18n.I18n)
+// TODO refactor along with sms_otp and email service, much of the logic is shared
 
-	//err := common.CheckCaptcha(service.PointJson, service.Token)
-	//if err != nil {
-	//	return serializer.Err(c, service, serializer.CodeCaptchaInvalid, i18n.T("invalid_captcha"), nil)
-	//}
+func (service *WhatsAppOtpService) GetWhatsApp(c *gin.Context) serializer.Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
 
 	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 	if service.Mobile[:1] == "0" {
@@ -82,32 +74,7 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 	}
 }
 
-func (service *SmsOtpService) GetUsernameSMS(c *gin.Context, username string) serializer.Response {
-	i18n := c.MustGet("i18n").(i18n.I18n)
-
-	otp, err := service.sendOtp(c, username)
-	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
-		return serializer.ParamErr(c, service, i18n.T("invalid_otp_action"), nil)
-	}
-	if err != nil && errors.Is(err, errReachedOtpLimit) {
-		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("otp_limit_reached"), err)
-	}
-	if err != nil && errors.Is(err, errOtpAlreadySent) {
-		return serializer.Err(c, service, serializer.CodeSMSSent, i18n.T("Sms_wait"), nil)
-	}
-
-	resp := serializer.SendOtp{}
-	if os.Getenv("ENV") == "local" || os.Getenv("ENV") == "staging" {
-		resp.Otp = otp
-	}
-
-	return serializer.Response{
-		Msg:  i18n.T("success"),
-		Data: resp,
-	}
-}
-
-func (service *SmsOtpService) sendOtp(c *gin.Context, otpUserKey string) (string, error) {
+func (service *WhatsAppOtpService) sendOtp(c *gin.Context, otpUserKey string) (string, error) {
 	// Check if otp has been sent
 	otpSent, err := cache.GetOtp(c, service.Action, otpUserKey)
 	if err != nil {
@@ -125,10 +92,10 @@ func (service *SmsOtpService) sendOtp(c *gin.Context, otpUserKey string) (string
 	}
 
 	// Send otp sms
-	if os.Getenv("ENV") == "production" || os.Getenv("SEND_SMS_IN_TEST") == "true" {
-		err = service.sendSMS(c, otp)
+	if os.Getenv("ENV") == "production" || os.Getenv("SEND_WHATSAPP_IN_TEST") == "true" {
+		err = service.sendMessage(c, otp)
 		if err != nil {
-			return "", fmt.Errorf("sendSMS err: %w", err)
+			return "", fmt.Errorf("sendMessage err: %w", err)
 		}
 	}
 
@@ -141,7 +108,7 @@ func (service *SmsOtpService) sendOtp(c *gin.Context, otpUserKey string) (string
 	return otp, nil
 }
 
-func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
+func (service *WhatsAppOtpService) sendMessage(c *gin.Context, otp string) error {
 	// Check and increase OTP limit
 	deviceInfo, _ := util.GetDeviceInfo(c)
 	ip := c.ClientIP()
@@ -154,19 +121,20 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 		return errReachedOtpLimit
 	}
 
-	// Send SMS
-	smsCfg, err := smsutil.BuildDefaultConfig()
+	// Send WhatsApp Message
+	cfg, err := whatsapputil.BuildDefaultConfig()
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("BuildDefaultConfig error: %s", err.Error())
 		return err
 	}
-	smsManager := smsutil.Manager{
-		Templates: util.BuildSmsTemplates(c),
-		Config:    smsCfg,
+
+	manager := whatsapputil.Manager{
+		Config: cfg,
 	}
-	res, err := smsManager.Send(service.CountryCode, service.Mobile, otp)
+
+	res, err := manager.SendCode(service.CountryCode, service.Mobile, otp)
 	if err != nil {
-		util.GetLoggerEntry(c).Errorf("Send sms error: %s", err.Error())
+		util.GetLoggerEntry(c).Errorf("Send whatsapp message error: %s", err.Error())
 	}
 	if !res.HasSucceeded {
 		return err
@@ -178,10 +146,10 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 			CountryCode: service.CountryCode,
 			Mobile:      service.Mobile,
 			Otp:         otp,
-			Provider:    smsutil.SmsProviderName[res.Provider],
+			Provider:    whatsapputil.ProviderName[res.Provider],
 			DateTime:    time.Now().Format(time.DateTime),
 			BrandId:     int64(c.GetInt("_brand")),
-			Method:      ploutos.OtpEventMethodSms,
+			Method:      ploutos.OtpEventMethodWhatsApp,
 		},
 	}
 	if err := model.LogOtpEvent(event); err != nil {
@@ -192,7 +160,7 @@ func (service *SmsOtpService) sendSMS(c *gin.Context, otp string) error {
 	return nil
 }
 
-func (service *SmsOtpService) verifyMobileNumber() error {
+func (service *WhatsAppOtpService) verifyMobileNumber() error {
 	if service.CountryCode == "+63" {
 		phMobilepattern := `^(9\d{9})$`
 		phMobileRegex := regexp.MustCompile(phMobilepattern)
@@ -204,7 +172,7 @@ func (service *SmsOtpService) verifyMobileNumber() error {
 	return nil
 }
 
-func (service *SmsOtpService) checkExisting(countryCode, mobile string) bool {
+func (service *WhatsAppOtpService) checkExisting(countryCode, mobile string) bool {
 	var user model.User
 	mobileHash := serializer.MobileEmailHash(mobile)
 	row := model.DB.Where(`country_code`, countryCode).Where(`mobile_hash`, mobileHash).First(&user).RowsAffected

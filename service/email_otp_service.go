@@ -121,6 +121,7 @@ func (service *EmailOtpService) sendEmail(c *gin.Context, otp string) error {
 			Provider: utilities.MailGunName,
 			DateTime: time.Now().Format(time.DateTime),
 			BrandId:  int64(c.GetInt("_brand")),
+			Method:   ploutos.OtpEventMethodEmail,
 		},
 	}
 	if err := model.LogOtpEvent(event); err != nil {
