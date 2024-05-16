@@ -272,10 +272,6 @@ func NewRouter() *gin.Engine {
 
 				user.GET("/otp-check", api.VerifyOtp)
 
-				user.POST("/transfer_to", api.TransferTo)
-				user.POST("/transfer_from", api.TransferFrom)
-				user.POST("/transfer_back", api.TransferBack)
-
 				user.POST("/feedback", api.FeedbackAdd)
 
 				user.GET("/vip-status", api.VipGet)
