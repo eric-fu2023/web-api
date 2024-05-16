@@ -15,9 +15,12 @@ import (
 	"web-api/util/i18n"
 )
 
+var ErrCannotFindUser = errors.New("cannot find user")
+
 type UserSetPasswordService struct {
 	CountryCode string `form:"country_code" json:"country_code" validate:"omitempty"`
 	Mobile      string `form:"mobile" json:"mobile" validate:"omitempty,number"`
+	Email       string `form:"email" json:"email" validate:"omitempty,number"`
 	Password    string `form:"password" json:"password" binding:"required,password"`
 	Otp         string `form:"otp" json:"otp" binding:"required"`
 }
@@ -27,15 +30,20 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 
 	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
+	service.Email = strings.ToLower(service.Email)
 
 	var user model.User
+	var err error
 	u, isUser := c.Get("user")
 	if isUser {
 		user = u.(model.User)
 	} else {
-		mobileHash := serializer.MobileEmailHash(service.Mobile)
-		if err := model.DB.Where(`country_code`, service.CountryCode).Where(`mobile_hash`, mobileHash).First(&user).Error; err != nil {
-			return serializer.ParamErr(c, service, i18n.T("Mobile_password_invalid"), err)
+		user, err = service.getUser(c)
+		if err != nil && errors.Is(err, ErrCannotFindUser) {
+			return serializer.ParamErr(c, service, i18n.T("account_invalid"), err)
+		}
+		if err != nil {
+			return serializer.GeneralErr(c, err)
 		}
 	}
 
@@ -72,6 +80,28 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 	return serializer.Response{
 		Msg: i18n.T("success"),
 	}
+}
+
+func (service *UserSetPasswordService) getUser(c *gin.Context) (model.User, error) {
+	var user model.User
+
+	if service.Mobile != "" && service.CountryCode != "" {
+		mobileHash := serializer.MobileEmailHash(service.Mobile)
+		if err := model.DB.Where(`country_code`, service.CountryCode).Where(`mobile_hash`, mobileHash).First(&user).Error; err != nil {
+			util.GetLoggerEntry(c).Error("get user with mobile error", err)
+			return model.User{}, err
+		}
+	} else if service.Email != "" {
+		emailHash := serializer.MobileEmailHash(service.Email)
+		if err := model.DB.Where(`email_hash`, emailHash).First(&user).Error; err != nil {
+			util.GetLoggerEntry(c).Error("get user with email error", err)
+			return model.User{}, err
+		}
+	} else {
+		return model.User{}, ErrCannotFindUser
+	}
+
+	return user, nil
 }
 
 type UserFinishSetupService struct {
