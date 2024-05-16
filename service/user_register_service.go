@@ -60,6 +60,7 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 			RegistrationDeviceUuid:  deviceInfo.Uuid,
 			ReferralWagerMultiplier: 1,
 			Channel:                 service.Channel,
+			Locale:                  c.MustGet("_locale").(string),
 		},
 	}
 	genNickname(&user)

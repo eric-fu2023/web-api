@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"os"
 	"strings"
 	"web-api/util/i18n"
 )
@@ -12,6 +13,10 @@ func Locale() gin.HandlerFunc {
 		locale := "en-us"
 		language := "en"
 		countryCode := "us"
+		if os.Getenv("PLATFORM_LANGUAGE") != "" {
+			locale = os.Getenv("PLATFORM_LANGUAGE")
+			language = locale
+		}
 		if c.GetHeader("Locale") != "" {
 			l := strings.ToLower(c.GetHeader("Locale"))
 			locale = l
