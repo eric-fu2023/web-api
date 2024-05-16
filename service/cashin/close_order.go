@@ -96,8 +96,9 @@ func HandleSmPixelReporting(c context.Context, order model.CashOrder) {
 		return
 	}
 	paymentDetails := social_media_pixel.PaymentDetails{
-		Currency: "USD",
-		Value:    order.AppliedCashInAmount,
+		Currency:     "USD",
+		Value:        order.AppliedCashInAmount,
+		CashMethodId: order.CashMethodId,
 	}
 
 	social_media_pixel.ReportPayment(c, user, paymentDetails)

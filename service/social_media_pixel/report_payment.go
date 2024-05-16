@@ -12,8 +12,9 @@ import (
 )
 
 type PaymentDetails struct {
-	Currency string
-	Value    int64
+	Currency     string
+	Value        int64
+	CashMethodId int64
 }
 
 func ReportPayment(ctx context.Context, user model.User, paymentDetails PaymentDetails) {
@@ -61,6 +62,7 @@ func reportPaymentTikTok(ctx context.Context, configDetails ConfigDetails, payme
                 "contents": [
                     {
                         "content_name": "CompletePayment"
+						"content_id": "%d"
                     }
                 ]
             },
@@ -70,7 +72,7 @@ func reportPaymentTikTok(ctx context.Context, configDetails ConfigDetails, payme
             "test_event_code": ""
         }
     ]
-}`, configDetails.ID, time.Now().Unix(), paymentDetails.Currency, float64(paymentDetails.Value/100)))
+}`, configDetails.ID, time.Now().Unix(), paymentDetails.Currency, float64(paymentDetails.Value/100), paymentDetails.CashMethodId))
 
 	fmt.Printf("Debug456 EventSourceId: %s, EventTime: %d, Currency: %s, Value: %.2f\n",
 		configDetails.ID, time.Now().Unix(), paymentDetails.Currency, float64(paymentDetails.Value/100),
