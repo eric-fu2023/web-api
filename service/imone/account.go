@@ -38,7 +38,7 @@ func (c *ImOne) createImOneUserAndDbWallet(user model.User, currency string) err
 			gvu := ploutos.GameVendorUser{
 				GameVendorId:     gameVendor.ID,
 				UserId:           user.ID,
-				ExternalUserId:   user.Username,
+				ExternalUserId:   user.IdAsString(),
 				ExternalCurrency: currency,
 			}
 
