@@ -2,9 +2,13 @@ package social_media_pixel
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"web-api/model"
@@ -34,7 +38,7 @@ func ReportPayment(ctx context.Context, user model.User, paymentDetails PaymentD
 		}
 	} else if configDetails.SmPlatform == SmPlatformFacebook {
 		fmt.Printf("Debug456: Facebook\n")
-		err := reportPaymentFacebook(ctx, configDetails, paymentDetails)
+		err := reportPaymentFacebook(ctx, configDetails, paymentDetails, user)
 		if err != nil {
 			util.GetLoggerEntry(ctx).Errorf("ReportPaymentFacebook error: %s", err.Error())
 			return
@@ -109,28 +113,42 @@ func reportPaymentTikTok(ctx context.Context, configDetails ConfigDetails, payme
 	return fmt.Errorf("unexpected response: %s", string(body))
 }
 
-func reportPaymentFacebook(ctx context.Context, configDetails ConfigDetails, paymentDetails PaymentDetails) error {
+func reportPaymentFacebook(ctx context.Context, configDetails ConfigDetails, paymentDetails PaymentDetails, user model.User) error {
 	url := fmt.Sprintf("https://graph.facebook.com/v19.0/%s/events", configDetails.ID)
 	method := "POST"
+
+	h := sha256.New()
+	h.Write([]byte(strconv.FormatInt(user.ID, 10)))
+	userIdHash := hex.EncodeToString(h.Sum(nil))
+
+	// generate uuid for event id
+	eventId := uuid.NewString()
+
+	ip := user.LastLoginIp
+	if ip == "" {
+		ip = user.RegistrationIp
+	}
 
 	payload := strings.NewReader(fmt.Sprintf(`{
     "data": [
         {
             "action_source": "website",
-            "event_name": "CompletePayment",
+            "event_name": "Purchase",
             "event_time": %d,
             "custom_data": {
 				"currency": "%s",
 				"value": %.2f
 			},
             "user_data": {
-                "em": [""],
-                "ph": []
-            }
+                "external_id": "%s",
+				"client_ip_address": "%s",
+				"client_user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            },
+			"event_id": "%s"
         }
     ],
     "access_token": "%s"
-}`, time.Now().Unix(), paymentDetails.Currency, float64(paymentDetails.Value/100), configDetails.Token))
+}`, time.Now().Unix(), paymentDetails.Currency, float64(paymentDetails.Value/100), userIdHash, ip, eventId, configDetails.Token))
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
