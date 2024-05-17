@@ -101,7 +101,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 			return err
 		})
 		if err != nil {
-			util.Log().Error(`GAME INTEGRATION TRANSFER IN ERROR: %v %v`, err)
+			util.Log().Error(`GAME INTEGRATION TRANSFER IN ERROR user_id: %d, game_code: %s, %v`, user.ID, subGame.GameVendor.GameCode, err)
 		}
 	}(user, locale, subGame, game, gvu)
 
