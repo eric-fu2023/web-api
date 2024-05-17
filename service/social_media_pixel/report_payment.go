@@ -27,6 +27,7 @@ func ReportPayment(ctx context.Context, user model.User, paymentDetails PaymentD
 		return
 	}
 
+	fmt.Printf("Debug963: ReportPayment channel: %s, smPlatform: %d, id: %s, token: %s\n", user.Channel, configDetails.SmPlatform, configDetails.ID, configDetails.Token)
 	fmt.Printf("Debug456 configDetails Platform: %d, ID: %s, Token: %s\n", configDetails.SmPlatform, configDetails.ID, configDetails.Token)
 
 	if configDetails.SmPlatform == SmPlatformTikTok {
@@ -114,6 +115,7 @@ func reportPaymentTikTok(ctx context.Context, configDetails ConfigDetails, payme
 }
 
 func reportPaymentFacebook(ctx context.Context, configDetails ConfigDetails, paymentDetails PaymentDetails, user model.User) error {
+	fmt.Printf("Debug963: reportPaymentFacebook\n")
 	url := fmt.Sprintf("https://graph.facebook.com/v19.0/%s/events", configDetails.ID)
 	method := "POST"
 
@@ -150,6 +152,13 @@ func reportPaymentFacebook(ctx context.Context, configDetails ConfigDetails, pay
     "access_token": "%s"
 }`, time.Now().Unix(), paymentDetails.Currency, float64(paymentDetails.Value/100), userIdHash, ip, eventId, configDetails.Token))
 
+	fmt.Printf("Debug963: paymentDetails.Currency: %s\n", paymentDetails.Currency)
+	fmt.Printf("Debug963: float64(paymentDetails.Value/100): %.2f\n", float64(paymentDetails.Value/100))
+	fmt.Printf("Debug963: userIdHash: %s\n", userIdHash)
+	fmt.Printf("Debug963: ip: %s\n", ip)
+	fmt.Printf("Debug963: eventId: %s\n", eventId)
+	fmt.Printf("Debug963: configDetails.Token: %s\n", configDetails.Token)
+
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
 	if err != nil {
@@ -165,14 +174,20 @@ func reportPaymentFacebook(ctx context.Context, configDetails ConfigDetails, pay
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode == http.StatusOK {
-		return nil
-	}
+	//if res.StatusCode == http.StatusOK {
+	//	return nil
+	//}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		util.GetLoggerEntry(ctx).Errorf("ReadAll error: %s", err.Error())
 		return err
+	}
+
+	fmt.Printf("Debug963: ResponseValue: %s\n", string(body))
+
+	if res.StatusCode == http.StatusOK {
+		return nil
 	}
 
 	return fmt.Errorf("unexpected response: %s", string(body))

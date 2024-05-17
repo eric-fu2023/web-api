@@ -27,10 +27,12 @@ const (
 )
 
 func ReportRegisterConversion(ctx context.Context, user model.User) {
+
 	configDetails, ok := Config[user.Channel]
 	if !ok {
 		return
 	}
+	fmt.Printf("Debug789: ReportRegisterConversion, channel: %s\n", user.Channel)
 
 	if configDetails.SmPlatform == SmPlatformTikTok {
 		err := reportRegisterTikTok(ctx, configDetails, user)
@@ -106,6 +108,7 @@ func reportRegisterTikTok(ctx context.Context, configDetails ConfigDetails, user
 }
 
 func reportRegisterFacebook(ctx context.Context, configDetails ConfigDetails, user model.User) error {
+	fmt.Println("Debug789: reportRegisterFacebook")
 	url := fmt.Sprintf("https://graph.facebook.com/v19.0/%s/events", configDetails.ID)
 	method := "POST"
 
@@ -134,6 +137,8 @@ func reportRegisterFacebook(ctx context.Context, configDetails ConfigDetails, us
     "access_token": "%s"
 }`, time.Now().Unix(), userIdHash, user.RegistrationIp, eventId, configDetails.Token))
 
+	fmt.Printf("Debug789: userIdHash: %s, user.RegistrationIp: %s, eventId: %s, configDetails.Token: %s\n", userIdHash, user.RegistrationIp, eventId, configDetails.Token)
+
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
 	if err != nil {
@@ -149,14 +154,20 @@ func reportRegisterFacebook(ctx context.Context, configDetails ConfigDetails, us
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode == http.StatusOK {
-		return nil
-	}
+	//if res.StatusCode == http.StatusOK {
+	//	return nil
+	//}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		util.GetLoggerEntry(ctx).Errorf("ReadAll error: %s", err.Error())
 		return err
+	}
+
+	fmt.Printf("Debug963: ResponseValue: %s\n", string(body))
+
+	if res.StatusCode == http.StatusOK {
+		return nil
 	}
 
 	return fmt.Errorf("unexpected response: %s", string(body))
