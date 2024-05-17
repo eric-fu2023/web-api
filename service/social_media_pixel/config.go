@@ -9,8 +9,8 @@ var (
 		},
 		"100008": {
 			SmPlatform: SmPlatformTikTok,
-			ID:         "COU9R6RC77U9UK75QD1G",
-			Token:      "0f05d6b303d687a5f02d24b68f663cf91cafa663",
+			ID:         "CP3F8AJC77U0CPUE3880",
+			Token:      "17766bba93ea202e969675d82e1ce48a1d6936bd",
 		},
 		"100001": {
 			SmPlatform: SmPlatformFacebook,
