@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/gin-contrib/pprof"
 	"github.com/robfig/cron/v3"
 	"log"
 	"net/http"
@@ -15,8 +16,6 @@ import (
 	"web-api/task"
 	websocketTask "web-api/task/websocket"
 	"web-api/websocket"
-
-	"github.com/gin-contrib/pprof"
 )
 
 var runTask bool
@@ -44,6 +43,7 @@ func main() {
 		go task.ProcessSabaSettle()
 		go task.ProcessImUpdateBalance()
 		go task.ConsumeMgStreams()
+		go task.ConsumeMgStreamsHot()
 		if os.Getenv("MQTT_ADDRESS") != "" { // mqtt tasks
 			go task.UpdateOnlineStatus()
 			go task.UpdateUnsubscribed()
