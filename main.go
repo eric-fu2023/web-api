@@ -44,8 +44,8 @@ func main() {
 		go task.ProcessTayaSyncTransaction()
 		go task.ProcessSabaSettle()
 		go task.ProcessImUpdateBalance()
-		//go task.ConsumeMgStreams()
-		//go task.ConsumeMgStreamsHot()
+		go task.ConsumeMgStreams()
+		go task.ConsumeMgStreamsHot()
 		if os.Getenv("MQTT_ADDRESS") != "" { // mqtt tasks
 			go task.UpdateOnlineStatus()
 			go task.UpdateUnsubscribed()
