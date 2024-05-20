@@ -10,6 +10,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/util"
 	"web-api/util/i18n"
 )
 
@@ -35,9 +36,9 @@ func (service *UserSetEmailService) Set(c *gin.Context) serializer.Response {
 		return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 	}
 
-	emailHash := serializer.MobileEmailHash(service.Email)
+	emailHash := util.MobileEmailHash(service.Email)
 	var existing model.User
-	rows := model.DB.Where(`email`, service.Email).Where(`email_hash`, emailHash).First(&existing).RowsAffected
+	rows := model.DB.Where(`email_hash`, emailHash).First(&existing).RowsAffected
 	if rows > 0 {
 		return serializer.ParamErr(c, service, i18n.T("existing_email"), nil)
 	}

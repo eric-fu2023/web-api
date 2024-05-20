@@ -24,6 +24,7 @@ type UserOtpVerificationService struct {
 	CountryCode string `form:"country_code" json:"country_code"`
 	Mobile      string `form:"mobile" json:"mobile"`
 	Action      string `form:"action" json:"action" binding:"required"`
+	Email       string `form:"email" json:"email"`
 }
 
 func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
@@ -31,13 +32,18 @@ func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
 
 	s.CountryCode = util.FormatCountryCode(s.CountryCode)
 	s.Mobile = strings.TrimPrefix(s.Mobile, "0")
+	s.Email = strings.ToLower(s.Email)
 
 	var user model.User
+	var err error
 	u, exists := c.Get("user")
 	if !exists {
-		mobileHash := serializer.MobileEmailHash(s.Mobile)
-		if err := model.DB.Where(`country_code`, s.CountryCode).Where(`mobile_hash`, mobileHash).First(&user).Error; err != nil {
+		user, err = model.GetUserByMobileOrEmail(s.CountryCode, s.Mobile, s.Email)
+		if err != nil && errors.Is(err, model.ErrCannotFindUser) {
 			return serializer.ParamErr(c, s, i18n.T("account_invalid"), err)
+		}
+		if err != nil {
+			return serializer.GeneralErr(c, err)
 		}
 	} else {
 		user = u.(model.User)
@@ -76,8 +82,8 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 
 	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
-	mobileHash := serializer.MobileEmailHash(service.Mobile)
-	emailHash := serializer.MobileEmailHash(service.Email)
+	mobileHash := util.MobileEmailHash(service.Mobile)
+	emailHash := util.MobileEmailHash(service.Email)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 

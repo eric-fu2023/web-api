@@ -38,7 +38,7 @@ func (service *UserSetMobileService) Set(c *gin.Context) serializer.Response {
 		return serializer.Err(c, service, serializer.CodeOtpInvalid, i18n.T("otp_invalid"), nil)
 	}
 
-	mobileHash := serializer.MobileEmailHash(service.Mobile)
+	mobileHash := util.MobileEmailHash(service.Mobile)
 	var existing model.User
 	rows := model.DB.Where(`country_code`, service.CountryCode).Where(`mobile_hash`, mobileHash).First(&existing).RowsAffected
 	if rows > 0 {

@@ -3,10 +3,13 @@ package util
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/md5"
 	random "crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
@@ -66,6 +69,11 @@ func AesDecrypt(str string) (string, error) {
 	mode.XORKeyStream(ciphertext, ciphertext)
 
 	return string(ciphertext), nil
+}
+
+func MobileEmailHash(str string) string {
+	signatureHash := md5.Sum([]byte(fmt.Sprintf("%s%s", str, os.Getenv("MOBILE_EMAIL_HASH_SALT"))))
+	return hex.EncodeToString(signatureHash[:])
 }
 
 func MapSlice[T any, M any](a []T, f func(T) M) []M {

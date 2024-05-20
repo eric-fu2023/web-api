@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
 	"web-api/util"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -16,6 +15,10 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+)
+
+var (
+	ErrCannotFindUser = errors.New("cannot find user")
 )
 
 type User struct {
@@ -128,4 +131,49 @@ func GetUserLang(userId int64) string {
 	var user User
 	DB.First(&user)
 	return user.Locale[:2]
+}
+
+func GetUserByMobileOrEmailOld(countryCode, mobile, email string) (User, error) {
+	var user User
+
+	if mobile != "" && countryCode != "" {
+		mobileHash := util.MobileEmailHash(mobile)
+		if err := DB.Where(`country_code`, countryCode).Where(`mobile_hash`, mobileHash).First(&user).Error; err != nil {
+			return User{}, err
+		}
+	} else if email != "" {
+		emailHash := util.MobileEmailHash(email)
+		if err := DB.Where(`email_hash`, emailHash).First(&user).Error; err != nil {
+			return User{}, err
+		}
+	} else {
+		return User{}, ErrCannotFindUser
+	}
+
+	return user, nil
+}
+
+func GetUserByMobileOrEmail(countryCode, mobile, email string) (User, error) {
+	var users []User
+	if mobile != "" && countryCode != "" {
+		mobileHash := util.MobileEmailHash(mobile)
+		if err := DB.Where(`country_code`, countryCode).Where(`mobile_hash`, mobileHash).Find(&users).Error; err != nil {
+			return User{}, err
+		}
+	}
+	if len(users) > 0 {
+		return users[0], nil
+	}
+
+	if email != "" {
+		emailHash := util.MobileEmailHash(email)
+		if err := DB.Where(`email_hash`, emailHash).First(&users).Error; err != nil {
+			return User{}, err
+		}
+	}
+	if len(users) > 0 {
+		return users[0], nil
+	}
+
+	return User{}, ErrCannotFindUser
 }

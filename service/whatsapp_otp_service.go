@@ -174,7 +174,7 @@ func (service *WhatsAppOtpService) verifyMobileNumber() error {
 
 func (service *WhatsAppOtpService) checkExisting(countryCode, mobile string) bool {
 	var user model.User
-	mobileHash := serializer.MobileEmailHash(mobile)
+	mobileHash := util.MobileEmailHash(mobile)
 	row := model.DB.Where(`country_code`, countryCode).Where(`mobile_hash`, mobileHash).First(&user).RowsAffected
 	if row > 0 {
 		return true
