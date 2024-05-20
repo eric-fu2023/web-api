@@ -59,7 +59,13 @@ func welcomeToRoom(conn *websocket.Connection, message string) {
 			i18n := i18n.I18n{}
 			i18n.LoadLanguages(lang)
 			m := i18n.T("chat_welcome_message")
+			if os.Getenv("CHAT_WELCOME_MESSAGES") != "" {
+				m = os.Getenv("CHAT_WELCOME_MESSAGES")
+			}
 			n := i18n.T("chat_welcome_name")
+			if os.Getenv("CHAT_WELCOME_NAMES") != "" {
+				n = os.Getenv("CHAT_WELCOME_NAMES")
+			}
 			if v, exists := j["rejoin"]; !exists || !v.(bool) {
 				msg := websocket.RoomMessage{
 					SocketId:  j["socket_id"].(string),
