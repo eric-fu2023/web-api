@@ -2,9 +2,13 @@ package social_media_pixel
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"web-api/model"
@@ -23,19 +27,21 @@ const (
 )
 
 func ReportRegisterConversion(ctx context.Context, user model.User) {
+
 	configDetails, ok := Config[user.Channel]
 	if !ok {
 		return
 	}
+	fmt.Printf("Debug789: ReportRegisterConversion, channel: %s\n", user.Channel)
 
 	if configDetails.SmPlatform == SmPlatformTikTok {
-		err := reportRegisterTikTok(ctx, configDetails)
+		err := reportRegisterTikTok(ctx, configDetails, user)
 		if err != nil {
 			util.GetLoggerEntry(ctx).Errorf("ReportRegisterConversionTikTok error: %s", err.Error())
 			return
 		}
 	} else if configDetails.SmPlatform == SmPlatformFacebook {
-		err := reportRegisterFacebook(ctx, configDetails)
+		err := reportRegisterFacebook(ctx, configDetails, user)
 		if err != nil {
 			util.GetLoggerEntry(ctx).Errorf("ReportRegisterConversionFacebook error: %s", err.Error())
 			return
@@ -45,7 +51,7 @@ func ReportRegisterConversion(ctx context.Context, user model.User) {
 	return
 }
 
-func reportRegisterTikTok(ctx context.Context, configDetails ConfigDetails) error {
+func reportRegisterTikTok(ctx context.Context, configDetails ConfigDetails, user model.User) error {
 	url := "https://business-api.tiktok.com/open_api/v1.3/event/track/"
 	method := "POST"
 
@@ -101,9 +107,17 @@ func reportRegisterTikTok(ctx context.Context, configDetails ConfigDetails) erro
 	return fmt.Errorf("unexpected response: %s", string(body))
 }
 
-func reportRegisterFacebook(ctx context.Context, configDetails ConfigDetails) error {
+func reportRegisterFacebook(ctx context.Context, configDetails ConfigDetails, user model.User) error {
+	fmt.Println("Debug789: reportRegisterFacebook")
 	url := fmt.Sprintf("https://graph.facebook.com/v19.0/%s/events", configDetails.ID)
 	method := "POST"
+
+	h := sha256.New()
+	h.Write([]byte(strconv.FormatInt(user.ID, 10)))
+	userIdHash := hex.EncodeToString(h.Sum(nil))
+
+	// generate uuid for event id
+	eventId := uuid.NewString()
 
 	payload := strings.NewReader(fmt.Sprintf(`{
     "data": [
@@ -113,13 +127,17 @@ func reportRegisterFacebook(ctx context.Context, configDetails ConfigDetails) er
             "event_time": %d,
             "custom_data": {},
             "user_data": {
-                "em": [""],
-                "ph": []
-            }
+                "external_id": "%s",
+				"client_ip_address": "%s",
+				"client_user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            },
+			"event_id": "%s"
         }
     ],
     "access_token": "%s"
-}`, time.Now().Unix(), configDetails.Token))
+}`, time.Now().Unix(), userIdHash, user.RegistrationIp, eventId, configDetails.Token))
+
+	fmt.Printf("Debug789: userIdHash: %s, user.RegistrationIp: %s, eventId: %s, configDetails.Token: %s\n", userIdHash, user.RegistrationIp, eventId, configDetails.Token)
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
@@ -136,14 +154,20 @@ func reportRegisterFacebook(ctx context.Context, configDetails ConfigDetails) er
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode == http.StatusOK {
-		return nil
-	}
+	//if res.StatusCode == http.StatusOK {
+	//	return nil
+	//}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		util.GetLoggerEntry(ctx).Errorf("ReadAll error: %s", err.Error())
 		return err
+	}
+
+	fmt.Printf("Debug963: ResponseValue: %s\n", string(body))
+
+	if res.StatusCode == http.StatusOK {
+		return nil
 	}
 
 	return fmt.Errorf("unexpected response: %s", string(body))

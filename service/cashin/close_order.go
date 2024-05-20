@@ -57,7 +57,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 	})
 	if err == nil {
 		go HandlePromotion(c.Copy(), newCashOrderState)
-		go HandleSmPixelReporting(c.Copy(), newCashOrderState)
+		//go HandleSmPixelReporting(c.Copy(), newCashOrderState)
 	}
 	return
 }
