@@ -84,7 +84,7 @@ func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.Cash
 	updatedCashOrder = newCashOrderState
 
 	common.SendCashNotificationWithoutCurrencyId(newCashOrderState.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_DEPOSIT_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_SUCCESS, newCashOrderState.AppliedCashInAmount)
-	common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "deposit_success")
+	common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "deposit_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
 	return
 }
 

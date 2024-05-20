@@ -77,7 +77,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	defer func() {
 		go func() {
 			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
-			common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "withdraw")
+			common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "withdraw",float64(cashOrder.AppliedCashOutAmount)/100)
 		}()
 	}()
 

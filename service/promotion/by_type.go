@@ -277,7 +277,7 @@ func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange i
 	if err != nil {
 		return err
 	}
-	common.SendUserSumSocketMsg(userId, sum.UserSum, "promotion")
+	common.SendUserSumSocketMsg(userId, sum.UserSum, "promotion", float64(rewardAmount)/100)
 	return nil
 }
 
