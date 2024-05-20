@@ -97,10 +97,10 @@ func BuildReferralAllianceReferrals(
 		if v, ok := rewardSummaries[rd.ReferralId]; ok {
 			rs = v
 		}
-		if rd.ReferralVipRecord == nil {
-			rd.ReferralVipRecord = &ploutos.VipRecord{
-				VipRule: defaultVip,
-			}
+
+		vipId := defaultVip.ID
+		if rd.ReferralVipRecord != nil {
+			vipId = rd.ReferralVipRecord.VipID
 		}
 
 		if rd.Referral == nil {
@@ -114,7 +114,7 @@ func BuildReferralAllianceReferrals(
 			Id:             rd.Referral.ID,
 			Nickname:       rd.Referral.Nickname,
 			Avatar:         Url(rd.Referral.Avatar),
-			VipId:          rd.ReferralVipRecord.VipRule.ID,
+			VipId:          vipId,
 			JoinTime:       rd.Referral.CreatedAt.Unix(),
 			ReferrerReward: float64(referrerReward) / 100,
 		})

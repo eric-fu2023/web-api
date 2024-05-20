@@ -2,7 +2,6 @@ package game_integration
 
 import (
 	"fmt"
-
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -28,9 +27,21 @@ func (service *SubGameService) List(c *gin.Context) (serializer.Response, error)
 	}
 
 	var subGames []ploutos.SubGameCGameVendorBrand
-	model.DB.Model(ploutos.SubGameCGameVendorBrand{}).Preload("GameVendorBrand").Joins(fmt.Sprintf(`LEFT JOIN game_vendor_brand gvb on gvb.game_vendor_id = %s.vendor_id`, ploutos.SubGameCGameVendorBrand{}.TableName())).Where("gvb.brand_id = ?", brandId).Where(fmt.Sprintf("gvb.%s = ?", platform), 1).Find(&subGames)
+	tx := model.DB.Model(ploutos.SubGameCGameVendorBrand{}).Preload("GameVendorBrand").Joins(fmt.Sprintf(`LEFT JOIN game_vendor_brand gvb on gvb.game_vendor_id = %s.vendor_id`, ploutos.SubGameCGameVendorBrand{}.TableName())).Where("gvb.brand_id = ?", brandId).Where(fmt.Sprintf("%s.%s = ?", ploutos.SubGameCGameVendorBrand{}.TableName(), platform), 1).Find(&subGames)
+	if err := tx.Error; err != nil {
+		return serializer.Response{
+			Data: []serializer.SubGamesByGameType{},
+		}, err
+	}
+
+	data, err := serializer.BuildSubGamesByGameType(subGames)
+	if err != nil {
+		return serializer.Response{
+			Data: []serializer.SubGamesByGameType{},
+		}, err
+	}
 
 	return serializer.Response{
-		Data: serializer.BuildSubGamesByCategory(c, subGames),
+		Data: data,
 	}, nil
 }

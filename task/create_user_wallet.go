@@ -2,9 +2,11 @@ package task
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 
 	"web-api/model"
+	"web-api/service/imone"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
@@ -70,28 +72,40 @@ func CreateUserWallet(gameVendorIds []int64, gameIntegrationId int64) {
 	wg.Wait()
 }
 
-func CreateUserWalletForUser(gameVendorIds []int64, currency string, userIds ...int64) {
-	if len(userIds) != 1 {
-		fmt.Println("len(userIds) != 1")
+// assumes if game_vendor_user not created => yet to register with imone
+func CreateImOneUsersForExistingTayaUsers() {
+	currency := "INR"
+	var userIds []int64
+	tx := model.DB.Raw(fmt.Sprintf("select user_id from user_sums where user_id  not in (select user_id from game_vendor_users gvu, game_vendor gv, game_integrations gi where gvu.game_vendor_id = gv.id and gv.game_integration_id = gi.id and gi.name = 'IMONE');")).Find(&userIds)
+	if tx.Error != nil {
+		fmt.Println(tx.Error)
 		return
 	}
-	userId := userIds[0]
+	fmt.Printf("userIds: %v", len(userIds))
 
-	for _, gameVendorId := range gameVendorIds {
-		var gameVendorUser ploutos.GameVendorUser
-		rows := model.DB.Where(`user_id`, userId).Where(`game_vendor_id`, gameVendorId).First(&gameVendorUser).RowsAffected
-		if rows > 0 {
-			continue
-		}
-		gameVendorUser = ploutos.GameVendorUser{
-			GameVendorId:     gameVendorId,
-			UserId:           userId,
-			ExternalCurrency: currency,
-		}
-		err := model.DB.Create(&gameVendorUser).Error
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+	service := &imone.ImOne{}
+
+	var wg sync.WaitGroup
+	for _, userId := range userIds {
+		wg.Add(1)
+		go func(userId int64) {
+			defer wg.Done()
+			err := service.CreateWallet(model.User{
+				User: ploutos.User{
+					BASE: ploutos.BASE{
+						ID: userId,
+					},
+				},
+			}, currency)
+
+			if err != nil {
+				fmt.Println("err creating waller. user id " + strconv.Itoa(int(userId)) + " err: " + err.Error())
+			} else {
+				fmt.Println("ok creating waller. user id " + strconv.Itoa(int(userId)) + " ")
+			}
+		}(userId)
 	}
+
+	wg.Wait()
+
 }

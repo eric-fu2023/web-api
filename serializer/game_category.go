@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"errors"
 	"time"
 
 	"web-api/util/i18n"
@@ -56,10 +57,12 @@ func FormatGameCategoryName(c *gin.Context, id int64) string {
 }
 
 type SubGame struct {
-	ID               int64  `json:"id"`
+	GameVendorId         int64 `json:"id"`
+	GameVendorCategoryId int64 `json:"game_vendor_category_id"`
+
 	Name             string `json:"name"`
-	GameId           int64  `json:"game_id,omitempty"`
-	Type             int64  `json:"type"`
+	Id               int64  `json:"game_id,omitempty"`
+	Type             string `json:"type"`
 	WebIcon          string `json:"web_icon,omitempty"`
 	AppIcon          string `json:"app_icon,omitempty"`
 	IsMaintenance    bool   `json:"is_maintenance,omitempty"`
@@ -67,27 +70,36 @@ type SubGame struct {
 	MaintenanceEnd   int64  `json:"maintenance_end,omitempty"`
 }
 
-type SubGamesByCategory struct {
-	Id       int64     `json:"category_id"`
-	SubGames []SubGame `json:"vendor,omitempty"`
+// SubGamesByGameType
+// game_type M to category_id 1
+type SubGamesByGameType struct {
+	Type string `json:"game_type"`
+
+	GameVendorCategoryId int64     `json:"category_id"`
+	SubGames             []SubGame `json:"vendor,omitempty"`
 }
 
-type SubGamesMap map[ /*categoryId*/ int64][]SubGame
+type SubGamesMap map[string][]SubGame
 
-func (m SubGamesMap) AsSlice() (list []SubGamesByCategory) {
-	for categoryId, subGames := range m {
-		list = append(list, SubGamesByCategory{
-			Id:       categoryId,
-			SubGames: subGames,
+func (m SubGamesMap) AsSlice() (list []SubGamesByGameType, err error) {
+	for subGameType, subGames := range m {
+		if len(subGames) == 0 {
+			return list, errors.New("build SubGamesByGameType aborted. cannot accept empty subGames")
+		}
+		list = append(list, SubGamesByGameType{
+			Type:                 subGameType,
+			GameVendorCategoryId: subGames[0].GameVendorCategoryId,
+			SubGames:             subGames,
 		})
 	}
-	return list
+	return list, nil
 }
 
-func BuildSubGamesByCategory(_ *gin.Context, subGamesModel []ploutos.SubGameCGameVendorBrand) []SubGamesByCategory {
+func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameCGameVendorBrand) ([]SubGamesByGameType, error) {
 	subGamesMap := make(SubGamesMap)
 	for _, sg := range subGamesModel {
-		cId := sg.GameVendorBrand.CategoryId
+		gameType := sg.GameType
+		gvCategoryId := sg.GameVendorBrand.CategoryId
 		startTime, endTime := sg.GameVendorBrand.StartTime, sg.GameVendorBrand.EndTime
 		now := time.Now()
 
@@ -104,11 +116,13 @@ func BuildSubGamesByCategory(_ *gin.Context, subGamesModel []ploutos.SubGameCGam
 			}
 		}
 
-		subGamesMap[cId] = append(subGamesMap[cId], SubGame{
-			ID:               sg.GameVendorBrand.GameVendorId,
+		subGamesMap[gameType] = append(subGamesMap[gameType], SubGame{
+			GameVendorId:         sg.GameVendorBrand.GameVendorId,
+			GameVendorCategoryId: gvCategoryId,
+
 			Name:             sg.Name,
-			GameId:           sg.ID,
-			Type:             cId,
+			Id:               sg.ID,
+			Type:             sg.GameType,
 			WebIcon:          Url(sg.WebIcon),
 			AppIcon:          Url(sg.AppIcon),
 			IsMaintenance:    isMaintenance,

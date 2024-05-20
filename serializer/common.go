@@ -124,11 +124,6 @@ func UserSignature(userId int64) string {
 	return hex.EncodeToString(signatureHash[:])
 }
 
-func MobileEmailHash(str string) string {
-	signatureHash := md5.Sum([]byte(fmt.Sprintf("%s%s", str, os.Getenv("MOBILE_EMAIL_HASH_SALT"))))
-	return hex.EncodeToString(signatureHash[:])
-}
-
 // func HouseClean(c *gin.Context, err error, res *Response) {
 // 	if res.Code != 0 || res.Data != nil || res.Msg != "" {
 // 		return

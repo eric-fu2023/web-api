@@ -2,9 +2,7 @@ package conf
 
 import (
 	"os"
-	"strings"
 	"web-api/cache"
-	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/aj_captcha"
 	"web-api/util"
@@ -22,15 +20,6 @@ func Init() {
 	godotenv.Load()
 	InitCfg()
 	InitLocale()
-
-	if os.Getenv("CHAT_WELCOME_NAMES") != "" {
-		arr := strings.Split(os.Getenv("CHAT_WELCOME_NAMES"), "|")
-		consts.ChatSystem["names"] = arr
-	}
-	if os.Getenv("CHAT_WELCOME_MESSAGES") != "" {
-		arr := strings.Split(os.Getenv("CHAT_WELCOME_MESSAGES"), "|")
-		consts.ChatSystem["messages"] = arr
-	}
 
 	util.BuildLogger(os.Getenv("LOG_LEVEL"))
 

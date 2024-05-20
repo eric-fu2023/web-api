@@ -112,14 +112,6 @@ var (
 		"assistant": 5,
 		"streamer":  6,
 	}
-	ChatSystem = map[string][]string{
-		"names": {"System"},
-		"messages": {
-			"Welcome to the chat room, where everyone can talk about sports. The platform administrator conducts 24-hour online inspections. If there are any violations of laws and regulations, pornography and vulgarity in the chat room, please report it immediately. The messages in the chat room only represent personal opinions and do not represent the opinions of the platform. Do not give your account to other people.",
-			"Connecting...",
-			"Successfully connected.",
-		},
-	}
 	ChatSystemId  int64 = -999999
 	AuthEventType       = map[string]int{
 		"login":  1,
@@ -476,6 +468,7 @@ const (
 	Notification_Type_Cash_Transaction    = "cash_transaction"
 	Notification_Type_Deposit_Bonus       = "deposit_bonus"
 	Notification_Type_Mobile_Reset        = "mobile_reset"
+	Notification_Type_Email_Reset         = "email_reset"
 	Notification_Type_Birthday_Bonus      = "birthday_bonus"
 	Notification_Type_Vip_Promotion_Bonus = "vip_promotion_bonus"
 	Notification_Type_Weekly_Bonus        = "weekly_bonus"
@@ -491,4 +484,5 @@ const (
 	SmsOtpActionSetPassword          = "set_password"
 	SmsOtpActionSetSecondaryPassword = "set_secondary_password"
 	SmsOtpActionSetMobile            = "set_mobile"
+	SmsOtpActionSetEmail             = "set_email"
 )

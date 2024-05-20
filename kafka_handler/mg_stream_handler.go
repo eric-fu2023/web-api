@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 	"web-api/conf/consts"
@@ -43,11 +42,6 @@ type MgStreamHandler struct {
 }
 
 func NewMgStreamHandler(topic string) *MgStreamHandler {
-	intervalSeconds, err := strconv.Atoi(os.Getenv("DATA_PIPELINE_SAVE_USER_ACTIVITY_LOGS_INTERVAL_SECONDS"))
-	if intervalSeconds == 0 {
-		util.Log().Error("Err parsing SaveUserActivityLogsBatchSize", err.Error())
-		intervalSeconds = 1
-	}
 	return &MgStreamHandler{
 		Topic:   topic,
 		GroupId: ConsumerGroupIdMgStream,

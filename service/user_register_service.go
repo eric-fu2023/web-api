@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"strings"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -60,23 +61,28 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 			RegistrationDeviceUuid:  deviceInfo.Uuid,
 			ReferralWagerMultiplier: 1,
 			Channel:                 service.Channel,
+			Locale:                  c.MustGet("_locale").(string),
 		},
 	}
 	genNickname(&user)
 
-	err = CreateNewUser(&user, service.Code)
-	if err != nil {
-		util.GetLoggerEntry(c).Errorf("CreateNewUser error: %s", err.Error())
-		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
-	}
-
-	err = CreateUser(&user)
+	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = CreateNewUserWithDB(&user, service.Code, tx)
+		if err != nil {
+			util.GetLoggerEntry(c).Errorf("CreateNewUser error: %s", err.Error())
+			return
+		}
+		err = CreateUserWithDB(&user, tx)
+		if err != nil {
+			return
+		}
+		return
+	})
 	if err != nil {
 		if errors.Is(err, ErrEmptyCurrencyId) {
 			return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
-		} else {
-			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 		}
+		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 	}
 
 	tokenString, err := ProcessUserLogin(c, user, consts.AuthEventLoginMethod["username"], "", "", "")

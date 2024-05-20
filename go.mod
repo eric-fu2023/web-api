@@ -6,10 +6,10 @@ toolchain go1.21.1
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
-	blgit.rfdev.tech/taya/game-service v0.0.0-20240514105634-ae0cf205737c
+	blgit.rfdev.tech/taya/game-service v0.0.0-20240520033036-3fc9c671ff04
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240510092708-dd038047bcaa
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240515041514-e005fd4a2b4c
-	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240508045431-76ae7ba2e3a8
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240517100715-0113a68b6262
+	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240516070751-9395192e189b
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
 	github.com/IBM/sarama v1.43.1

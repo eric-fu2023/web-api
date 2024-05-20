@@ -11,6 +11,8 @@ type VipReferralAllianceRewardRulesService struct{}
 
 func (v VipReferralAllianceRewardRulesService) Load(c *gin.Context) (r serializer.Response, err error) {
 	list, err := model.GetAllReferralAllianceRules()
+	u, _ := c.Get("user")
+	user := u.(model.User)
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("Err GetAllReferralAllianceRules: %s", err.Error())
 		r = serializer.Err(c, "", serializer.CodeGeneralError, "", err)
@@ -27,6 +29,6 @@ func (v VipReferralAllianceRewardRulesService) Load(c *gin.Context) (r serialize
 		r = serializer.Err(c, "", serializer.CodeGeneralError, "", err)
 		return
 	}
-	r.Data = serializer.BuildVipReferralDetails(c, list, desc, vips)
+	r.Data = serializer.BuildVipReferralDetails(c, list, desc, vips, model.GetUserLang(user.ID))
 	return
 }

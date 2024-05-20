@@ -362,7 +362,7 @@ func SendCashNotification(userId int64, notificationType string, title string, t
 			return
 		}
 
-		lang := conf.GetDefaultLocale()
+		lang := model.GetUserLang(userId)
 		title = conf.GetI18N(lang).T(title)
 		text = conf.GetI18N(lang).T(text)
 		p := message.NewPrinter(message.MatchLanguage(lang))

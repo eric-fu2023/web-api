@@ -11,6 +11,8 @@ type VipRebateQuery struct{}
 
 func (v VipRebateQuery) Load(c *gin.Context) (r serializer.Response, err error) {
 	list, err := model.LoadVipRebateRules(c)
+	u, _ := c.Get("user")
+	user := u.(model.User)
 	if err != nil {
 		r = serializer.Err(c, "", serializer.CodeGeneralError, "", err)
 		return
@@ -25,6 +27,6 @@ func (v VipRebateQuery) Load(c *gin.Context) (r serializer.Response, err error) 
 		r = serializer.Err(c, "", serializer.CodeGeneralError, "", err)
 		return
 	}
-	r.Data = serializer.BuildVipRebateDetails(list, desc, vips)
+	r.Data = serializer.BuildVipRebateDetails(list, desc, vips, model.GetUserLang(user.ID))
 	return
 }

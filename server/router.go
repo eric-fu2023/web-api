@@ -163,6 +163,7 @@ func NewRouter() *gin.Engine {
 		// no cache routes
 		v1.POST("/sms_otp", api.SmsOtp)
 		v1.POST("/email_otp", api.EmailOtp)
+		v1.POST("/whatsapp_otp", api.WhatsAppOtp)
 		v1.POST("/login_otp", api.UserLoginOtp)
 		v1.POST("/login_password", api.UserLoginPassword)
 		v1.POST("/password", middleware.CheckAuth(), api.UserSetPassword)
@@ -262,6 +263,7 @@ func NewRouter() *gin.Engine {
 
 				user.PUT("/secondary-password", api.UserSetSecondaryPassword)
 				user.PUT("/mobile", api.UserSetMobile)
+				user.PUT("/email", api.UserSetEmail)
 
 				user.GET("/orders", api.OrderList)
 				user.GET("/recent_games", api.UserRecentGameList)
@@ -271,10 +273,6 @@ func NewRouter() *gin.Engine {
 				user.GET("/withdraw-accounts", api.WthdrawAccountsList)
 
 				user.GET("/otp-check", api.VerifyOtp)
-
-				user.POST("/transfer_to", api.TransferTo)
-				user.POST("/transfer_from", api.TransferFrom)
-				user.POST("/transfer_back", api.TransferBack)
 
 				user.POST("/feedback", api.FeedbackAdd)
 

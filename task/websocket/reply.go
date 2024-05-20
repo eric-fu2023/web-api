@@ -12,6 +12,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
+	"web-api/util/i18n"
 	"web-api/websocket"
 )
 
@@ -50,21 +51,28 @@ func welcomeToRoom(conn *websocket.Connection, message string) {
 	if e := json.Unmarshal([]byte(str), &j); e == nil {
 		if rm, exists := j["room"]; exists {
 			room := rm.(string)
+			lang := "zh"
+			if v, ok := j["locale"]; ok {
+				lang = v.(string)
+				lang = lang[0:2]
+			}
+			i18n := i18n.I18n{}
+			i18n.LoadLanguages(lang)
+			m := i18n.T("chat_welcome_message")
+			n := i18n.T("chat_welcome_name")
 			if v, exists := j["rejoin"]; !exists || !v.(bool) {
-				for _, m := range consts.ChatSystem["messages"] {
-					msg := websocket.RoomMessage{
-						SocketId:  j["socket_id"].(string),
-						Room:      room,
-						Timestamp: time.Now().Unix(),
-						Message:   m,
-						UserId:    consts.ChatSystemId,
-						UserType:  consts.ChatUserType["system"],
-						Nickname:  consts.ChatSystem["names"][0],
-						Avatar:    serializer.Url(os.Getenv("CHAT_SYSTEM_PROFILE_IMG")),
-						Type:      consts.WebSocketMessageType["text"],
-					}
-					msg.Send(conn)
+				msg := websocket.RoomMessage{
+					SocketId:  j["socket_id"].(string),
+					Room:      room,
+					Timestamp: time.Now().Unix(),
+					Message:   m,
+					UserId:    consts.ChatSystemId,
+					UserType:  consts.ChatUserType["system"],
+					Nickname:  n,
+					Avatar:    serializer.Url(os.Getenv("CHAT_SYSTEM_PROFILE_IMG")),
+					Type:      consts.WebSocketMessageType["text"],
 				}
+				msg.Send(conn)
 
 				coll := model.MongoDB.Collection("room_message")
 				filter := bson.M{"room": room, "deleted_at": nil}

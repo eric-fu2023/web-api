@@ -16,11 +16,7 @@ type _gameUserInterface interface {
 	GetGameBalance(model.User, string, string, model.Extra) (int64, error)
 }
 
-type imoner interface {
-	_gameUserInterface
-}
-
 type ImOne struct {
 }
 
-var _ imoner = &ImOne{}
+var _ _gameUserInterface = &ImOne{}

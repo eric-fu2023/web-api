@@ -40,8 +40,8 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 
-	mobileHash := serializer.MobileEmailHash(service.Mobile)
-	emailHash := serializer.MobileEmailHash(service.Email)
+	mobileHash := util.MobileEmailHash(service.Mobile)
+	emailHash := util.MobileEmailHash(service.Email)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 

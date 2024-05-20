@@ -18,6 +18,7 @@ import (
 type UserSetPasswordService struct {
 	CountryCode string `form:"country_code" json:"country_code" validate:"omitempty"`
 	Mobile      string `form:"mobile" json:"mobile" validate:"omitempty,number"`
+	Email       string `form:"email" json:"email" validate:"omitempty,number"`
 	Password    string `form:"password" json:"password" binding:"required,password"`
 	Otp         string `form:"otp" json:"otp" binding:"required"`
 }
@@ -27,15 +28,20 @@ func (service *UserSetPasswordService) SetPassword(c *gin.Context) serializer.Re
 
 	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
+	service.Email = strings.ToLower(service.Email)
 
 	var user model.User
+	var err error
 	u, isUser := c.Get("user")
 	if isUser {
 		user = u.(model.User)
 	} else {
-		mobileHash := serializer.MobileEmailHash(service.Mobile)
-		if err := model.DB.Where(`country_code`, service.CountryCode).Where(`mobile_hash`, mobileHash).First(&user).Error; err != nil {
-			return serializer.ParamErr(c, service, i18n.T("Mobile_password_invalid"), err)
+		user, err = model.GetUserByMobileOrEmail(service.CountryCode, service.Mobile, service.Email)
+		if err != nil && errors.Is(err, model.ErrCannotFindUser) {
+			return serializer.ParamErr(c, service, i18n.T("account_invalid"), err)
+		}
+		if err != nil {
+			return serializer.GeneralErr(c, err)
 		}
 	}
 

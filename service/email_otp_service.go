@@ -20,14 +20,22 @@ import (
 )
 
 type EmailOtpService struct {
-	Email  string `form:"email" json:"email" binding:"required,email"`
-	Action string `form:"action" json:"action" binding:"required"`
+	Email     string `form:"email" json:"email" binding:"required,email"`
+	CheckUser bool   `form:"check_user" json:"check_user"`
+	Action    string `form:"action" json:"action" binding:"required"`
 }
 
 func (service *EmailOtpService) GetEmail(c *gin.Context) serializer.Response {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+
 	service.Email = strings.ToLower(service.Email)
 
-	i18n := c.MustGet("i18n").(i18n.I18n)
+	if service.CheckUser {
+		exists := service.checkExisting()
+		if !exists {
+			return serializer.ParamErr(c, service, i18n.T("account_invalid"), nil)
+		}
+	}
 
 	otpSent, err := cache.GetOtp(c, service.Action, service.Email)
 	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {
@@ -121,6 +129,7 @@ func (service *EmailOtpService) sendEmail(c *gin.Context, otp string) error {
 			Provider: utilities.MailGunName,
 			DateTime: time.Now().Format(time.DateTime),
 			BrandId:  int64(c.GetInt("_brand")),
+			Method:   ploutos.OtpEventMethodEmail,
 		},
 	}
 	if err := model.LogOtpEvent(event); err != nil {
@@ -129,4 +138,14 @@ func (service *EmailOtpService) sendEmail(c *gin.Context, otp string) error {
 	}
 
 	return nil
+}
+
+func (service *EmailOtpService) checkExisting() bool {
+	var user model.User
+	emailHash := util.MobileEmailHash(service.Email)
+	row := model.DB.Where(`email_hash`, emailHash).First(&user).RowsAffected
+	if row > 0 {
+		return true
+	}
+	return false
 }
