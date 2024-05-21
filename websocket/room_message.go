@@ -26,10 +26,14 @@ func (a RoomMessage) Send(conn *Connection) (err error) {
 	if a.SocketId != "" {
 		event = "room_socket"
 	}
-	if msg, err := json.Marshal(a); err == nil {
-		if err = conn.Send(fmt.Sprintf(`42["%s", %s]`, event, string(msg))); err != nil {
-			util.Log().Error("ws send error", err)
-		}
+	var msg []byte
+	if msg, err = json.Marshal(a); err != nil {
+		util.Log().Error("json marshal error", err)
+		return
+	}
+	if err = conn.Send(fmt.Sprintf(`42["%s", %s]`, event, string(msg))); err != nil {
+		util.Log().Error("ws send error", err)
+		return
 	}
 	return
 }
