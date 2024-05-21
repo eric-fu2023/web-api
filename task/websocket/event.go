@@ -20,21 +20,22 @@ func Event(conn *websocket.Connection, ctx context.Context, cancelFunc context.C
 		case <-ctx.Done():
 			return
 		default:
+			time.Sleep(5 * time.Minute)
 			var streams []ploutos.LiveStream
 			err := model.DB.Model(ploutos.LiveStream{}).Where(`status`, 2).Order(`id`).Find(&streams).Error
 			if err != nil {
-				return
+				continue
 			}
 			if len(streams) == 0 {
-				return
+				continue
 			}
 			var events []ploutos.RoomEvent
 			err = model.DB.Model(ploutos.RoomEvent{}).Where(`is_enabled`, true).Find(&events).Error
 			if err != nil {
-				return
+				continue
 			}
 			if len(events) == 0 {
-				return
+				continue
 			}
 			eventLangs := map[string][]ploutos.RoomEvent{}
 			for _, event := range events {
@@ -62,10 +63,10 @@ func Event(conn *websocket.Connection, ctx context.Context, cancelFunc context.C
 					}
 					if e := msg.Send(conn); e != nil {
 						cancelFunc()
+						return
 					}
 				}
 			}
 		}
-		time.Sleep(5 * time.Minute)
 	}
 }
