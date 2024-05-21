@@ -182,7 +182,7 @@ func (s *RankingsService) GetUserInfo(ctx context.Context, user model.User, rank
 	}
 	for _, ranking := range rankings.ReferralRankings {
 		if ranking.Id == user.ID {
-			ret.RewardRank = ranking.Rank
+			ret.ReferralRank = ranking.Rank
 			break
 		}
 	}
