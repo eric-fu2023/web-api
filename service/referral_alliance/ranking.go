@@ -167,7 +167,7 @@ func (s *RankingsService) GetUserInfo(ctx context.Context, user model.User, rank
 			Id:            user.ID,
 			Nickname:      user.Nickname,
 			Avatar:        serializer.Url(user.Avatar),
-			RewardAmount:  float64(userRanking.TotalClaimable / 100),
+			RewardAmount:  float64(userRanking.TotalClaimable) / 100,
 			ReferralCount: userRanking.ReferralCount,
 		},
 		RewardRank:   -1,
@@ -244,42 +244,6 @@ func (s *RankingsService) next5PM(t time.Time) time.Time {
 	return today5PM.Add(24 * time.Hour)
 }
 
-func (s *RankingsService) buildReferralAllianceRankingsResponseFromCache(rankingsCache cache.ReferralAllianceRankings) serializer.ReferralAllianceRankings {
-	var rewardRankings []serializer.ReferralAllianceRanking
-	for _, rankingCache := range rankingsCache.RewardRankings {
-		rewardRankings = append(rewardRankings, serializer.ReferralAllianceRanking{
-			ReferralAllianceRankingUserDetails: serializer.ReferralAllianceRankingUserDetails{
-				Id:           rankingCache.Id,
-				Nickname:     rankingCache.Nickname,
-				Avatar:       serializer.Url(rankingCache.Avatar),
-				RewardAmount: float64(rankingCache.RewardAmount / 100),
-			},
-			Rank: rankingCache.Rank,
-		})
-	}
-
-	var referralRankings []serializer.ReferralAllianceRanking
-	for _, rankingCache := range rankingsCache.ReferralRankings {
-		referralRankings = append(referralRankings, serializer.ReferralAllianceRanking{
-			ReferralAllianceRankingUserDetails: serializer.ReferralAllianceRankingUserDetails{
-				Id:            rankingCache.Id,
-				Nickname:      rankingCache.Nickname,
-				Avatar:        serializer.Url(rankingCache.Avatar),
-				ReferralCount: rankingCache.ReferralCount,
-			},
-			Rank: rankingCache.Rank,
-		})
-	}
-
-	ret := serializer.ReferralAllianceRankings{
-		RewardRankings:   rewardRankings,
-		ReferralRankings: referralRankings,
-		LastUpdateTime:   rankingsCache.LastUpdateTime,
-	}
-
-	return ret
-}
-
 func (s *RankingsService) buildReferralAllianceRankingsCacheFromDb(
 	rewardRankingsDB,
 	referralRankingsDB []model.ReferralAllianceRankingInfo,
@@ -335,4 +299,40 @@ func (s *RankingsService) buildUserReferralAllianceRankingsCache(userRanking ser
 		RewardRank:    userRanking.RewardRank,
 		ReferralRank:  userRanking.ReferralRank,
 	}
+}
+
+func (s *RankingsService) buildReferralAllianceRankingsResponseFromCache(rankingsCache cache.ReferralAllianceRankings) serializer.ReferralAllianceRankings {
+	var rewardRankings []serializer.ReferralAllianceRanking
+	for _, rankingCache := range rankingsCache.RewardRankings {
+		rewardRankings = append(rewardRankings, serializer.ReferralAllianceRanking{
+			ReferralAllianceRankingUserDetails: serializer.ReferralAllianceRankingUserDetails{
+				Id:           rankingCache.Id,
+				Nickname:     rankingCache.Nickname,
+				Avatar:       serializer.Url(rankingCache.Avatar),
+				RewardAmount: float64(rankingCache.RewardAmount) / 100,
+			},
+			Rank: rankingCache.Rank,
+		})
+	}
+
+	var referralRankings []serializer.ReferralAllianceRanking
+	for _, rankingCache := range rankingsCache.ReferralRankings {
+		referralRankings = append(referralRankings, serializer.ReferralAllianceRanking{
+			ReferralAllianceRankingUserDetails: serializer.ReferralAllianceRankingUserDetails{
+				Id:            rankingCache.Id,
+				Nickname:      rankingCache.Nickname,
+				Avatar:        serializer.Url(rankingCache.Avatar),
+				ReferralCount: rankingCache.ReferralCount,
+			},
+			Rank: rankingCache.Rank,
+		})
+	}
+
+	ret := serializer.ReferralAllianceRankings{
+		RewardRankings:   rewardRankings,
+		ReferralRankings: referralRankings,
+		LastUpdateTime:   rankingsCache.LastUpdateTime,
+	}
+
+	return ret
 }
