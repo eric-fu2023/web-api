@@ -26,6 +26,7 @@ const (
 	SmPlatformFacebook = 2
 )
 
+// deprecated: FE will do the reporting instead
 func ReportRegisterConversion(ctx context.Context, user model.User) {
 
 	configDetails, ok := Config[user.Channel]
