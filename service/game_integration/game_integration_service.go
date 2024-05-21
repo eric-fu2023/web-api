@@ -2,7 +2,7 @@ package game_integration
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	"log"
 
 	"web-api/conf/consts"
 	"web-api/model"
