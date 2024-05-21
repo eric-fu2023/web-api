@@ -170,6 +170,8 @@ func (s *RankingsService) GetUserInfo(ctx context.Context, user model.User, rank
 			RewardAmount:  float64(userRanking.TotalClaimable / 100),
 			ReferralCount: userRanking.ReferralCount,
 		},
+		RewardRank:   -1,
+		ReferralRank: -1,
 	}
 
 	for _, ranking := range rankings.RewardRankings {
