@@ -59,7 +59,7 @@ func (s *RankingsService) GetRankings(ctx context.Context) (serializer.ReferralA
 	}
 
 	if err == nil {
-		return s.buildReferralAllianceRankingsFromCache(rankingsCache), nil
+		return s.buildReferralAllianceRankingsResponseFromCache(rankingsCache), nil
 	}
 
 	rewardRankingsDB, referralRankingsDB, err := s.GetRankingsFromDB(ctx)
@@ -75,7 +75,7 @@ func (s *RankingsService) GetRankings(ctx context.Context) (serializer.ReferralA
 		// Just log error
 	}
 
-	return s.buildReferralAllianceRankingsFromCache(rankingsCache), nil
+	return s.buildReferralAllianceRankingsResponseFromCache(rankingsCache), nil
 }
 
 func (s *RankingsService) GetRankingsFromCache(ctx context.Context) (cache.ReferralAllianceRankings, error) {
@@ -244,14 +244,14 @@ func (s *RankingsService) next5PM(t time.Time) time.Time {
 	return today5PM.Add(24 * time.Hour)
 }
 
-func (s *RankingsService) buildReferralAllianceRankingsFromCache(rankingsCache cache.ReferralAllianceRankings) serializer.ReferralAllianceRankings {
+func (s *RankingsService) buildReferralAllianceRankingsResponseFromCache(rankingsCache cache.ReferralAllianceRankings) serializer.ReferralAllianceRankings {
 	var rewardRankings []serializer.ReferralAllianceRanking
 	for _, rankingCache := range rankingsCache.RewardRankings {
 		rewardRankings = append(rewardRankings, serializer.ReferralAllianceRanking{
 			ReferralAllianceRankingUserDetails: serializer.ReferralAllianceRankingUserDetails{
 				Id:           rankingCache.Id,
 				Nickname:     rankingCache.Nickname,
-				Avatar:       rankingCache.Avatar,
+				Avatar:       serializer.Url(rankingCache.Avatar),
 				RewardAmount: float64(rankingCache.RewardAmount / 100),
 			},
 			Rank: rankingCache.Rank,
@@ -264,7 +264,7 @@ func (s *RankingsService) buildReferralAllianceRankingsFromCache(rankingsCache c
 			ReferralAllianceRankingUserDetails: serializer.ReferralAllianceRankingUserDetails{
 				Id:            rankingCache.Id,
 				Nickname:      rankingCache.Nickname,
-				Avatar:        rankingCache.Avatar,
+				Avatar:        serializer.Url(rankingCache.Avatar),
 				ReferralCount: rankingCache.ReferralCount,
 			},
 			Rank: rankingCache.Rank,
