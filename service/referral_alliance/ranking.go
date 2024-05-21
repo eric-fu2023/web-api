@@ -69,6 +69,7 @@ func (s *RankingsService) GetRankings(ctx context.Context) (serializer.ReferralA
 	}
 
 	rankingsCache = s.buildReferralAllianceRankingsCacheFromDb(rewardRankingsDB, referralRankingsDB, now)
+	rankingsCache.RewardRankings, rankingsCache.ReferralRankings = fillAdditionalRankings(rankingsCache)
 	err = s.SetRankingsToCache(ctx, rankingsCache, now)
 	if err != nil {
 		util.GetLoggerEntry(ctx).Errorf("SetRankingsToCache error: %s", err.Error())
