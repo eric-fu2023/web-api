@@ -2,6 +2,7 @@ package game_integration
 
 import (
 	"fmt"
+	"log"
 
 	"web-api/conf/consts"
 	"web-api/model"
@@ -43,6 +44,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 	game := common.GameIntegration[subGame.GameVendor.GameIntegrationId]
 	extra := model.Extra{Locale: locale, Ip: c.ClientIP()}
 	url, err := game.GetGameUrl(user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
+	log.Printf("game.GetGameUrl url:%s err: %v user %v, gvu.ExternalCurrency %v, subGame.GameVendor.GameCode %v, subGame.GameCode %v, service.Platform %v, extra %+v", url, err, user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
 	if err != nil {
 		return
 	}
