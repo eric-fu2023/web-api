@@ -21,6 +21,6 @@ type ReferralAllianceRankingUserDetails struct {
 	Id            int64   `json:"id"`
 	Nickname      string  `json:"nickname"`
 	Avatar        string  `json:"avatar"`
-	RewardAmount  float64 `json:"reward_amount,omitempty"`
-	ReferralCount int64   `json:"referral_count,omitempty"`
+	RewardAmount  float64 `json:"reward_amount"`
+	ReferralCount int64   `json:"referral_count"`
 }

@@ -2,6 +2,7 @@ package referral_alliance
 
 import (
 	"math/rand"
+	"sort"
 	"time"
 	"web-api/cache"
 )
@@ -16,6 +17,11 @@ func fillAdditionalRankings(
 }
 
 func fillAdditionalReferralRankings(cur, mock []cache.ReferralAllianceRanking) (ret []cache.ReferralAllianceRanking) {
+	// sort mock according to the referral count
+	sort.Slice(mock, func(i, j int) bool {
+		return mock[i].ReferralCount > mock[j].ReferralCount
+	})
+
 	idxC, idxM := 0, 0
 	for len(ret) < ReferralAllianceRankingsLimit && idxC < len(cur) && idxM < len(mock) {
 		if cur[idxC].ReferralCount >= mock[idxM].ReferralCount {
@@ -48,6 +54,11 @@ func fillAdditionalReferralRankings(cur, mock []cache.ReferralAllianceRanking) (
 }
 
 func fillAdditionalRewardRankings(cur, mock []cache.ReferralAllianceRanking) (ret []cache.ReferralAllianceRanking) {
+	// sort mock according to the referral count
+	sort.Slice(mock, func(i, j int) bool {
+		return mock[i].RewardAmount > mock[j].RewardAmount
+	})
+
 	idxC, idxM := 0, 0
 	for len(ret) < ReferralAllianceRankingsLimit && idxC < len(cur) && idxM < len(mock) {
 		if cur[idxC].RewardAmount >= mock[idxM].RewardAmount {
