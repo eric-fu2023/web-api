@@ -111,62 +111,80 @@ var (
 	mockRewardRankings = []MockRanking{
 		{
 			Nickname:             "国米·布雷特",
-			DefaultRewardAmount:  4000,
-			DefaultReferralCount: 4,
+			DefaultRewardAmount:  1309509,
+			DefaultReferralCount: 135,
 		},
 		{
 
 			Nickname:             "巴萨·诺尔",
-			DefaultRewardAmount:  2700,
-			DefaultReferralCount: 3,
+			DefaultRewardAmount:  986578,
+			DefaultReferralCount: 151,
 		},
 		{
 
 			Nickname:             "斯巴达·贝吉塔",
-			DefaultRewardAmount:  2500,
-			DefaultReferralCount: 3,
+			DefaultRewardAmount:  503489,
+			DefaultReferralCount: 98,
 		},
 		{
 
 			Nickname:             "思考·仙女",
-			DefaultRewardAmount:  2300,
-			DefaultReferralCount: 2,
+			DefaultRewardAmount:  400380,
+			DefaultReferralCount: 82,
 		},
 		{
 
 			Nickname:             "煮饭·公牛",
-			DefaultRewardAmount:  2100,
-			DefaultReferralCount: 2,
+			DefaultRewardAmount:  98823,
+			DefaultReferralCount: 75,
 		},
 		{
 
 			Nickname:             "敲木鱼·曹操",
-			DefaultRewardAmount:  1400,
-			DefaultReferralCount: 2,
+			DefaultRewardAmount:  45609,
+			DefaultReferralCount: 34,
 		},
 		{
 
 			Nickname:             "躲雨·荔枝",
-			DefaultRewardAmount:  1100,
-			DefaultReferralCount: 1,
+			DefaultRewardAmount:  35515,
+			DefaultReferralCount: 28,
 		},
 		{
 
 			Nickname:             "坐电梯·仙女神",
-			DefaultRewardAmount:  800,
-			DefaultReferralCount: 1,
+			DefaultRewardAmount:  15023,
+			DefaultReferralCount: 25,
 		},
 		{
 
 			Nickname:             "喝豆奶·编剧",
-			DefaultRewardAmount:  700,
-			DefaultReferralCount: 1,
+			DefaultRewardAmount:  6323,
+			DefaultReferralCount: 12,
 		},
 		{
 
 			Nickname:             "迫降·贝斯",
-			DefaultRewardAmount:  200,
-			DefaultReferralCount: 1,
+			DefaultRewardAmount:  2503,
+			DefaultReferralCount: 3,
+		},
+		{
+
+			Nickname:             "富勒姆·布雷",
+			DefaultRewardAmount:  0,
+			DefaultReferralCount: 122,
+		},
+		{
+
+			Nickname:             "奥林匹亚科斯·威少",
+			DefaultRewardAmount:  0,
+			DefaultReferralCount: 101,
+		},
+		{
+
+			Nickname:             "掘金·希尔",
+			DefaultRewardAmount:  0,
+			DefaultReferralCount: 87,
 		},
 	}
 )
