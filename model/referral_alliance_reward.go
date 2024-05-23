@@ -13,6 +13,7 @@ type ReferralAllianceSummary struct {
 	RecordCount     int64
 	TotalReward     int64
 	ClaimableReward int64
+	ReferralCount   int64
 }
 
 type GetReferralAllianceSummaryCond struct {
@@ -105,4 +106,23 @@ func ClaimReferralAllianceRewards(tx *gorm.DB, ids []int64, now time.Time) error
 			HasBeenClaimed: true,
 			ClaimTime:      sql.NullTime{Time: now, Valid: true}},
 		).Error
+}
+
+func GetTopReferrerRewards(limit int) ([]ReferralAllianceSummary, error) {
+	referrerRewards := DB.Table(ploutos.ReferralAllianceReward{}.TableName()).
+		Select("referrer_id, SUM(claimable_amount) AS claimable_reward").
+		Group("referrer_id")
+
+	var ret []ReferralAllianceSummary
+
+	db := DB.Table("(?)", referrerRewards)
+	if limit > 0 {
+		db = db.Limit(limit)
+	}
+
+	err := db.Select("referrer_id, claimable_reward").
+		Where("claimable_reward > 0").
+		Order("claimable_reward DESC").
+		Find(ret).Error
+	return ret, err
 }

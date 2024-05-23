@@ -72,7 +72,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			err = model.DB.Debug().WithContext(c).Omit(clause.Associations).Updates(&updatedCashOrder).Error
 			go func() {
 				userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(cashOrder.UserId, model.DB)
-				common.SendUserSumSocketMsg(cashOrder.UserId, userSum.UserSum, "withdraw_pending")
+				common.SendUserSumSocketMsg(cashOrder.UserId, userSum.UserSum, "withdraw_pending", float64(updatedCashOrder.AppliedCashOutAmount)/100)
 			}()
 
 			if err != nil {

@@ -277,7 +277,7 @@ func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange i
 	if err != nil {
 		return err
 	}
-	common.SendUserSumSocketMsg(userId, sum.UserSum, "promotion")
+	common.SendUserSumSocketMsg(userId, sum.UserSum, "promotion", float64(rewardAmount)/100)
 	return nil
 }
 
@@ -469,20 +469,6 @@ func earlier(a time.Time, b time.Time) time.Time {
 		return a
 	}
 	return b
-}
-
-func getLastMonthString(t time.Time) (string, error) {
-	tzOffsetStr, err := model.GetAppConfigWithCache("timezone", "offset_seconds")
-	if err != nil {
-		return "", fmt.Errorf("failed to get tz offset config: %w", err)
-	}
-	tzOffset, err := strconv.Atoi(tzOffsetStr)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse tz offset config: %w", err)
-	}
-
-	timeTz := t.In(time.FixedZone("", tzOffset))
-	return util.LastDayOfPreviousMonth(timeTz).Format(consts.StdMonthFormat), nil
 }
 
 func getSameDayVipRewardRecord(tx *gorm.DB, userID, prmotionID int64) models.VipRewardRecords {
