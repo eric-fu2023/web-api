@@ -96,7 +96,6 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 		return serializer.GeneralErr(c, err)
 	}
 
-	//go social_media_pixel.ReportRegisterConversion(c, user)
 	go common.SendNotification(user.ID, consts.Notification_Type_User_Registration, i18n.T("notification_welcome_title"), i18n.T("notification_welcome"))
 
 	return serializer.Response{

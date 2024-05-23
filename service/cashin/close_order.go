@@ -57,7 +57,6 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 	})
 	if err == nil {
 		go HandlePromotion(c.Copy(), newCashOrderState)
-		//go HandleSmPixelReporting(c.Copy(), newCashOrderState)
 	}
 	return
 }
@@ -88,6 +87,7 @@ func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.Cash
 	return
 }
 
+// deprecated: FE will do the reporting instead
 func HandleSmPixelReporting(c context.Context, order model.CashOrder) {
 	// Get user
 	var user model.User
