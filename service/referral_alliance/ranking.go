@@ -168,7 +168,7 @@ func (s *RankingsService) GetUserInfo(ctx context.Context, user model.User, rank
 			Id:            user.ID,
 			Nickname:      user.Nickname,
 			Avatar:        serializer.Url(user.Avatar),
-			RewardAmount:  float64(userRanking.TotalClaimable) / 100,
+			RewardAmount:  util.Max(0, float64(userRanking.TotalClaimable)/100),
 			ReferralCount: userRanking.ReferralCount,
 		},
 		RewardRank:   -1,
