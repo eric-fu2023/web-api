@@ -72,10 +72,4 @@ func InitMQTT() {
 		panic(err)
 	}
 	MQTTClient = c
-	pb := &paho.Publish{
-		Topic:   fmt.Sprintf(`debug`),
-		QoS:     byte(1),
-		Payload: []byte("mqtt debug..."),
-	}
-	MQTTClient.Publish(context.Background(), pb)
 }
