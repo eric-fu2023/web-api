@@ -2,6 +2,7 @@ package referral_alliance
 
 import (
 	"math/rand"
+	"os"
 	"sort"
 	"time"
 	"web-api/cache"
@@ -97,8 +98,12 @@ func generateMockRankings() []cache.ReferralAllianceRanking {
 	for _, mockRanking := range mockRewardRankings {
 		rewardMaxValue := int64(float64(mockRanking.DefaultRewardAmount) * mockRankingRangeRatePos)
 		rewardMinValue := int64(float64(mockRanking.DefaultRewardAmount) * mockRankingRangeRateNeg)
+		nickname := mockRanking.NicknameZh
+		if os.Getenv("PLATFORM_LANGUAGE") == "en" {
+			nickname = mockRanking.NicknameEn
+		}
 		ret = append(ret, cache.ReferralAllianceRanking{
-			Nickname:      mockRanking.Nickname,
+			Nickname:      nickname,
 			Avatar:        mockRanking.Avatar,
 			RewardAmount:  rewardMinValue + r.Int63n(rewardMaxValue-rewardMinValue+1),
 			ReferralCount: mockRanking.DefaultReferralCount,
