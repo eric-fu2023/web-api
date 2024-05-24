@@ -2,6 +2,8 @@ package game_integration
 
 import (
 	"fmt"
+	"slices"
+
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -16,6 +18,12 @@ type SubGameService struct {
 	Platform int64 `form:"platform" json:"platform" binding:"required"`
 }
 
+var gameTypeOrdering = map[string]int{
+	"SPRIBE": 0,
+	"SLOTS":  1,
+	"TABLE":  2,
+}
+
 func (service *SubGameService) List(c *gin.Context) (serializer.Response, error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	brandId := c.MustGet("_brand").(int)
@@ -26,18 +34,22 @@ func (service *SubGameService) List(c *gin.Context) (serializer.Response, error)
 		return r, nil
 	}
 
-	var subGames []ploutos.SubGameCGameVendorBrand
-	tx := model.DB.Model(ploutos.SubGameCGameVendorBrand{}).Preload("GameVendorBrand").Joins(fmt.Sprintf(`LEFT JOIN game_vendor_brand gvb on gvb.game_vendor_id = %s.vendor_id`, ploutos.SubGameCGameVendorBrand{}.TableName())).Where("gvb.brand_id = ?", brandId).Where(fmt.Sprintf("%s.%s = ?", ploutos.SubGameCGameVendorBrand{}.TableName(), platform), 1).Find(&subGames)
+	var subGames []ploutos.SubGameBrand
+	tx := model.DB.Model(ploutos.SubGameBrand{}).Preload("GameVendorBrand").Joins(fmt.Sprintf(`LEFT JOIN game_vendor_brand gvb on gvb.id = %s.vendor_brand_id`, ploutos.SubGameBrand{}.TableName())).Where(fmt.Sprintf("%s.brand_id = %d", ploutos.SubGameBrand{}.TableName(), brandId)).Where(fmt.Sprintf("%s.%s = ?", ploutos.SubGameBrand{}.TableName(), platform), 1).Find(&subGames)
 	if err := tx.Error; err != nil {
 		return serializer.Response{
-			Data: []serializer.SubGamesByGameType{},
+			Data: []serializer.SubGamesBrandsByGameType{},
 		}, err
 	}
 
-	data, err := serializer.BuildSubGamesByGameType(subGames)
+	slices.SortFunc(subGames, func(a, b ploutos.SubGameBrand) int {
+		return int(a.SortRanking - b.SortRanking)
+	})
+
+	data, err := serializer.BuildSubGamesByGameType(subGames, gameTypeOrdering)
 	if err != nil {
 		return serializer.Response{
-			Data: []serializer.SubGamesByGameType{},
+			Data: []serializer.SubGamesBrandsByGameType{},
 		}, err
 	}
 

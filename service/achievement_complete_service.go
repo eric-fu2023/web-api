@@ -1,6 +1,7 @@
 package service
 
 import (
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"web-api/model"
@@ -12,9 +13,9 @@ import (
 var (
 	// This API is meant for achievements whose progress is tracked by FE
 	isAchievementWhitelisted = map[int64]bool{
-		model.UserAchievementIdFirstAppLoginTutorial:     true,
-		model.UserAchievementIdFirstDepositBonusTutorial: true,
-		model.UserAchievementIdReferralAllianceTutorial:  true,
+		models.UserAchievementIdFirstAppLoginTutorial:     true,
+		models.UserAchievementIdFirstDepositBonusTutorial: true,
+		models.UserAchievementIdReferralAllianceTutorial:  true,
 	}
 )
 

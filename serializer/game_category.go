@@ -2,6 +2,7 @@ package serializer
 
 import (
 	"errors"
+	"slices"
 	"time"
 
 	"web-api/util/i18n"
@@ -56,80 +57,88 @@ func FormatGameCategoryName(c *gin.Context, id int64) string {
 	}
 }
 
+// for /sub_games
 type SubGame struct {
 	GameVendorId         int64 `json:"id"`
 	GameVendorCategoryId int64 `json:"game_vendor_category_id"`
 
-	Name             string `json:"name"`
-	Id               int64  `json:"game_id,omitempty"`
-	Type             string `json:"type"`
-	WebIcon          string `json:"web_icon,omitempty"`
-	AppIcon          string `json:"app_icon,omitempty"`
-	IsMaintenance    bool   `json:"is_maintenance,omitempty"`
-	MaintenanceStart int64  `json:"maintenance_start,omitempty"`
-	MaintenanceEnd   int64  `json:"maintenance_end,omitempty"`
+	SubGameId int64 `json:"game_id,omitempty"`
+
+	Name                 string `json:"name"`
+	Type                 string `json:"type"`
+	WebIcon              string `json:"web_icon,omitempty"`
+	AppIcon              string `json:"app_icon,omitempty"`
+	IsMaintenance        bool   `json:"is_maintenance,omitempty"`
+	MaintenanceStartUnix int64  `json:"maintenance_start,omitempty"`
+	MaintenanceEndUnix   int64  `json:"maintenance_end,omitempty"`
+	SortRanking          int64  `json:"sort,omitempty"`
 }
 
-// SubGamesByGameType
+// SubGamesBrandsByGameType
 // game_type M to category_id 1
-type SubGamesByGameType struct {
+type SubGamesBrandsByGameType struct {
 	Type string `json:"game_type"`
 
 	GameVendorCategoryId int64     `json:"category_id"`
 	SubGames             []SubGame `json:"vendor,omitempty"`
 }
 
-type SubGamesMap map[string][]SubGame
+type SubGameBrandsMap map[string][]SubGame
 
-func (m SubGamesMap) AsSlice() (list []SubGamesByGameType, err error) {
+func (m SubGameBrandsMap) AsSlice(gameTypeOrder map[string]int) (list []SubGamesBrandsByGameType, err error) {
+	if gameTypeOrder == nil {
+		return
+	}
 	for subGameType, subGames := range m {
 		if len(subGames) == 0 {
-			return list, errors.New("build SubGamesByGameType aborted. cannot accept empty subGames")
+			return list, errors.New("build SubGamesBrandsByGameType aborted. cannot accept empty subGames")
 		}
-		list = append(list, SubGamesByGameType{
+		list = append(list, SubGamesBrandsByGameType{
 			Type:                 subGameType,
 			GameVendorCategoryId: subGames[0].GameVendorCategoryId,
 			SubGames:             subGames,
 		})
 	}
+
+	slices.SortFunc(list, func(a, b SubGamesBrandsByGameType) int {
+		return gameTypeOrder[a.Type] - gameTypeOrder[b.Type]
+	})
 	return list, nil
 }
 
-func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameCGameVendorBrand) ([]SubGamesByGameType, error) {
-	subGamesMap := make(SubGamesMap)
-	for _, sg := range subGamesModel {
-		gameType := sg.GameType
-		gvCategoryId := sg.GameVendorBrand.CategoryId
-		startTime, endTime := sg.GameVendorBrand.StartTime, sg.GameVendorBrand.EndTime
+func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameBrand, gameTypeOrder map[string]int) ([]SubGamesBrandsByGameType, error) {
+	m := make(SubGameBrandsMap)
+	for _, sgb := range subGamesModel {
+		gameType := sgb.GameType
+		gvCategoryId := sgb.GameVendorBrand.CategoryId
+		gvbMaintenanceStartTime, gvbMaintenanceEndTime := sgb.GameVendorBrand.StartTime, sgb.GameVendorBrand.EndTime
+
 		now := time.Now()
-
-		var isMaintenance bool
-		var maintenanceStart, maintenanceEnd int64
-
-		if !sg.GameVendorBrand.StartTime.IsZero() {
-			if now.After(startTime) && (now.Before(endTime) || endTime.IsZero()) {
-				isMaintenance = true
-				maintenanceStart = startTime.Unix()
-				if !endTime.IsZero() {
-					maintenanceEnd = endTime.Unix()
-				}
+		var isGvbMaintenance bool
+		if !sgb.GameVendorBrand.StartTime.IsZero() {
+			if now.After(gvbMaintenanceStartTime) && (now.Before(gvbMaintenanceEndTime) || gvbMaintenanceEndTime.IsZero()) {
+				isGvbMaintenance = true
 			}
 		}
 
-		subGamesMap[gameType] = append(subGamesMap[gameType], SubGame{
-			GameVendorId:         sg.GameVendorBrand.GameVendorId,
+		m[gameType] = append(m[gameType], SubGame{
+			GameVendorId:         sgb.GameVendorBrand.GameVendorId,
 			GameVendorCategoryId: gvCategoryId,
 
-			Name:             sg.Name,
-			Id:               sg.ID,
-			Type:             sg.GameType,
-			WebIcon:          Url(sg.WebIcon),
-			AppIcon:          Url(sg.AppIcon),
-			IsMaintenance:    isMaintenance,
-			MaintenanceStart: maintenanceStart,
-			MaintenanceEnd:   maintenanceEnd,
+			IsMaintenance:        isGvbMaintenance,
+			MaintenanceStartUnix: gvbMaintenanceStartTime.Unix(),
+			MaintenanceEndUnix:   gvbMaintenanceEndTime.Unix(),
+
+			SubGameId: sgb.SubGameId,
+
+			Name:    sgb.Name,
+			Type:    sgb.GameType,
+			WebIcon: Url(sgb.WebIcon),
+			AppIcon: Url(sgb.AppIcon),
+
+			SortRanking: sgb.SortRanking,
 		})
 	}
 
-	return subGamesMap.AsSlice()
+	return m.AsSlice(gameTypeOrder)
 }

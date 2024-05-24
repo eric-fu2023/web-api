@@ -137,13 +137,13 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 				return err
 			}
 			if p.Type == models.PromotionTypeBeginnerB {
-				err = model.CreateUserAchievement(userID, model.UserAchievementIdFirstAppLoginReward)
+				err = model.CreateUserAchievement(userID, models.UserAchievementIdFirstAppLoginReward)
 				if err != nil {
 					return err
 				}
 			}
 			if p.Type == models.PromotionTypeOneTimeDepB {
-				err = model.CreateUserAchievement(userID, model.UserAchievementIdFirstDepositBonusReward)
+				err = model.CreateUserAchievement(userID, models.UserAchievementIdFirstDepositBonusReward)
 				if err != nil {
 					return err
 				}

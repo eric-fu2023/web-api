@@ -8,22 +8,13 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-const (
-	UserAchievementIdFirstAppLoginTutorial     int64 = 1
-	UserAchievementIdFirstAppLoginReward       int64 = 2
-	UserAchievementIdFirstDepositBonusTutorial int64 = 3
-	UserAchievementIdFirstDepositBonusReward   int64 = 4
-	UserAchievementIdUpdateBirthday            int64 = 5
-	UserAchievementIdSetBirthday               int64 = 6
-	UserAchievementIdReferralAllianceTutorial  int64 = 7
-)
-
 var (
 	ErrAchievementAlreadyCompleted = errors.New("user has already completed the achievement")
 )
 
 type UserAchievement struct {
 	ploutos.UserAchievement
+	Achievement *ploutos.Achievement `gorm:"foreignKey:AchievementId;references:ID"`
 }
 
 type GetUserAchievementCond struct {
@@ -45,12 +36,20 @@ func GetUserAchievementsWithDB(tx *gorm.DB, userId int64, cond GetUserAchievemen
 	}
 
 	var achievements []UserAchievement
-	err := db.Where("user_id = ?", userId).Find(&achievements).Error
+	err := db.Preload("Achievement").
+		Where("user_id = ?", userId).
+		Find(&achievements).Error
 	return achievements, err
 }
 
 func CreateUserAchievement(userId int64, achievementId int64) error {
-	return CreateUserAchievementWithDB(DB, userId, achievementId)
+	tx := DB.Begin()
+	err := CreateUserAchievementWithDB(tx, userId, achievementId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit().Error
 }
 
 func CreateUserAchievementWithDB(tx *gorm.DB, userId int64, achievementId int64) error {
@@ -64,11 +63,16 @@ func CreateUserAchievementWithDB(tx *gorm.DB, userId int64, achievementId int64)
 	if err != nil {
 		return fmt.Errorf("get user achievements err: %w", err)
 	}
-	if len(achievements) > 0 {
+
+	if len(achievements) > 0 && achievements[0].Achievement == nil {
+		return fmt.Errorf("fail to match achievement with id: %d", achievementId)
+	}
+
+	if len(achievements) > 0 && !achievements[0].Achievement.AllowRepeat {
 		return ErrAchievementAlreadyCompleted
 	}
 
-	ua := UserAchievement{ploutos.UserAchievement{
+	ua := UserAchievement{UserAchievement: ploutos.UserAchievement{
 		UserId:        userId,
 		AchievementId: achievementId,
 	}}
@@ -77,9 +81,9 @@ func CreateUserAchievementWithDB(tx *gorm.DB, userId int64, achievementId int64)
 
 func GetUserAchievementsForMe(userId int64) ([]UserAchievement, error) {
 	uaCond := GetUserAchievementCond{AchievementIds: []int64{
-		UserAchievementIdFirstAppLoginTutorial,
-		UserAchievementIdFirstAppLoginReward,
-		UserAchievementIdUpdateBirthday,
+		ploutos.UserAchievementIdFirstAppLoginTutorial,
+		ploutos.UserAchievementIdFirstAppLoginReward,
+		ploutos.UserAchievementIdUpdateBirthday,
 	}}
 	return GetUserAchievements(userId, uaCond)
 }

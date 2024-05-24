@@ -1,6 +1,7 @@
 package cashin
 
 import (
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"strconv"
 	"time"
@@ -21,7 +22,7 @@ func HandleOneTimeB(c context.Context, order model.CashOrder) {
 		return
 	}
 	uaCond := model.GetUserAchievementCond{AchievementIds: []int64{
-		model.UserAchievementIdFirstDepositBonusTutorial,
+		models.UserAchievementIdFirstDepositBonusTutorial,
 	}}
 	a, err := model.GetUserAchievements(order.UserId, uaCond)
 	if err != nil {

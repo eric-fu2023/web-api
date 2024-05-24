@@ -15,8 +15,8 @@ const (
 	_argios
 )
 
-func (c *ImOne) GetGameUrl(user model.User, currency, gameCode, subGameCode string, _ int64, extra model.Extra) (string, error) {
-	productWalletCode, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
+func (c *ImOne) GetGameUrl(user model.User, currency, tayaGameCode, tayaSubGameCode string, _ int64, extra model.Extra) (string, error) {
+	productWalletCode, exist := tayaGameCodeToImOneWalletCodeMapping[tayaGameCode]
 	if !exist {
 		return "", ErrGameCodeMapping
 	}
@@ -35,5 +35,5 @@ func (c *ImOne) GetGameUrl(user model.User, currency, gameCode, subGameCode stri
 		}
 	}
 
-	return client.NewLaunchMobileGame(subGameCode, extra.Locale, extra.Ip, productWalletCode, "", userId)
+	return client.NewLaunchMobileGame(tayaSubGameCode, extra.Locale, extra.Ip, productWalletCode, "", userId)
 }

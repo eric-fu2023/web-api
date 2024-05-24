@@ -52,6 +52,11 @@ func (service *UserSetMobileService) Set(c *gin.Context) serializer.Response {
 		return serializer.DBErr(c, service, i18n.T("password_update_failed"), err)
 	}
 
+	err = model.CreateUserAchievement(user.ID, ploutos.UserAchievementIdUpdateMobileNumber)
+	if err != nil {
+		return serializer.DBErr(c, service, i18n.T("general_error"), err)
+	}
+
 	common.SendNotification(user.ID, consts.Notification_Type_Mobile_Reset, i18n.T("notification_mobile_add_title"), i18n.T("notification_mobile_add"))
 
 	return serializer.Response{
