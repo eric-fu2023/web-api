@@ -30,7 +30,7 @@ func GetUserAchievementsWithDB(tx *gorm.DB, userId int64, cond GetUserAchievemen
 		return nil, errors.New("tx is nil")
 	}
 
-	db := DB.Table(UserAchievement{}.TableName())
+	db := tx.Table(UserAchievement{}.TableName())
 	if len(cond.AchievementIds) > 0 {
 		db = db.Where("achievement_id IN ?", cond.AchievementIds)
 	}
