@@ -60,14 +60,15 @@ type SubGame struct {
 	GameVendorId         int64 `json:"id"`
 	GameVendorCategoryId int64 `json:"game_vendor_category_id"`
 
-	Name             string `json:"name"`
-	Id               int64  `json:"game_id,omitempty"`
-	Type             string `json:"type"`
-	WebIcon          string `json:"web_icon,omitempty"`
-	AppIcon          string `json:"app_icon,omitempty"`
-	IsMaintenance    bool   `json:"is_maintenance,omitempty"`
-	MaintenanceStart int64  `json:"maintenance_start,omitempty"`
-	MaintenanceEnd   int64  `json:"maintenance_end,omitempty"`
+	Name                 string `json:"name"`
+	Id                   int64  `json:"game_id,omitempty"`
+	Type                 string `json:"type"`
+	WebIcon              string `json:"web_icon,omitempty"`
+	AppIcon              string `json:"app_icon,omitempty"`
+	IsMaintenance        bool   `json:"is_maintenance,omitempty"`
+	MaintenanceStartUnix int64  `json:"maintenance_start,omitempty"`
+	MaintenanceEndUnix   int64  `json:"maintenance_end,omitempty"`
+	SortRanking          int64  `json:"sort,omitempty"`
 }
 
 // SubGamesByGameType
@@ -95,24 +96,18 @@ func (m SubGamesMap) AsSlice() (list []SubGamesByGameType, err error) {
 	return list, nil
 }
 
-func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameCGameVendorBrand) ([]SubGamesByGameType, error) {
+func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameBrand) ([]SubGamesByGameType, error) {
 	subGamesMap := make(SubGamesMap)
 	for _, sg := range subGamesModel {
 		gameType := sg.GameType
 		gvCategoryId := sg.GameVendorBrand.CategoryId
-		startTime, endTime := sg.GameVendorBrand.StartTime, sg.GameVendorBrand.EndTime
+		gvbMaintenanceStartTime, gvbMaintenanceEndTime := sg.GameVendorBrand.StartTime, sg.GameVendorBrand.EndTime
+
 		now := time.Now()
-
 		var isMaintenance bool
-		var maintenanceStart, maintenanceEnd int64
-
 		if !sg.GameVendorBrand.StartTime.IsZero() {
-			if now.After(startTime) && (now.Before(endTime) || endTime.IsZero()) {
+			if now.After(gvbMaintenanceStartTime) && (now.Before(gvbMaintenanceEndTime) || gvbMaintenanceEndTime.IsZero()) {
 				isMaintenance = true
-				maintenanceStart = startTime.Unix()
-				if !endTime.IsZero() {
-					maintenanceEnd = endTime.Unix()
-				}
 			}
 		}
 
@@ -120,14 +115,15 @@ func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameCGameVendorBrand) ([
 			GameVendorId:         sg.GameVendorBrand.GameVendorId,
 			GameVendorCategoryId: gvCategoryId,
 
-			Name:             sg.Name,
-			Id:               sg.ID,
-			Type:             sg.GameType,
-			WebIcon:          Url(sg.WebIcon),
-			AppIcon:          Url(sg.AppIcon),
-			IsMaintenance:    isMaintenance,
-			MaintenanceStart: maintenanceStart,
-			MaintenanceEnd:   maintenanceEnd,
+			Name:                 sg.Name,
+			Id:                   sg.ID,
+			Type:                 sg.GameType,
+			WebIcon:              Url(sg.WebIcon),
+			AppIcon:              Url(sg.AppIcon),
+			IsMaintenance:        isMaintenance,
+			MaintenanceStartUnix: gvbMaintenanceStartTime.Unix(),
+			MaintenanceEndUnix:   gvbMaintenanceEndTime.Unix(),
+			SortRanking:          sg.SortRanking,
 		})
 	}
 

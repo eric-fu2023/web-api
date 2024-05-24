@@ -8,7 +8,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240521063443-42f91a56e67e
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240510092708-dd038047bcaa
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240517100715-0113a68b6262
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240524052522-99abb12f57cc
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240520083451-a1c1a6f085a7
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
