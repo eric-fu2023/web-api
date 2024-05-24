@@ -37,7 +37,7 @@ func (service *SubGameService) List(c *gin.Context) (serializer.Response, error)
 	tx := model.DB.Model(ploutos.SubGameBrand{}).Preload("GameVendorBrand").Joins(fmt.Sprintf(`LEFT JOIN game_vendor_brand gvb on gvb.id = %s.vendor_brand_id`, ploutos.SubGameBrand{}.TableName())).Where(fmt.Sprintf("%s.brand_id = %d", ploutos.SubGameBrand{}.TableName(), brandId)).Where(fmt.Sprintf("%s.%s = ?", ploutos.SubGameBrand{}.TableName(), platform), 1).Find(&subGames)
 	if err := tx.Error; err != nil {
 		return serializer.Response{
-			Data: []serializer.SubGamesByGameType{},
+			Data: []serializer.SubGamesBrandsByGameType{},
 		}, err
 	}
 
@@ -48,7 +48,7 @@ func (service *SubGameService) List(c *gin.Context) (serializer.Response, error)
 	data, err := serializer.BuildSubGamesByGameType(subGames, gameTypeOrdering)
 	if err != nil {
 		return serializer.Response{
-			Data: []serializer.SubGamesByGameType{},
+			Data: []serializer.SubGamesBrandsByGameType{},
 		}, err
 	}
 
