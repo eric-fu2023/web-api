@@ -1,6 +1,7 @@
 package service
 
 import (
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -55,7 +56,7 @@ func (service *ProfileUpdateService) validate(c *gin.Context, user model.User) s
 		}
 
 		// Check if user has already updated birthday before
-		uas, err := model.GetUserAchievements(user.ID, model.GetUserAchievementCond{AchievementIds: []int64{model.UserAchievementIdUpdateBirthday}})
+		uas, err := model.GetUserAchievements(user.ID, model.GetUserAchievementCond{AchievementIds: []int64{models.UserAchievementIdUpdateBirthday}})
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("get user achievement error: %s", err.Error())
 			return serializer.DBErr(c, service, i18n.T("general_error"), err)
@@ -86,9 +87,9 @@ func (service *ProfileUpdateService) updateUser(user *model.User) (err error) {
 
 		// Need to record when the user sets and updates the birthday
 		if service.Birthday != "" && service.Birthday != user.Birthday {
-			birthdayAchievementId := model.UserAchievementIdSetBirthday
+			birthdayAchievementId := models.UserAchievementIdSetBirthday
 			if user.Birthday != "" {
-				birthdayAchievementId = model.UserAchievementIdUpdateBirthday
+				birthdayAchievementId = models.UserAchievementIdUpdateBirthday
 			}
 
 			err := model.CreateUserAchievementWithDB(tx, user.ID, birthdayAchievementId)

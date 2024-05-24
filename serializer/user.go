@@ -99,9 +99,9 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 	for _, a := range user.Achievements {
 		hasCompletedAchievement[a.AchievementId] = true
 	}
-	u.HasCompletedFirstAppLoginTutorial = hasCompletedAchievement[model.UserAchievementIdFirstAppLoginTutorial]
-	u.HasClaimedFirstAppLoginReward = hasCompletedAchievement[model.UserAchievementIdFirstAppLoginReward]
-	u.CanUpdateBirthday = !hasCompletedAchievement[model.UserAchievementIdUpdateBirthday]
+	u.HasCompletedFirstAppLoginTutorial = hasCompletedAchievement[ploutos.UserAchievementIdFirstAppLoginTutorial]
+	u.HasClaimedFirstAppLoginReward = hasCompletedAchievement[ploutos.UserAchievementIdFirstAppLoginReward]
+	u.CanUpdateBirthday = !hasCompletedAchievement[ploutos.UserAchievementIdUpdateBirthday]
 
 	return u
 }
