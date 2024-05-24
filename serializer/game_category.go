@@ -125,7 +125,7 @@ func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameBrand, gameTypeOrder
 			GameVendorCategoryId: gvCategoryId,
 
 			Name:                 sg.Name,
-			Id:                   sg.ID,
+			Id:                   sg.SubGameId,
 			Type:                 sg.GameType,
 			WebIcon:              Url(sg.WebIcon),
 			AppIcon:              Url(sg.AppIcon),
