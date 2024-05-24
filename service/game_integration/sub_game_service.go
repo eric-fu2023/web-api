@@ -18,6 +18,11 @@ type SubGameService struct {
 	Platform int64 `form:"platform" json:"platform" binding:"required"`
 }
 
+var gameTypeOrdering = map[string]int{
+	"SPRIBE": 0,
+	"SLOTS":  1,
+}
+
 func (service *SubGameService) List(c *gin.Context) (serializer.Response, error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	brandId := c.MustGet("_brand").(int)
@@ -40,7 +45,7 @@ func (service *SubGameService) List(c *gin.Context) (serializer.Response, error)
 		return int(a.SortRanking - b.SortRanking)
 	})
 
-	data, err := serializer.BuildSubGamesByGameType(subGames)
+	data, err := serializer.BuildSubGamesByGameType(subGames, gameTypeOrdering)
 	if err != nil {
 		return serializer.Response{
 			Data: []serializer.SubGamesByGameType{},

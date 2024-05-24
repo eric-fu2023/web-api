@@ -2,6 +2,7 @@ package serializer
 
 import (
 	"errors"
+	"slices"
 	"time"
 
 	"web-api/util/i18n"
@@ -82,7 +83,11 @@ type SubGamesByGameType struct {
 
 type SubGamesMap map[string][]SubGame
 
-func (m SubGamesMap) AsSlice() (list []SubGamesByGameType, err error) {
+func (m SubGamesMap) AsSlice(gameTypeOrder map[string]int) (list []SubGamesByGameType, err error) {
+
+	if gameTypeOrder == nil {
+		return
+	}
 	for subGameType, subGames := range m {
 		if len(subGames) == 0 {
 			return list, errors.New("build SubGamesByGameType aborted. cannot accept empty subGames")
@@ -93,10 +98,14 @@ func (m SubGamesMap) AsSlice() (list []SubGamesByGameType, err error) {
 			SubGames:             subGames,
 		})
 	}
+
+	slices.SortFunc(list, func(a, b SubGamesByGameType) int {
+		return gameTypeOrder[a.Type] - gameTypeOrder[b.Type]
+	})
 	return list, nil
 }
 
-func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameBrand) ([]SubGamesByGameType, error) {
+func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameBrand, gameTypeOrder map[string]int) ([]SubGamesByGameType, error) {
 	subGamesMap := make(SubGamesMap)
 	for _, sg := range subGamesModel {
 		gameType := sg.GameType
@@ -127,5 +136,5 @@ func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameBrand) ([]SubGamesBy
 		})
 	}
 
-	return subGamesMap.AsSlice()
+	return subGamesMap.AsSlice(gameTypeOrder)
 }
