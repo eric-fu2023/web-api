@@ -107,6 +107,13 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 		}
 	}(user, locale, subGame, game, gvu)
 
+	defer func() {
+		go func() {
+			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
+			common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "enter_game", 0)
+		}()
+	}()
+
 	r = serializer.Response{
 		Data: url,
 	}
