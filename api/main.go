@@ -51,7 +51,10 @@ func FinpayRedirect(c *gin.Context) {
 				QoS:     byte(1),
 				Payload: j,
 			}
-			util.MQTTClient.Publish(context.Background(), pb)
+			_, e := util.MQTTClient.Publish(context.Background(), pb)
+			if e != nil {
+				util.Log().Error(`finpay_redirect MQTT PUBLISH ERROR %v`, e)
+			}
 		}
 	}
 	c.Status(200)
