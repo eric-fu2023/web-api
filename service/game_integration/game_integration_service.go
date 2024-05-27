@@ -105,14 +105,13 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 		if err != nil {
 			util.Log().Error(`GAME INTEGRATION TRANSFER IN ERROR user_id: %d, game_code: %s, %v`, user.ID, subGame.GameVendor.GameCode, err)
 		}
-	}(user, locale, subGame, game, gvu)
-
-	defer func() {
-		go func() {
-			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
-			common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "enter_game", 0)
+		defer func() {
+			go func() {
+				userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
+				common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "enter_game", 0)
+			}()
 		}()
-	}()
+	}(user, locale, subGame, game, gvu)
 
 	r = serializer.Response{
 		Data: url,
