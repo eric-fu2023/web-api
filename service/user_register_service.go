@@ -65,6 +65,7 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 		},
 	}
 	genNickname(&user)
+	model.SetRandomAvatar(&user)
 
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = CreateNewUserWithDB(&user, service.Code, tx)

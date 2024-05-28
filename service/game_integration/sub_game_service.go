@@ -19,9 +19,11 @@ type SubGameService struct {
 }
 
 var gameTypeOrdering = map[string]int{
-	"SPRIBE": 0,
-	"SLOTS":  1,
-	"TABLE":  2,
+	"LIVE":   0,
+	"FLASH":  1,
+	"SPRIBE": 1,
+	"SLOTS":  2,
+	"TABLE":  3,
 }
 
 func (service *SubGameService) List(c *gin.Context) (serializer.Response, error) {
