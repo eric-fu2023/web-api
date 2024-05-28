@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -176,4 +177,29 @@ func GetUserByMobileOrEmail(countryCode, mobile, email string) (User, error) {
 	}
 
 	return User{}, ErrCannotFindUser
+}
+
+var avatars = []string{
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/8.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p1.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p10.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p11.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p12.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p13.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p14.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p15.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p16.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p17.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p2.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p3.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p4.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p5.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p6.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p7.jpg",
+	"https://cdn.tayalive.com/aha-img/user/default_user_image/p9.jpg",
+}
+
+func SetRandomAvatar(user *User) {
+	rand := rand.Intn(len(avatars))
+	user.Avatar = avatars[rand]
 }
