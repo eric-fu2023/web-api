@@ -48,7 +48,7 @@ func FinpayRedirect(c *gin.Context) {
 		if vv, ok := v.(string); ok && vv != "" {
 			pb := &paho.Publish{
 				Topic:   fmt.Sprintf(`finpay_redirect/user/%s`, vv),
-				QoS:     byte(1),
+				QoS:     byte(0),
 				Payload: j,
 			}
 			_, e := util.MQTTClient.Publish(context.Background(), pb)
