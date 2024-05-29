@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"os"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -61,8 +62,10 @@ func (s *GetTokenService) Get(c *gin.Context) (r serializer.Response, err error)
 				RegistrationIp:          s.Ip,
 				RegistrationDeviceUuid:  s.DeviceUuid,
 				ReferralWagerMultiplier: 1,
+				Locale:                  os.Getenv("PLATFORM_LANGUAGE"),
 			},
 		}
+		model.SetRandomAvatar(&user)
 		if s.Pin != "" {
 			bytes, err := bcrypt.GenerateFromPassword([]byte(s.Pin), model.PassWordCost)
 			if err != nil {
