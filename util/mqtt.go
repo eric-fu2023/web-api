@@ -79,7 +79,10 @@ func Publish(pb *paho.Publish) error {
 	if e := MQTTClient.AwaitConnection(ctx); e != nil {
 		return e
 	}
-	if _, e := MQTTClient.Publish(ctx, pb); e != nil {
+	qp := &autopaho.QueuePublish{
+		Publish: pb,
+	}
+	if e := MQTTClient.PublishViaQueue(ctx, qp); e != nil {
 		return e
 	}
 	return nil
