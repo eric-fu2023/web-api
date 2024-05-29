@@ -73,3 +73,14 @@ func InitMQTT() {
 	}
 	MQTTClient = c
 }
+
+func Publish(pb *paho.Publish) error {
+	ctx := context.Background()
+	if e := MQTTClient.AwaitConnection(ctx); e != nil {
+		return e
+	}
+	if _, e := MQTTClient.Publish(ctx, pb); e != nil {
+		return e
+	}
+	return nil
+}

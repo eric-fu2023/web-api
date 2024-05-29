@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/eclipse/paho.golang/paho"
@@ -51,8 +50,7 @@ func FinpayRedirect(c *gin.Context) {
 				QoS:     byte(0),
 				Payload: j,
 			}
-			_, e := util.MQTTClient.Publish(context.Background(), pb)
-			if e != nil {
+			if e := util.Publish(pb); e != nil {
 				util.Log().Error(`finpay_redirect MQTT PUBLISH ERROR %v`, e)
 			}
 		}
