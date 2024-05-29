@@ -20,7 +20,7 @@ var (
 
 func InitMQTT() {
 	ctx := context.TODO()
-	u, err := url.Parse(fmt.Sprintf("mqtts://%s", os.Getenv("MQTT_ADDRESS")))
+	u, err := url.Parse(fmt.Sprintf("mqtt://%s", os.Getenv("MQTT_ADDRESS")))
 	if err != nil {
 		panic(err)
 	}
