@@ -50,9 +50,11 @@ func FinpayRedirect(c *gin.Context) {
 				QoS:     byte(0),
 				Payload: j,
 			}
-			if e := util.Publish(pb); e != nil {
-				util.Log().Error(`finpay_redirect MQTT PUBLISH ERROR %v`, e)
-			}
+			go func(pb *paho.Publish) {
+				if e := util.Publish(pb); e != nil {
+					util.Log().Error(`finpay_redirect MQTT PUBLISH ERROR %v`, e)
+				}
+			}(pb)
 		}
 	}
 	c.Status(200)
