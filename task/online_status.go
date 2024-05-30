@@ -9,7 +9,7 @@ import (
 	"web-api/util"
 )
 
-func init() {
+func UpdateOnlineStatus() {
 	subscription := paho.SubscribeOptions{Topic: "$SYS/brokers/#", QoS: 1}
 	var exists bool
 	for _, s := range util.Subscriptions {
@@ -34,9 +34,7 @@ func init() {
 			util.TopicChannels[topic] = make(chan []byte, 100)
 		}
 	}
-}
 
-func UpdateOnlineStatus() {
 	go func() {
 		for {
 			select {
