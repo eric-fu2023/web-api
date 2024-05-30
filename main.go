@@ -46,11 +46,11 @@ func main() {
 		go task.ProcessImUpdateBalance()
 		go task.ConsumeMgStreams()
 		go task.ConsumeMgStreamsHot()
-		if os.Getenv("MQTT_ADDRESS") != "" { // mqtt tasks
-			go task.UpdateOnlineStatus()
-			go task.UpdateUnsubscribed()
-			go task.UpdateSubscribed()
-		}
+		//if os.Getenv("MQTT_ADDRESS") != "" { // mqtt tasks
+		//	go task.UpdateOnlineStatus()
+		//	go task.UpdateUnsubscribed()
+		//	go task.UpdateSubscribed()
+		//}
 		go func() {
 			websocketTask.Functions = []func(*websocket.Connection, context.Context, context.CancelFunc){ // modules to be run when connected
 				websocketTask.Reply,
