@@ -47,10 +47,6 @@ func Init() {
 	util.InitFCMFactory()
 	model.InitShengWang()
 
-	if os.Getenv("MQTT_ADDRESS") != "" {
-		util.InitMQTT()
-	}
-
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("username", util.UsernameValidation)
 		v.RegisterValidation("password", util.PasswordValidation)

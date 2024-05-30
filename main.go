@@ -8,12 +8,12 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
 	"web-api/conf"
 	"web-api/model"
 	"web-api/server"
 	"web-api/task"
 	websocketTask "web-api/task/websocket"
+	"web-api/util"
 	"web-api/websocket"
 
 	"github.com/gin-contrib/pprof"
@@ -46,11 +46,12 @@ func main() {
 		go task.ProcessImUpdateBalance()
 		go task.ConsumeMgStreams()
 		go task.ConsumeMgStreamsHot()
-		//if os.Getenv("MQTT_ADDRESS") != "" { // mqtt tasks
-		//	go task.UpdateOnlineStatus()
-		//	go task.UpdateUnsubscribed()
-		//	go task.UpdateSubscribed()
-		//}
+		if os.Getenv("MQTT_ADDRESS") != "" { // mqtt tasks
+			go task.UpdateOnlineStatus()
+			go task.UpdateUnsubscribed()
+			go task.UpdateSubscribed()
+			util.InitMQTT()
+		}
 		go func() {
 			websocketTask.Functions = []func(*websocket.Connection, context.Context, context.CancelFunc){ // modules to be run when connected
 				websocketTask.Reply,
@@ -72,6 +73,9 @@ func main() {
 		//task.CreateImOneUsersForExistingTayaUsers() // to create wallets when a new game vendor is added // to create wallets when a new game vendor is added
 		//task.EncryptMobileAndEmail()
 		task.SetRandomAvatar()
+		if os.Getenv("MQTT_ADDRESS") != "" {
+			util.InitMQTT()
+		}
 		go task.SendDummyMqtt() // to avoid mqtt from disconnecting
 		r := server.NewRouter()
 		pprof.Register(r)
