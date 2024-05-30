@@ -10,7 +10,7 @@ import (
 
 func SendDummyMqtt() {
 	c := cron.New(cron.WithSeconds())
-	c.AddFunc("*/10 * * * * *", func() {
+	c.AddFunc("0 * * * * *", func() {
 		send()
 	})
 	c.Start()
