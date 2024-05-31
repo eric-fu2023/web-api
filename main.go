@@ -72,11 +72,10 @@ func main() {
 		//task.CreateUserWallet([]int64{8, 9}, 1) // to create wallets when a new game vendor is added
 		//task.CreateImOneUsersForExistingTayaUsers() // to create wallets when a new game vendor is added // to create wallets when a new game vendor is added
 		//task.EncryptMobileAndEmail()
-		task.SetRandomAvatar()
+		//task.SetRandomAvatar()
 		if os.Getenv("MQTT_ADDRESS") != "" {
 			util.InitMQTT()
 		}
-		go task.SendDummyMqtt() // to avoid mqtt from disconnecting
 		r := server.NewRouter()
 		pprof.Register(r)
 		srv := &http.Server{
