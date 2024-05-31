@@ -39,6 +39,6 @@ func BuildCashMethod(a model.CashMethod) CashMethod {
 			return int(a) / 100
 		}),
 		Currency:            a.Currency,
-		AccountNameRequired: a.Currency == "CNY",
+		AccountNameRequired: a.AccountType == "bank_card",
 	}
 }
