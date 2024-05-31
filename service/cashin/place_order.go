@@ -116,6 +116,10 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 
 		}()
 		cashinAmount := int64(float64(cashOrder.AppliedCashInAmount) * er.AdjustedExchangeRate)
+
+		// Round cashinAmount to nearest multiple 100, remove decimal
+		cashinAmount = (cashinAmount / 100) * 100
+
 		switch config.Type {
 		default:
 			data, err = finpay.FinpayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, user.ID, cashOrder.ID, config.Type, method.Currency, user.Username, "", config.TypeExtra)
