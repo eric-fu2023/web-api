@@ -19,6 +19,29 @@ import (
 
 const ConsumerGroupIdMgStream = "rf_stream_getter"
 
+var coverImages = []string{
+	"https://cdn.tayalive.com/temp/aha/stream/1.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/2.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/3.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/4.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/5.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/6.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/8.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/9.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/10.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/11.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/12.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/13.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/14.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/15.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/16.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/17.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/18.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/19.jpg",
+	"https://cdn.tayalive.com/temp/aha/stream/20.jpg",
+}
+
 var (
 	errInvalidTopic = errors.New("invalid topic name")
 	errValueEmpty   = errors.New("invalid msg value")
@@ -37,8 +60,9 @@ var sportsCategoryMapping = map[int64]int64{
 }
 
 type MgStreamHandler struct {
-	Topic   string
-	GroupId string
+	Topic           string
+	GroupId         string
+	CoverImageIndex int
 }
 
 func NewMgStreamHandler(topic string) *MgStreamHandler {
@@ -117,7 +141,10 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 	}
 	stream.Title = mgStream.Title
 	stream.StreamerId = streamer.ID
-	stream.ImgUrl = mgStream.Thumb
+	//stream.ImgUrl = mgStream.Thumb
+	i := d.CoverImageIndex % len(coverImages)
+	stream.ImgUrl = coverImages[i]
+	d.CoverImageIndex = i + 1
 	stream.MgRoomId = &mgStream.RoomId
 	stream.ScheduleTime = time.Now()
 	if stream.ID == 0 {
