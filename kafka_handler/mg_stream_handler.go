@@ -141,14 +141,14 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 	}
 	stream.Title = mgStream.Title
 	stream.StreamerId = streamer.ID
-	//stream.ImgUrl = mgStream.Thumb
-	i := d.CoverImageIndex % len(coverImages)
-	stream.ImgUrl = coverImages[i]
-	d.CoverImageIndex = i + 1
 	stream.MgRoomId = &mgStream.RoomId
 	stream.ScheduleTime = time.Now()
 	if stream.ID == 0 {
 		stream.Status = 1 // default pending
+		//stream.ImgUrl = mgStream.Thumb
+		i := d.CoverImageIndex % len(coverImages)
+		stream.ImgUrl = coverImages[i]
+		d.CoverImageIndex = i + 1
 	}
 	if mgStream.Srctp == 8 { // MatchId is FB id
 		var match ploutos.Match
