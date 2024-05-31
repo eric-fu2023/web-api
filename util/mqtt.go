@@ -6,7 +6,6 @@ import (
 	"github.com/eclipse/paho.golang/autopaho"
 	"github.com/eclipse/paho.golang/paho"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 	"net/url"
 	"os"
 	"strings"
@@ -31,10 +30,6 @@ func InitMQTT() {
 		KeepAlive:         20,
 		ConnectTimeout:    3 * time.Second,
 		ConnectRetryDelay: 3 * time.Second,
-		Debug:             log.New(),
-		Errors:            log.New(),
-		PahoDebug:         log.New(),
-		PahoErrors:        log.New(),
 		OnConnectionUp: func(cm *autopaho.ConnectionManager, connAck *paho.Connack) {
 			fmt.Println("mqtt connection up")
 			if len(Subscriptions) != 0 {
