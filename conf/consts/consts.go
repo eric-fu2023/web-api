@@ -96,6 +96,7 @@ var (
 		"pic_base64": 3,
 		"ad_text":    4,
 		"sticker":    5,
+		"join":       6,
 		"typing":     100,
 		"empty":      101,
 	}

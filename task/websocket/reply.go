@@ -80,6 +80,16 @@ func welcomeToRoom(conn *websocket.Connection, message string) {
 				}
 				msg.Send(conn)
 
+				if vv, ex := j["nickname"]; ex {
+					msg2 := websocket.RoomMessage{
+						Room:      room,
+						Timestamp: time.Now().Unix(),
+						Nickname:  vv.(string),
+						Type:      consts.WebSocketMessageType["join"],
+					}
+					msg2.Send(conn)
+				}
+
 				coll := model.MongoDB.Collection("room_message")
 				filter := bson.M{"room": room, "deleted_at": nil}
 				opts := options.Find()
