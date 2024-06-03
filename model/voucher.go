@@ -47,12 +47,17 @@ func VoucherListUsableByUserFilter(c context.Context, userID int64, filter strin
 }
 
 func VoucherActiveGetByIDUserWithDB(c context.Context, userID int64, ID int64, now time.Time, tx *gorm.DB) (v models.Voucher, err error) {
-	err = tx.Debug().WithContext(c).Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id", userID).Where("id", ID).Scopes(Ongoing(time.Now(), "start_at", "end_at")).First(&v).Error
+	err = tx.Debug().WithContext(c).Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id", userID).Where("id", ID).Scopes(Ongoing(now, "start_at", "end_at")).First(&v).Error
 	return
 }
 
 func VoucherPendingGetByIDUserWithDB(c context.Context, userID int64, ID int64, now time.Time, tx *gorm.DB) (v models.Voucher, err error) {
-	err = tx.Debug().WithContext(c).Clauses(clause.Locking{Strength: "UPDATE"}).Where("status", models.VoucherStatusPending).Where("user_id", userID).Where("id", ID).Scopes(Ongoing(time.Now(), "start_at", "end_at")).First(&v).Error
+	err = tx.Debug().WithContext(c).Clauses(clause.Locking{Strength: "UPDATE"}).Where("status", models.VoucherStatusPending).Where("user_id", userID).Where("id", ID).Scopes(Ongoing(now, "start_at", "end_at")).First(&v).Error
+	return
+}
+
+func VoucherPendingGetByIDUserWithDBNoTime(c context.Context, userID int64, ID int64, tx *gorm.DB) (v models.Voucher, err error) {
+	err = tx.Debug().WithContext(c).Clauses(clause.Locking{Strength: "UPDATE"}).Where("status", models.VoucherStatusPending).Where("user_id", userID).Where("id", ID).First(&v).Error
 	return
 }
 

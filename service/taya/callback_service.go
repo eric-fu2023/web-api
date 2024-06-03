@@ -119,8 +119,7 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 			return
 		}
 		ctx := context.TODO()
-		now := time.Now()
-		voucher, err := model.VoucherPendingGetByIDUserWithDB(ctx, userId, voucherId, now, tx)
+		voucher, err := model.VoucherPendingGetByIDUserWithDBNoTime(ctx, userId, voucherId, tx)
 		if err != nil {
 			return
 		}
