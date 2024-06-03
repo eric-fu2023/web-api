@@ -88,7 +88,7 @@ func (v VoucherApplicable) GetIMTransactionDetail() (ret IMTransactionDetail) {
 }
 
 func (v VoucherApplicable) Handle(c *gin.Context) (r serializer.Response, err error) {
-	now := time.Unix(v.StartTime, 0).Add(4 * time.Hour)
+	now := time.Now()
 	deviceInfo, _ := util.GetDeviceInfo(c)
 
 	// brand := c.MustGet(`_brand`).(int)
@@ -153,7 +153,7 @@ func (v VoucherPreBinding) GetIMTransactionDetail() (ret IMTransactionDetail) {
 }
 
 func (v VoucherPreBinding) Handle(c *gin.Context) (r serializer.Response, err error) {
-	now := time.Unix(v.StartTime, 0).Add(4 * time.Hour)
+	now := time.Now()
 	// brand := c.MustGet(`_brand`).(int)
 	user := c.MustGet("user").(model.User)
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userVoucherBindingKey, user.ID, v.VoucherID), redsync.WithExpiry(5*time.Second))
