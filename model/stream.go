@@ -44,7 +44,7 @@ func StreamsOnline(includeUpcoming bool) func(db *gorm.DB) *gorm.DB {
 		statuses := []int64{2}
 		if includeUpcoming {
 			statuses = append(statuses, 1)
-			db = db.Joins(`LEFT JOIN (SELECT streamer_id, MAX(status) AS status, MIN(schedule_time) AS schedule_time FROM live_streams GROUP BY streamer_id) AS upcoming_streams ON upcoming_streams.streamer_id = live_streams.streamer_id AND upcoming_streams.schedule_time = live_streams.schedule_time AND upcoming_streams.status = live_streams.status`).
+			db = db.Joins(`LEFT JOIN (SELECT streamer_id, MAX(status) AS status, MIN(schedule_time) AS schedule_time FROM live_streams WHERE status in ? GROUP BY streamer_id) AS upcoming_streams ON upcoming_streams.streamer_id = live_streams.streamer_id AND upcoming_streams.schedule_time = live_streams.schedule_time AND upcoming_streams.status = live_streams.status`, statuses).
 				Where(`live_streams.status = 2 OR (live_streams.status = 1 AND upcoming_streams.streamer_id IS NOT NULL)`)
 		}
 		return db.Where(`live_streams.status`, statuses)
