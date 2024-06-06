@@ -58,10 +58,13 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 	}
 
 	if referralCode != "" {
-		err = model.LinkReferralWithDB(tx, user.ID, referralCode)
+		referrer, err := model.LinkReferralWithDB(tx, user.ID, referralCode)
 		if err != nil {
 			return fmt.Errorf("link referral with db: %w", err)
 		}
+		// Overwrite user's channel with referrer's channel
+		// Set to empty if referrer's channel is empty
+		user.Channel = referrer.Channel
 	}
 
 	return nil

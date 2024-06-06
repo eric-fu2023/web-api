@@ -20,13 +20,13 @@ type UserReferral struct {
 	ReferralVipRecord *ploutos.VipRecord `gorm:"foreignKey:ReferralId;references:UserID"`
 }
 
-func LinkReferralWithDB(tx *gorm.DB, referralId int64, referralCode string) error {
+func LinkReferralWithDB(tx *gorm.DB, referralId int64, referralCode string) (User, error) {
 	var referrer User
 	err := tx.Table(referrer.TableName()).Where("referral_code = ?", referralCode).First(&referrer).Error
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		return ErrInvalidReferralCode
+		return User{}, ErrInvalidReferralCode
 	} else if err != nil {
-		return fmt.Errorf("get referrer: %w", err)
+		return User{}, fmt.Errorf("get referrer: %w", err)
 	}
 
 	userReferral := ploutos.UserReferral{
@@ -35,10 +35,9 @@ func LinkReferralWithDB(tx *gorm.DB, referralId int64, referralCode string) erro
 	}
 	err = tx.Create(&userReferral).Error
 	if err != nil {
-		return fmt.Errorf("create user referral: %w", err)
+		return User{}, fmt.Errorf("create user referral: %w", err)
 	}
-
-	return nil
+	return referrer, nil
 }
 
 type UserReferralCond struct {
