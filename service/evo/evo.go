@@ -94,37 +94,75 @@ func (e EVO) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode strin
 	}
 
 	if res.Result == "N" {
-		log.Printf("Error transfer evo user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
+		log.Printf("Error transfer evo user balance,userID: %v ,err: %v ", user.IdAsString(), res.ErrorMsg)
+		// need to call another routine to fetch transactions details.
+		go handleFailedTransaction( tx, user, userBalance.TBalance, res.TransID, gameVendorId)
 		return
 	}
-	var sum ploutos.UserSum
-	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error
+	err = updateUserBalance(tx, user, userBalance.TBalance, res.TransID, gameVendorId);
 	if err != nil {
-		return
-	}
-	amount := util.MoneyInt(userBalance.TBalance)
-	transaction := ploutos.Transaction{
-		UserId:                user.ID,
-		Amount:                amount,
-		BalanceBefore:         sum.Balance,
-		BalanceAfter:          sum.Balance + amount,
-		TransactionType:       ploutos.TransactionTypeFromGameIntegration,
-		Wager:                 0,
-		WagerBefore:           sum.RemainingWager,
-		WagerAfter:            sum.RemainingWager,
-		ExternalTransactionId: res.TransID,
-		GameVendorId:          gameVendorId,
-	}
-	err = tx.Create(&transaction).Error
-	if err != nil {
-		return
-	}
-	err = tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`balance`, gorm.Expr(`balance + ?`, amount)).Error
-	if err != nil {
-		return
-	}
-	return
+        return err
+    }
+    return nil
 }
+
+func handleFailedTransaction(tx *gorm.DB, user model.User, userBalance float64, TransID string, gameVendorId int64) {
+	// sleep 2 seconds to archive 99.9% accuracy
+	time.Sleep(2 * time.Second)
+	client := util.EvoFactory.NewClient()
+    transaction, err := client.Transactions(user.IdAsString(), TransID)
+    if err != nil {
+        log.Printf("Error fetching transaction details from EVO, err: %v", err)
+        return
+    }
+    log.Printf("Transaction details: %v", transaction)
+
+    if transaction.Result == "Y" {
+		// if transaction success, we need to deposit user balance for the transaction amount in this transaction response!
+		// NOT THE AMOUNT FROM INITIAL REQUEST, just to keep all consistent with EVO system
+        err = updateUserBalance(tx, user, transaction.Amount, TransID, gameVendorId)
+        if err != nil {
+            log.Printf("Error updating user balance, err: %v", err)
+        }
+    }
+}
+
+func updateUserBalance(tx *gorm.DB, user model.User, TBalance float64, transID string, gameVendorId int64) error {
+    var sum ploutos.UserSum
+    err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id = ?", user.ID).First(&sum).Error
+    if err != nil {
+        log.Printf("Error fetching user balance, err: %v", err)
+        return err
+    }
+
+	amount := util.MoneyInt(TBalance)
+    transaction := ploutos.Transaction{
+        UserId:                user.ID,
+        Amount:                amount,
+        BalanceBefore:         sum.Balance,
+        BalanceAfter:          sum.Balance + amount,
+        TransactionType:       ploutos.TransactionTypeFromGameIntegration,
+        Wager:                 0,
+        WagerBefore:           sum.RemainingWager,
+        WagerAfter:            sum.RemainingWager,
+        ExternalTransactionId: transID,
+        GameVendorId:          gameVendorId,
+    }
+    err = tx.Create(&transaction).Error
+    if err != nil {
+        log.Printf("Error creating transaction, err: %v", err)
+        return err
+    }
+
+    err = tx.Model(ploutos.UserSum{}).Where("user_id = ?", user.ID).Update("balance", gorm.Expr("balance + ?", amount)).Error
+    if err != nil {
+        log.Printf("Error updating user balance, err: %v", err)
+        return err
+    }
+
+    return nil
+}
+
 
 func (e EVO) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
 	switch {
