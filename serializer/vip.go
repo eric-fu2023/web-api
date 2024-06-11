@@ -41,6 +41,7 @@ type VipRule struct {
 	PromotionBenefit     int64   `json:"promotion_benefit"`
 	WeeklyBenefit        int64   `json:"weekly_benefit"`
 	BirthdayBenefit      int64   `json:"birthday_benefit"`
+	Name                 string  `json:"name"`
 }
 
 func BuildVip(v models.VipRecord) Vip {
@@ -82,5 +83,6 @@ func BuildVipRule(v models.VIPRule) VipRule {
 		BirthdayBenefit:      v.BirthdayBenefit / 100,
 		RebateCap:            v.RebateCap / 100,
 		ReferralCap:          v.ReferralCap / 100,
+		Name:                 v.Name,
 	}
 }
