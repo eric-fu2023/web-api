@@ -21,6 +21,7 @@ type Match struct {
 	AwayNameEn   string `json:"away_name_en"`
 	AwayNameCn   string `json:"away_name_cn"`
 	NamiId       int64  `json:"nami_id,omitempty"`
+	FbId         int64  `json:"fb_id,omitempty"`
 }
 
 func BuildMatch(c *gin.Context, a ploutos.Match) (b Match) {
@@ -41,6 +42,10 @@ func BuildMatch(c *gin.Context, a ploutos.Match) (b Match) {
 		AwayNameCn:   a.AwayNameCn,
 		NamiId:       a.NamiId,
 	}
+
+	// if Srctp = 8
+	// live_streams ls join matches m on ls.match_id = m.id, then get match_id from matches table
+	b.FbId = a.MatchId
 
 	return
 }
