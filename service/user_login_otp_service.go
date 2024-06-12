@@ -74,6 +74,7 @@ type UserLoginOtpService struct {
 	Email       string `form:"email" json:"email"`
 	Username    string `form:"username" json:"username"`
 	Otp         string `form:"otp" json:"otp" binding:"required"`
+	Channel     string `form:"channel" json:"channel"`
 }
 
 func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
@@ -136,6 +137,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 				RegistrationIp:          c.ClientIP(),
 				RegistrationDeviceUuid:  deviceInfo.Uuid,
 				ReferralWagerMultiplier: 1,
+				Channel:                 service.Channel,
 			},
 			Email:  ploutos.EncryptedStr(service.Email),
 			Mobile: ploutos.EncryptedStr(service.Mobile),
