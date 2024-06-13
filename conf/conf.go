@@ -43,7 +43,7 @@ func Init() {
 	util.InitUgsFactory()
 	util.InitImOneFactory()
 	util.InitEvoFactory()
-
+	util.InitNineWicketFactory()
 	util.InitFCMFactory()
 	model.InitShengWang()
 
