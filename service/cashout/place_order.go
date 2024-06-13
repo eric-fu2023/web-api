@@ -35,6 +35,9 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	amountDecimal := decimal.NewFromFloat(s.Amount).IntPart()
+	if float64(amountDecimal) < s.Amount {
+		amountDecimal++
+	}
 	amount := amountDecimal * 100
 	user := c.MustGet("user").(model.User)
 
@@ -77,7 +80,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	defer func() {
 		go func() {
 			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
-			common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "withdraw",float64(cashOrder.AppliedCashOutAmount)/100)
+			common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "withdraw", float64(cashOrder.AppliedCashOutAmount)/100)
 		}()
 	}()
 
