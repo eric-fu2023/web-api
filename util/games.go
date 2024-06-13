@@ -1,6 +1,7 @@
 package util
 
 import (
+	"blgit.rfdev.tech/taya/game-service/ninewicket"
 	"fmt"
 	"os"
 
@@ -17,20 +18,22 @@ import (
 )
 
 const (
-	IntegrationIdUGS   = 1
-	IntegrationIdImOne = 2
-	IntegrationIdEvo   = 3
+	IntegrationIdUGS        = 1
+	IntegrationIdImOne      = 2
+	IntegrationIdEvo        = 3
+	IntegrationIdNineWicket = 4
 )
 
 var (
-	TayaFactory  fb.FB
-	FBFactory    fb.FB
-	SabaFactory  saba.Saba
-	DCFactory    dc.Dc
-	IMFactory    imsb.IM
-	UgsFactory   ugs.UGS
-	EvoFactory   evo.EVO
-	ImOneFactory func() imone.GeneralApi
+	TayaFactory       fb.FB
+	FBFactory         fb.FB
+	SabaFactory       saba.Saba
+	DCFactory         dc.Dc
+	IMFactory         imsb.IM
+	UgsFactory        ugs.UGS
+	EvoFactory        evo.EVO
+	NineWicketFactory func() ninewicket.ClientOperations
+	ImOneFactory      func() imone.GeneralApi
 )
 
 var VendorIdToGameClient = make(map[int64]gameservicecommon.TransferWalletInterface)
@@ -87,6 +90,7 @@ func InitUgsFactory() {
 		ClientId:     os.Getenv("GAME_UGS_CLIENT_ID"),
 		ClientSecret: os.Getenv("GAME_UGS_CLIENT_SECRET"),
 	}
+
 }
 
 // ImonePlayer FIXME: move to relevant pkg
@@ -133,5 +137,23 @@ func InitEvoFactory() {
 		ECToken:               os.Getenv("GAME_EVO_EC_TOKEN"),
 		GameHistoryApiToken:   os.Getenv("GAME_EVO_HISTORY_API_TOKEN"),
 		ExternalLobbyApiToken: os.Getenv("GAME_EVO_LOBBY_API_TOKEN"),
+	}
+}
+
+func InitNineWicketFactory() {
+	//NineWicketFactory = ninewicket.NineWicket{
+	//	ApiServerHost: os.Getenv("GAME_NINE_WICKET_API_HOST"),
+	//	ExchangeHost:  os.Getenv("GAME_NINE_WICKET_EX_HOST"),
+	//	Domain:        os.Getenv("GAME_NINE_WICKET_DOMAIN"),
+	//	Cert:          os.Getenv("GAME_NINE_WICKET_CERT"),
+	//}
+
+	f := ninewicket.NewClientFactory(os.Getenv("GAME_NINE_WICKET_CERT"), os.Getenv("GAME_NINE_WICKET_DOMAIN"), os.Getenv("GAME_NINE_WICKET_WEBSITE"))
+	NineWicketFactory = func() ninewicket.ClientOperations {
+		client := f()
+		d, _ := client.GetDomains()
+		client.SetDomains(d.Domains)
+		client.SetPrivateDomains(d.PrivateDomains)
+		return client
 	}
 }
