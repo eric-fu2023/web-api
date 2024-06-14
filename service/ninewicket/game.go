@@ -18,7 +18,7 @@ func (n *NineWicket) GetGameUrl(user model.User, currency, gameCode, subGameCode
 	//currentTimeMillis := time.Now().UnixNano() / int64(time.Millisecond)
 	//currentTimeMillisString := strconv.FormatInt(currentTimeMillis, 10)
 
-	key, err := client.PlayerGetKey(user.IdAsString(), user.Username, "testbainrma", api.EventTypeCricket)
+	key, err := client.PlayerGetKey(user.IdAsString(), user.Username, "testbainrma", api.CurrencyINR)
 	if err != nil {
 		log.Printf("Error getting 9Wicket key, err: %v ", err.Error())
 	}
