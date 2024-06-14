@@ -75,11 +75,13 @@ type UserLoginOtpService struct {
 	Username    string `form:"username" json:"username"`
 	Otp         string `form:"otp" json:"otp" binding:"required"`
 	Channel     string `form:"channel" json:"channel"`
+	Code        string `form:"code" json:"code"`
 }
 
 func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	service.Email = strings.ToLower(service.Email)
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
+	service.Code = strings.ToUpper(strings.TrimSpace(service.Code))
 
 	service.CountryCode = util.FormatCountryCode(service.CountryCode)
 	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
@@ -151,7 +153,8 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		//user.BrandId = int64(c.MustGet("_brand").(int))
 		//user.AgentId = int64(c.MustGet("_agent").(int))
 		genNickname(&user)
-		err = user.CreateWithDB(model.DB)
+		model.SetRandomAvatar(&user)
+		err = CreateNewUserWithDB(&user, service.Code, model.DB)
 		if err != nil {
 			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 		}
