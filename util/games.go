@@ -148,7 +148,7 @@ func InitNineWicketFactory() {
 	//	Cert:          os.Getenv("GAME_NINE_WICKET_CERT"),
 	//}
 
-	f := ninewicket.NewClientFactory(os.Getenv("GAME_NINE_WICKET_CERT"), os.Getenv("GAME_NINE_WICKET_DOMAIN"), os.Getenv("GAME_NINE_WICKET_WEBSITE"))
+	f := ninewicket.NewClientFactory(os.Getenv("GAME_NINE_WICKETS_CERT"), os.Getenv("GAME_NINE_WICKETS_DOMAIN"), os.Getenv("GAME_NINE_WICKETS_WEBSITE"))
 	NineWicketFactory = func() ninewicket.ClientOperations {
 		client := f()
 		d, _ := client.GetDomains()
