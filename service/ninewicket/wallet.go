@@ -49,17 +49,7 @@ func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSu
 	}
 
 	client := util.NineWicketFactory()
-	//domainCollections, err := client.GetDomains()
-	//
-	//client.SetDomains(domainCollections.Domains)
-	//client.SetPrivateDomains(domainCollections.PrivateDomains)
-	//clientx := util.NineWicketFactory.
 
-	//currentTimeMillis := time.Now().UnixNano() / int64(time.Millisecond)
-	//currentTimeMillisString := strconv.FormatInt(currentTimeMillis, 10)
-
-	//userId := "2517"
-	//balance := 10.69
 	tsCode, err := client.Deposit(user.IdAsString(), util.MoneyFloat(sum.Balance))
 	util.Log().Info("9Wicket GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIdNineWicket, user.IdAsString(), util.MoneyFloat(sum.Balance), tsCode)
 
@@ -90,16 +80,6 @@ func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSu
 
 func (n *NineWicket) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
 	client := util.NineWicketFactory()
-	//domainCollections, err := client.GetDomains()
-	//
-	//client.SetDomains(domainCollections.Domains)
-	//client.SetPrivateDomains(domainCollections.PrivateDomains)
-
-	//currentTimeMillis := time.Now().UnixNano() / int64(time.Millisecond)
-	//currentTimeMillisString := strconv.FormatInt(currentTimeMillis, 10)
-	//
-	//userId := "2517"
-	//balance := 1.00
 
 	userBalance, err := client.GetBalanceOneUser(user.IdAsString())
 
@@ -212,14 +192,10 @@ func checkCondition() bool {
 
 func (n *NineWicket) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, _err error) {
 	client := util.NineWicketFactory()
-	//domainCollections, err := client.GetDomains()
-	//
-	//client.SetDomains(domainCollections.Domains)
-	//client.SetPrivateDomains(domainCollections.PrivateDomains)
 
 	userBalance, err := client.GetBalanceOneUser(user.IdAsString())
 	if err != nil {
-		util.Log().Info("Error getting evo user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
+		util.Log().Info("Error getting 9wicket user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
 	}
 
