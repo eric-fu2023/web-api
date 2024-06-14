@@ -1,7 +1,6 @@
 package util
 
 import (
-	"blgit.rfdev.tech/taya/game-service/ninewicket"
 	"fmt"
 	"os"
 
@@ -13,6 +12,7 @@ import (
 	"blgit.rfdev.tech/taya/game-service/fb"
 	"blgit.rfdev.tech/taya/game-service/imone"
 	"blgit.rfdev.tech/taya/game-service/imsb"
+	"blgit.rfdev.tech/taya/game-service/ninewickets"
 	"blgit.rfdev.tech/taya/game-service/saba"
 	"blgit.rfdev.tech/taya/game-service/ugs"
 )
@@ -32,7 +32,7 @@ var (
 	IMFactory         imsb.IM
 	UgsFactory        ugs.UGS
 	EvoFactory        evo.EVO
-	NineWicketFactory func() ninewicket.ClientOperations
+	NineWicketFactory func() ninewickets.ClientOperations
 	ImOneFactory      func() imone.GeneralApi
 )
 
@@ -148,8 +148,8 @@ func InitNineWicketFactory() {
 	//	Cert:          os.Getenv("GAME_NINE_WICKET_CERT"),
 	//}
 
-	f := ninewicket.NewClientFactory(os.Getenv("GAME_NINE_WICKETS_CERT"), os.Getenv("GAME_NINE_WICKETS_DOMAIN"), os.Getenv("GAME_NINE_WICKETS_WEBSITE"))
-	NineWicketFactory = func() ninewicket.ClientOperations {
+	f := ninewickets.NewClientFactory(os.Getenv("GAME_NINE_WICKETS_CERT"), os.Getenv("GAME_NINE_WICKETS_DOMAIN"), os.Getenv("GAME_NINE_WICKETS_WEBSITE"))
+	NineWicketFactory = func() ninewickets.ClientOperations {
 		client := f()
 		d, _ := client.GetDomains()
 		client.SetDomains(d.Domains)

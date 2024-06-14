@@ -1,14 +1,17 @@
 package ninewicket
 
 import (
-	"blgit.rfdev.tech/taya/game-service/ninewicket/api"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"log"
+
 	"web-api/model"
 	"web-api/util"
+
+	"blgit.rfdev.tech/taya/game-service/ninewickets/api"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (n *NineWicket) CreateWallet(user model.User, currency string) (err error) {
@@ -50,7 +53,7 @@ func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSu
 
 	client := util.NineWicketFactory()
 
-	tsCode, err := client.Deposit(user.IdAsString(), util.MoneyFloat(sum.Balance))
+	tsCode, err := client.Deposit(api.UserId(user.ID), util.MoneyFloat(sum.Balance))
 	util.Log().Info("9Wicket GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIdNineWicket, user.IdAsString(), util.MoneyFloat(sum.Balance), tsCode)
 
 	//go handleFailedTransaction(userId, userId+currentTimeMillisString)
@@ -81,7 +84,7 @@ func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSu
 func (n *NineWicket) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
 	client := util.NineWicketFactory()
 
-	userBalance, err := client.GetBalanceOneUser(user.IdAsString())
+	userBalance, err := client.GetBalanceOneUser(api.UserId(user.ID))
 
 	if err != nil {
 		util.Log().Info("Error getting evo user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
@@ -94,7 +97,7 @@ func (n *NineWicket) TransferFrom(tx *gorm.DB, user model.User, currency, gameCo
 	}
 
 	//resp := ninewicket.WithdrawResponse{}
-	resp, err := client.Withdraw(user.IdAsString(), api.WithdrawOptions{Withdraw: 1})
+	resp, err := client.Withdraw(api.UserId(user.ID), api.WithdrawOptions{Withdraw: 1})
 	util.Log().Info("9Wicket GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, remaining balance: %.4f, tx_id: %s", util.IntegrationIdNineWicket, user.IdAsString(), resp.Withdrawn, resp.Remaining, resp.TxId)
 
 	//res, err = client.CheckTransferRecord(userId, userId+currentTimeMillisString)
@@ -193,7 +196,7 @@ func checkCondition() bool {
 func (n *NineWicket) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, _err error) {
 	client := util.NineWicketFactory()
 
-	userBalance, err := client.GetBalanceOneUser(user.IdAsString())
+	userBalance, err := client.GetBalanceOneUser(api.UserId(user.ID))
 	if err != nil {
 		util.Log().Info("Error getting 9wicket user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
