@@ -1,17 +1,16 @@
 package ninewicket
 
 import (
-	"errors"
-	"log"
-
-	"web-api/model"
-	"web-api/util"
-
 	"blgit.rfdev.tech/taya/game-service/ninewickets/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-
+	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"log"
+	"time"
+	"web-api/model"
+	"web-api/util"
 )
 
 func (n *NineWicket) CreateWallet(user model.User, currency string) (err error) {
@@ -48,7 +47,7 @@ func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSu
 	case sum.Balance == 0:
 		return 0, nil
 	case sum.Balance < 0:
-		return 0, errors.New("Evo::TransferTo not allowed to transfer negative sum")
+		return 0, errors.New("9Wicket::TransferTo not allowed to transfer negative sum")
 	}
 
 	client := util.NineWicketFactory()
@@ -87,7 +86,7 @@ func (n *NineWicket) TransferFrom(tx *gorm.DB, user model.User, currency, gameCo
 	userBalance, err := client.GetBalanceOneUser(api.UserId(user.ID))
 
 	if err != nil {
-		util.Log().Info("Error getting evo user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
+		util.Log().Info("Error getting 9Wicket user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
 	}
 
@@ -96,24 +95,20 @@ func (n *NineWicket) TransferFrom(tx *gorm.DB, user model.User, currency, gameCo
 		return
 	}
 
-	//resp := ninewicket.WithdrawResponse{}
 	resp, err := client.Withdraw(api.UserId(user.ID), api.WithdrawOptions{Withdraw: 1})
+
+	if err != nil {
+		util.Log().Info("Error transfer 9Wicket user balance from 9Wicket error,userID: %v ,err: %v ", user.IdAsString(), err.Error())
+		go handleFailedTransaction(tx, user, userBalance, resp.TxId, gameVendorId)
+		return
+	}
 	util.Log().Info("9Wicket GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, remaining balance: %.4f, tx_id: %s", util.IntegrationIdNineWicket, user.IdAsString(), resp.Withdrawn, resp.Remaining, resp.TxId)
 
 	//res, err = client.CheckTransferRecord(userId, userId+currentTimeMillisString)
 	//util.Log().Info("9Wicket GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %s, balance: %.4f, status: %s, tx_id: %s", util.IntegrationIdNineWicket, userId, res.Result[userId+currentTimeMillisString].Balance, res.Result[userId+currentTimeMillisString].Status, res.Result[userId+currentTimeMillisString].TsCode)
-	//go handleFailedTransaction(userId, userId+currentTimeMillisString)
-	if err != nil {
-		util.Log().Info("Error transfer evo user balance from error,userID: %v ,err: %v ", user.IdAsString(), err.Error())
-		return
-	}
 
-	//if res.Result == "N" {
-	//	log.Printf("Error transfer evo user balance,userID: %v ,err: %v ", user.IdAsString(), res.ErrorMsg)
-	//	// need to call another routine to fetch transactions details.
-	//	go handleFailedTransaction(tx, user, userBalance.TBalance, user.IdAsString()+"_"+currentTimeMillisString, gameVendorId)
-	//	return
-	//}
+	//go handleFailedTransaction(tx, user, userBalance, resp.TxId, gameVendorId)
+
 	err = updateUserBalance(tx, user, userBalance, resp.TxId, gameVendorId)
 	if err != nil {
 		return err
@@ -121,64 +116,57 @@ func (n *NineWicket) TransferFrom(tx *gorm.DB, user model.User, currency, gameCo
 	return nil
 }
 
-// Function that returns a boolean value
-func checkCondition() bool {
-	// Your condition logic here
-	// Returning false as an example
+func handleFailedTransaction(tx *gorm.DB, user model.User, userBalance float64, TransID string, gameVendorId int64) {
+	//func handleFailedTransaction(userId string, tsCode string) {
+	client := util.NineWicketFactory()
+	var count = 0
+	for {
+		res, err := client.CheckTransferRecord(api.UserId(user.ID), TransID)
 
-	return false
+		if err != nil {
+			util.Log().Info("Error fetching transaction details from 9Wicket, err: %v", err)
+			return
+		}
+
+		if count == 3 {
+			break
+		}
+		// Check the condition
+		if res.Status == "1" {
+			// Condition is true, do something
+			if res.Result[TransID].Status == "1012" {
+				util.Log().Info("9Wicket GAME TRANSACTION DETAIL IN game_integration_id: %d, user_id: %s, balance: %.4f, status: %s, tx_id: %s", util.IntegrationIdNineWicket, api.UserId(user.ID), res.Result[TransID].Balance, res.Result[TransID].Status, res.Result[TransID].TsCode)
+				err = updateUserBalance(tx, user, userBalance, TransID, gameVendorId)
+				if err != nil {
+					log.Printf("Error updating user balance, err: %v", err)
+				}
+			}
+			if res.Result[TransID].Status == "1038" {
+				time.Sleep(10 * time.Second)
+				util.Log().Info("9Wicket GAME TRANSACTION DETAIL IN game_integration_id: %d, user_id: %s, status: %s, tx_id: %s", util.IntegrationIdNineWicket, api.UserId(user.ID), res.Result[TransID].Status, TransID)
+				count++
+				continue
+			}
+			if res.Result[TransID].Status == "1025" {
+				time.Sleep(10 * time.Second)
+				util.Log().Info("9Wicket GAME TRANSACTION DETAIL IN game_integration_id: %d, user_id: %s, status: %s, tx_id: %s", util.IntegrationIdNineWicket, api.UserId(user.ID), res.Result[TransID].Status, TransID)
+				count++
+				continue
+			}
+			//Condition met, proceeding with loop.
+		} else {
+			// Condition is false, wait for 10 seconds
+			fmt.Println("Condition not met, waiting for 10 seconds.")
+			util.Log().Info("9Wicket GAME TRANSACTION DETAIL IN game_integration_id: %d, status: %s", util.IntegrationIdNineWicket, api.UserId(user.ID), res.Status)
+
+			time.Sleep(10 * time.Second)
+			// Continue the loop after waiting
+			count++
+			continue
+		}
+		break
+	}
 }
-
-// func handleFailedTransaction(tx *gorm.DB, user model.User, userBalance float64, TransID string, gameVendorId int64) {
-//func handleFailedTransaction(userId string, tsCode string) {
-//	client := util.NineWicketFactory()
-//
-//	for {
-//		res, err := client.CheckTransferRecord(userId, tsCode)
-//
-//		if err != nil {
-//			util.Log().Info("Error fetching transaction details from 9Wicket, err: %v", err)
-//			return
-//		}
-//		// Check the condition
-//		if res.Status == "1" {
-//			// Condition is true, do something
-//			util.Log().Info("9Wicket GAME TRANSACTION DETAIL IN game_integration_id: %d, user_id: %s, balance: %.4f, status: %s, tx_id: %s", util.IntegrationIdNineWicket, userId, res.Result[tsCode].Balance, res.Result[tsCode].Status, res.Result[tsCode].TsCode)
-//
-//			fmt.Println("Condition met, proceeding with loop.")
-//		} else {
-//			// Condition is false, wait for 10 seconds
-//			fmt.Println("Condition not met, waiting for 10 seconds.")
-//			util.Log().Info("9Wicket GAME TRANSACTION DETAIL IN game_integration_id: %d, status: %s", util.IntegrationIdNineWicket, userId, res.Status)
-//
-//			time.Sleep(10 * time.Second)
-//			// Continue the loop after waiting
-//			continue
-//		}
-//
-//		break
-//	}
-
-// sleep 2 seconds to archive 99.9% accuracy
-//time.Sleep(2 * time.Second)
-//client := util.EvoFactory.NewClient()
-//transaction, err := client.Transactions(user.IdAsString(), TransID)
-//if err != nil {
-//	log.Printf("Error fetching transaction details from EVO, err: %v", err)
-//	return
-//}
-//log.Printf("Transaction details: %v", transaction)
-//
-//if transaction.Result == "Y" {
-//	// if transaction success, we need to deposit user balance for the transaction amount in this transaction response!
-//	// NOT THE AMOUNT FROM INITIAL REQUEST, just to keep all consistent with EVO system
-//	err = updateUserBalance(tx, user, transaction.Amount, TransID, gameVendorId)
-//	if err != nil {
-//		log.Printf("Error updating user balance, err: %v", err)
-//	}
-//}
-
-//}
 
 //func (n *NineWicket) GetGameBalance(userId string) (balance float64, err error) {
 //	client := util.NineWicketFactory()
