@@ -14,7 +14,7 @@ func (n *NineWicket) GetGameUrl(user model.User, currency, gameCode, subGameCode
 	userId := api.UserId(user.ID)
 
 	// fixme
-	key, err := client.PlayerGetKey(userId, user.Username, "testbainrma", api.CurrencyINR)
+	key, err := client.PlayerGetKey(userId, user.Username, api.CurrencyINR)
 	if err != nil {
 		log.Printf("Error getting 9Wicket key, err: %v ", err.Error())
 	}
