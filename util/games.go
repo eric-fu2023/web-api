@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"os"
 
 	"web-api/conf/consts"
@@ -15,13 +14,14 @@ import (
 	"blgit.rfdev.tech/taya/game-service/ninewickets"
 	"blgit.rfdev.tech/taya/game-service/saba"
 	"blgit.rfdev.tech/taya/game-service/ugs"
+	ploutosmodel "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 const (
-	IntegrationIdUGS        = 1
-	IntegrationIdImOne      = 2
-	IntegrationIdEvo        = 3
-	IntegrationIdNineWicket = 4
+	IntegrationIdUGS        = ploutosmodel.GAME_INTEGRATION_UGS
+	IntegrationIdImOne      = ploutosmodel.GAME_INTEGRATION_IMONE
+	IntegrationIdEvo        = ploutosmodel.GAME_INTEGRATION_EVO
+	IntegrationIdNineWicket = ploutosmodel.GAME_INTEGRATION_NINEWICKETS
 )
 
 var (
@@ -93,40 +93,12 @@ func InitUgsFactory() {
 
 }
 
-// ImonePlayer FIXME: move to relevant pkg
-type ImonePlayer struct {
-	BaseId string
-	Prefix string
-}
-
-func (p ImonePlayer) Token() string {
-	//TODO implement me
-	return ""
-}
-
-func (p ImonePlayer) SetToken(token string) {
-	//TODO implement me
-}
-
-func (p ImonePlayer) Id() string {
-	return p.Prefix + fmt.Sprintf("%08s", p.BaseId)
-}
-
-func NewPlayer(prefix string) func(string) imone.Playable {
-	return func(baseId string) imone.Playable {
-		return &ImonePlayer{
-			BaseId: baseId,
-			Prefix: prefix,
-		}
-	}
-}
-
 func InitImOneFactory() {
 	baseUrl := os.Getenv("GAME_IMONE_BASE_URL")
 	merchantCode := os.Getenv("GAME_IMONE_MERCHANT_CODE")
 	prefix := os.Getenv("GAME_IMONE_PLAYER_PREFIX")
 
-	ImOneFactory = imone.NewGeneralService(baseUrl, merchantCode, NewPlayer(prefix))
+	ImOneFactory = imone.NewGeneralService(baseUrl, merchantCode, imone.NewPrefixedPlayer(prefix))
 }
 
 func InitEvoFactory() {
