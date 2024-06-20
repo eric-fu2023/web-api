@@ -516,6 +516,7 @@ notification_mobile_add: "Your mobile number has been added successfully."
 notification_email_add_title: "Successfully Add Your Email"
 notification_email_add: "Your email has been added successfully."
 
+invalid_amount: "Amount is out of range"
 negative_amount: "Amount cannot be negative"
 first_topup_amount: "First top up should be at least %d"
 topup_amount: "Top up should be at least %d"
