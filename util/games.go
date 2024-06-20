@@ -12,25 +12,28 @@ import (
 	"blgit.rfdev.tech/taya/game-service/fb"
 	"blgit.rfdev.tech/taya/game-service/imone"
 	"blgit.rfdev.tech/taya/game-service/imsb"
+	"blgit.rfdev.tech/taya/game-service/ninewickets"
 	"blgit.rfdev.tech/taya/game-service/saba"
 	"blgit.rfdev.tech/taya/game-service/ugs"
 )
 
 const (
-	IntegrationIdUGS   = 1
-	IntegrationIdImOne = 2
-	IntegrationIdEvo   = 3
+	IntegrationIdUGS        = 1
+	IntegrationIdImOne      = 2
+	IntegrationIdEvo        = 3
+	IntegrationIdNineWicket = 4
 )
 
 var (
-	TayaFactory  fb.FB
-	FBFactory    fb.FB
-	SabaFactory  saba.Saba
-	DCFactory    dc.Dc
-	IMFactory    imsb.IM
-	UgsFactory   ugs.UGS
-	EvoFactory   evo.EVO
-	ImOneFactory func() imone.GeneralApi
+	TayaFactory       fb.FB
+	FBFactory         fb.FB
+	SabaFactory       saba.Saba
+	DCFactory         dc.Dc
+	IMFactory         imsb.IM
+	UgsFactory        ugs.UGS
+	EvoFactory        evo.EVO
+	NineWicketFactory func() ninewickets.ClientOperations
+	ImOneFactory      func() imone.GeneralApi
 )
 
 var VendorIdToGameClient = make(map[int64]gameservicecommon.TransferWalletInterface)
@@ -87,6 +90,7 @@ func InitUgsFactory() {
 		ClientId:     os.Getenv("GAME_UGS_CLIENT_ID"),
 		ClientSecret: os.Getenv("GAME_UGS_CLIENT_SECRET"),
 	}
+
 }
 
 // ImonePlayer FIXME: move to relevant pkg
@@ -133,5 +137,23 @@ func InitEvoFactory() {
 		ECToken:               os.Getenv("GAME_EVO_EC_TOKEN"),
 		GameHistoryApiToken:   os.Getenv("GAME_EVO_HISTORY_API_TOKEN"),
 		ExternalLobbyApiToken: os.Getenv("GAME_EVO_LOBBY_API_TOKEN"),
+	}
+}
+
+func InitNineWicketsFactory() {
+	cert := os.Getenv("GAME_NINE_WICKETS_CERT")
+	initPrivateDomain := os.Getenv("GAME_NINE_WICKETS_DOMAIN")
+	website := os.Getenv("GAME_NINE_WICKETS_WEBSITE")
+	agentId := os.Getenv("GAME_NINE_WICKETS_AGENT_ID")
+	apiServerHost := os.Getenv("GAME_NINE_WICKETS_API_HOST")
+	exchHost := os.Getenv("GAME_NINE_WICKETS_EX_HOST")
+
+	f := ninewickets.NewClientFactory(cert, initPrivateDomain, website, apiServerHost, exchHost, agentId)
+	NineWicketFactory = func() ninewickets.ClientOperations {
+		nwclient := f()
+		d, _ := nwclient.GetDomains()
+		nwclient.SetDomains(d.Domains)
+		nwclient.SetPrivateDomains(d.PrivateDomains)
+		return nwclient
 	}
 }

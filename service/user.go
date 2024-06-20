@@ -65,6 +65,13 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		// Overwrite user's channel with referrer's channel
 		// Set to empty if referrer's channel is empty
 		user.Channel = referrer.Channel
+		err = tx.Select("channel").Updates(&model.User{User: ploutos.User{
+			BASE:    ploutos.BASE{ID: user.ID},
+			Channel: user.Channel,
+		}}).Error
+		if err != nil {
+			return fmt.Errorf("update user channel: %w", err)
+		}
 	}
 
 	return nil

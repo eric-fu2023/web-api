@@ -56,7 +56,7 @@ func RefreshPaymentOrder() {
 			// } else {
 			// 	fmt.Println("completed order err", err)
 			// }
-		} else if data.PaymentOrderStatus == "FAILED" || data.PaymentOrderStatus == "CLOSED" {
+		} else if data.PaymentOrderStatus == "FAILED" {
 			err = model.DB.Debug().Model(&t).Updates(map[string]any{
 				"status":           models.CashOrderStatusFailed,
 				"notes":            models.EncryptedStr(serializedData),
@@ -66,6 +66,17 @@ func RefreshPaymentOrder() {
 				fmt.Println("failed order", t.ID)
 			} else {
 				fmt.Println("failed order err", err)
+			}
+		} else if data.PaymentOrderStatus == "CLOSED" {
+			err = model.DB.Debug().Model(&t).Updates(map[string]any{
+				"status":           models.CashOrderStatusExpired,
+				"notes":            models.EncryptedStr(serializedData),
+				"manual_closed_by": specialUpdatedBy,
+			}).Error
+			if err == nil {
+				fmt.Println("expired order", t.ID)
+			} else {
+				fmt.Println("expired order err", err)
 			}
 		}
 	}
