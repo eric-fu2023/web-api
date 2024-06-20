@@ -516,6 +516,7 @@ notification_mobile_add: "您的手机号已成功设置."
 notification_email_add_title: "电邮设置成功"
 notification_email_add: "您的电邮已成功设置."
 
+invalid_amount: "金额超出范围"
 negative_amount: "金额不能为负数"
 first_topup_amount: "首次充值金额应至少为 %d"
 topup_amount: "充值金额应至少为 %d"

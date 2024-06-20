@@ -140,20 +140,20 @@ func InitEvoFactory() {
 	}
 }
 
-func InitNineWicketFactory() {
-	//NineWicketFactory = ninewicket.NineWicket{
-	//	ApiServerHost: os.Getenv("GAME_NINE_WICKET_API_HOST"),
-	//	ExchangeHost:  os.Getenv("GAME_NINE_WICKET_EX_HOST"),
-	//	Domain:        os.Getenv("GAME_NINE_WICKET_DOMAIN"),
-	//	Cert:          os.Getenv("GAME_NINE_WICKET_CERT"),
-	//}
+func InitNineWicketsFactory() {
+	cert := os.Getenv("GAME_NINE_WICKETS_CERT")
+	initPrivateDomain := os.Getenv("GAME_NINE_WICKETS_DOMAIN")
+	website := os.Getenv("GAME_NINE_WICKETS_WEBSITE")
+	agentId := os.Getenv("GAME_NINE_WICKETS_AGENT_ID")
+	apiServerHost := os.Getenv("GAME_NINE_WICKETS_API_HOST")
+	exchHost := os.Getenv("GAME_NINE_WICKETS_EX_HOST")
 
-	f := ninewickets.NewClientFactory(os.Getenv("GAME_NINE_WICKETS_CERT"), os.Getenv("GAME_NINE_WICKETS_DOMAIN"), os.Getenv("GAME_NINE_WICKETS_WEBSITE"))
+	f := ninewickets.NewClientFactory(cert, initPrivateDomain, website, apiServerHost, exchHost, agentId)
 	NineWicketFactory = func() ninewickets.ClientOperations {
-		client := f()
-		d, _ := client.GetDomains()
-		client.SetDomains(d.Domains)
-		client.SetPrivateDomains(d.PrivateDomains)
-		return client
+		nwclient := f()
+		d, _ := nwclient.GetDomains()
+		nwclient.SetDomains(d.Domains)
+		nwclient.SetPrivateDomains(d.PrivateDomains)
+		return nwclient
 	}
 }
