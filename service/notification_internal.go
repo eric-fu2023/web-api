@@ -28,7 +28,11 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 	case vipPromoteNote:
 		notificationType = consts.Notification_Type_Vip_Promotion
 		title = conf.GetI18N(lang).T(common.NOTIFICATION_VIP_PROMOTION_TITLE)
-		text = fmt.Sprintf(conf.GetI18N(lang).T(common.NOTIFICATION_VIP_PROMOTION), p.Params["vip_level"])
+		vipName := p.Params["name"]
+		if vipName == "" {
+			vipName = p.Params["vip_level"]
+		}
+		text = fmt.Sprintf(conf.GetI18N(lang).T(common.NOTIFICATION_VIP_PROMOTION), vipName)
 	}
 	common.SendNotification(p.UserID, notificationType, title, text)
 	r.Data = "Success"
