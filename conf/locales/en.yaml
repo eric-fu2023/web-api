@@ -625,3 +625,5 @@ NOTIFICATION_REFERRAL_ALLIANCE: "Congratulations on receiving a Referral Allianc
 
 chat_welcome_message: "Welcome! Enjoy real-time interaction with others. Please keep this chat positive and respectful. 😊\nPlease note that some comments in this live broadcast have been filtered to enhance the community experience."
 chat_welcome_name: "System"
+
+invalid_username: "Invalid Username."

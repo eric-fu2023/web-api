@@ -1,13 +1,9 @@
 package api
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
-	"github.com/go-redis/redis/v8"
+	"strings"
 	"time"
 	"web-api/cache"
 	"web-api/conf/consts"
@@ -16,6 +12,12 @@ import (
 	"web-api/service"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
+	"github.com/go-redis/redis/v8"
 )
 
 func Me(c *gin.Context) {
@@ -297,6 +299,16 @@ func UserRegister(c *gin.Context) {
 		res := service.Register(c)
 		c.JSON(200, res)
 	} else {
+		if strings.Contains(err.Error(), "username") {
+			t, exists := c.Get("i18n")
+			i18n := t.(i18n.I18n)
+			if !exists {
+				c.JSON(400, ErrorResponseWithMsg(c, service, err, "Invalid Username"))
+				return
+			}
+			c.JSON(400, ErrorResponseWithMsg(c, service, err, i18n.T("invalid_username")))
+			return
+		}
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }

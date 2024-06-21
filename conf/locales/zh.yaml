@@ -625,3 +625,5 @@ NOTIFICATION_REFERRAL_ALLIANCE: "恭喜您获得共赢奖励！您的共赢奖�
 
 chat_welcome_message: "欢迎光临！ 享受与他人的实时互动。 请保持此聊天积极且尊重。 玩得开心！ 😊\n请注意，本次直播中的一些评论已被过滤，以增强社区的体验。"
 chat_welcome_name: "系统"
+
+invalid_username: "账号注册格式错误"
