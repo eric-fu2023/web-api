@@ -2,9 +2,11 @@ package service
 
 import (
 	"errors"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
+	"regexp"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
+
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -14,21 +16,44 @@ import (
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type UserRegisterService struct {
-	Username   string `form:"username" json:"username" binding:"required,username"`
-	Password   string `form:"password" json:"password" binding:"required,password"`
-	CurrencyId int64  `form:"currency_id" json:"currency_id" binding:"required"`
-	Code       string `form:"code" json:"code"`
-	Channel    string `form:"channel" json:"channel"`
+	Username    string `form:"username" json:"username" binding:"required,username"`
+	Password    string `form:"password" json:"password" binding:"required,password"`
+	CurrencyId  int64  `form:"currency_id" json:"currency_id" binding:"required"`
+	Code        string `form:"code" json:"code"`
+	Channel     string `form:"channel" json:"channel"`
+	Mobile      string `form:"mobile" json:"mobile"`
+	CountryCode string `form:"country_code" json:"country_code"`
 }
 
-func (service *UserRegisterService) Register(c *gin.Context) serializer.Response {
+func validateMobileNumber(countryCode, mobile string) error {
+	if countryCode == "+63" {
+		phMobilepattern := `^(9\d{9})$`
+		phMobileRegex := regexp.MustCompile(phMobilepattern)
+		if !phMobileRegex.MatchString(mobile) {
+			return errors.New("invalid mobile number format")
+		}
+	}
+	return nil
+}
+
+func (service *UserRegisterService) validateMobileNumber() error {
+	return validateMobileNumber(service.CountryCode, service.Mobile)
+}
+
+func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpVerify bool) serializer.Response {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	brandId := c.MustGet("_brand").(int)
+
 	service.Username = strings.TrimSpace(strings.ToLower(service.Username))
 	service.Code = strings.ToUpper(strings.TrimSpace(service.Code))
+
+	service.CountryCode = util.FormatCountryCode(service.CountryCode)
+	service.Mobile = strings.TrimPrefix(service.Mobile, "0")
+
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("GetDeviceInfo error: %s", err.Error())
@@ -61,9 +86,27 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 			RegistrationDeviceUuid:  deviceInfo.Uuid,
 			ReferralWagerMultiplier: 1,
 			Channel:                 service.Channel, // replace with referrer's channel if referred
-			Locale:                  c.MustGet("_locale").(string),
+
+			Locale: c.MustGet("_locale").(string),
 		},
 	}
+
+	if bypassSetMobileOtpVerify { // store mobile only if flag is set
+		if _err := service.validateMobileNumber(); _err != nil {
+			return serializer.ParamErr(c, service, i18n.T("invalid_mobile_number_format"), _err)
+		}
+		mobileHash := util.MobileEmailHash(service.Mobile)
+		var userWithMobile model.User
+		uwmRows := model.DB.Where(`country_code`, service.CountryCode).Where(`mobile_hash`, mobileHash).First(&userWithMobile).RowsAffected
+		if uwmRows > 0 {
+			return serializer.ParamErr(c, service, i18n.T("existing_mobile"), nil)
+		}
+
+		user.CountryCode = service.CountryCode
+		user.Mobile = ploutos.EncryptedStr(service.Mobile)
+		user.MobileHash = mobileHash
+	}
+
 	genNickname(&user)
 	model.SetRandomAvatar(&user)
 
@@ -86,7 +129,7 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
 	}
 
-	tokenString, err := ProcessUserLogin(c, user, consts.AuthEventLoginMethod["username"], "", "", "")
+	tokenString, err := ProcessUserLogin(c, user, consts.AuthEventLoginMethod["username"], "", service.CountryCode, service.Mobile)
 	if err != nil && errors.Is(err, ErrTokenGeneration) {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
 	} else if err != nil && errors.Is(err, util.ErrInvalidDeviceInfo) {

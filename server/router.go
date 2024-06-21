@@ -3,6 +3,7 @@ package server
 import (
 	"os"
 	"time"
+
 	"web-api/api"
 	dc_api "web-api/api/dc"
 	dollar_jackpot_api "web-api/api/dollar_jackpot"
@@ -168,7 +169,10 @@ func NewRouter() *gin.Engine {
 		v1.POST("/login_password", api.UserLoginPassword)
 		v1.POST("/password", middleware.CheckAuth(), api.UserSetPassword)
 		v1.GET("/otp-check", api.VerifyOtp)
-		v1.POST("/register", api.UserRegister)
+
+		requireMobile := os.Getenv("REGISTER_REQUIRES_MOBILE") == "TRUE"
+		bypassSetMobileOtpVerify := os.Getenv("REGISTER_NO_VERIFY_MOBILE_OTP") == "TRUE"
+		v1.POST("/register", api.UserRegister(requireMobile, bypassSetMobileOtpVerify))
 		v1.GET("/referral", middleware.Cache(10*time.Second, false), api.VerifyReferralCode)
 
 		v1.GET("/config", api.Config)
