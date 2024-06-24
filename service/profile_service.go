@@ -23,6 +23,12 @@ func (service *ProfileUpdateService) Update(c *gin.Context) serializer.Response 
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
+	nicknameMaxLen := 15
+	if len(service.Nickname) < nicknameMaxLen {
+		nicknameMaxLen = len(service.Nickname)
+	}
+	service.Nickname = service.Nickname[:nicknameMaxLen] // Trim nickname to max length
+
 	validateResp := service.validate(c, user)
 	if validateResp.Code != 0 {
 		return validateResp
@@ -148,7 +154,12 @@ func (service *NicknameUpdateService) Update(c *gin.Context) serializer.Response
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	user.Nickname = *service.Nickname
+	nicknameMaxLen := 15
+	if len(*service.Nickname) < nicknameMaxLen {
+		nicknameMaxLen = len(*service.Nickname)
+	}
+	nickname := *service.Nickname
+	user.Nickname = nickname[:nicknameMaxLen] // Trim nickname to max length
 	err := model.DB.Model(model.User{}).Where(`id`, user.ID).Update(`nickname`, user.Nickname).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
