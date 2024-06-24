@@ -140,14 +140,7 @@ func handleFailedTransaction(tx *gorm.DB, user model.User, userBalance float64, 
 				if err != nil {
 					log.Printf("Error updating user balance, err: %v", err)
 				}
-			}
-			if res.Result[TransID].Status == "1038" {
-				time.Sleep(10 * time.Second)
-				util.Log().Info("9Wicket GAME TRANSACTION DETAIL IN game_integration_id: %d, user_id: %s, status: %s, tx_id: %s", util.IntegrationIdNineWicket, api.UserId(user.ID), res.Result[TransID].Status, TransID)
-				count++
-				continue
-			}
-			if res.Result[TransID].Status == "1025" {
+			} else {
 				time.Sleep(10 * time.Second)
 				util.Log().Info("9Wicket GAME TRANSACTION DETAIL IN game_integration_id: %d, user_id: %s, status: %s, tx_id: %s", util.IntegrationIdNineWicket, api.UserId(user.ID), res.Result[TransID].Status, TransID)
 				count++
