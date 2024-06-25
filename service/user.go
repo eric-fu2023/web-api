@@ -285,6 +285,13 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 		user.Achievements = userAchievements
 	}
 
+	firstTime, err := model.CashOrder{}.IsFirstTime(c, user.ID)
+	if err != nil {
+		user.IsDeposited = false
+	} else {
+		user.IsDeposited = firstTime
+	}
+
 	if service.WithKyc {
 		if value, err := GetCachedConfig(c, consts.ConfigKeyTopupKycCheck); err == nil {
 			if value == "true" {
