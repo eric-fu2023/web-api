@@ -20,6 +20,8 @@ import (
 	"web-api/service/stream_game"
 	"web-api/service/taya"
 
+	"golang.org/x/crypto/bcrypt"
+
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
@@ -82,9 +84,10 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 			channelCode = ""
 		}
 
+		passwordByte, _ := bcrypt.GenerateFromPassword([]byte(strings.Replace(strings.ToLower(agentCode), "_", "", -1)), model.PassWordCost)
 		agent := ploutos.Agent{
 			Username: strings.Replace(strings.ToLower(agentCode), "_", "", -1),
-			Password: strings.Replace(strings.ToLower(agentCode), "_", "", -1),
+			Password: string(passwordByte),
 			Code:     strings.ToUpper(agentCode),
 			Status:   1,
 			BrandId:  user.BrandId,
@@ -276,6 +279,16 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 	var userSum ploutos.UserSum
+
+	if !user.IsDeposited {
+		firstTime, err := model.CashOrder{}.IsFirstTime(c, user.ID)
+		// Not first time = deposited before
+		if err == nil && !firstTime {
+			user.IsDeposited = true
+			_ = model.DB.Save(&user).Error
+		}
+	}
+
 	if e := model.DB.Where(`user_id`, user.ID).First(&userSum).Error; e == nil {
 		user.UserSum = &userSum
 	}
@@ -283,13 +296,6 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 	userAchievements, err := model.GetUserAchievementsForMe(user.ID)
 	if err == nil {
 		user.Achievements = userAchievements
-	}
-
-	firstTime, err := model.CashOrder{}.IsFirstTime(c, user.ID)
-	if err != nil {
-		user.IsDeposited = false
-	} else {
-		user.IsDeposited = firstTime
 	}
 
 	if service.WithKyc {
