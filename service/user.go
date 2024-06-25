@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -52,6 +53,81 @@ func CreateNewUser(user *model.User, referralCode string) (err error) {
 }
 
 func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (err error) {
+
+	// Default AgentId and ChannelId if no channelCode
+	// Change to env later
+	agentIdString := os.Getenv("DEFAULT_AGENT_ID")
+	channelCode := ""
+
+	if agentIdString == "" {
+		agentIdString = "1000001"
+	}
+
+	agentId, err := strconv.Atoi(agentIdString)
+
+	if err != nil {
+		return fmt.Errorf("string conv err: %w", err)
+	}
+
+	if user.Channel != "" {
+		user.Channel = strings.ToUpper(user.Channel)
+		splitChannel := strings.Split(user.Channel, "_")
+		agentCode := strings.ToUpper(strings.Join(splitChannel[:len(splitChannel)-1], "_"))
+
+		channelCode = splitChannel[len(splitChannel)-1]
+
+		// Eg: C1000 (Not C1000_1, 代理_渠道号)
+		if len(splitChannel) < 2 {
+			agentCode = channelCode
+			channelCode = ""
+		}
+
+		agent := ploutos.Agent{
+			Username: strings.Replace(strings.ToLower(agentCode), "_", "", -1),
+			Password: strings.Replace(strings.ToLower(agentCode), "_", "", -1),
+			Code:     strings.ToUpper(agentCode),
+			Status:   1,
+			BrandId:  user.BrandId,
+		}
+
+		err = tx.Where(`code`, agentCode).Find(&agent).Error
+		if err != nil {
+			return
+		}
+
+		if agent.ID == 0 {
+			err = tx.Create(&agent).Error
+			if err != nil {
+				return
+			}
+		}
+
+		user.AgentId = agent.ID
+		user.Channel = agentCode
+		agentId = int(agent.ID)
+	} else {
+		user.AgentId = int64(agentId)
+	}
+
+	channel := ploutos.Channel{
+		Code:    channelCode,
+		AgentId: int64(agentId),
+	}
+
+	err = tx.Where(`agent_id`, agentId).Where(`code`, channelCode).Find(&channel).Error
+	if err != nil {
+		return
+	}
+
+	if channel.ID == 0 {
+		err = tx.Create(&channel).Error
+		if err != nil {
+			return
+		}
+	}
+
+	user.ChannelId = channel.ID
+
 	err = user.CreateWithDB(tx)
 	if err != nil {
 		return fmt.Errorf("create with db: %w", err)
