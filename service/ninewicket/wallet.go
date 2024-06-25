@@ -1,6 +1,7 @@
 package ninewicket
 
 import (
+	"blgit.rfdev.tech/taya/game-service/ninewickets"
 	"blgit.rfdev.tech/taya/game-service/ninewickets/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
@@ -13,8 +14,8 @@ import (
 	"web-api/util"
 )
 
-func (n *NineWicket) CreateWallet(user model.User, currency string) (err error) {
-	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+func (n *NineWicket) CreateWallet(user model.User, currency string) error {
+	return model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
 		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id`).
 			Where(`game_vendor.game_integration_id`, util.IntegrationIdNineWicket).Find(&gameVendors).Error
@@ -35,11 +36,6 @@ func (n *NineWicket) CreateWallet(user model.User, currency string) (err error) 
 		}
 		return
 	})
-	if err != nil {
-		return
-	}
-
-	return
 }
 
 func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
@@ -50,7 +46,10 @@ func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSu
 		return 0, errors.New("9Wicket::TransferTo not allowed to transfer negative sum")
 	}
 
-	client := util.NineWicketFactory()
+	client, err := util.NineWicketFactory()
+	if err != nil {
+		return 0, err
+	}
 
 	tsCode, err := client.Deposit(api.UserId(user.ID), util.MoneyFloat(sum.Balance))
 	util.Log().Info("9Wicket GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIdNineWicket, user.IdAsString(), util.MoneyFloat(sum.Balance), tsCode)
@@ -81,10 +80,12 @@ func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSu
 }
 
 func (n *NineWicket) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
-	client := util.NineWicketFactory()
+	client, err := util.NineWicketFactory()
+	if err != nil {
+		return err
+	}
 
 	userBalance, err := client.GetBalanceOneUser(api.UserId(user.ID))
-
 	if err != nil {
 		util.Log().Info("Error getting 9Wicket user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
@@ -99,30 +100,19 @@ func (n *NineWicket) TransferFrom(tx *gorm.DB, user model.User, currency, gameCo
 
 	if err != nil {
 		util.Log().Info("Error transfer 9Wicket user balance from 9Wicket error,userID: %v ,err: %v ", user.IdAsString(), err.Error())
-		go handleFailedTransaction(tx, user, userBalance, resp.TxId, gameVendorId)
+		go handleFailedTransaction(tx, user, userBalance, resp.TxId, gameVendorId, client)
 		return
 	}
+
 	util.Log().Info("9Wicket GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, remaining balance: %.4f, tx_id: %s", util.IntegrationIdNineWicket, user.IdAsString(), resp.Withdrawn, resp.Remaining, resp.TxId)
-
-	//res, err = client.CheckTransferRecord(userId, userId+currentTimeMillisString)
-	//util.Log().Info("9Wicket GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %s, balance: %.4f, status: %s, tx_id: %s", util.IntegrationIdNineWicket, userId, res.Result[userId+currentTimeMillisString].Balance, res.Result[userId+currentTimeMillisString].Status, res.Result[userId+currentTimeMillisString].TsCode)
-
-	//go handleFailedTransaction(tx, user, userBalance, resp.TxId, gameVendorId)
-
 	err = updateUserBalance(tx, user, userBalance, resp.TxId, gameVendorId)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
-func handleFailedTransaction(tx *gorm.DB, user model.User, userBalance float64, TransID string, gameVendorId int64) {
-	//func handleFailedTransaction(userId string, tsCode string) {
-	client := util.NineWicketFactory()
+func handleFailedTransaction(tx *gorm.DB, user model.User, userBalance float64, TransID string, gameVendorId int64, client ninewickets.ClientOperations) {
 	var count = 0
 	for {
 		res, err := client.CheckTransferRecord(api.UserId(user.ID), TransID)
-
 		if err != nil {
 			util.Log().Info("Error fetching transaction details from 9Wicket, err: %v", err)
 			return
@@ -161,22 +151,11 @@ func handleFailedTransaction(tx *gorm.DB, user model.User, userBalance float64, 
 	}
 }
 
-//func (n *NineWicket) GetGameBalance(userId string) (balance float64, err error) {
-//	client := util.NineWicketFactory()
-//
-//	res, err := client.GetGameBalance(userId)
-//	if err != nil {
-//		return
-//	}
-//
-//	balance = res.Results[0].Balance
-//	//balance = util.MoneyInt(balanceFloat)
-//	return balance, err
-//}
-
 func (n *NineWicket) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, _err error) {
-	client := util.NineWicketFactory()
-
+	client, err := util.NineWicketFactory()
+	if err != nil {
+		return 0, err
+	}
 	userBalance, err := client.GetBalanceOneUser(api.UserId(user.ID))
 	if err != nil {
 		util.Log().Info("Error getting 9wicket user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())

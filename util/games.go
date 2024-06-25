@@ -32,7 +32,7 @@ var (
 	IMFactory         imsb.IM
 	UgsFactory        ugs.UGS
 	EvoFactory        evo.EVO
-	NineWicketFactory func() ninewickets.ClientOperations
+	NineWicketFactory func() (ninewickets.ClientOperations, error)
 	ImOneFactory      func() imone.GeneralApi
 )
 
@@ -120,12 +120,5 @@ func InitNineWicketsFactory() {
 	apiServerHost := os.Getenv("GAME_NINE_WICKETS_API_HOST")
 	exchHost := os.Getenv("GAME_NINE_WICKETS_EX_HOST")
 
-	f := ninewickets.NewClientFactory(cert, initPrivateDomain, website, apiServerHost, exchHost, agentId)
-	NineWicketFactory = func() ninewickets.ClientOperations {
-		nwclient := f()
-		d, _ := nwclient.GetDomains()
-		nwclient.SetDomains(d.Domains)
-		nwclient.SetPrivateDomains(d.PrivateDomains)
-		return nwclient
-	}
+	NineWicketFactory = ninewickets.NewClientFactory(cert, initPrivateDomain, website, apiServerHost, exchHost, agentId, true)
 }
