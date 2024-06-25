@@ -30,7 +30,6 @@ type User struct {
 	UserSum          *ploutos.UserSum     `gorm:"foreignKey:UserId;references:ID"`
 	Kyc              *Kyc                 `gorm:"foreignKey:UserId;references:ID"`
 	Achievements     []UserAchievement    `gorm:"foreignKey:UserId;references:ID"`
-	IsDeposited      bool                 `gorm:"foreignKey:UserId;references:isDeposited"`
 }
 
 const (
