@@ -1,11 +1,12 @@
 package serializer
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/gin-gonic/gin"
 	"os"
 	"time"
 	"web-api/model"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 type User struct {
@@ -58,6 +59,7 @@ type UserInfo struct {
 	Birthday                          string   `json:"birthday"`
 	CanUpdateBirthday                 bool     `json:"can_update_birthday"`
 	ReferralCode                      string   `json:"referral_code"`
+	IsDeposited                       bool     `json:"is_deposited"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
@@ -78,6 +80,7 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		Agent:              user.AgentId,
 		ReferralCode:       user.ReferralCode,
 		Birthday:           user.Birthday,
+		IsDeposited:        user.IsDeposited,
 	}
 	if user.Username == "" {
 		u.SetupRequired = true
