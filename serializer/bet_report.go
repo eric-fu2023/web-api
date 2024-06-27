@@ -11,6 +11,7 @@ import (
 
 type BetReport struct {
 	OrderId    string   `json:"order_id"`
+	BusinessId string   `json:"business_id"`
 	Ts         int64    `json:"ts"`
 	Status     int64    `json:"status"`
 	IsParlay   bool     `json:"is_parlay"`
@@ -29,6 +30,7 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 	deviceInfo, _ := util.GetDeviceInfo(c)
 	b = BetReport{
 		OrderId:    a.OrderId,
+		BusinessId: a.BusinessId,
 		Ts:         a.BetTime.Unix(),
 		Status:     a.Status,
 		IsParlay:   a.IsParlay,
