@@ -13,6 +13,7 @@ type BetReport struct {
 	OrderId    string   `json:"order_id"`
 	BusinessId string   `json:"business_id"`
 	Ts         int64    `json:"ts"`
+	SettleTs   int64    `json:"settle_ts"`
 	Status     int64    `json:"status"`
 	IsParlay   bool     `json:"is_parlay"`
 	MatchCount int64    `json:"match_count"`
@@ -32,6 +33,7 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 		OrderId:    a.OrderId,
 		BusinessId: a.BusinessId,
 		Ts:         a.BetTime.Unix(),
+		SettleTs:   a.RewardTime.Unix(),
 		Status:     a.Status,
 		IsParlay:   a.IsParlay,
 		MatchCount: a.MatchCount,
