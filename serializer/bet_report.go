@@ -33,12 +33,14 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 		OrderId:    a.OrderId,
 		BusinessId: a.BusinessId,
 		Ts:         a.BetTime.Unix(),
-		SettleTs:   a.RewardTime.Unix(),
 		Status:     a.Status,
 		IsParlay:   a.IsParlay,
 		MatchCount: a.MatchCount,
 		BetType:    a.BetType,
 		Stake:      float64(a.Bet) / 100,
+	}
+	if a.RewardTime != nil {
+		b.SettleTs = a.RewardTime.Unix()
 	}
 	if a.MaxWinAmount != "" {
 		if v, e := strconv.ParseFloat(a.MaxWinAmount, 64); e == nil {
