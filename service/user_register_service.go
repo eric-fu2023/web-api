@@ -73,6 +73,7 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 	if err != nil {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 	}
+
 	user := model.User{
 		User: ploutos.User{
 			Username:                service.Username,
@@ -91,20 +92,22 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 		},
 	}
 
-	if bypassSetMobileOtpVerify { // store mobile only if flag is set
+	if bypassSetMobileOtpVerify { // store mobile as unverified if flag is set
 		if _err := service.validateMobileNumber(); _err != nil {
 			return serializer.ParamErr(c, service, i18n.T("invalid_mobile_number_format"), _err)
 		}
-		mobileHash := util.MobileEmailHash(service.Mobile)
+		unverifiedMobile, err := ploutos.ToEncrypt(service.Mobile)
+		if err != nil {
+			return serializer.ParamErr(c, service, i18n.T("invalid_mobile_number_format")+"encrypt", err)
+		}
 		var userWithMobile model.User
-		uwmRows := model.DB.Where(`country_code`, service.CountryCode).Where(`mobile_hash`, mobileHash).First(&userWithMobile).RowsAffected
+		uwmRows := model.DB.Where(`unverified_country_code`, service.CountryCode).Where(`unverified_mobile`, unverifiedMobile).First(&userWithMobile).RowsAffected
 		if uwmRows > 0 {
 			return serializer.ParamErr(c, service, i18n.T("existing_mobile"), nil)
 		}
 
-		user.CountryCode = service.CountryCode
-		user.Mobile = ploutos.EncryptedStr(service.Mobile)
-		user.MobileHash = mobileHash
+		user.UnverifiedCountryCode = service.CountryCode
+		user.UnverifiedMobile = unverifiedMobile
 	}
 
 	genNickname(&user)

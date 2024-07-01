@@ -311,8 +311,8 @@ func UserRegister(requireMobile bool, bypassSetMobileOtpVerify bool) func(*gin.C
 		i18n := c.MustGet("i18n").(i18n.I18n)
 		if requireMobile != bypassSetMobileOtpVerify {
 			// storing mobile in db implies mobile has gone through verification.
-			// hence if mobile is required, otp verification bypass must explicitly be enabled
-			// the converse is true. if no bypass => user should not be required to, and provide, mobile
+			// hence if mobile is required, otp verification bypass flow must explicitly be enabled (this flow may record the mobile elsewhere for non-verification purpose).
+			// the transposition holds. if no bypass => user should not be required to, and provide, mobile
 			util.Log().Error("%v", errors.New("invalid server config"))
 			c.JSON(http.StatusNotImplemented, ErrorResponseWithMsg(c, service, errors.New("not implemented"), "Not Implemented"))
 			return
