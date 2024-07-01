@@ -101,7 +101,7 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 			return serializer.ParamErr(c, service, i18n.T("invalid_mobile_number_format")+"encrypt", err)
 		}
 		var userWithMobile model.User
-		uwmRows := model.DB.Where(`country_code`, service.CountryCode).Where(`unverified_mobile`, unverifiedMobile).First(&userWithMobile).RowsAffected
+		uwmRows := model.DB.Where(`unverified_country_code`, service.CountryCode).Where(`unverified_mobile`, unverifiedMobile).First(&userWithMobile).RowsAffected
 		if uwmRows > 0 {
 			return serializer.ParamErr(c, service, i18n.T("existing_mobile"), nil)
 		}
