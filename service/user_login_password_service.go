@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -79,7 +80,9 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 
 	respData := map[string]interface{}{}
 	if os.Getenv("PASSWORD_LOGIN_REQUIRES_OTP") == "true" {
+		log.Printf("userloginpassword OTP SET 1... username: %v otpResp: %v \n", user.Username, otpResp)
 		otpResp, err = service.sendOtp(c, user)
+		log.Printf("userloginpassword OTP SET 2... username: %v otpResp: %v \n", user.Username, otpResp)
 		if errors.Is(err, errNoEmailOrMobile) {
 			return serializer.ParamErr(c, service, i18n.T("User_needs_email_or_mobile"), nil)
 		} else if err != nil {
@@ -102,6 +105,10 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 			}
 		}
 	} else {
+
+		log.Printf("userloginpassword OTP UNSET"+
+			" username: %v respData: %v \n", user.Username, respData)
+
 		tokenString, err := ProcessUserLogin(c, user, consts.AuthEventLoginMethod["password"], service.Email, service.CountryCode, service.Mobile)
 		if err != nil && errors.Is(err, ErrTokenGeneration) {
 			return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("Error_token_generation"), err)
@@ -115,6 +122,8 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 
 		respData["token"] = tokenString
 	}
+
+	log.Printf("userloginpassword OK username: %v respData: %v \n", user.Username, respData)
 
 	return serializer.Response{
 		Msg:  i18n.T("success"),
