@@ -72,9 +72,8 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 	}
 
 	if user.Channel != "" {
-		user.Channel = strings.ToUpper(user.Channel)
 		splitChannel := strings.Split(user.Channel, "_")
-		agentCode := strings.ToUpper(strings.Join(splitChannel[:len(splitChannel)-1], "_"))
+		agentCode := strings.Join(splitChannel[:len(splitChannel)-1], "_")
 
 		channelCode = splitChannel[len(splitChannel)-1]
 
@@ -84,11 +83,11 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 			channelCode = ""
 		}
 
-		passwordByte, _ := bcrypt.GenerateFromPassword([]byte(strings.Replace(strings.ToLower(agentCode), "_", "", -1)), model.PassWordCost)
+		passwordByte, _ := bcrypt.GenerateFromPassword([]byte(strings.Replace(agentCode, "_", "", -1)), model.PassWordCost)
 		agent := ploutos.Agent{
-			Username: strings.Replace(strings.ToLower(agentCode), "_", "", -1),
+			Username: strings.Replace(agentCode, "_", "", -1),
 			Password: string(passwordByte),
-			Code:     strings.ToUpper(agentCode),
+			Code:     agentCode,
 			Status:   1,
 			BrandId:  user.BrandId,
 		}
