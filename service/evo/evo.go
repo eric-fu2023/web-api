@@ -1,6 +1,7 @@
 package evo
 
 import (
+	"blgit.rfdev.tech/taya/game-service/evo/callback"
 	"errors"
 	"os"
 	"strconv"
@@ -54,7 +55,12 @@ func (e EVO) GetGameUrl(user model.User, currency, gameCode, subGameCode string,
 	uuid := uuid.NewString()
 	currentTimeMillis := time.Now().UnixNano() / int64(time.Millisecond)
 	currentTimeMillisString := strconv.FormatInt(currentTimeMillis, 10)
-	response, err := client.GetGameUrl(uuid, extra.Locale, user.IdAsString(), currency, user.IdAsString()+"_"+currentTimeMillisString, extra.Ip, subGameCode)
+	response := callback.GetGameURLResponse{}
+	if subGameCode != "0" {
+		response, err = client.GetGameUrl(uuid, extra.Locale, user.IdAsString(), currency, user.IdAsString()+"_"+currentTimeMillisString, extra.Ip, subGameCode)
+	} else {
+		response, err = client.GetGameLobbyUrl(uuid, extra.Locale, user.IdAsString(), currency, user.IdAsString()+"_"+currentTimeMillisString, extra.Ip)
+	}
 
 	if err != nil {
 		log.Printf("Error getting evo game url, err: %v ", err.Error())
