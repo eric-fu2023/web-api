@@ -71,6 +71,8 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		return fmt.Errorf("string conv err: %w", err)
 	}
 
+	// prefixExist := true
+
 	if user.Channel != "" {
 		splitChannel := strings.Split(user.Channel, "_")
 		agentCode := strings.Join(splitChannel[:len(splitChannel)-1], "_")
@@ -106,6 +108,8 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 			// Get Default instead of Create New
 			agent.ID = int64(agentId)
 			agentCode = ""
+
+			// prefixExist = false
 		}
 
 		user.AgentId = agent.ID
@@ -126,14 +130,16 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		return
 	}
 
-	if channel.ID == 0 {
-		err = tx.Create(&channel).Error
-		if err != nil {
-			return
-		}
-	}
+	// if !prefixExist {
+	// 	if channel.ID == 0 {
+	// 		err = tx.Create(&channel).Error
+	// 		if err != nil {
+	// 			return
+	// 		}
+	// 	}
 
-	user.ChannelId = channel.ID
+	// 	user.ChannelId = channel.ID
+	// }
 
 	err = user.CreateWithDB(tx)
 	if err != nil {
