@@ -67,9 +67,6 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("password_encrypt_failed"), err)
 	}
 
-	service.Mutex.Lock()
-	defer service.Mutex.Unlock()
-
 	var existing model.User
 	rows := model.DB.Where(`username`, service.Username).First(&existing).RowsAffected
 	if rows > 0 {
