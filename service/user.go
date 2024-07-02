@@ -105,7 +105,7 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 
 			// Get Default instead of Create New
 			agent.ID = int64(agentId)
-
+			agentCode = ""
 		}
 
 		user.AgentId = agent.ID
