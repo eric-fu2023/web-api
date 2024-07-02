@@ -52,7 +52,7 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 		}
 	}
 
-	statuses := []int64{2, 5}
+	statuses := []int64{2, 5, 6}
 	sumStatuses := statuses
 	if service.IsSettled != nil && *service.IsSettled {
 		sumStatuses = []int64{5, 6}
