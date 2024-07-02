@@ -29,7 +29,7 @@ type UserRegisterService struct {
 	Mobile      string `form:"mobile" json:"mobile"`
 	CountryCode string `form:"country_code" json:"country_code"`
 
-	Mutex sync.Mutex
+	Mutex *sync.Mutex
 }
 
 func validateMobileNumber(countryCode, mobile string) error {

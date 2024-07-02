@@ -62,7 +62,7 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 	channelCode := ""
 
 	if agentIdString == "" {
-		agentIdString = "1000001"
+		agentIdString = "1000000"
 	}
 
 	agentId, err := strconv.Atoi(agentIdString)
@@ -98,15 +98,20 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		}
 
 		if agent.ID == 0 {
-			err = tx.Create(&agent).Error
-			if err != nil {
-				return
-			}
+			// err = tx.Create(&agent).Error
+			// if err != nil {
+			// 	return
+			// }
+
+			// Get Default instead of Create New
+			agent.ID = int64(agentId)
+
 		}
 
 		user.AgentId = agent.ID
 		user.Channel = agentCode
 		agentId = int(agent.ID)
+
 	} else {
 		user.AgentId = int64(agentId)
 	}
