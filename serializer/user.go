@@ -60,13 +60,17 @@ type UserInfo struct {
 	CanUpdateBirthday                 bool     `json:"can_update_birthday"`
 	ReferralCode                      string   `json:"referral_code"`
 	IsDeposited                       bool     `json:"is_deposited"`
+	UnverifiedMobile                  string   `json:"unverified_mobile"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
+	unverfiedMobile, _ := ploutos.ToPlain(user.UnverifiedMobile)
+
 	u := UserInfo{
 		ID:                 user.ID,
 		CountryCode:        user.CountryCode,
 		Mobile:             string(user.Mobile),
+		UnverifiedMobile:   unverfiedMobile,
 		Username:           user.Username,
 		Email:              string(user.Email),
 		Nickname:           user.Nickname,
