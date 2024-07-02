@@ -4,6 +4,7 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+	"sync"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -27,6 +28,8 @@ type UserRegisterService struct {
 	Channel     string `form:"channel" json:"channel"`
 	Mobile      string `form:"mobile" json:"mobile"`
 	CountryCode string `form:"country_code" json:"country_code"`
+
+	Mutex sync.Mutex
 }
 
 func validateMobileNumber(countryCode, mobile string) error {
@@ -63,6 +66,10 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 	if err != nil {
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("password_encrypt_failed"), err)
 	}
+
+	service.Mutex.Lock()
+	defer service.Mutex.Unlock()
+
 	var existing model.User
 	rows := model.DB.Where(`username`, service.Username).First(&existing).RowsAffected
 	if rows > 0 {
