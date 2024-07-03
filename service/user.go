@@ -60,7 +60,7 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 	channelCode := ""
 
 	if agentIdString == "" {
-		agentIdString = "1000000"
+		agentIdString = "1000001"
 	}
 
 	var channelId int64
