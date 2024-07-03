@@ -57,9 +57,9 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 	// Default AgentId and ChannelId if no channelCode
 	// Change to env later
 	agentIdString := os.Getenv("DEFAULT_AGENT_ID")
-	channelCode := ""
+	// channelCode := ""
 
-	if agentIdString == "" || agentIdString == "1000000" {
+	if agentIdString == "" {
 		agentIdString = "1000001"
 	}
 
@@ -117,25 +117,15 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 			return
 		}
 
-		if splittedChannelCode == "" {
-			if channel.ID == 0 {
-				err = tx.Create(&channel).Error
-				if err != nil {
-					return
-				}
-			}
-			channelId = channel.ID
-		} else {
-			if channel.ID == 0 {
-				user.Channel = ""
-			}
+		if channel.ID == 0 {
+			user.Channel = ""
 		}
+		channelId = channel.ID
 	}
 
 	if user.Channel != "" {
 
 		agentCode := splittedAgentCode
-		// channelCode = splittedChannelCode
 
 		agent := ploutos.Agent{
 			Code: agentCode,
@@ -157,29 +147,11 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 
 		user.AgentId = agent.ID
 
-		// if user.Channel = agent means user.Channel has no channelCode suffix
-		// if user.Channel != agent means user.Channel has channelCode suffix
 		user.Channel = agentCode
 		user.ChannelId = channelId
 
 	} else {
 		user.AgentId = int64(agentId)
-		channel := ploutos.Channel{
-			Code:    splittedChannelCode,
-			AgentId: int64(agentId),
-		}
-
-		err = tx.Where(`agent_id`, agentId).Where(`code`, channelCode).Find(&channel).Error
-		if err != nil {
-			return
-		}
-		if channel.ID == 0 {
-			err = tx.Create(&channel).Error
-			if err != nil {
-				return
-			}
-		}
-		user.ChannelId = channel.ID
 	}
 
 	var existed model.User
