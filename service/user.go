@@ -20,8 +20,6 @@ import (
 	"web-api/service/stream_game"
 	"web-api/service/taya"
 
-	"golang.org/x/crypto/bcrypt"
-
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
@@ -65,6 +63,8 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		agentIdString = "1000000"
 	}
 
+	var channelId int64
+
 	agentId, err := strconv.Atoi(agentIdString)
 
 	if err != nil {
@@ -73,25 +73,67 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 
 	// prefixExist := true
 
-	if user.Channel != "" {
-		splitChannel := strings.Split(user.Channel, "_")
-		agentCode := strings.Join(splitChannel[:len(splitChannel)-1], "_")
+	// Check AgentCode and ChannelCode, COMBINATION OF BOTH MUST EXIST, else treat as default
 
-		channelCode = splitChannel[len(splitChannel)-1]
+	invalidAgentCode := false
 
-		// Eg: C1000 (Not C1000_1, 代理_渠道号)
-		if len(splitChannel) < 2 {
-			agentCode = channelCode
-			channelCode = ""
+	// 1) Check AgentCode
+	// 2) Check ChannelCode
+
+	splitChannel := strings.Split(user.Channel, "_")
+
+	splittedAgentCode := strings.Join(splitChannel[:len(splitChannel)-1], "_")
+	splittedChannelCode := splitChannel[len(splitChannel)-1]
+
+	// Eg: C1000 (Not C1000_1, 代理_渠道号)
+	if len(splitChannel) < 2 {
+		splittedAgentCode = splittedChannelCode
+		splittedChannelCode = ""
+	}
+
+	if splittedChannelCode != "" {
+		agent := ploutos.Agent{
+			Code: splittedAgentCode,
 		}
 
-		passwordByte, _ := bcrypt.GenerateFromPassword([]byte(strings.Replace(agentCode, "_", "", -1)), model.PassWordCost)
+		err = tx.Where(`code`, splittedAgentCode).Find(&agent).Error
+		if err != nil {
+			return
+		}
+
+		if agent.ID == 0 {
+			invalidAgentCode = true
+		}
+
+		if invalidAgentCode {
+			user.Channel = ""
+		} else {
+			channel := ploutos.Channel{
+				Code:    splittedChannelCode,
+				AgentId: int64(agent.ID),
+			}
+
+			err = tx.Where(`agent_id`, agent.ID).Where(`code`, splittedChannelCode).Find(&channel).Error
+			if err != nil {
+				return
+			}
+
+			if channel.ID == 0 {
+				user.Channel = ""
+			}
+			channelId = channel.ID
+		}
+	} else {
+		user.Channel = ""
+	}
+
+	if user.Channel != "" {
+
+		agentCode := splittedAgentCode
+		channelCode = splittedChannelCode
+
 		agent := ploutos.Agent{
-			Username: strings.Replace(agentCode, "_", "", -1),
-			Password: string(passwordByte),
-			Code:     agentCode,
-			Status:   1,
-			BrandId:  user.BrandId,
+			Code: agentCode,
 		}
 
 		err = tx.Where(`code`, agentCode).Find(&agent).Error
@@ -100,10 +142,6 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		}
 
 		if agent.ID == 0 {
-			// err = tx.Create(&agent).Error
-			// if err != nil {
-			// 	return
-			// }
 
 			// Get Default instead of Create New
 			agent.ID = int64(agentId)
@@ -113,7 +151,11 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		}
 
 		user.AgentId = agent.ID
-		user.Channel = agentCode
+
+		// if user.Channel = agent means user.Channel has no channelCode suffix
+		// if user.Channel != agent means user.Channel has channelCode suffix
+		// user.Channel = agentCode
+		user.ChannelId = channelId
 		agentId = int(agent.ID)
 
 	} else {
@@ -129,17 +171,6 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 	if err != nil {
 		return
 	}
-
-	// if !prefixExist {
-	// 	if channel.ID == 0 {
-	// 		err = tx.Create(&channel).Error
-	// 		if err != nil {
-	// 			return
-	// 		}
-	// 	}
-
-	// 	user.ChannelId = channel.ID
-	// }
 
 	err = user.CreateWithDB(tx)
 	if err != nil {

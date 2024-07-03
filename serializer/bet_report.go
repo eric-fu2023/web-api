@@ -47,7 +47,7 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 			b.MaxReturn = v / 100
 		}
 	}
-	if a.Status == 5 {
+	if a.Status == 5 || a.Status == 6 {
 		t := float64(a.Win) / 100
 		b.Won = &t
 	}
