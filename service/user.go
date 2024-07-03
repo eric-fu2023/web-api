@@ -91,40 +91,45 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		splittedChannelCode = ""
 	}
 
-	if splittedChannelCode != "" {
-		agent := ploutos.Agent{
-			Code: splittedAgentCode,
+	agent := ploutos.Agent{
+		Code: splittedAgentCode,
+	}
+
+	err = tx.Where(`code`, splittedAgentCode).Find(&agent).Error
+	if err != nil {
+		return
+	}
+
+	if agent.ID == 0 {
+		invalidAgentCode = true
+	}
+
+	if invalidAgentCode {
+		user.Channel = ""
+	} else {
+		channel := ploutos.Channel{
+			AgentId: int64(agent.ID),
+			Code:    splittedChannelCode,
 		}
 
-		err = tx.Where(`code`, splittedAgentCode).Find(&agent).Error
+		err = tx.Where(`agent_id`, agent.ID).Where(`code`, splittedChannelCode).Find(&channel).Error
 		if err != nil {
 			return
 		}
 
-		if agent.ID == 0 {
-			invalidAgentCode = true
-		}
-
-		if invalidAgentCode {
-			user.Channel = ""
+		if splittedChannelCode == "" {
+			if channel.ID == 0 {
+				err = tx.Create(&channel).Error
+				if err != nil {
+					return
+				}
+			}
+			channelId = channel.ID
 		} else {
-			channel := ploutos.Channel{
-				Code:    splittedChannelCode,
-				AgentId: int64(agent.ID),
-			}
-
-			err = tx.Where(`agent_id`, agent.ID).Where(`code`, splittedChannelCode).Find(&channel).Error
-			if err != nil {
-				return
-			}
-
 			if channel.ID == 0 {
 				user.Channel = ""
 			}
-			channelId = channel.ID
 		}
-	} else {
-		user.Channel = ""
 	}
 
 	if user.Channel != "" {
