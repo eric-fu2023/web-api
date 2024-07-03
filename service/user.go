@@ -154,7 +154,7 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 
 		// if user.Channel = agent means user.Channel has no channelCode suffix
 		// if user.Channel != agent means user.Channel has channelCode suffix
-		// user.Channel = agentCode
+		user.Channel = agentCode
 		user.ChannelId = channelId
 		agentId = int(agent.ID)
 
