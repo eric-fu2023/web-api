@@ -135,7 +135,7 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 	if user.Channel != "" {
 
 		agentCode := splittedAgentCode
-		channelCode = splittedChannelCode
+		// channelCode = splittedChannelCode
 
 		agent := ploutos.Agent{
 			Code: agentCode,
@@ -165,7 +165,7 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 	} else {
 		user.AgentId = int64(agentId)
 		channel := ploutos.Channel{
-			Code:    channelCode,
+			Code:    splittedChannelCode,
 			AgentId: int64(agentId),
 		}
 
