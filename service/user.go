@@ -54,6 +54,8 @@ func CreateNewUser(user *model.User, referralCode string) (err error) {
 
 func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (err error) {
 
+	initialChannel := user.Channel
+
 	// Default AgentId and ChannelId if no channelCode
 	// Change to env later
 	agentIdString := os.Getenv("DEFAULT_AGENT_ID")
@@ -160,6 +162,7 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		return fmt.Errorf("username existed: %s %w", user.Username, err)
 	}
 
+	user.Channel = initialChannel
 	err = user.CreateWithDB(tx)
 	if err != nil {
 		return fmt.Errorf("create with db: %w", err)
