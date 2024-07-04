@@ -160,5 +160,5 @@ var urlList1 = []string{
 
 // mainly for batace
 var urlList2 = []string{
-	"https://cdn.tayalive.com/batace-img/user/default_user_image/1.jpg",
+	"https://cdn.tayalive.com/batace-img/user/default_user_image/1.png",
 }
