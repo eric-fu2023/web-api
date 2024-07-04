@@ -1,13 +1,14 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/gin-gonic/gin"
 	"time"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 var orderType = map[int64][]int64{
@@ -51,10 +52,10 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 		}
 	}
 
-	statuses := []int64{2, 5}
+	statuses := []int64{2, 5, 6}
 	sumStatuses := statuses
 	if service.IsSettled != nil && *service.IsSettled {
-		sumStatuses = []int64{5}
+		sumStatuses = []int64{5, 6}
 	}
 	types := orderType[service.Type]
 	if service.Type == 2 { // 2: games (which include games from game integration)

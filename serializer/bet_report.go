@@ -11,7 +11,9 @@ import (
 
 type BetReport struct {
 	OrderId    string   `json:"order_id"`
+	BusinessId string   `json:"business_id"`
 	Ts         int64    `json:"ts"`
+	SettleTs   int64    `json:"settle_ts"`
 	Status     int64    `json:"status"`
 	IsParlay   bool     `json:"is_parlay"`
 	MatchCount int64    `json:"match_count"`
@@ -29,6 +31,7 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 	deviceInfo, _ := util.GetDeviceInfo(c)
 	b = BetReport{
 		OrderId:    a.OrderId,
+		BusinessId: a.BusinessId,
 		Ts:         a.BetTime.Unix(),
 		Status:     a.Status,
 		IsParlay:   a.IsParlay,
@@ -36,12 +39,15 @@ func BuildBetReport(c *gin.Context, a ploutos.BetReport) (b BetReport) {
 		BetType:    a.BetType,
 		Stake:      float64(a.Bet) / 100,
 	}
+	if a.RewardTime != nil {
+		b.SettleTs = a.RewardTime.Unix()
+	}
 	if a.MaxWinAmount != "" {
 		if v, e := strconv.ParseFloat(a.MaxWinAmount, 64); e == nil {
 			b.MaxReturn = v / 100
 		}
 	}
-	if a.Status == 5 {
+	if a.Status == 5 || a.Status == 6 {
 		t := float64(a.Win) / 100
 		b.Won = &t
 	}

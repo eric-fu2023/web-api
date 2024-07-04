@@ -10,7 +10,10 @@ import (
 )
 
 func (n *NineWicket) GetGameUrl(user model.User, currency, gameCode, subGameCode string, platform int64, extra model.Extra) (url string, err error) {
-	client := util.NineWicketFactory()
+	client, err := util.NineWicketFactory()
+	if err != nil {
+		return "", err
+	}
 	userId := api.UserId(user.ID)
 
 	// fixme

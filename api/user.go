@@ -1,14 +1,11 @@
 package api
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
-	"github.com/go-redis/redis/v8"
+	"net/http"
 	"time"
+
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -16,6 +13,12 @@ import (
 	"web-api/service"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
+	"github.com/go-redis/redis/v8"
 )
 
 func Me(c *gin.Context) {
@@ -131,7 +134,7 @@ func UserFinishSetup(c *gin.Context) {
 		res := service.Set(c)
 		c.JSON(200, res)
 	} else {
-		if validationErrorWithMsg(c, service, err) {
+		if usernameValidationErrorWithMsg(c, service, err, "validation_username") {
 			return
 		}
 		c.JSON(400, ErrorResponse(c, service, err))
@@ -144,7 +147,7 @@ func UserCheckUsername(c *gin.Context) {
 		res := service.Check(c)
 		c.JSON(200, res)
 	} else {
-		if validationErrorWithMsg(c, service, err) {
+		if usernameValidationErrorWithMsg(c, service, err, "validation_username") {
 			return
 		}
 		c.JSON(400, ErrorResponse(c, service, err))
@@ -291,23 +294,51 @@ func InternalRecallFund(c *gin.Context) {
 	}
 }
 
-func UserRegister(c *gin.Context) {
-	var service service.UserRegisterService
-	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
-		res := service.Register(c)
+var ErrEmptyMobileNumber = errors.New("mobile number required but empty")
+var ErrExtraFieldMobileNumber = errors.New("mobile should be unset")
+
+func UserRegister(requireMobile bool, bypassSetMobileOtpVerify bool) func(*gin.Context) {
+	return func(c *gin.Context) {
+		var service service.UserRegisterService
+		if err := c.ShouldBindWith(&service, binding.Form); err != nil {
+			if usernameValidationErrorWithMsg(c, service, err, "invalid_username") {
+				return
+			}
+			c.JSON(400, ErrorResponse(c, service, err))
+			return
+		}
+
+		i18n := c.MustGet("i18n").(i18n.I18n)
+		if requireMobile != bypassSetMobileOtpVerify {
+			// storing mobile in db implies mobile has gone through verification.
+			// hence if mobile is required, otp verification bypass flow must explicitly be enabled (this flow may record the mobile elsewhere for non-verification purpose).
+			// the transposition holds. if no bypass => user should not be required to, and provide, mobile
+			util.Log().Error("%v", errors.New("invalid server config"))
+			c.JSON(http.StatusNotImplemented, ErrorResponseWithMsg(c, service, errors.New("not implemented"), "Not Implemented"))
+			return
+		}
+		if requireMobile {
+			if service.Mobile == "" || service.CountryCode == "" {
+				c.JSON(400, ErrorResponseWithMsg(c, service, ErrEmptyMobileNumber, i18n.T("Mobile_invalid")))
+				return
+			}
+		} else if !(service.Mobile == "" && service.CountryCode == "") {
+			c.JSON(400, ErrorResponseWithMsg(c, service, ErrExtraFieldMobileNumber, i18n.T("Mobile_invalid")))
+			return
+		}
+
+		res := service.Register(c, bypassSetMobileOtpVerify)
 		c.JSON(200, res)
-	} else {
-		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
 
-func validationErrorWithMsg(c *gin.Context, service any, err error) (exists bool) {
+func usernameValidationErrorWithMsg(c *gin.Context, service any, err error, i18nKey string) (exists bool) {
 	var ve validator.ValidationErrors
 	if errors.As(err, &ve) {
 		i18n := c.MustGet("i18n").(i18n.I18n)
 		for _, fe := range ve {
 			if fe.Field() == "Username" {
-				c.JSON(400, ErrorResponseWithMsg(c, service, err, i18n.T("validation_username")))
+				c.JSON(400, ErrorResponseWithMsg(c, service, err, i18n.T(i18nKey)))
 				exists = true
 				return
 			}

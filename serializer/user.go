@@ -1,11 +1,12 @@
 package serializer
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/gin-gonic/gin"
 	"os"
 	"time"
 	"web-api/model"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 type User struct {
@@ -58,26 +59,34 @@ type UserInfo struct {
 	Birthday                          string   `json:"birthday"`
 	CanUpdateBirthday                 bool     `json:"can_update_birthday"`
 	ReferralCode                      string   `json:"referral_code"`
+	IsDeposited                       bool     `json:"is_deposited"`
+	UnverifiedMobile                  string   `json:"unverified_mobile"`
+	UnverifiedCountryCode             string   `json:"unverified_country_code"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
+	unverfiedMobile, _ := ploutos.ToPlain(user.UnverifiedMobile)
+
 	u := UserInfo{
-		ID:                 user.ID,
-		CountryCode:        user.CountryCode,
-		Mobile:             string(user.Mobile),
-		Username:           user.Username,
-		Email:              string(user.Email),
-		Nickname:           user.Nickname,
-		Avatar:             Url(user.Avatar),
-		Bio:                user.Bio,
-		CurrencyId:         user.CurrencyId,
-		Signature:          UserSignature(user.ID),
-		FollowingCount:     user.FollowingCount,
-		HasSetSecondaryPwd: len(user.SecondaryPassword) > 0,
-		Brand:              user.BrandId,
-		Agent:              user.AgentId,
-		ReferralCode:       user.ReferralCode,
-		Birthday:           user.Birthday,
+		ID:                    user.ID,
+		CountryCode:           user.CountryCode,
+		Mobile:                string(user.Mobile),
+		UnverifiedMobile:      unverfiedMobile,
+		UnverifiedCountryCode: user.UnverifiedCountryCode,
+		Username:              user.Username,
+		Email:                 string(user.Email),
+		Nickname:              user.Nickname,
+		Avatar:                Url(user.Avatar),
+		Bio:                   user.Bio,
+		CurrencyId:            user.CurrencyId,
+		Signature:             UserSignature(user.ID),
+		FollowingCount:        user.FollowingCount,
+		HasSetSecondaryPwd:    len(user.SecondaryPassword) > 0,
+		Brand:                 user.BrandId,
+		Agent:                 user.AgentId,
+		ReferralCode:          user.ReferralCode,
+		Birthday:              user.Birthday,
+		IsDeposited:           user.IsDeposited,
 	}
 	if user.Username == "" {
 		u.SetupRequired = true

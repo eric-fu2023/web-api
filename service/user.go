@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -52,6 +53,45 @@ func CreateNewUser(user *model.User, referralCode string) (err error) {
 }
 
 func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (err error) {
+
+	// Default AgentId and ChannelId if no channelCode
+	// Change to env later
+	agentIdString := os.Getenv("DEFAULT_AGENT_ID")
+	// channelCode := ""
+
+	if agentIdString == "" || agentIdString == "1000000" {
+		agentIdString = "1000001"
+	}
+
+	agentId, err := strconv.Atoi(agentIdString)
+
+	if err != nil {
+		return fmt.Errorf("string conv err: %w", err)
+	}
+
+	channel := ploutos.Channel{
+		Code: user.Channel,
+	}
+
+	err = tx.Where(`code`, user.Channel).Find(&channel).Error
+	if err != nil {
+		return
+	}
+
+	if channel.ID != 0 {
+		user.ChannelId = channel.ID
+		user.AgentId = channel.AgentId
+	} else {
+		user.ChannelId = 1
+		user.AgentId = int64(agentId)
+	}
+
+	var existed model.User
+	rows := model.DB.Where(`username`, user.Username).First(&existed).RowsAffected
+	if rows > 0 {
+		return fmt.Errorf("username existed: %s %w", user.Username, err)
+	}
+
 	err = user.CreateWithDB(tx)
 	if err != nil {
 		return fmt.Errorf("create with db: %w", err)
@@ -200,6 +240,16 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 	var userSum ploutos.UserSum
+
+	if !user.IsDeposited {
+		firstTime, err := model.CashOrder{}.IsFirstTime(c, user.ID)
+		// Not first time = deposited before
+		if err == nil && !firstTime {
+			user.IsDeposited = true
+			_ = model.DB.Save(&user).Error
+		}
+	}
+
 	if e := model.DB.Where(`user_id`, user.ID).First(&userSum).Error; e == nil {
 		user.UserSum = &userSum
 	}

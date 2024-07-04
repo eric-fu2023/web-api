@@ -147,7 +147,9 @@ func (d *MgStreamHandler) processMessages(msg *sarama.ConsumerMessage) error {
 		stream.Status = 1 // default pending
 		//stream.ImgUrl = mgStream.Thumb
 		i := d.CoverImageIndex % len(coverImages)
-		stream.ImgUrl = coverImages[i]
+		if streamer.CoverImage == "" {
+			stream.ImgUrl = coverImages[i]
+		}
 		d.CoverImageIndex = i + 1
 	}
 	if mgStream.Srctp == 8 { // MatchId is FB id
