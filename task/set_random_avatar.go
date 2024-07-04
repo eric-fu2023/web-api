@@ -2,7 +2,9 @@ package task
 
 import (
 	"fmt"
+
 	"web-api/model"
+	"web-api/model/avatar"
 )
 
 func SetRandomAvatar() {
@@ -14,7 +16,7 @@ func SetRandomAvatar() {
 	}
 
 	for _, user := range users {
-		model.SetRandomAvatar(&user)
+		user.Avatar = avatar.GetRandomAvatarUrl()
 		err = model.DB.Save(&user).Error
 		if err != nil {
 			fmt.Println(err)

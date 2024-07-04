@@ -8,14 +8,17 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/model/avatar"
 	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -153,7 +156,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		//user.BrandId = int64(c.MustGet("_brand").(int))
 		//user.AgentId = int64(c.MustGet("_agent").(int))
 		genNickname(&user)
-		model.SetRandomAvatar(&user)
+		user.Avatar = avatar.GetRandomAvatarUrl()
 		err = CreateNewUserWithDB(&user, service.Code, model.DB)
 		if err != nil {
 			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
