@@ -86,12 +86,6 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		user.AgentId = int64(agentId)
 	}
 
-	var existed model.User
-	rows := model.DB.Where(`username`, user.Username).First(&existed).RowsAffected
-	if rows > 0 {
-		return fmt.Errorf("username existed: %s %w", user.Username, err)
-	}
-
 	err = user.CreateWithDB(tx)
 	if err != nil {
 		return fmt.Errorf("create with db: %w", err)
