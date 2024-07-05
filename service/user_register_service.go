@@ -10,6 +10,7 @@ import (
 
 	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/model/avatar"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util"
@@ -115,7 +116,7 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 	}
 
 	genNickname(&user)
-	model.SetRandomAvatar(&user)
+	user.Avatar = avatar.GetRandomAvatarUrl()
 
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = CreateNewUserWithDB(&user, service.Code, tx)
