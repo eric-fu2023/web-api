@@ -86,6 +86,15 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		user.AgentId = int64(agentId)
 	}
 
+	// FIXME this is a substitute for the unique constraint with partial index. note that this does not prevent race condition.
+	if user.Username != "" {
+		var existed model.User
+		rows := model.DB.Where(`username`, user.Username).First(&existed).RowsAffected
+		if rows > 0 {
+			return fmt.Errorf("username existed: %s %w", user.Username, err)
+		}
+	}
+
 	err = user.CreateWithDB(tx)
 	if err != nil {
 		return fmt.Errorf("create with db: %w", err)
