@@ -57,13 +57,11 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 	// Default AgentId and ChannelId if no channelCode
 	// Change to env later
 	agentIdString := os.Getenv("DEFAULT_AGENT_ID")
-	channelCode := ""
+	// channelCode := ""
 
 	if agentIdString == "" || agentIdString == "1000000" {
 		agentIdString = "1000001"
 	}
-
-	var channelId int64
 
 	agentId, err := strconv.Atoi(agentIdString)
 
@@ -71,121 +69,30 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 		return fmt.Errorf("string conv err: %w", err)
 	}
 
-	// prefixExist := true
-
-	// Check AgentCode and ChannelCode, COMBINATION OF BOTH MUST EXIST, else treat as default
-
-	invalidAgentCode := false
-
-	// 1) Check AgentCode
-	// 2) Check ChannelCode
-
-	splitChannel := strings.Split(user.Channel, "_")
-
-	splittedAgentCode := strings.Join(splitChannel[:len(splitChannel)-1], "_")
-	splittedChannelCode := splitChannel[len(splitChannel)-1]
-
-	// Eg: C1000 (Not C1000_1, 代理_渠道号)
-	if len(splitChannel) < 2 {
-		splittedAgentCode = splittedChannelCode
-		splittedChannelCode = ""
+	channel := ploutos.Channel{
+		Code: user.Channel,
 	}
 
-	agent := ploutos.Agent{
-		Code: splittedAgentCode,
-	}
-
-	err = tx.Where(`code`, splittedAgentCode).Find(&agent).Error
+	err = tx.Where(`code`, user.Channel).Find(&channel).Error
 	if err != nil {
 		return
 	}
 
-	if agent.ID == 0 {
-		invalidAgentCode = true
-	}
-
-	if invalidAgentCode {
-		user.Channel = ""
-	} else {
-		channel := ploutos.Channel{
-			AgentId: int64(agent.ID),
-			Code:    splittedChannelCode,
-		}
-
-		err = tx.Where(`agent_id`, agent.ID).Where(`code`, splittedChannelCode).Find(&channel).Error
-		if err != nil {
-			return
-		}
-
-		if splittedChannelCode == "" {
-			if channel.ID == 0 {
-				err = tx.Create(&channel).Error
-				if err != nil {
-					return
-				}
-			}
-			channelId = channel.ID
-		} else {
-			if channel.ID == 0 {
-				user.Channel = ""
-			}
-		}
-	}
-
-	if user.Channel != "" {
-
-		agentCode := splittedAgentCode
-		// channelCode = splittedChannelCode
-
-		agent := ploutos.Agent{
-			Code: agentCode,
-		}
-
-		err = tx.Where(`code`, agentCode).Find(&agent).Error
-		if err != nil {
-			return
-		}
-
-		if agent.ID == 0 {
-
-			// Get Default instead of Create New
-			agent.ID = int64(agentId)
-			agentCode = ""
-
-			// prefixExist = false
-		}
-
-		user.AgentId = agent.ID
-
-		// if user.Channel = agent means user.Channel has no channelCode suffix
-		// if user.Channel != agent means user.Channel has channelCode suffix
-		user.Channel = agentCode
-		user.ChannelId = channelId
-
-	} else {
-		user.AgentId = int64(agentId)
-		channel := ploutos.Channel{
-			Code:    splittedChannelCode,
-			AgentId: int64(agentId),
-		}
-
-		err = tx.Where(`agent_id`, agentId).Where(`code`, channelCode).Find(&channel).Error
-		if err != nil {
-			return
-		}
-		if channel.ID == 0 {
-			err = tx.Create(&channel).Error
-			if err != nil {
-				return
-			}
-		}
+	if channel.ID != 0 {
 		user.ChannelId = channel.ID
+		user.AgentId = channel.AgentId
+	} else {
+		user.ChannelId = 1
+		user.AgentId = int64(agentId)
 	}
 
-	var existed model.User
-	rows := model.DB.Where(`username`, user.Username).First(&existed).RowsAffected
-	if rows > 0 {
-		return fmt.Errorf("username existed: %s %w", user.Username, err)
+	// FIXME this is a substitute for the unique constraint with partial index. note that this does not prevent race condition.
+	if user.Username != "" {
+		var existed model.User
+		rows := model.DB.Where(`username`, user.Username).First(&existed).RowsAffected
+		if rows > 0 {
+			return fmt.Errorf("username existed: %s %w", user.Username, err)
+		}
 	}
 
 	err = user.CreateWithDB(tx)
