@@ -26,7 +26,7 @@ func ApproveWithdrawal(c *gin.Context) {
 		if res, err := service.Approve(c); err == nil {
 			c.JSON(200, res)
 		} else {
-			c.JSON(500, serializer.EnsureErr(c, err, res))
+			c.JSON(500, serializer.Err(c, "", 50000, err.Error(), err))
 		}
 	} else {
 		c.JSON(400, serializer.ParamErr(c, service, "", err))
