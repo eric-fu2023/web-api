@@ -157,7 +157,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		//user.AgentId = int64(c.MustGet("_agent").(int))
 		genNickname(&user)
 		user.Avatar = avatar.GetRandomAvatarUrl()
-		connectChannelAgent(&user, model.DB)
+		ConnectChannelAgent(&user, model.DB)
 		err = CreateNewUserWithDB(&user, service.Code, model.DB)
 		if err != nil {
 			return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)

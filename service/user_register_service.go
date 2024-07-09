@@ -122,7 +122,7 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 	user.Avatar = avatar.GetRandomAvatarUrl()
 
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
-		connectChannelAgent(&user, tx)
+		ConnectChannelAgent(&user, tx)
 		err = CreateNewUserWithDB(&user, service.Code, tx)
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("CreateNewUser error: %s", err.Error())
@@ -161,7 +161,7 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 	}
 }
 
-func connectChannelAgent(user *model.User, tx *gorm.DB) (err error) {
+func ConnectChannelAgent(user *model.User, tx *gorm.DB) (err error) {
 	fmt.Printf("=== PRE username - %s, channelCode - %s, userChannelId - %s, userAgentId - %s === \n", user.Username, user.Channel, strconv.Itoa(int(user.ChannelId)), strconv.Itoa(int(user.AgentId)))
 	// Default AgentId and ChannelId if no channelCode
 	// Change to env later
