@@ -2,7 +2,10 @@ package service
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -119,6 +122,7 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 	user.Avatar = avatar.GetRandomAvatarUrl()
 
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+		connectChannelAgent(&user, tx)
 		err = CreateNewUserWithDB(&user, service.Code, tx)
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("CreateNewUser error: %s", err.Error())
@@ -155,4 +159,40 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 			"token": tokenString,
 		},
 	}
+}
+
+func connectChannelAgent(user *model.User, tx *gorm.DB) (err error) {
+	// Default AgentId and ChannelId if no channelCode
+	// Change to env later
+	agentIdString := os.Getenv("DEFAULT_AGENT_ID")
+	// channelCode := ""
+
+	if agentIdString == "" || agentIdString == "1000000" {
+		agentIdString = "1000001"
+	}
+
+	agentId, err := strconv.Atoi(agentIdString)
+
+	if err != nil {
+		return fmt.Errorf("string conv err: %w", err)
+	}
+
+	channel := ploutos.Channel{
+		Code: user.Channel,
+	}
+
+	err = tx.Where(`code`, user.Channel).Find(&channel).Error
+	if err != nil {
+		return
+	}
+
+	if channel.ID != 0 {
+		user.ChannelId = channel.ID
+		user.AgentId = channel.AgentId
+	} else {
+		user.ChannelId = 1
+		user.AgentId = int64(agentId)
+	}
+
+	return
 }
