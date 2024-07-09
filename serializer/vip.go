@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"math"
 	"time"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
@@ -17,12 +18,13 @@ type Vip struct {
 }
 
 type VipProgress struct {
-	ID              int64 `json:"id"`
-	UserID          int64 `json:"user_id"`
-	TotalProgress   int64 `json:"total_progress"`
-	CurrentProgress int64 `json:"current_progress"`
-	TotalDeposit    int64 `json:"total_deposit"`
-	CurrentDeposit  int64 `json:"current_deposit"`
+	ID                   int64   `json:"id"`
+	UserID               int64   `json:"user_id"`
+	TotalProgress        int64   `json:"total_progress"`
+	CurrentProgress      int64   `json:"current_progress"`
+	TotalDeposit         int64   `json:"total_deposit"`
+	CurrentDeposit       int64   `json:"current_deposit"`
+	VIPProgessPercantage float64 `json:"vip_progress_percentage"`
 }
 
 type VipRule struct {
@@ -60,13 +62,33 @@ func BuildVip(v models.VipRecord) Vip {
 }
 
 func BuildVipProgress(v models.VipProgress) VipProgress {
+
+	if v.CurrentProgress == 0 {
+		v.CurrentProgress = 1
+	}
+	if v.TotalProgress == 0 {
+		v.TotalProgress = 1
+	}
+	if v.CurrentCashInAmount == 0 {
+		v.CurrentCashInAmount = 1
+	}
+	if v.TotalCashInAmount == 0 {
+		v.TotalCashInAmount = 1
+	}
+
+	wagerProgressPercentage := math.Min((float64(v.CurrentProgress) / float64(v.TotalProgress) * 100), 100)
+	cashinProgressPercentage := math.Min((float64(v.CurrentCashInAmount) / float64(v.TotalCashInAmount) * 100), 100)
+
+	totalProgressPercentage := (math.Floor(((wagerProgressPercentage + cashinProgressPercentage) / 2) * 100)) / 100
+
 	return VipProgress{
-		ID:              v.ID,
-		UserID:          v.UserID,
-		TotalProgress:   v.TotalProgress / 100,
-		CurrentProgress: v.CurrentProgress / 100,
-		TotalDeposit:    v.TotalCashInAmount / 100,
-		CurrentDeposit:  v.CurrentCashInAmount / 100,
+		ID:                   v.ID,
+		UserID:               v.UserID,
+		TotalProgress:        v.TotalProgress / 100,
+		CurrentProgress:      v.CurrentProgress / 100,
+		TotalDeposit:         v.TotalCashInAmount / 100,
+		CurrentDeposit:       v.CurrentCashInAmount / 100,
+		VIPProgessPercantage: totalProgressPercentage,
 	}
 
 }
