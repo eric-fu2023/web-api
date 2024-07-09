@@ -20,14 +20,48 @@ type ListWithdrawAccountsService struct {
 func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, error) {
 	user := c.MustGet("user").(model.User)
 
-	list, err := model.UserAccountBinding{}.GetAccountByUser(user.ID)
+	vip, err := model.GetVipWithDefault(c, user.ID)
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}
 
+	list, err := model.UserAccountBinding{}.GetAccountByUser(user.ID, vip.VipRule.ID)
+	if err != nil {
+		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
+	}
+
+	weeklyAmountRecords, dailyAmountRecords, err := model.GetWeeklyAndDailyCashMethodPromotionRecord(c, 0, user.ID)
+	if err != nil {
+		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
+	}
+	maxPromotionAmountByCashMethodId := map[int64]int64{}
+	util.MapSlice(list, func(a model.UserAccountBinding) (err error) {
+		if a.CashMethod == nil {
+			return
+		}
+		if a.CashMethod.CashMethodPromotion == nil {
+			return
+		}
+		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b models.CashMethodPromotionRecord) bool {
+			return b.CashMethodId == a.CashMethod.ID
+		}).Amount
+		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b models.CashMethodPromotionRecord) bool {
+			return b.CashMethodId == a.CashMethod.ID
+		}).Amount
+
+		maxAmount, err := model.GetMaxCashMethodPromotionAmount(c, weeklyAmount, dailyAmount, *a.CashMethod.CashMethodPromotion, user.ID, 0, true)
+		if err != nil {
+			util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetMaxAmountPayment", err)
+		}
+		maxPromotionAmountByCashMethodId[a.CashMethod.ID] = maxAmount
+		return
+	})
+
 	return serializer.Response{
 		Data: util.MapSlice(list, func(a model.UserAccountBinding) serializer.UserAccountBinding {
-			return serializer.BuildUserAccountBinding(a, serializer.Modifier(serializer.BuildCashMethod, func(cm serializer.CashMethod) serializer.CashMethod {
+			return serializer.BuildUserAccountBinding(a, serializer.Modifier(func(b model.CashMethod) serializer.CashMethod {
+				return serializer.BuildCashMethod(b, maxPromotionAmountByCashMethodId)
+			}, func(cm serializer.CashMethod) serializer.CashMethod {
 				firstTopup, err := model.FirstTopup(c, user.ID)
 				if err != nil || len(firstTopup.ID) == 0 {
 					cm.MinAmount = conf.GetCfg().WithdrawMinNoDeposit / 100
