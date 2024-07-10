@@ -16,9 +16,23 @@ type GiftRecord struct {
 	GiftTime     time.Time `json:"gift_time"`
 }
 
-func BuildGiftRecords(a []models.GiftRecord) (b []GiftRecord) {
+type PaginatedGiftRecord struct {
+	TotalCount  int64        `json:"total_count"`
+	TotalAmount float64      `json:"total_amount"`
+	TotalWin    float64      `json:"total_win"`
+	List        []GiftRecord `json:"list,omitempty"`
+}
+
+func BuildPaginatedGiftRecord(a []models.GiftRecord, total, amount, win int64) (b PaginatedGiftRecord) {
+
+	b = PaginatedGiftRecord{
+		TotalCount:  total,
+		TotalAmount: float64(amount) / 100,
+		TotalWin:    float64(win) / 100,
+	}
+
 	for _, giftRecord := range a {
-		b = append(b, GiftRecord{
+		b.List = append(b.List, GiftRecord{
 			ID:           giftRecord.ID,
 			UserId:       giftRecord.UserId,
 			GiftId:       giftRecord.GiftId,

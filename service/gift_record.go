@@ -21,11 +21,8 @@ type GiftSendRequestService struct {
 }
 
 type GiftRecordListService struct {
-	Type      int64  `form:"type" json:"type" binding:"required"`
-	IsParlay  bool   `form:"is_parlay" json:"is_parlay"`
-	IsSettled *bool  `form:"is_settled" json:"is_settled"`
-	Start     string `form:"start" json:"start" binding:"required"`
-	End       string `form:"end" json:"end" binding:"required"`
+	Start string `form:"start" json:"start" binding:"required"`
+	End   string `form:"end" json:"end" binding:"required"`
 	common.Page
 }
 
@@ -96,8 +93,7 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 	}, nil
 }
 
-func (service *GiftRecordListService) List(c *gin.Context) (r serializer.Response) {
-	var err error
+func (service *GiftRecordListService) List(c *gin.Context) (r serializer.Response, err error) {
 	var giftRecords []ploutos.GiftRecord
 	var giftRecordSummary GiftRecordSummary
 	i18n := c.MustGet("i18n").(i18n.I18n)
@@ -117,19 +113,19 @@ func (service *GiftRecordListService) List(c *gin.Context) (r serializer.Respons
 	}
 
 	err = model.DB.Model(ploutos.GiftRecord{}).Scopes(model.ByOrderGiftRecordListConditions(user.ID, start, end)).
-		Select(`COUNT(1) as count, SUM(bet) as amount, SUM(win-bet) as win`).Find(&giftRecordSummary).Error
+		Select(`COUNT(1) as count, SUM(total_price) as amount, SUM(total_price) as win`).Find(&giftRecordSummary).Error
 	if err != nil {
-		return serializer.DBErr(c, service, i18n.T("general_error"), err)
+		return serializer.DBErr(c, service, i18n.T("general_error"), err), err
 	}
 
 	err = model.DB.Model(ploutos.GiftRecord{}).Scopes(model.ByOrderGiftRecordListConditions(user.ID, start, end), model.ByGiftRecordSort, model.Paginate(service.Page.Page, service.Page.Limit)).
 		Find(&giftRecords).Error
 	if err != nil {
-		return serializer.DBErr(c, service, i18n.T("general_error"), err)
+		return serializer.DBErr(c, service, i18n.T("general_error"), err), err
 	}
 
 	r = serializer.Response{
-		Data: serializer.BuildGiftRecords(giftRecords),
+		Data: serializer.BuildPaginatedGiftRecord(giftRecords, giftRecordSummary.Count, giftRecordSummary.Amount, giftRecordSummary.Win),
 	}
 	return
 }
