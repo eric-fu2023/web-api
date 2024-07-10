@@ -51,7 +51,7 @@ func (service *TokenService) Get(c *gin.Context) (res serializer.Response, err e
 		}
 	}
 
-	token, err := util.AesEncrypt([]byte(fmt.Sprintf(`%d`, user.ID)))
+	token, err := util.AesCFBModeEncrypt([]byte(fmt.Sprintf(`%d`, user.ID)))
 	if err != nil {
 		res = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
@@ -76,7 +76,7 @@ func (service *ValidateTokenService) Validate(c *gin.Context) (res callback.Vali
 	if err != nil {
 		return
 	}
-	uidStr, err := util.AesDecrypt(string(token))
+	uidStr, err := util.AesCFBModeDecrypt(string(token))
 	if err != nil {
 		return
 	}
