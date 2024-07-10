@@ -628,3 +628,5 @@ chat_welcome_message: "欢迎光临！ 享受与他人的实时互动。 请保�
 chat_welcome_name: "系统"
 
 invalid_username: "账号注册格式错误"
+
+send_de: "发送的"

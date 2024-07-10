@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"web-api/conf"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -408,7 +409,7 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 	}()
 }
 
-func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftName string, isGiftAnimated bool, avatar string, nickname string, liveStreamId int64) {
+func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftName string, isGiftAnimated bool, avatar string, nickname string, liveStreamId int64, message string) {
 	go func() {
 		conn := websocket.Connection{}
 		conn.Connect(os.Getenv("WS_URL"), os.Getenv("WS_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
@@ -419,7 +420,7 @@ func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftNam
 				default:
 					msg := websocket.RoomMessage{
 						Room:         fmt.Sprintf(`stream:%d`, liveStreamId),
-						Message:      "GIFTTT21?",
+						Message:      message + giftName + " " + strconv.Itoa(giftQuantity) + " x ",
 						UserId:       consts.ChatSystemId,
 						UserType:     consts.ChatUserType["system"],
 						Nickname:     nickname,

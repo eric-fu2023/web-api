@@ -628,3 +628,5 @@ chat_welcome_message: "Welcome! Enjoy real-time interaction with others. Please 
 chat_welcome_name: "System"
 
 invalid_username: "Invalid Username."
+
+send_de: "Sent"
