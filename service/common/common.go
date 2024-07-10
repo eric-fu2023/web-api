@@ -421,8 +421,8 @@ func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftNam
 					msg := websocket.RoomMessage{
 						Room:         fmt.Sprintf(`stream:%d`, liveStreamId),
 						Message:      message + giftName + " " + strconv.Itoa(giftQuantity) + " x ",
-						UserId:       consts.ChatSystemId,
-						UserType:     consts.ChatUserType["system"],
+						UserId:       userId,
+						UserType:     consts.ChatUserType["user"],
 						Nickname:     nickname,
 						Avatar:       avatar,
 						Type:         consts.WebSocketMessageType["gift"],
