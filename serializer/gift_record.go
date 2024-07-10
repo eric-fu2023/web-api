@@ -7,9 +7,9 @@ import (
 )
 
 type GiftRecord struct {
-	ID           int64     `json:"id"`
-	UserId       int64     `json:"user_id"`
-	GiftId       int64     `json:"gift_id"`
+	ID     int64 `json:"id"`
+	UserId int64 `json:"user_id"`
+	// GiftId       int64     `json:"gift_id"`
 	GiftName     string    `json:"gift_name"`
 	Quantity     int       `json:"quantity"`
 	TotalPrice   int64     `json:"total_price"`

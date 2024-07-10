@@ -25,9 +25,13 @@ type GiftMessage struct {
 }
 
 func (giftMsg GiftMessage) Send(conn *Connection) (err error) {
-	event := "send_gift"
+	// event := "send_gift"
+	// if giftMsg.SocketId != "" {
+	// 	event = "send_gift_socket"
+	// }
+	event := "room"
 	if giftMsg.SocketId != "" {
-		event = "send_gift_socket"
+		event = "room_socket"
 	}
 	var msg []byte
 	if msg, err = json.Marshal(giftMsg); err != nil {
@@ -38,5 +42,7 @@ func (giftMsg GiftMessage) Send(conn *Connection) (err error) {
 		util.Log().Error("ws send gift error", err)
 		return
 	}
+	fmt.Println("err")
+	fmt.Println(err)
 	return
 }

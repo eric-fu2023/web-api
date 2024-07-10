@@ -408,7 +408,7 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 	}()
 }
 
-func SendGiftSockerMessage(userId int64, giftId int64, giftQuantity int, giftName string, avatar string, nickname string, liveStreamId int64) {
+func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftName string, avatar string, nickname string, liveStreamId int64) {
 	go func() {
 		conn := websocket.Connection{}
 		conn.Connect(os.Getenv("WS_NOTIFICATION_URL"), os.Getenv("WS_NOTIFICATION_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
@@ -418,17 +418,18 @@ func SendGiftSockerMessage(userId int64, giftId int64, giftQuantity int, giftNam
 					return
 				default:
 					msg := websocket.GiftMessage{
-						Room:         fmt.Sprintf(`stream:%d`, liveStreamId),
-						Message:      "",
+						Room:         fmt.Sprintf(`streamer:%d`, 3108),
+						Message:      "GIFTTT",
 						UserId:       userId,
-						UserType:     consts.ChatUserType["user"],
+						UserType:     consts.ChatUserType["system"],
 						Nickname:     nickname,
 						Avatar:       avatar,
-						Type:         consts.WebSocketMessageType["gift"],
+						Type:         consts.WebSocketMessageType["text"],
 						GiftId:       giftId,
 						GiftQuantity: giftQuantity,
 						GiftName:     giftName,
 					}
+					fmt.Println("ADAAAAAAAAA")
 					msg.Send(conn)
 				}
 			},

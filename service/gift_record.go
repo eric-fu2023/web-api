@@ -53,6 +53,7 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 		LiveStreamId: service.LiveStreamId,
 		TotalPrice:   int64(service.Quantity) * gift.Price,
 	}
+	var userSum model.UserSum
 
 	err = model.DB.Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&giftRecord).Error
@@ -61,12 +62,11 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 			return err
 		}
 
-		var userSum model.UserSum
 		userSum, _ = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, tx)
 		userSum.Balance -= giftRecord.TotalPrice
-		userSum.MaxWithdrawable -= giftRecord.TotalPrice
+		// userSum.MaxWithdrawable -= giftRecord.TotalPrice
 
-		if userSum.Balance < 0 || userSum.MaxWithdrawable < 0 {
+		if userSum.Balance < 0 {
 			util.GetLoggerEntry(c).Errorf("User balance not enough")
 			return errors.New("user balance not enough")
 		}
@@ -86,7 +86,8 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 		}, err
 	}
 
-	common.SendGiftSockerMessage(user.ID, gift.ID, service.Quantity, gift.Name, user.Avatar, user.Nickname, service.LiveStreamId)
+	common.SendGiftSocketMessage(user.ID, gift.ID, service.Quantity, gift.Name, user.Avatar, user.Nickname, service.LiveStreamId)
+	common.SendUserSumSocketMsg(3086, userSum.UserSum, "bet", 8819)
 
 	return serializer.Response{
 		Msg: i18n.T("success"),
