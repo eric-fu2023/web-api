@@ -118,7 +118,7 @@ func (service *GiftRecordListService) List(c *gin.Context) (r serializer.Respons
 		return serializer.DBErr(c, service, i18n.T("general_error"), err), err
 	}
 
-	err = model.DB.Model(ploutos.GiftRecord{}).Scopes(model.ByOrderGiftRecordListConditions(user.ID, start, end), model.ByGiftRecordSort, model.Paginate(service.Page.Page, service.Page.Limit)).
+	err = model.DB.Model(ploutos.GiftRecord{}).Preload("Gift").Scopes(model.ByOrderGiftRecordListConditions(user.ID, start, end), model.ByGiftRecordSort, model.Paginate(service.Page.Page, service.Page.Limit)).
 		Find(&giftRecords).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err), err
