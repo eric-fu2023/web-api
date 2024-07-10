@@ -86,8 +86,9 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 		}, err
 	}
 
-	common.SendGiftSocketMessage(user.ID, gift.ID, service.Quantity, gift.Name, user.Avatar, user.Nickname, service.LiveStreamId)
-	common.SendUserSumSocketMsg(3086, userSum.UserSum, "bet", 8819)
+	common.SendGiftSocketMessage(user.ID, gift.ID, service.Quantity, gift.Name, gift.IsAnimated, user.Avatar, user.Nickname, service.LiveStreamId)
+	common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "send_gift", float64(giftRecord.TotalPrice)/100)
+	// common.SendUserSumSocketMsg(3086, userSum.UserSum, "bet", 8819)
 
 	return serializer.Response{
 		Msg: i18n.T("success"),

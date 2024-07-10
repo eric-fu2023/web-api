@@ -1,20 +1,20 @@
 package serializer
 
 import (
-	"time"
+	"strconv"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type GiftRecord struct {
-	ID     int64 `json:"id"`
-	UserId int64 `json:"user_id"`
+	ID     string `json:"id"`
+	UserId int64  `json:"user_id"`
 	// GiftId       int64     `json:"gift_id"`
-	GiftName     string    `json:"gift_name"`
-	Quantity     int       `json:"quantity"`
-	TotalPrice   int64     `json:"total_price"`
-	LiveStreamId int64     `json:"live_stream_id"`
-	GiftTime     time.Time `json:"gift_time"`
+	GiftName     string `json:"gift_name"`
+	Quantity     int    `json:"quantity"`
+	TotalPrice   int64  `json:"total_price"`
+	LiveStreamId int64  `json:"live_stream_id"`
+	GiftTime     int64  `json:"gift_time"`
 }
 
 type PaginatedGiftRecord struct {
@@ -33,14 +33,18 @@ func BuildPaginatedGiftRecord(a []models.GiftRecord, total, amount, win int64) (
 	}
 
 	for _, giftRecord := range a {
+
+		dateTimeId := strconv.Itoa(int(giftRecord.CreatedAt.Unix())) + "T"
+		uniqueId := dateTimeId + strconv.Itoa(int(giftRecord.ID))
+
 		b.List = append(b.List, GiftRecord{
-			ID:     giftRecord.ID,
+			ID:     uniqueId,
 			UserId: giftRecord.UserId,
 			// GiftId:       giftRecord.GiftId,
 			TotalPrice:   giftRecord.TotalPrice / 100,
 			Quantity:     giftRecord.Quantity,
 			LiveStreamId: giftRecord.LiveStreamId,
-			GiftTime:     giftRecord.CreatedAt,
+			GiftTime:     giftRecord.CreatedAt.Unix(),
 			GiftName:     giftRecord.Gift.Name,
 		})
 	}

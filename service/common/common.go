@@ -408,7 +408,7 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 	}()
 }
 
-func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftName string, avatar string, nickname string, liveStreamId int64) {
+func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftName string, isGiftAnimated bool, avatar string, nickname string, liveStreamId int64) {
 	go func() {
 		conn := websocket.Connection{}
 		conn.Connect(os.Getenv("WS_URL"), os.Getenv("WS_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
@@ -417,20 +417,23 @@ func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftNam
 				case <-ctx.Done():
 					return
 				default:
-					msg := websocket.GiftMessage{
+					msg := websocket.RoomMessage{
 						Room:         fmt.Sprintf(`stream:%d`, liveStreamId),
-						Message:      "GIFTTT",
-						UserId:       userId,
+						Message:      "GIFTTT21?",
+						UserId:       consts.ChatSystemId,
 						UserType:     consts.ChatUserType["system"],
 						Nickname:     nickname,
 						Avatar:       avatar,
-						Type:         consts.WebSocketMessageType["text"],
+						Type:         consts.WebSocketMessageType["gift"],
 						GiftId:       giftId,
 						GiftQuantity: giftQuantity,
 						GiftName:     giftName,
+						IsAnimated:   isGiftAnimated,
 					}
-					fmt.Println("ADAAAAAAAAA")
-					msg.Send(conn)
+					if e := msg.Send(conn); e != nil {
+						cancelFunc()
+						return
+					}
 				}
 			},
 		})
