@@ -20,7 +20,7 @@ func (service *GiftListService) List(c *gin.Context) (r serializer.Response, err
 	var gifts []ploutos.Gift
 	// i18n := c.MustGet("i18n").(i18n.I18n)
 
-	err = model.DB.Model(ploutos.Gift{}).Scopes(model.ByActiveGifts(true)).Find(&gifts).Error
+	err = model.DB.Model(ploutos.Gift{}).Scopes(model.ByActiveGifts(true), model.SortById).Find(&gifts).Error
 	if err != nil {
 		return
 	}
