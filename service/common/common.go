@@ -409,7 +409,7 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 	}()
 }
 
-func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftName string, isGiftAnimated bool, avatar string, nickname string, liveStreamId int64, message string) {
+func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftName string, isGiftAnimated bool, avatar string, nickname string, liveStreamId int64, message string, vipId int64) {
 	go func() {
 		conn := websocket.Connection{}
 		conn.Connect(os.Getenv("WS_URL"), os.Getenv("WS_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
@@ -430,6 +430,7 @@ func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftNam
 						GiftQuantity: giftQuantity,
 						GiftName:     giftName,
 						IsAnimated:   isGiftAnimated,
+						VipId:        vipId,
 					}
 					if e := msg.Send(conn); e != nil {
 						cancelFunc()

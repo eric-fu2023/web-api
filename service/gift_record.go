@@ -18,6 +18,7 @@ type GiftSendRequestService struct {
 	GiftId       int64 `form:"gift_id" json:"gift_id"`
 	Quantity     int   `form:"quantity" json:"quantity"`
 	LiveStreamId int64 `form:"live_stream_id" json:"live_stream_id"`
+	VipId        int64 `form:"vip_id" json:"vip_id"`
 }
 
 type GiftRecordListService struct {
@@ -86,7 +87,7 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 		}, err
 	}
 
-	common.SendGiftSocketMessage(user.ID, gift.ID, service.Quantity, gift.Name, gift.IsAnimated, user.Avatar, user.Nickname, service.LiveStreamId, i18n.T("send_de"))
+	common.SendGiftSocketMessage(user.ID, gift.ID, service.Quantity, gift.Name, gift.IsAnimated, user.Avatar, user.Nickname, service.LiveStreamId, i18n.T("send_de"), service.VipId)
 	common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "send_gift", float64(giftRecord.TotalPrice)/100)
 	// common.SendUserSumSocketMsg(3086, userSum.UserSum, "bet", 8819)
 
