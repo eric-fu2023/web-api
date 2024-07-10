@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"web-api/conf"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -399,6 +400,34 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 						Balance:         float64(userSum.Balance) / 100,
 						RemainingWager:  float64(userSum.RemainingWager) / 100,
 						MaxWithdrawable: float64(userSum.MaxWithdrawable) / 100,
+					}
+					msg.Send(conn)
+				}
+			},
+		})
+	}()
+}
+
+func SendGiftSockerMessage(userId int64, giftId int64, giftQuantity int, giftName string, avatar string, nickname string, liveStreamId int64) {
+	go func() {
+		conn := websocket.Connection{}
+		conn.Connect(os.Getenv("WS_NOTIFICATION_URL"), os.Getenv("WS_NOTIFICATION_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
+			func(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					msg := websocket.GiftMessage{
+						Room:         fmt.Sprintf(`stream:%d`, liveStreamId),
+						Message:      "",
+						UserId:       userId,
+						UserType:     consts.ChatUserType["user"],
+						Nickname:     nickname,
+						Avatar:       avatar,
+						Type:         consts.WebSocketMessageType["gift"],
+						GiftId:       giftId,
+						GiftQuantity: giftQuantity,
+						GiftName:     giftName,
 					}
 					msg.Send(conn)
 				}

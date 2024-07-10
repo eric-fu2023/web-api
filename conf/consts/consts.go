@@ -99,6 +99,7 @@ var (
 		"join":       7,
 		"typing":     100,
 		"empty":      101,
+		"gift":       10,
 	}
 	UserRole = map[string]int64{
 		"user":      1,
