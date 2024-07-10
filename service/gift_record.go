@@ -15,10 +15,11 @@ import (
 )
 
 type GiftSendRequestService struct {
-	GiftId       int64 `form:"gift_id" json:"gift_id"`
-	Quantity     int   `form:"quantity" json:"quantity"`
-	LiveStreamId int64 `form:"live_stream_id" json:"live_stream_id"`
-	VipId        int64 `form:"vip_id" json:"vip_id"`
+	GiftId       int64  `form:"gift_id" json:"gift_id"`
+	Quantity     int    `form:"quantity" json:"quantity"`
+	LiveStreamId int64  `form:"live_stream_id" json:"live_stream_id"`
+	VipId        int64  `form:"vip_id" json:"vip_id"`
+	StreamerName string `form:"streamer_name" json:"streamer_name"`
 }
 
 type GiftRecordListService struct {
@@ -40,6 +41,12 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 
 	var gift ploutos.Gift
 
+	if service.StreamerName == "" {
+		return serializer.Response{
+			Msg: "Invalid Streamer Name",
+		}, errors.New("invalid streamer name")
+	}
+
 	err = model.DB.Where(`id`, service.GiftId).Find(&gift).Error
 	if err != nil || gift.ID == 0 {
 		return serializer.Response{
@@ -53,6 +60,7 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 		Quantity:     service.Quantity,
 		LiveStreamId: service.LiveStreamId,
 		TotalPrice:   int64(service.Quantity) * gift.Price,
+		StreamerName: service.StreamerName,
 	}
 	var userSum model.UserSum
 
