@@ -411,14 +411,14 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftName string, avatar string, nickname string, liveStreamId int64) {
 	go func() {
 		conn := websocket.Connection{}
-		conn.Connect(os.Getenv("WS_NOTIFICATION_URL"), os.Getenv("WS_NOTIFICATION_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
+		conn.Connect(os.Getenv("WS_URL"), os.Getenv("WS_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
 			func(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
 				select {
 				case <-ctx.Done():
 					return
 				default:
 					msg := websocket.GiftMessage{
-						Room:         fmt.Sprintf(`streamer:%d`, 3108),
+						Room:         fmt.Sprintf(`stream:%d`, liveStreamId),
 						Message:      "GIFTTT",
 						UserId:       userId,
 						UserType:     consts.ChatUserType["system"],
