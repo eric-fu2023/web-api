@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"log"
 	"strconv"
 	"time"
 	"web-api/model"
@@ -68,7 +69,6 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 	err = model.DB.Transaction(func(tx *gorm.DB) error {
 
 		userSum, _ = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, tx)
-		userSum.Balance -= giftRecord.TotalPrice
 		// userSum.MaxWithdrawable -= giftRecord.TotalPrice
 
 		if userSum.Balance < 0 {
@@ -76,8 +76,11 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 			return errors.New("user balance not enough")
 		}
 
-		giftRecord.BalanceBefore = userSum.Balance
-		giftRecord.BalanceAfter = userSum.Balance - giftRecord.TotalPrice
+		balanceBefore := userSum.Balance
+		balanceAfter := userSum.Balance - giftRecord.TotalPrice
+
+		giftRecord.BalanceBefore = balanceBefore
+		giftRecord.BalanceAfter = balanceAfter
 
 		giftRecord.TransactionId = strconv.Itoa(int(user.ID)) + strconv.Itoa(int(time.Now().UTC().UnixMilli())) + strconv.Itoa(int(service.GiftId))
 
@@ -87,9 +90,28 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 			return err
 		}
 
+		userSum.Balance -= giftRecord.TotalPrice
 		err = tx.Save(&userSum).Error
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("User balance not enough: %s", err.Error())
+			return err
+		}
+
+		transaction := ploutos.Transaction{
+			UserId:                user.ID,
+			Amount:                giftRecord.TotalPrice,
+			BalanceBefore:         balanceBefore,
+			BalanceAfter:          balanceAfter,
+			TransactionType:       ploutos.TransactionTypeSendGift,
+			Wager:                 0,
+			WagerBefore:           userSum.RemainingWager,
+			WagerAfter:            userSum.RemainingWager,
+			ExternalTransactionId: strconv.Itoa(int(giftRecord.ID)),
+			GameVendorId:          0,
+		}
+		err = tx.Create(&transaction).Error
+		if err != nil {
+			log.Printf("Error creating transaction, err: %v", err)
 			return err
 		}
 
