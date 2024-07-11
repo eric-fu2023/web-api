@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"strconv"
 	"time"
 	"web-api/model"
 	"web-api/serializer"
@@ -65,11 +66,6 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 	var userSum model.UserSum
 
 	err = model.DB.Transaction(func(tx *gorm.DB) error {
-		err := tx.Create(&giftRecord).Error
-		if err != nil {
-			util.GetLoggerEntry(c).Errorf("Send gift failed: %s", err.Error())
-			return err
-		}
 
 		userSum, _ = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, tx)
 		userSum.Balance -= giftRecord.TotalPrice
@@ -78,6 +74,17 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 		if userSum.Balance < 0 {
 			util.GetLoggerEntry(c).Errorf("User balance not enough")
 			return errors.New("user balance not enough")
+		}
+
+		giftRecord.BalanceBefore = userSum.Balance
+		giftRecord.BalanceAfter = userSum.Balance - giftRecord.TotalPrice
+
+		giftRecord.TransactionId = strconv.Itoa(int(user.ID)) + strconv.Itoa(int(time.Now().UTC().UnixMilli())) + strconv.Itoa(int(service.GiftId))
+
+		err := tx.Create(&giftRecord).Error
+		if err != nil {
+			util.GetLoggerEntry(c).Errorf("Send gift failed: %s", err.Error())
+			return err
 		}
 
 		err = tx.Save(&userSum).Error
