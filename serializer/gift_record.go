@@ -10,11 +10,13 @@ type GiftRecord struct {
 	ID     string `json:"id"`
 	UserId int64  `json:"user_id"`
 	// GiftId       int64     `json:"gift_id"`
-	GiftName     string `json:"gift_name"`
-	Quantity     int    `json:"quantity"`
-	TotalPrice   int64  `json:"total_price"`
-	LiveStreamId int64  `json:"live_stream_id"`
-	GiftTime     int64  `json:"gift_time"`
+	GiftName      string `json:"gift_name"`
+	Quantity      int    `json:"quantity"`
+	TotalPrice    int64  `json:"total_price"`
+	LiveStreamId  int64  `json:"live_stream_id"`
+	GiftTime      int64  `json:"gift_time"`
+	TransactionID string `json:"transaction_id"`
+	StreamerName  string `json:"streamer_name"`
 }
 
 type PaginatedGiftRecord struct {
@@ -41,11 +43,13 @@ func BuildPaginatedGiftRecord(a []models.GiftRecord, total, amount, win int64) (
 			ID:     uniqueId,
 			UserId: giftRecord.UserId,
 			// GiftId:       giftRecord.GiftId,
-			TotalPrice:   giftRecord.TotalPrice / 100,
-			Quantity:     giftRecord.Quantity,
-			LiveStreamId: giftRecord.LiveStreamId,
-			GiftTime:     giftRecord.CreatedAt.Unix(),
-			GiftName:     giftRecord.Gift.Name,
+			TotalPrice:    giftRecord.TotalPrice / 100,
+			Quantity:      giftRecord.Quantity,
+			LiveStreamId:  giftRecord.LiveStreamId,
+			GiftTime:      giftRecord.CreatedAt.Unix(),
+			GiftName:      giftRecord.Gift.Name,
+			StreamerName:  giftRecord.StreamerName,
+			TransactionID: giftRecord.TransactionId,
 		})
 	}
 	return
