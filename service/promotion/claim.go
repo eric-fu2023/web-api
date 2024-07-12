@@ -83,7 +83,11 @@ func Claim(c context.Context, now time.Time, promotion models.Promotion, session
 		return
 	}
 	progress = ProgressByType(c, promotion, session, userID, now)
-	reward = RewardByType(c, promotion, session, userID, progress, now)
+	reward, meetGapType, vipIncrementDetail, err := RewardByType(c, promotion, session, userID, progress, now)
+	if err != nil {
+		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		return
+	}
 	template, err = model.VoucherTemplateGetByPromotion(c, promotion.ID)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -94,7 +98,7 @@ func Claim(c context.Context, now time.Time, promotion models.Promotion, session
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("nothing_to_claim"), err)
 		return
 	}
-	voucher, err = ClaimVoucherByType(c, promotion, session, template, userID, reward, now)
+	voucher, err = ClaimVoucherByType(c, promotion, session, template, userID, reward, now, meetGapType, vipIncrementDetail)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
