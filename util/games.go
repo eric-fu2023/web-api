@@ -22,6 +22,7 @@ const (
 	IntegrationIdImOne      = ploutosmodel.GAME_INTEGRATION_IMONE
 	IntegrationIdEvo        = ploutosmodel.GAME_INTEGRATION_EVO
 	IntegrationIdNineWicket = ploutosmodel.GAME_INTEGRATION_NINEWICKETS
+	IntegrationIdMumbai     = ploutosmodel.GAME_INTEGRATION_MUMBAI
 )
 
 var (
@@ -34,6 +35,7 @@ var (
 	EvoFactory        evo.EVO
 	NineWicketFactory func() (ninewickets.ClientOperations, error)
 	ImOneFactory      func() imone.GeneralApi
+	// TODO @Seng
 )
 
 var VendorIdToGameClient = make(map[int64]gameservicecommon.TransferWalletInterface)

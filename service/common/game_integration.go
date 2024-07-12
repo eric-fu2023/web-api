@@ -18,6 +18,7 @@ var GameIntegration = map[int64]GameIntegrationInterface{
 	util.IntegrationIdImOne:      &imone.ImOne{},
 	util.IntegrationIdEvo:        evo.EVO{},
 	util.IntegrationIdNineWicket: &ninewicket.NineWicket{},
+	util.IntegrationIdMumbai:     &GameIntegrationNoop{}, // FIXME @Seng
 }
 
 // to delete if unused
