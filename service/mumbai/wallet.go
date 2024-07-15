@@ -12,7 +12,7 @@ import (
 // TransferFrom
 func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) error {
 	client, _ := util.MumbaiFactory()
-	client.CheckBalanceUser("someuser")
+	_ = client
 	return fmt.Errorf("not implemented")
 }
 
