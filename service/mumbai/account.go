@@ -1,9 +1,7 @@
-package imone
+package mumbai
 
 import (
 	"fmt"
-	"web-api/util"
-
 	"web-api/model"
 )
 
@@ -13,9 +11,7 @@ func (c *Mumbai) CreateWallet(user model.User, currency string) error {
 
 // skips duplicate error on insert.
 func (c *Mumbai) createMumbaiUserAndDbWallet(user model.User, currency string) error {
-	client, _ := util.MumbaiFactory()
-	_ = client
-	// call game service :client.LoginUser()
+
 	return fmt.Errorf("not implemented") // @Seng
 
 }
