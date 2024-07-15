@@ -1,7 +1,7 @@
 package mumbai
 
 import (
-	"fmt"
+	"strconv"
 	"web-api/model"
 	"web-api/util"
 
@@ -11,7 +11,6 @@ import (
 
 func (c *Mumbai) CreateWallet(user model.User, currency string) error {
 	// create a record for the user for mumbai game.
-
 	return model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
 		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id`).
@@ -42,5 +41,28 @@ func (c *Mumbai) CreateWallet(user model.User, currency string) error {
 }
 
 func (c *Mumbai) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, _err error) {
-	return 0, fmt.Errorf("not implemented") // @Seng
+
+	// create the client to call the web-service.
+	client, err := util.MumbaiFactory()
+
+	if err != nil {
+		return 0, err
+	}
+
+	username := c.Merchant + c.Agent + user.IdAsString()
+
+	res, err := client.CheckBalanceUser(username)
+
+	if err != nil {
+		return 0, err
+	}
+
+	// parse the money into float64 first from string (since in service it is returned as string)
+	money, err := strconv.ParseFloat(res.Result.Money, 64)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return util.MoneyInt(money), nil
 }

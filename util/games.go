@@ -37,7 +37,6 @@ var (
 	NineWicketFactory func() (ninewickets.ClientOperations, error)
 	ImOneFactory      func() imone.GeneralApi
 	MumbaiFactory     func() (mumbai.UserService, error)
-	// TODO @Seng
 )
 
 var VendorIdToGameClient = make(map[int64]gameservicecommon.TransferWalletInterface)

@@ -23,7 +23,7 @@ var GameIntegration = map[int64]GameIntegrationInterface{
 	util.IntegrationIdMumbai: &mumbai.Mumbai{
 		Merchant: os.Getenv("GAME_MUMBAI_MERCHANT_CODE"),
 		Agent:    os.Getenv("GAME_MUMBAI_AGENT_CODE"),
-	}, // FIXME @Seng
+	},
 }
 
 type GameIntegrationInterface interface {
