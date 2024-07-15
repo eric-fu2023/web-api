@@ -54,14 +54,14 @@ func (c *Mumbai) GetGameBalance(user model.User, currency, gameCode string, extr
 	res, err := client.CheckBalanceUser(username)
 
 	if err != nil {
-		return 0, err
+		return 0, ErrGetBalance
 	}
 
 	// parse the money into float64 first from string (since in service it is returned as string)
 	money, err := strconv.ParseFloat(res.Result.Money, 64)
 
 	if err != nil {
-		return 0, err
+		return 0, ErrGetBalance
 	}
 
 	return util.MoneyInt(money), nil
