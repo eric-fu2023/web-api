@@ -56,22 +56,25 @@ func BuildVip(v models.VipRecord) Vip {
 		UserID:     v.UserID,
 		AcquiredAt: v.AcquiredAt,
 		ExpireAt:   v.ExpireAt,
-		Progress:   BuildVipProgress(v.VipProgress),
+		Progress:   BuildVipProgress(v.VipProgress, v.VipRule),
 		Rule:       BuildVipRule(v.VipRule),
 	}
 }
 
-func BuildVipProgress(v models.VipProgress) VipProgress {
+func BuildVipProgress(v models.VipProgress, r models.VIPRule) VipProgress {
 
-	if v.CurrentProgress == 0 {
-		v.CurrentProgress = 1
-	}
+	v.CurrentProgress = v.CurrentProgress * 100
+	v.TotalProgress = r.TotalRequirement
+	v.TotalCashInAmount = r.TotalCashInRequirement
+	// if v.CurrentProgress == 0 {
+	// 	v.CurrentProgress = 1
+	// }
 	if v.TotalProgress == 0 {
 		v.TotalProgress = 1
 	}
-	if v.CurrentCashInAmount == 0 {
-		v.CurrentCashInAmount = 1
-	}
+	// if v.CurrentCashInAmount == 0 {
+	// 	v.CurrentCashInAmount = 1
+	// }
 	if v.TotalCashInAmount == 0 {
 		v.TotalCashInAmount = 1
 	}
