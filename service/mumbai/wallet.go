@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"web-api/model"
@@ -39,7 +38,7 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 	if err != nil {
 		return err
 	}
-	res, err := client.WithdrawUser(username, transactionNo, fmt.Sprintf("%.2f", mbBalance))
+	withdraw, err := client.WithdrawUser(username, transactionNo, fmt.Sprintf("%.2f", mbBalance))
 	if err != nil {
 		if err.Error() == string(api.ResponseCodeNotEnoughFundsError) {
 			return ErrInsufficientMumbaiWalletBalance
@@ -51,12 +50,7 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 	// if no error means we have sufficient funds to withdraw from mumbai server
 	// now we will need to update the balance in db to match with the withdraw amount.
 	// parse the money from string -> float64 -> int64
-	money, err := strconv.ParseFloat(res.Result.Money, 64)
-	moneyToInsertDB := util.MoneyInt(money)
-	if err != nil {
-		return err
-	}
-
+	moneyToInsertDB := util.MoneyInt(withdraw)
 	var sum ploutos.UserSum
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error; err != nil {
 		return err
