@@ -2,6 +2,7 @@ package mumbai
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
@@ -29,6 +30,8 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 	}
 
 	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
+
+	log.Printf("mumbai username %s", username)
 	// FIXME
 	// may need to encode
 	transactionNo := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + defaultTransactionNum
