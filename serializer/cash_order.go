@@ -84,8 +84,10 @@ type GenericCashOrder struct {
 	EffectiveAmount float64 `json:"effective_amount"`
 	OrderType       string  `json:"order_type"`
 	// Currency    string    `json:"currency"`
-	TypeDetail string  `json:"type_detail"`
-	Wager      float64 `json:"wager"`
+	TypeDetail     string  `json:"type_detail"`
+	Wager          float64 `json:"wager"`
+	ErrReasonTitle string  `json:"err_reason_title"`
+	ErrReasonDesc  string  `json:"err_reason_desc"`
 }
 
 func BuildGenericCashOrder(p model.CashOrder, i18n i18n.I18n) GenericCashOrder {
