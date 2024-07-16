@@ -1,6 +1,7 @@
 package mumbai
 
 import (
+	"fmt"
 	"web-api/model"
 	"web-api/util"
 
@@ -46,11 +47,10 @@ func (c *Mumbai) GetGameBalance(user model.User, currency, gameCode string, extr
 		return 0, err
 	}
 
-	username := c.Merchant + c.Agent + user.IdAsString()
+	username := c.Merchant + c.Agent + fmt.Sprintf("%08s", user.IdAsString())
 	balanceFloat, err := client.CheckBalanceUser(username)
 	if err != nil {
 		return 0, ErrGetBalance
 	}
-
 	return util.MoneyInt(balanceFloat), nil
 }

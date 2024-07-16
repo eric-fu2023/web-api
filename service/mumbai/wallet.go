@@ -4,10 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+
 	"web-api/model"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/game-service/mumbai/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -25,13 +28,15 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 		return err
 	}
 
-	username := c.Merchant + c.Agent + user.IdAsString()
+	username := c.Merchant + c.Agent + fmt.Sprintf("%08s", user.IdAsString())
+
+	// FIXME
+	// may need to encode
 	transactionNo := c.Merchant + defaultTransactionNum
 
 	res, err := client.WithdrawUser(username, transactionNo, defaultTransferAmount)
-
 	if err != nil {
-		if err.Error() == string(ResponseCodeNotEnoughFundsError) {
+		if err.Error() == string(api.ResponseCodeNotEnoughFundsError) {
 			return ErrInsufficientMumbaiWalletBalance
 		} else {
 			return err
@@ -43,7 +48,6 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 	// parse the money from string -> float64 -> int64
 	money, err := strconv.ParseFloat(res.Result.Money, 64)
 	moneyToInsertDB := util.MoneyInt(money)
-
 	if err != nil {
 		return err
 	}
