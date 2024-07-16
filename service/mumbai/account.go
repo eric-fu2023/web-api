@@ -2,6 +2,7 @@ package mumbai
 
 import (
 	"fmt"
+	"os"
 	"web-api/model"
 	"web-api/util"
 
@@ -20,7 +21,7 @@ func (c *Mumbai) CreateWallet(user model.User, currency string) error {
 			return
 		}
 
-		externalUserId := c.Merchant + c.Agent + user.IdAsString()
+		externalUserId := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + user.IdAsString()
 
 		for _, gameVendor := range gameVendors {
 			gvu := ploutos.GameVendorUser{
@@ -47,7 +48,7 @@ func (c *Mumbai) GetGameBalance(user model.User, currency, gameCode string, extr
 		return 0, err
 	}
 
-	username := c.Merchant + c.Agent + fmt.Sprintf("%08s", user.IdAsString())
+	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
 	balanceFloat, err := client.CheckBalanceUser(username)
 	if err != nil {
 		return 0, ErrGetBalance

@@ -2,6 +2,7 @@ package mumbai
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"web-api/model"
@@ -27,10 +28,10 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 		return err
 	}
 
-	username := c.Merchant + c.Agent + fmt.Sprintf("%08s", user.IdAsString())
+	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
 	// FIXME
 	// may need to encode
-	transactionNo := c.Merchant + defaultTransactionNum
+	transactionNo := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + defaultTransactionNum
 
 	res, err := client.WithdrawUser(username, transactionNo, defaultTransferAmount)
 	if err != nil {
@@ -92,12 +93,12 @@ func (c *Mumbai) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _
 	}
 
 	// Assuming uaerName, transactionNo, and money are defined and initialized somewhere
-	username := c.Merchant + c.Agent + fmt.Sprintf("%08s", user.IdAsString())
+	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
 
 	// Convert money to string
 	moneyStr := strconv.Itoa(int(sum.Balance))
 	fmt.Sprintf("%.4f", util.MoneyFloat(sum.Balance))
-	transactionNo := c.Merchant + defaultTransactionNum
+	transactionNo := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + defaultTransactionNum
 	_, err = client.DepositUser(username, transactionNo, moneyStr)
 	if err != nil {
 		return 0, err
