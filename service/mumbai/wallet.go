@@ -2,6 +2,7 @@ package mumbai
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -34,7 +35,11 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
 	transactionNo := generateTransactionNo(user, api.WithdrawCheckType)
 	mbBalance, err := client.CheckBalanceUser(username)
-	res, err := client.WithdrawUser(username, transactionNo, fmt.Sprintf("%.4f", mbBalance))
+	log.Printf("(c *Mumbai) TransferFrom balance %v err %v\n", mbBalance, err)
+	if err != nil {
+		return err
+	}
+	res, err := client.WithdrawUser(username, transactionNo, fmt.Sprintf("%.2f", mbBalance))
 	if err != nil {
 		if err.Error() == string(api.ResponseCodeNotEnoughFundsError) {
 			return ErrInsufficientMumbaiWalletBalance
@@ -97,8 +102,7 @@ func (c *Mumbai) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _
 	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
 
 	// Convert money to string
-	moneyStr := strconv.Itoa(int(sum.Balance))
-	fmt.Sprintf("%.4f", util.MoneyFloat(sum.Balance))
+	moneyStr := fmt.Sprintf("%.2f", util.MoneyFloat(sum.Balance))
 	transactionNo := generateTransactionNo(user, api.DepositCheckType)
 
 	_, err = client.DepositUser(username, transactionNo, moneyStr)
