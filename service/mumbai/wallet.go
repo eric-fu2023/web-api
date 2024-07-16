@@ -1,7 +1,6 @@
 package mumbai
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -29,7 +28,6 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 	}
 
 	username := c.Merchant + c.Agent + fmt.Sprintf("%08s", user.IdAsString())
-
 	// FIXME
 	// may need to encode
 	transactionNo := c.Merchant + defaultTransactionNum
@@ -79,14 +77,13 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 	return err
 }
 
-var ResponseCodeTransactionNumberExistError = errors.New("transaction number exist")
-
 func (c *Mumbai) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
-	switch {
-	case sum.Balance == 0:
+	if sum.Balance == 0 {
 		return 0, nil
-	case sum.Balance < 0:
-		return 0, ResponseCodeTransactionNumberExistError
+	}
+
+	if sum.Balance < 0 {
+		return 0, ErrInsufficientUserWalletBalance
 	}
 
 	client, err := util.MumbaiFactory()
@@ -95,20 +92,15 @@ func (c *Mumbai) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _
 	}
 
 	// Assuming uaerName, transactionNo, and money are defined and initialized somewhere
-	uaerName := "example_username"
-	transactionNo := "example_transaction_no"
-	money := 100 // example value
+	username := c.Merchant + c.Agent + fmt.Sprintf("%08s", user.IdAsString())
 
 	// Convert money to string
-	moneyStr := strconv.Itoa(money)
-
-	ptxid, err := client.DepositUser(uaerName, transactionNo, moneyStr)
+	moneyStr := strconv.Itoa(int(sum.Balance))
+	fmt.Sprintf("%.4f", util.MoneyFloat(sum.Balance))
+	transactionNo := c.Merchant + defaultTransactionNum
+	_, err = client.DepositUser(username, transactionNo, moneyStr)
 	if err != nil {
 		return 0, err
-	}
-
-	if ptxid.Code != "0" { // Assuming ptxid has a field Code indicating success or failure
-		return 0, fmt.Errorf("deposit failed with code: %s, message: %s", ptxid.Code, ptxid.Message)
 	}
 
 	transaction := ploutos.Transaction{
@@ -132,6 +124,5 @@ func (c *Mumbai) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _
 	if err != nil {
 		return 0, err
 	}
-
 	return sum.Balance, nil
 }
