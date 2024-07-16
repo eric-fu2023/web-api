@@ -14,7 +14,6 @@ const defaultPassword = "qq123456"
 
 func (c *Mumbai) GetGameUrl(user model.User, currency, tayaGameCode, tayaSubGameCode string, _ int64, extra model.Extra) (string, error) {
 	log.Printf("Mumbai GetGameUrl ... \n")
-
 	// creates the client so that we can call the login method.
 	client, err := util.MumbaiFactory()
 	if err != nil {

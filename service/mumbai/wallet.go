@@ -2,9 +2,9 @@ package mumbai
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"web-api/model"
 	"web-api/util"
@@ -18,10 +18,12 @@ import (
 
 // CURRENTLY USING HARDCODED VALUE. NOTE: WILL NEED TO CHANGE TO USE USER INPUT.
 const (
-	defaultTransactionNum = "12345678"
 	defaultTransferAmount = "50"
 )
 
+func generateTransactionNo(user model.User, mode api.TransferCheckType) string {
+	return os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + string(mode) + user.IdAsString() + fmt.Sprintf("x%x", time.Now().Unix())
+}
 func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) error {
 	// get the balance from mumbai and update the db
 	client, err := util.MumbaiFactory()
@@ -30,13 +32,9 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 	}
 
 	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
-
-	log.Printf("mumbai username %s", username)
-	// FIXME
-	// may need to encode
-	transactionNo := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + defaultTransactionNum
-
-	res, err := client.WithdrawUser(username, transactionNo, defaultTransferAmount)
+	transactionNo := generateTransactionNo(user, api.WithdrawCheckType)
+	mbBalance, err := client.CheckBalanceUser(username)
+	res, err := client.WithdrawUser(username, transactionNo, fmt.Sprintf("%.4f", mbBalance))
 	if err != nil {
 		if err.Error() == string(api.ResponseCodeNotEnoughFundsError) {
 			return ErrInsufficientMumbaiWalletBalance
@@ -101,7 +99,8 @@ func (c *Mumbai) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _
 	// Convert money to string
 	moneyStr := strconv.Itoa(int(sum.Balance))
 	fmt.Sprintf("%.4f", util.MoneyFloat(sum.Balance))
-	transactionNo := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + defaultTransactionNum
+	transactionNo := generateTransactionNo(user, api.DepositCheckType)
+
 	_, err = client.DepositUser(username, transactionNo, moneyStr)
 	if err != nil {
 		return 0, err
