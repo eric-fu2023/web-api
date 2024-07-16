@@ -1,7 +1,6 @@
 package mumbai
 
 import (
-	"strconv"
 	"web-api/model"
 	"web-api/util"
 
@@ -41,28 +40,17 @@ func (c *Mumbai) CreateWallet(user model.User, currency string) error {
 }
 
 func (c *Mumbai) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, _err error) {
-
 	// create the client to call the web-service.
 	client, err := util.MumbaiFactory()
-
 	if err != nil {
 		return 0, err
 	}
 
 	username := c.Merchant + c.Agent + user.IdAsString()
-
-	res, err := client.CheckBalanceUser(username)
-
+	balanceFloat, err := client.CheckBalanceUser(username)
 	if err != nil {
 		return 0, ErrGetBalance
 	}
 
-	// parse the money into float64 first from string (since in service it is returned as string)
-	money, err := strconv.ParseFloat(res.Result.Money, 64)
-
-	if err != nil {
-		return 0, ErrGetBalance
-	}
-
-	return util.MoneyInt(money), nil
+	return util.MoneyInt(balanceFloat), nil
 }
