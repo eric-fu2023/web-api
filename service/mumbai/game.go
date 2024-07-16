@@ -4,6 +4,7 @@ import (
 	"blgit.rfdev.tech/taya/game-service/mumbai"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"web-api/model"
 	"web-api/util"
@@ -22,6 +23,8 @@ func (c *Mumbai) GetGameUrl(user model.User, currency, tayaGameCode, tayaSubGame
 	// try to login user and if there's is an error (EX002) meaning this user has not been created yet so we call register
 	// and then login the user again to get the url.
 	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
+	log.Printf("GetGameUrl mumbai username %s", username)
+
 	res, err := client.LoginUser(username, defaultPassword, extra.Ip, tayaSubGameCode) // check for error code.
 
 	// check whether there is error
