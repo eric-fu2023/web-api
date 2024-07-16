@@ -20,12 +20,13 @@ func (s VipQuery) Get(c *gin.Context) serializer.Response {
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err)
 	}
+	currentVipRule := vip.VipRule
 	vip.VipRule, err = model.GetNextLevelVipRule(vip.VipRule)
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err)
 	}
 	return serializer.Response{
-		Data: serializer.BuildVip(vip),
+		Data: serializer.BuildVip(vip, currentVipRule),
 	}
 }
 

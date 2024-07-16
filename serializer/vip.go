@@ -50,37 +50,24 @@ type VipRule struct {
 	RetentionDepositRequirement int64   `json:"retention_deposit_requirement"`
 }
 
-func BuildVip(v models.VipRecord) Vip {
-	return Vip{
+func BuildVip(v models.VipRecord, r models.VIPRule) Vip {
+
+	vip := Vip{
 		ID:         v.ID,
 		UserID:     v.UserID,
 		AcquiredAt: v.AcquiredAt,
 		ExpireAt:   v.ExpireAt,
 		Progress:   BuildVipProgress(v.VipProgress, v.VipRule),
-		Rule:       BuildVipRule(v.VipRule),
 	}
+	vip.Rule = BuildVipRule(r)
+
+	return vip
 }
 
 func BuildVipProgress(v models.VipProgress, r models.VIPRule) VipProgress {
 
-	v.CurrentProgress = v.CurrentProgress * 100
-	v.TotalProgress = r.TotalRequirement
-	v.TotalCashInAmount = r.TotalCashInRequirement
-	// if v.CurrentProgress == 0 {
-	// 	v.CurrentProgress = 1
-	// }
-	if v.TotalProgress == 0 {
-		v.TotalProgress = 1
-	}
-	// if v.CurrentCashInAmount == 0 {
-	// 	v.CurrentCashInAmount = 1
-	// }
-	if v.TotalCashInAmount == 0 {
-		v.TotalCashInAmount = 1
-	}
-
-	wagerProgressPercentage := math.Min((float64(v.CurrentProgress) / float64(v.TotalProgress) * 100), 100)
-	cashinProgressPercentage := math.Min((float64(v.CurrentCashInAmount) / float64(v.TotalCashInAmount) * 100), 100)
+	wagerProgressPercentage := math.Min((float64(v.TotalProgress) / float64(r.TotalRequirement) * 100), 100)
+	cashinProgressPercentage := math.Min((float64(v.TotalCashInAmount) / float64(v.TotalCashInAmount) * 100), 100)
 
 	totalProgressPercentage := (math.Floor(((wagerProgressPercentage + cashinProgressPercentage) / 2) * 100)) / 100
 
