@@ -1,9 +1,11 @@
 package common
 
 import (
+	"os"
 	"web-api/model"
 	"web-api/service/evo"
 	"web-api/service/imone"
+	"web-api/service/mumbai"
 	"web-api/service/ninewicket"
 	"web-api/service/ugs"
 	"web-api/util"
@@ -18,30 +20,10 @@ var GameIntegration = map[int64]GameIntegrationInterface{
 	util.IntegrationIdImOne:      &imone.ImOne{},
 	util.IntegrationIdEvo:        evo.EVO{},
 	util.IntegrationIdNineWicket: &ninewicket.NineWicket{},
-}
-
-// to delete if unused
-type GameIntegrationNoop struct {
-}
-
-func (g GameIntegrationNoop) CreateWallet(user model.User, s string) error {
-	return nil
-}
-
-func (g GameIntegrationNoop) TransferFrom(db *gorm.DB, user model.User, s string, s2 string, i int64, extra model.Extra) error {
-	return nil
-}
-
-func (g GameIntegrationNoop) TransferTo(db *gorm.DB, user model.User, sum ploutos.UserSum, s string, s2 string, i int64, extra model.Extra) (int64, error) {
-	return 0, nil
-}
-
-func (g GameIntegrationNoop) GetGameUrl(user model.User, s string, s2 string, s3 string, i int64, extra model.Extra) (string, error) {
-	return "gameintegration/url", nil
-}
-
-func (g GameIntegrationNoop) GetGameBalance(user model.User, s string, s2 string, extra model.Extra) (int64, error) {
-	return 0, nil
+	util.IntegrationIdMumbai: &mumbai.Mumbai{
+		Merchant: os.Getenv("GAME_MUMBAI_MERCHANT_CODE"),
+		Agent:    os.Getenv("GAME_MUMBAI_AGENT_CODE"),
+	},
 }
 
 type GameIntegrationInterface interface {
