@@ -115,7 +115,7 @@ func GetSums(tx *gorm.DB, gpu ploutos.GameVendorUser) (balance int64, remainingW
 }
 
 func ProcessTransaction(obj CallbackInterface) (err error) {
-	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelSerializable})
 	if tx.Error != nil {
 		err = tx.Error
 		return
