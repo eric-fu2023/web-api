@@ -565,6 +565,7 @@ vip_promo: "VIP升级礼金"
 vip_weekly:  "VIP每周红包"
 vip_rebate:  "VIP场馆返水"
 vip_referral: "VIP共赢奖励"
+cash_method_promotion: "支付渠道奖励"
 
 system_adjust: "系统调整"
 game_adjust: "游戏调整"
