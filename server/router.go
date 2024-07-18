@@ -230,7 +230,7 @@ func NewRouter() *gin.Engine {
 			referralAlliance.GET("rankings", middleware.CheckAuth(), referral_alliance_api.GetRankings)
 		}
 
-		v1.GET("/gifts", api.GiftList)
+		v1.GET("/gifts", middleware.Cache(1*time.Minute, false), api.GiftList)
 
 		auth := v1.Group("/user")
 		{
