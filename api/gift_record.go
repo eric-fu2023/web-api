@@ -13,7 +13,8 @@ func GiftSend(c *gin.Context) {
 	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
 		res, err := service.Handle(c)
 		if err != nil {
-			c.JSON(500, serializer.Err(c, "", 50000, err.Error(), err))
+			c.JSON(400, ErrorResponse(c, service, err))
+			return
 		}
 		c.JSON(200, res)
 	} else {
@@ -27,6 +28,7 @@ func GiftRecordList(c *gin.Context) {
 		res, err := service.List(c)
 		if err != nil {
 			c.JSON(500, serializer.Err(c, "", 50000, err.Error(), err))
+			return
 		}
 		c.JSON(200, res)
 	} else {

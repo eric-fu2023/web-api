@@ -72,13 +72,13 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 		userSum, _ = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, tx)
 		// userSum.MaxWithdrawable -= giftRecord.TotalPrice
 
-		if userSum.Balance < 0 {
-			util.GetLoggerEntry(c).Errorf("User balance not enough")
-			return errors.New("user balance not enough")
-		}
-
 		balanceBefore := userSum.Balance
 		balanceAfter := userSum.Balance - giftRecord.TotalPrice
+
+		if balanceAfter < 0 {
+			util.GetLoggerEntry(c).Errorf("余额不足")
+			return errors.New("余额不足")
+		}
 
 		giftRecord.BalanceBefore = balanceBefore
 		giftRecord.BalanceAfter = balanceAfter
@@ -121,7 +121,7 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 
 	if err != nil {
 		return serializer.Response{
-			Msg: i18n.T("failed"),
+			Msg: "余额不足",
 		}, err
 	}
 
