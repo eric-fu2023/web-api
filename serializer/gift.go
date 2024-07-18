@@ -10,7 +10,7 @@ type Gift struct {
 	IsAnimated bool   `json:"is_animated"`
 	// IconUrl      string `json:"icon_url"`
 	// AnimationUrl string `json:"animation_url"`
-	Price int64 `json:"price"`
+	Price float64 `json:"price"`
 }
 
 func BuildGift(a []models.Gift) (b []Gift) {
@@ -19,7 +19,7 @@ func BuildGift(a []models.Gift) (b []Gift) {
 			ID:         gift.ID,
 			Name:       gift.Name,
 			IsAnimated: gift.IsAnimated,
-			Price:      gift.Price / 100,
+			Price:      float64(gift.Price) / float64(100),
 		})
 	}
 	return
