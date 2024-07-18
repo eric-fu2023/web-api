@@ -66,6 +66,14 @@ func BuildVip(v models.VipRecord, r models.VIPRule) Vip {
 
 func BuildVipProgress(v models.VipProgress, r models.VIPRule) VipProgress {
 
+	if r.TotalRequirement == 0 {
+		r.TotalRequirement = 1
+	}
+
+	if r.TotalCashInRequirement == 0 {
+		r.TotalCashInRequirement = 1
+	}
+
 	wagerProgressPercentage := math.Min((float64(v.TotalProgress) / float64(r.TotalRequirement) * 100), 100)
 	cashinProgressPercentage := math.Min((float64(v.TotalCashInAmount) / float64(r.TotalCashInRequirement) * 100), 100)
 
