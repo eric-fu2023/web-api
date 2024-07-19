@@ -27,7 +27,7 @@ const (
 	birthdayBonusRewardCacheKey = "birthday_bonus_reward_cache_key:%d"
 )
 
-func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward int64) {
+func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward, meetGapType int64, vipIncrementDetail models.VipIncrementDetail, err error) {
 	switch p.Type {
 	case models.PromotionTypeVipBirthdayB:
 		err := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
@@ -42,7 +42,12 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 	case models.PromotionTypeVipReferral:
 		reward = rewardVipReferral(c, userID, now)
 	default:
-		reward = p.GetRewardDetails().GetReward(progress)
+		var vip models.VipRecord
+		vip, err = model.GetVipWithDefault(c, userID)
+		if err != nil {
+			return
+		}
+		reward, meetGapType, vipIncrementDetail = p.GetRewardDetails().GetReward(progress, vip.VipRule.VIPLevel)
 	}
 	return
 }
@@ -118,8 +123,8 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 	return
 }
 
-func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, userID int64, rewardAmount int64, now time.Time) (voucher models.Voucher, err error) {
-	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, now)
+func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, userID int64, rewardAmount int64, now time.Time, meetGapType int64, vipIncrementDetail models.VipIncrementDetail) (voucher models.Voucher, err error) {
+	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, now, meetGapType, vipIncrementDetail)
 	lang := model.GetUserLang(userID)
 
 	switch p.Type {
@@ -281,7 +286,7 @@ func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange i
 	return nil
 }
 
-func CraftVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, rewardAmount, userID int64, now time.Time) (voucher models.Voucher) {
+func CraftVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, rewardAmount, userID int64, now time.Time, meetGapType int64, vipIncrementDetail models.VipIncrementDetail) (voucher models.Voucher) {
 	endAt := earlier(v.EndAt, v.GetExpiryTimeStamp(now, p.Timezone))
 	status := models.VoucherStatusReady
 	isUsable := false
@@ -330,6 +335,12 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		// ReferenceType
 		// ReferenceID
 		// TransactionID
+		MeetGapType:         meetGapType,
+		IncludeVipIncrement: vipIncrementDetail.IncludeVipIncrement,
+		UserVipLevel:        vipIncrementDetail.UserVipLevel,
+		VipIncrementType:    vipIncrementDetail.VipIncrementType,
+		VipIncrementValue:   vipIncrementDetail.VipIncrementValue,
+		VipIncrementAmount:  vipIncrementDetail.VipIncrementAmount,
 	}
 	voucher.FillUniqueID(suffix)
 	return

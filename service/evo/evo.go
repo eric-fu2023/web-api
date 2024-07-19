@@ -57,7 +57,7 @@ func (e EVO) GetGameUrl(user model.User, currency, gameCode, subGameCode string,
 	currentTimeMillisString := strconv.FormatInt(currentTimeMillis, 10)
 	response := callback.GetGameURLResponse{}
 	if subGameCode != "0" {
-		response, err = client.GetGameUrl(uuid, extra.Locale, user.IdAsString(), currency, user.IdAsString()+"_"+currentTimeMillisString, extra.Ip, subGameCode)
+		response, err = client.GetGameUrl(uuid, extra.Locale, user.IdAsString(), currency, user.IdAsString()+"_"+currentTimeMillisString, extra.Ip, subGameCode, callback.PlayModeRewardGames)
 	} else {
 		response, err = client.GetGameLobbyUrl(uuid, extra.Locale, user.IdAsString(), currency, user.IdAsString()+"_"+currentTimeMillisString, extra.Ip)
 	}
@@ -65,8 +65,8 @@ func (e EVO) GetGameUrl(user model.User, currency, gameCode, subGameCode string,
 	if err != nil {
 		log.Printf("Error getting evo game url, err: %v ", err.Error())
 	}
-	url = os.Getenv("GAME_EVO_HOST") + response.EntryEmebedded
 
+	url = os.Getenv("GAME_EVO_HOST") + response.EntryEmebedded
 	return url, err
 }
 

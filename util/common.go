@@ -30,7 +30,7 @@ func RandStringRunes(n int) string {
 	return string(b)
 }
 
-func AesEncrypt(str []byte) (string, error) {
+func AesCFBModeEncrypt(str []byte) (string, error) {
 	key := []byte(os.Getenv("ENCRYPT_KEY"))
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -46,7 +46,7 @@ func AesEncrypt(str []byte) (string, error) {
 	return base64.RawStdEncoding.EncodeToString(ciphertext), nil
 }
 
-func AesDecrypt(str string) (string, error) {
+func AesCFBModeDecrypt(str string) (string, error) {
 	key := []byte(os.Getenv("ENCRYPT_KEY"))
 	ciphertext, err := base64.RawStdEncoding.DecodeString(str)
 	if err != nil {

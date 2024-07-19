@@ -230,6 +230,8 @@ func NewRouter() *gin.Engine {
 			referralAlliance.GET("rankings", middleware.CheckAuth(), referral_alliance_api.GetRankings)
 		}
 
+		v1.GET("/gifts", middleware.Cache(1*time.Minute, false), api.GiftList)
+
 		auth := v1.Group("/user")
 		{
 			userWithoutBrand := auth.Group("")
@@ -284,6 +286,9 @@ func NewRouter() *gin.Engine {
 				user.GET("/vip-status", api.VipGet)
 				user.GET("/vip-rebate-details", middleware.Cache(5*time.Minute, false), api.VipLoadRebateRule)
 				user.GET("/vip-referral-alliance-reward-details", middleware.Cache(5*time.Minute, false), api.VipLoadReferralAllianceRewardRule)
+
+				user.POST("/gift-send", middleware.CheckAuth(), api.GiftSend)
+				user.GET("/gift-records", middleware.CheckAuth(), api.GiftRecordList)
 
 				taya := user.Group("/taya")
 				{

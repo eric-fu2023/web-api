@@ -44,6 +44,7 @@ func Init() {
 	util.InitImOneFactory()
 	util.InitEvoFactory()
 	util.InitNineWicketsFactory()
+	util.InitMumbaiFactory()
 	util.InitFCMFactory()
 	model.InitShengWang()
 

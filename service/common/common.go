@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"web-api/conf"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -113,7 +115,7 @@ func GetSums(tx *gorm.DB, gpu ploutos.GameVendorUser) (balance int64, remainingW
 }
 
 func ProcessTransaction(obj CallbackInterface) (err error) {
-	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelSerializable})
 	if tx.Error != nil {
 		err = tx.Error
 		return
@@ -401,6 +403,40 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 						MaxWithdrawable: float64(userSum.MaxWithdrawable) / 100,
 					}
 					msg.Send(conn)
+				}
+			},
+		})
+	}()
+}
+
+func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftName string, isGiftAnimated bool, avatar string, nickname string, liveStreamId int64, message string, vipId int64, totalPrice int64) {
+	go func() {
+		conn := websocket.Connection{}
+		conn.Connect(os.Getenv("WS_URL"), os.Getenv("WS_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
+			func(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					msg := websocket.RoomMessage{
+						Room:           fmt.Sprintf(`stream:%d`, liveStreamId),
+						Message:        message + giftName + " " + strconv.Itoa(giftQuantity) + " x ",
+						UserId:         userId,
+						UserType:       consts.ChatUserType["user"],
+						Nickname:       nickname,
+						Avatar:         avatar,
+						Type:           consts.WebSocketMessageType["gift"],
+						GiftId:         giftId,
+						GiftQuantity:   giftQuantity,
+						GiftName:       giftName,
+						IsAnimated:     isGiftAnimated,
+						VipId:          vipId,
+						TotalGiftPrice: totalPrice,
+					}
+					if e := msg.Send(conn); e != nil {
+						cancelFunc()
+						return
+					}
 				}
 			},
 		})

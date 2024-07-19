@@ -19,6 +19,12 @@ type RoomMessage struct {
 	Type      int64  `json:"type"`
 	IsHistory bool   `json:"is_history"`
 	VipId     int64  `json:"vip_id"`
+
+	GiftId         int64  `json:"gift_id,omitempty"`
+	GiftQuantity   int    `json:"gift_quantity,omitempty"`
+	GiftName       string `json:"gift_name,omitempty"`
+	TotalGiftPrice int64  `json:"total_gift_price,omitempty"`
+	IsAnimated     bool   `json:"is_animated,omitempty"`
 }
 
 func (a RoomMessage) Send(conn *Connection) (err error) {

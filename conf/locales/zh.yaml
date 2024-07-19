@@ -565,6 +565,7 @@ vip_promo: "VIP升级礼金"
 vip_weekly:  "VIP每周红包"
 vip_rebate:  "VIP场馆返水"
 vip_referral: "VIP共赢奖励"
+cash_method_promotion: "支付渠道奖励"
 
 system_adjust: "系统调整"
 game_adjust: "游戏调整"
@@ -628,3 +629,5 @@ chat_welcome_message: "欢迎光临！ 享受与他人的实时互动。 请保�
 chat_welcome_name: "系统"
 
 invalid_username: "账号注册格式错误"
+
+send_de: "发送的"

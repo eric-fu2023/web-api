@@ -24,14 +24,14 @@ func EncryptMobileAndEmail() {
 			defer wg.Done()
 			var toUpdate bool
 			if user.MobileHash == "" && user.Mobile != "" {
-				if enc, e := util.AesEncrypt([]byte(user.Mobile)); e == nil {
+				if enc, e := util.AesCFBModeEncrypt([]byte(user.Mobile)); e == nil {
 					user.MobileHash = util.MobileEmailHash(string(user.Mobile))
 					user.Mobile = ploutos.EncryptedStr(enc)
 					toUpdate = true
 				}
 			}
 			if user.EmailHash == "" && user.Email != "" {
-				if enc, e := util.AesEncrypt([]byte(user.Email)); e == nil {
+				if enc, e := util.AesCFBModeEncrypt([]byte(user.Email)); e == nil {
 					user.EmailHash = util.MobileEmailHash(string(user.Email))
 					user.Email = ploutos.EncryptedStr(enc)
 					toUpdate = true

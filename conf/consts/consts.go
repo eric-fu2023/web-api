@@ -19,6 +19,7 @@ var (
 		7:  OrderTypeTopup,
 		8:  OrderTypeTopup,
 		9:  OrderTypeTopup,
+		10: OrderTypeTopup,
 	}
 	OrderTypeDetailMap = map[int64]string{
 		-1: OrderTypeWithdraw,
@@ -31,6 +32,7 @@ var (
 		7:  OrderTypeVipWeekly,
 		8:  OrderTypeVipRebate,
 		9:  OrderTypeVipReferral,
+		10: OrderTypeVipCashMethodPromotion,
 	}
 	OrderOperationTypeDetailMap = map[int64]string{
 		1000: OrderOperationTypeSystemAdjust,
@@ -99,6 +101,7 @@ var (
 		"join":       7,
 		"typing":     100,
 		"empty":      101,
+		"gift":       10,
 	}
 	UserRole = map[string]int64{
 		"user":      1,
@@ -438,6 +441,7 @@ const (
 	OrderTypeVipWeekly                          = "vip_weekly"
 	OrderTypeVipRebate                          = "vip_rebate"
 	OrderTypeVipReferral                        = "vip_referral"
+	OrderTypeVipCashMethodPromotion             = "cash_method_promotion"
 	OrderOperationTypeSystemAdjust              = "system_adjust"
 	OrderOperationTypeGameAdjust                = "game_adjust"
 	OrderOperationTypeCashInAdjust              = "cash_in_adjust"

@@ -565,6 +565,7 @@ vip_promo: "VIP Promotion Bonus"
 vip_weekly:  "VIP Weekly Bonus"
 vip_rebate:  "VIP Rebate Bonus"
 vip_referral: "VIP Referral Bonus"
+cash_method_promotion: "Cash Method Promotion"
 
 system_adjust: "System Adjust"
 game_adjust: "Game Adjust"
@@ -628,3 +629,5 @@ chat_welcome_message: "Welcome! Enjoy real-time interaction with others. Please 
 chat_welcome_name: "System"
 
 invalid_username: "Invalid Username."
+
+send_de: "Sent"

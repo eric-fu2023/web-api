@@ -48,3 +48,10 @@ func GetDefaultVip() (models.VIPRule, error) {
 	err := DB.Where("is_active").Order("vip_level").First(&vipRule).Error
 	return vipRule, err
 }
+
+func GetNextLevelVipRule(r models.VIPRule) (models.VIPRule, error) {
+	var vipRule models.VIPRule
+	vipLevel := r.VIPLevel + 1
+	err := DB.Where("vip_level", vipLevel).First(&vipRule).Error
+	return vipRule, err
+}

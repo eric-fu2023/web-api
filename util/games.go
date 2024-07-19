@@ -11,6 +11,7 @@ import (
 	"blgit.rfdev.tech/taya/game-service/fb"
 	"blgit.rfdev.tech/taya/game-service/imone"
 	"blgit.rfdev.tech/taya/game-service/imsb"
+	"blgit.rfdev.tech/taya/game-service/mumbai"
 	"blgit.rfdev.tech/taya/game-service/ninewickets"
 	"blgit.rfdev.tech/taya/game-service/saba"
 	"blgit.rfdev.tech/taya/game-service/ugs"
@@ -22,6 +23,7 @@ const (
 	IntegrationIdImOne      = ploutosmodel.GAME_INTEGRATION_IMONE
 	IntegrationIdEvo        = ploutosmodel.GAME_INTEGRATION_EVO
 	IntegrationIdNineWicket = ploutosmodel.GAME_INTEGRATION_NINEWICKETS
+	IntegrationIdMumbai     = ploutosmodel.GAME_INTEGRATION_MUMBAI
 )
 
 var (
@@ -34,6 +36,7 @@ var (
 	EvoFactory        evo.EVO
 	NineWicketFactory func() (ninewickets.ClientOperations, error)
 	ImOneFactory      func() imone.GeneralApi
+	MumbaiFactory     func() (mumbai.UserService, error)
 )
 
 var VendorIdToGameClient = make(map[int64]gameservicecommon.TransferWalletInterface)
@@ -121,4 +124,16 @@ func InitNineWicketsFactory() {
 	exchHost := os.Getenv("GAME_NINE_WICKETS_EX_HOST")
 
 	NineWicketFactory = ninewickets.NewClientFactory(cert, initPrivateDomain, website, apiServerHost, exchHost, agentId, true)
+}
+
+func InitMumbaiFactory() {
+	domain := os.Getenv("GAME_MUMBAI_DOMAIN")
+	merchantCode := os.Getenv("GAME_MUMBAI_MERCHANT_CODE")
+	agentCode := os.Getenv("GAME_MUMBAI_AGENT_CODE")
+	apiKey := os.Getenv("GAME_MUMBAI_API_KEY")
+	modeName := os.Getenv("GAME_MUMBAI_MODE_NAME")
+
+	MumbaiFactory = func() (mumbai.UserService, error) {
+		return mumbai.NewUserService(domain, merchantCode, agentCode, apiKey, modeName)
+	}
 }

@@ -73,7 +73,7 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 	if loggedIn {
 		progress = ProgressByType(c, promotion, session, user.ID, now)
 		claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
-		reward = RewardByType(c, promotion, session, user.ID, progress, now)
+		reward, _, _, err = RewardByType(c, promotion, session, user.ID, progress, now)
 		extra = ExtraByType(c, promotion, session, user.ID, progress, now)
 	}
 	if claimStatus.HasClaimed {

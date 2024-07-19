@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"math"
 	"time"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
@@ -17,12 +18,13 @@ type Vip struct {
 }
 
 type VipProgress struct {
-	ID              int64 `json:"id"`
-	UserID          int64 `json:"user_id"`
-	TotalProgress   int64 `json:"total_progress"`
-	CurrentProgress int64 `json:"current_progress"`
-	TotalDeposit    int64 `json:"total_deposit"`
-	CurrentDeposit  int64 `json:"current_deposit"`
+	ID                   int64   `json:"id"`
+	UserID               int64   `json:"user_id"`
+	TotalProgress        int64   `json:"total_progress"`
+	CurrentProgress      int64   `json:"current_progress"`
+	TotalDeposit         int64   `json:"total_deposit"`
+	CurrentDeposit       int64   `json:"current_deposit"`
+	VIPProgessPercantage float64 `json:"vip_progress_percentage"`
 }
 
 type VipRule struct {
@@ -48,25 +50,43 @@ type VipRule struct {
 	RetentionDepositRequirement int64   `json:"retention_deposit_requirement"`
 }
 
-func BuildVip(v models.VipRecord) Vip {
-	return Vip{
+func BuildVip(v models.VipRecord, r models.VIPRule) Vip {
+
+	vip := Vip{
 		ID:         v.ID,
 		UserID:     v.UserID,
 		AcquiredAt: v.AcquiredAt,
 		ExpireAt:   v.ExpireAt,
-		Progress:   BuildVipProgress(v.VipProgress),
-		Rule:       BuildVipRule(v.VipRule),
+		Progress:   BuildVipProgress(v.VipProgress, v.VipRule),
 	}
+	vip.Rule = BuildVipRule(r)
+
+	return vip
 }
 
-func BuildVipProgress(v models.VipProgress) VipProgress {
+func BuildVipProgress(v models.VipProgress, r models.VIPRule) VipProgress {
+
+	if r.TotalRequirement == 0 {
+		r.TotalRequirement = 1
+	}
+
+	if r.TotalCashInRequirement == 0 {
+		r.TotalCashInRequirement = 1
+	}
+
+	wagerProgressPercentage := math.Min((float64(v.TotalProgress) / float64(r.TotalRequirement) * 100), 100)
+	cashinProgressPercentage := math.Min((float64(v.TotalCashInAmount) / float64(r.TotalCashInRequirement) * 100), 100)
+
+	totalProgressPercentage := (math.Floor(((wagerProgressPercentage + cashinProgressPercentage) / 2) * 100)) / 100
+
 	return VipProgress{
-		ID:              v.ID,
-		UserID:          v.UserID,
-		TotalProgress:   v.TotalProgress / 100,
-		CurrentProgress: v.CurrentProgress / 100,
-		TotalDeposit:    v.TotalCashInAmount / 100,
-		CurrentDeposit:  v.CurrentCashInAmount / 100,
+		ID:                   v.ID,
+		UserID:               v.UserID,
+		TotalProgress:        v.TotalProgress / 100,
+		CurrentProgress:      v.CurrentProgress / 100,
+		TotalDeposit:         v.TotalCashInAmount / 100,
+		CurrentDeposit:       v.CurrentCashInAmount / 100,
+		VIPProgessPercantage: totalProgressPercentage,
 	}
 
 }

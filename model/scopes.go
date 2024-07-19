@@ -2,10 +2,11 @@ package model
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"strings"
 	"time"
 	"web-api/conf/consts"
+
+	"gorm.io/gorm"
 )
 
 func GameVendorUserByVendorAndExternalUser(vendor int64, userId string) func(db *gorm.DB) *gorm.DB {
@@ -252,4 +253,24 @@ func ByCreatedAtGreaterThan(time time.Time) func(db *gorm.DB) *gorm.DB {
 
 func GameVendorUserDefaultJoinAndPreload(db *gorm.DB) *gorm.DB {
 	return db.InnerJoins(`GameVendor`).Preload(`GameVendor.GameVendorBrand`)
+}
+
+func ByActiveGifts(status bool) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(`status`, status)
+	}
+}
+
+func ByOrderGiftRecordListConditions(userId int64, start time.Time, end time.Time) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		db.Where(`user_id`, userId)
+		if !start.IsZero() && !end.IsZero() {
+			db.Where(`created_at >= ?`, start).Where(`created_at <= ?`, end)
+		}
+		return db
+	}
+}
+
+func ByGiftRecordSort(db *gorm.DB) *gorm.DB {
+	return db.Order(`created_at DESC`)
 }
