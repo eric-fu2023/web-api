@@ -76,8 +76,8 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 		balanceAfter := userSum.Balance - giftRecord.TotalPrice
 
 		if balanceAfter < 0 {
-			util.GetLoggerEntry(c).Errorf("余额不足")
-			return errors.New("余额不足")
+			util.GetLoggerEntry(c).Errorf(i18n.T("insufficient_balance"))
+			return errors.New(i18n.T("insufficient_balance"))
 		}
 
 		giftRecord.BalanceBefore = balanceBefore
@@ -121,8 +121,8 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 
 	if err != nil {
 		return serializer.Response{
-			Msg: "余额不足",
-		}, err
+			Msg: i18n.T("insufficient_balance"),
+		}, errors.New(i18n.T("insufficient_balance"))
 	}
 
 	common.SendGiftSocketMessage(user.ID, gift.ID, service.Quantity, gift.Name, gift.IsAnimated, service.AvatarUrl, user.Nickname, service.LiveStreamId, i18n.T("send_de"), service.VipId, giftRecord.TotalPrice/100)
