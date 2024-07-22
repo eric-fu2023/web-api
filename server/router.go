@@ -199,8 +199,10 @@ func NewRouter() *gin.Engine {
 		v1.GET("/game_categories", middleware.Cache(5*time.Minute, false), game_integration_api.GameCategoryList)
 		v1.GET("/sub_games", middleware.Cache(5*time.Minute, false), game_integration_api.SubGames)
 
-		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute, false), promotion_api.GetCoverList)
-		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
+		// v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Second, false), promotion_api.GetCoverList)
+		v1.GET("/promotion/list", middleware.CheckAuth(), promotion_api.GetCoverList)
+		// v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
+		v1.GET("/promotion/details", middleware.CheckAuth(), promotion_api.GetDetail)
 		v1.GET("/promotion/categories", middleware.CheckAuth(), middleware.Cache(5*time.Minute, false), promotion_api.GetCategoryList)
 
 		v1.GET("/rtc_token", middleware.CheckAuth(), api.RtcToken)
@@ -346,8 +348,10 @@ func NewRouter() *gin.Engine {
 
 				promotion := user.Group("/promotion")
 				{
-					promotion.GET("/list", middleware.Cache(5*time.Minute, false), promotion_api.GetCoverList)
+					// promotion.GET("/list", middleware.Cache(5*time.Minute, false), promotion_api.GetCoverList)
+					promotion.GET("/list", promotion_api.GetCoverList)
 					promotion.GET("/details", middleware.RequestLogger("get promotion details"), promotion_api.GetDetail)
+					promotion.GET("/custom-details", middleware.RequestLogger("get custom promotion details"), promotion_api.GetCustomDetail)
 					promotion.POST("/claim", middleware.RequestLogger("promotion claim"), promotion_api.PromotionClaim)
 				}
 

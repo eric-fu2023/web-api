@@ -17,6 +17,11 @@ func PromotionGetActive(c context.Context, brandID int, promotionID int64, now t
 	return
 }
 
+func PromotionGetSubActive(c context.Context, brandID int, promotionID int64, now time.Time) (p []models.Promotion, err error) {
+	err = DB.Debug().WithContext(c).Where("brand_id = ? or brand_id = 0", brandID).Where("is_active").Where("parent_id", promotionID).Scopes(Ongoing(now, "start_at", "end_at")).Find(&p).Error
+	return
+}
+
 func PromotionGetActiveNoBrand(c context.Context, promotionID int64, now time.Time) (p models.Promotion, err error) {
 	err = DB.Debug().WithContext(c).Where("is_active").Where("id", promotionID).Scopes(Ongoing(now, "start_at", "end_at")).First(&p).Error
 	return
@@ -27,3 +32,17 @@ func PromotionGetActivePassive(c context.Context, brandID int, now time.Time) (p
 		Where("brand_id = ? or brand_id = 0", brandID).Where("is_active").Where("type in ?", models.PassivePromotionType()).Scopes(Ongoing(now, "start_at", "end_at")).Find(&p).Error
 	return
 }
+
+// Find Success ONLY entry (Return Id = 0 if Rejected / Pending)
+// func FindJoinCustomPromotionEntry(c context.Context, brandID int, promotionID int64) (entry models.PromotionRequest, err error) {
+// 	err = DB.WithContext(c).Where("brand_id = ? or brand_id = 0", brandID).Where("is_active").Not("is_hide").Where("status = 2").First(&entry).Error
+// 	return
+// }
+
+// func CreateJoinCustomPromotion(request models.PromotionRequest) (err error) {
+// 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+// 		err = tx.Create(&request).Error
+// 		return
+// 	})
+// 	return
+// }

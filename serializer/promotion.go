@@ -22,6 +22,9 @@ type PromotionCover struct {
 	Label                  int64           `json:"label"`
 	IsVipAssociated        bool            `json:"is_vip_associated"`
 	DisplayOnly            bool            `json:"display_only"`
+	ParentId               int64           `json:"parent_id"`
+
+	ChildrenPromotions []PromotionCover `json:"children_promotions"`
 }
 
 type PromotionDetail struct {
@@ -45,6 +48,8 @@ type PromotionDetail struct {
 	IsVipAssociated        bool              `json:"is_vip_associated"`
 	DisplayOnly            bool              `json:"display_only"`
 	Extra                  any               `json:"extra"`
+
+	IsCustom bool `json:"is_custom"`
 }
 
 type ClaimStatus struct {
@@ -103,6 +108,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 		Label:                  p.Label,
 		IsVipAssociated:        p.VipAssociated,
 		DisplayOnly:            p.DisplayOnly,
+		ParentId:               p.ParentId,
 	}
 }
 
@@ -165,3 +171,7 @@ func buildPromotionTier(rewardTier models.TierdReward) RewardTier {
 	}
 	return p
 }
+
+// func BuildJoinCustomPromotionRequest(p PromotionJoin, request models.PromotionRequest) {
+
+// }
