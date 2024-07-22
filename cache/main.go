@@ -3,10 +3,11 @@ package cache
 import (
 	"context"
 	"errors"
-	"github.com/chenyahui/gin-cache/persist"
 	"os"
 	"strconv"
 	"web-api/util"
+
+	"github.com/chenyahui/gin-cache/persist"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/go-redsync/redsync/v4"
@@ -25,6 +26,7 @@ var RedisStore *persist.RedisStore
 var RedisLockClient *redsync.Redsync
 var RedisConfigClient *redis.Client
 var RedisRecentGamesClient *redis.Client
+var RedisGeolocationClient *redis.Client
 
 func Redis() {
 	db, _ := strconv.ParseUint(os.Getenv("REDIS_DB"), 10, 64)
@@ -140,4 +142,20 @@ func RedisRecentGames() {
 	}
 
 	RedisRecentGamesClient = client
+}
+
+func RedisGeolocation() {
+	db, _ := strconv.ParseUint(os.Getenv("REDIS_GEOLOCATION_DB"), 10, 64)
+	client := redis.NewClient(&redis.Options{
+		Addr:       os.Getenv("REDIS_ADDR"),
+		Password:   os.Getenv("REDIS_PW"),
+		DB:         int(db),
+		MaxRetries: 1,
+	})
+
+	if _, err := client.Ping(context.TODO()).Result(); err != nil {
+		util.Log().Panic("Fail to connect to REDIS_GEOLOCATION_DB", err)
+	}
+
+	RedisGeolocationClient = client
 }
