@@ -13,12 +13,12 @@ import (
 const defaultPassword = "qq123456"
 
 func (c *Mumbai) GetGameUrl(user model.User, currency, tayaGameCode, tayaSubGameCode string, _ int64, extra model.Extra) (string, error) {
-	log.Printf("Mumbai GetGameUrl ... \n")
 	// creates the client so that we can call the login method.
 	client, err := util.MumbaiFactory()
 	if err != nil {
 		return "", err
 	}
+	log.Printf("Mumbai GetGameUrl ... GAME_MUMBAI_MODE_NAME %s client %#v \n", os.Getenv("GAME_MUMBAI_MODE_NAME"), client)
 
 	// try to login user and if there's is an error (EX002) meaning this user has not been created yet so we call register
 	// and then login the user again to get the url.
