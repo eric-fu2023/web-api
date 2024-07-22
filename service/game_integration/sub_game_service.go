@@ -21,8 +21,8 @@ type SubGameService struct {
 var gameTypeOrdering = map[string]int{
 	"LIVE":   0,
 	"FLASH":  1,
-	"BOARD":  2,
-	"SPRIBE": 3,
+	"SPRIBE": 2,
+	"BOARD":  3,
 	"SLOTS":  4,
 	"TABLE":  5,
 }
