@@ -426,6 +426,7 @@ var (
 
 const (
 	CorrelationHeader                           = "X-Correlation-ID"
+	ClientIpHeader                              = "X-Forwarded-For"
 	LogKey                                      = "logger"
 	CorrelationKey                              = "correlation_id"
 	StdTimeFormat                               = "2006-01-02 15:04:05"
