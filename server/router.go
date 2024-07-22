@@ -140,14 +140,19 @@ func NewRouter() *gin.Engine {
 	// middlewares order can't be changed
 	r.Use(middleware.Cors())
 	r.GET("/ts", api.Ts)
+	// geolocations
+	r.GET("/v1/geolocation", api.GeolocationGet)
+	r.POST("/v1/geolocation", api.GeolocationCreate)
+	// payment
 	r.GET("/finpay_redirect", api.FinpayRedirect)
 	r.POST("/finpay_redirect", api.FinpayRedirect)
-	captcha := r.Group("/captcha")
-	{
-		captcha.POST("/get", api.CaptchaGet)
-		captcha.POST("/check", api.CaptchaCheck)
-	}
+	// captcha := r.Group("/captcha")
+	// {
+	// 	captcha.POST("/get", api.CaptchaGet)
+	// 	captcha.POST("/check", api.CaptchaCheck)
+	// }
 
+	// all APIs below will be encrypted
 	r.Use(middleware.EncryptPayload())
 	r.Use(middleware.CheckSignature())
 	r.Use(middleware.Ip())
