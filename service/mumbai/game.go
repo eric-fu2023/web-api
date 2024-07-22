@@ -26,27 +26,26 @@ func (c *Mumbai) GetGameUrl(user model.User, currency, tayaGameCode, tayaSubGame
 	log.Printf("Mumbai GetGameUrl mumbai username %s \n", username)
 
 	res, err := client.LoginUser(username, defaultPassword, extra.Ip, tayaSubGameCode) // check for error code.
-
-	// check whether there is error
 	if err != nil {
 		// check is it error with status code (EX002 - no account) , if yes then register new user.
 		if errors.Is(err, mumbai.ErrAccountNotFound) {
+			log.Printf("Mumbai GetGameUrl mumbai username %s not found. registering... \n", username)
 			// register new user.
 			_, regErr := client.RegisterUser(username, defaultPassword, extra.Ip)
 			if regErr != nil {
+				log.Printf("Mumbai GetGameUrl mumbai username %s not found. register fail err: %v \n", username, regErr)
 				return "", regErr
 			}
 			// successfully register, and now login in the user again to get the url.
 			loginResp, loginErr := client.LoginUser(username, defaultPassword, extra.Ip, tayaSubGameCode) // check for error code.
 			if loginErr != nil {
-				return "", nil
+				log.Printf("Mumbai GetGameUrl mumbai username %s not found. register success and login fail err: %v\n", username, loginErr)
+				return "", loginErr
 			}
 			return loginResp.Result.GameCenterAddress, nil
 		}
 		return "", err
 	}
 
-	// if no error meaning login successful , hence just return the url to front end.
 	return res.Result.GameCenterAddress, nil
-
 }
