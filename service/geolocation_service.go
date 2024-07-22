@@ -1,7 +1,9 @@
 package service
 
 import (
-	"fmt"
+	"log"
+	"strings"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -44,16 +46,40 @@ func (service *CreateGeolocationService) Create(c *gin.Context) serializer.Respo
 	}
 }
 
-type GetGeolocationService struct {
-	Key string `form:"key" json:"key"`
+type GetGeolocationService struct{}
+
+type Geolocation struct {
+	IpAddress   string `json:"ip_address"`
+	CountryCode string `json:"country_code"`
+	CountryName string `json:"country_name"`
+	Region      string `json:"region,omitempty"`
+	City        string `json:"city,omitempty"`
+	Zipcode     string `json:"zipcode,omitempty"`
 }
 
 func (service *GetGeolocationService) Get(c *gin.Context) serializer.Response {
-	for k, v := range c.Request.Header {
-		fmt.Printf("Header field %q, Value %q\n", k, v)
+	geolocation := Geolocation{
+		IpAddress:   retrieveClientIp(c),
+		CountryCode: "SG",
+		CountryName: "Singapore",
+		Region:      "Singapore",
+		City:        "Singapore",
+		Zipcode:     "999999",
 	}
-	fmt.Printf("Header field %q, Value %q\n", "remoteAddress", c.Request.RemoteAddr)
+
 	return serializer.Response{
-		Msg: "success",
+		Msg:  "success",
+		Data: geolocation,
 	}
+}
+
+func retrieveClientIp(c *gin.Context) string {
+	clientIpStr := c.Request.Header.Get(consts.ClientIpHeader)
+	if len(clientIpStr) > 0 {
+		clientIps := strings.Split(clientIpStr, ",")
+		return strings.TrimSpace(clientIps[0])
+	}
+	// fallback IP
+	log.Printf("Cannot retrieve %s from header, using fallback IP instead", consts.ClientIpHeader)
+	return "219.75.27.16"
 }
