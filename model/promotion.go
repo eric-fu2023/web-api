@@ -5,6 +5,7 @@ import (
 	"time"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+	"gorm.io/gorm"
 )
 
 func PromotionList(c context.Context, brandID int, now time.Time) (list []models.Promotion, err error) {
@@ -17,6 +18,11 @@ func PromotionGetActive(c context.Context, brandID int, promotionID int64, now t
 	return
 }
 
+func PromotionGetSubActive(c context.Context, brandID int, promotionID int64, now time.Time) (p []models.Promotion, err error) {
+	err = DB.Debug().WithContext(c).Where("brand_id = ? or brand_id = 0", brandID).Where("is_active").Where("parent_id", promotionID).Scopes(Ongoing(now, "start_at", "end_at")).Find(&p).Error
+	return
+}
+
 func PromotionGetActiveNoBrand(c context.Context, promotionID int64, now time.Time) (p models.Promotion, err error) {
 	err = DB.Debug().WithContext(c).Where("is_active").Where("id", promotionID).Scopes(Ongoing(now, "start_at", "end_at")).First(&p).Error
 	return
@@ -26,4 +32,57 @@ func PromotionGetActivePassive(c context.Context, brandID int, now time.Time) (p
 	err = DB.Debug().WithContext(c).Joins("JOIN promotion_sessions ON promotion_sessions.promotion_id = promotions.id AND promotion_sessions.start_at < ? AND promotion_sessions.end_at > ?", now, now).
 		Where("brand_id = ? or brand_id = 0", brandID).Where("is_active").Where("type in ?", models.PassivePromotionType()).Scopes(Ongoing(now, "start_at", "end_at")).Find(&p).Error
 	return
+}
+
+// Find Success ONLY entry (Return Id = 0 if Rejected / Pending)
+// func FindJoinCustomPromotionEntry(c context.Context, brandID int, promotionID int64) (entry models.PromotionRequest, err error) {
+// 	err = DB.WithContext(c).Where("brand_id = ? or brand_id = 0", brandID).Where("is_active").Not("is_hide").Where("status = 2").First(&entry).Error
+// 	return
+// }
+
+func CreateJoinCustomPromotion(request models.PromotionRequest) (err error) {
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = tx.Create(&request).Error
+		return
+	})
+	return
+}
+
+func CheckIfCustomPromotionEntryExceededLimit(c context.Context, entryLimitType, promotionId, userId int64, x int) (isExceeded bool, err error) {
+	var list []models.PromotionRequest
+	err = DB.Debug().WithContext(c).Where("status = 2 OR status = 1").Where("promotion_id", promotionId).Where("user_id", userId).Scopes(CustomPromotionEntryLimit(entryLimitType)).Find(&list).Error
+
+	if err != nil || len(list) >= x {
+		isExceeded = true
+	}
+
+	return
+}
+
+func CustomPromotionEntryLimit(entryLimitType int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		now := time.Now().UTC()
+
+		switch entryLimitType {
+
+		// case models.CustomPromotionClickLimit:
+		// 	// Find Promotion Request to Check Total Entry Limit
+		// 	return db.Where("promotion_id = ?", promotionId)
+		case models.CustomPromotionClickDailyLimit:
+			// Find Promotion Request to Check Current Day Entry Limit
+			today := now.Format("2006-01-02")
+			return db.Where("DATE(created_at) = ?", today)
+		case models.CustomPromotionClickWeeklyLimit:
+			// Find Promotion Request to Check Current Week Entry Limit
+			_, week := now.ISOWeek()
+			return db.Where("WEEK(created_at, 1) = ?", week)
+		case models.CustomPromotionClickMonthlyLimit:
+			// Find Promotion Request to Check Current Month Entry Limit
+			month := now.Format("2006-01")
+			return db.Where("DATE_FORMAT(created_at, '%Y-%m') = ?", month)
+		default:
+			// No Constraint
+			return db
+		}
+	}
 }
