@@ -23,6 +23,7 @@ type PromotionCover struct {
 	IsVipAssociated        bool            `json:"is_vip_associated"`
 	DisplayOnly            bool            `json:"display_only"`
 	ParentId               int64           `json:"parent_id"`
+	IsCustom               bool            `json:"is_custom"`
 
 	ChildrenPromotions []PromotionCover `json:"children_promotions"`
 }

@@ -52,6 +52,7 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 	for i, promotionCover := range promotionCoverList {
 		childrenPromotions, exists := parentIdToPromotionMap[promotionCover.ID]
 		if exists {
+			promotionCoverList[i].IsCustom = true
 			promotionCoverList[i].ChildrenPromotions = childrenPromotions
 		}
 	}
@@ -121,9 +122,12 @@ type PromotionCustomDetail struct {
 func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, err error) {
 	now := time.Now()
 	brand := c.MustGet(`_brand`).(int)
-	// u, loggedIn := c.Get("user")
-	// user, _ := u.(model.User)
+	u, _ := c.Get("user")
+	user, _ := u.(model.User)
 	// deviceInfo, _ := util.GetDeviceInfo(c)
+
+	var parentPromotion models.Promotion
+	var childPromotion models.Promotion
 
 	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
 	if err != nil {
@@ -132,115 +136,80 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 	}
 
 	outgoingRes := serializer.OutgoingCustomPromotionDetail{}
-	if promotion.ParentId != 0 {
-		var parentPromotion models.Promotion
-		parentPromotion, err = model.PromotionGetActive(c, brand, promotion.ParentId, now)
-		if err != nil {
-			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
-			return
-		}
-		outgoingRes.ParentInfo.Id = parentPromotion.ID
-		outgoingRes.ParentInfo.Name = parentPromotion.Name
-		promotionImages := serializer.IncomingPromotionImages{}
-		err = json.Unmarshal([]byte(parentPromotion.Image), &promotionImages)
-		if err != nil {
-			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
-			return
-		}
-		outgoingRes.ParentInfo.Images = promotionImages
 
-		var content serializer.IncomingPromotionMatchList
-
-		err = json.Unmarshal(promotion.SubpageContent, &content)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		promotionPage := serializer.CustomPromotionPage{
-			Title:       promotion.Name,
-			PromotionId: promotion.ID,
-		}
-
-		// joinEntry := model.FindJoinPromotionEntry()
-		promotionPage.Desc = content.Desc
-
-		customPromotionPageItem := serializer.BuildPromotionMatchList(content.List, promotion)
-		promotionPage.PageItemList = customPromotionPageItem
-
-		incomingRequestAction := serializer.IncomingPromotionRequestAction{}
-		err = json.Unmarshal(promotion.Action, &incomingRequestAction)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		outgoingRequestAction := serializer.BuildPromotionAction(incomingRequestAction)
-		promotionPage.Action = outgoingRequestAction
-
-		outgoingRes.PromotionInfo = promotionPage
-		outgoingRes.ChildrenPromotionIds = make([]int, 0)
+	if promotion.ParentId == 0 {
+		parentPromotion = promotion
 	} else {
-		outgoingRes.ParentInfo.Id = promotion.ID
-		outgoingRes.ParentInfo.Name = promotion.Name
-		promotionImages := serializer.IncomingPromotionImages{}
-		err = json.Unmarshal([]byte(promotion.Image), &promotionImages)
-		if err != nil {
-			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
-			return
-		}
-		outgoingRes.ParentInfo.Images = promotionImages
+		parentPromotion, err = model.PromotionGetActive(c, brand, promotion.ParentId, now)
+		childPromotion = promotion
+	}
 
-		subPromotions, err := model.PromotionGetSubActive(c, brand, p.ID, now)
+	outgoingRes.ParentInfo = serializer.IncomingPromotion{
+		Id:   parentPromotion.ID,
+		Name: parentPromotion.Name,
+	}
+	parentImages := serializer.IncomingPromotionImages{}
+	err = json.Unmarshal([]byte(promotion.Image), &parentImages)
+	if err != nil {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		return
+	}
+	outgoingRes.ParentInfo.Images = parentImages
+
+	if childPromotion.ID == 0 {
+		// IS PARENT
+		subPromotions, err := model.PromotionGetSubActive(c, brand, parentPromotion.ID, now)
 		if err != nil {
 			fmt.Println(err)
 		}
 
 		for _, subPromo := range subPromotions {
-			outgoingRes.ChildrenPromotionIds = append(outgoingRes.ChildrenPromotionIds, int(subPromo.ID))
+			outgoingRes.ChildrenPromotions = append(outgoingRes.ChildrenPromotions, serializer.OutgoingCustomPromotionPreview{
+				Id:    subPromo.ID,
+				Title: subPromo.Name,
+			})
 		}
+	} else {
+		// IS CHILD
+		var content serializer.IncomingPromotionMatchList
+
+		err = json.Unmarshal(childPromotion.SubpageContent, &content)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		promotionPage := serializer.CustomPromotionPage{
+			Title:       childPromotion.Name,
+			PromotionId: childPromotion.ID,
+		}
+
+		switch content.ListType {
+		case "matches":
+			promotionPage.PageItemListType = models.CustomPromotionTypeMatch
+		case "game_vendor_brand":
+			promotionPage.PageItemListType = models.CustomPromotionTypeGame
+		default:
+			promotionPage.PageItemListType = models.CustomPromotionTypeOthers
+		}
+
+		promotionPage.Desc = content.Desc
+
+		customPromotionPageItem := serializer.BuildPromotionMatchList(content.List, childPromotion)
+		promotionPage.PageItemList = customPromotionPageItem
+
+		incomingRequestAction := serializer.IncomingPromotionRequestAction{}
+		err = json.Unmarshal(childPromotion.Action, &incomingRequestAction)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		outgoingRequestAction := serializer.BuildPromotionAction(c, incomingRequestAction, childPromotion.ID, user.ID)
+		promotionPage.Action = outgoingRequestAction
+
+		outgoingRes.PromotionInfo = promotionPage
+		outgoingRes.ChildrenPromotions = make([]serializer.OutgoingCustomPromotionPreview, 0)
 	}
 
 	r.Data = outgoingRes
-	return
-
-	// if isCustom {
-
-	// 	promotionDetail := &serializer.CustomPromotionDetail{
-	// 		Pages: make([]serializer.CustomPromotionPage, 0),
-	// 	}
-
-	// 	for _, subPromotion := range subPromotions {
-	// 		var content serializer.IncomingPromotionMatchList
-
-	// 		err = json.Unmarshal(subPromotion.SubpageContent, &content)
-	// 		if err != nil {
-	// 			fmt.Println(err)
-	// 		}
-
-	// 		promotionPage := serializer.CustomPromotionPage{
-	// 			Title:       subPromotion.Name,
-	// 			PromotionId: subPromotion.ID,
-	// 		}
-
-	// 		// joinEntry := model.FindJoinPromotionEntry()
-	// 		promotionPage.Desc = content.Desc
-
-	// 		customPromotionPageItem := serializer.BuildPromotionMatchList(content.List, subPromotion)
-	// 		promotionPage.PageItemList = customPromotionPageItem
-
-	// 		incomingRequestAction := serializer.IncomingPromotionRequestAction{}
-	// 		err = json.Unmarshal(subPromotion.Action, &incomingRequestAction)
-	// 		if err != nil {
-	// 			fmt.Println(err)
-	// 		}
-
-	// 		outgoingRequestAction := serializer.BuildPromotionAction(incomingRequestAction)
-	// 		promotionPage.Action = outgoingRequestAction
-
-	// 		promotionDetail.Pages = append(promotionDetail.Pages, promotionPage)
-	// 	}
-
-	// 	r.Data = promotionDetail
-
-	// }
 	return
 }

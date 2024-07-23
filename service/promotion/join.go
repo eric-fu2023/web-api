@@ -1,58 +1,74 @@
 package promotion
 
 import (
+	"encoding/json"
+	"fmt"
+	"time"
+	"web-api/model"
 	"web-api/serializer"
+	"web-api/util/i18n"
+
+	models "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 )
 
 type PromotionJoin struct {
-	ID     int64                  `form:"id" json:"id"`
-	UserId int64                  `json:"user_id"`
-	Input  []PromotionJoinRequest `form:"input" json:"input"`
-}
-type PromotionJoinRequest struct {
-	InputKey   string `form:"input_key" json:"input_key"`
-	InputValue string `form:"input_value" json:"input_value"`
+	PromotionId int64                  `form:"promotion_id" json:"promotion_id"`
+	Input       map[string]interface{} `form:"input" json:"input"`
 }
 
 func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error) {
-	// now := time.Now().UTC()
-	// brand := c.MustGet(`_brand`).(int)
-	// user := c.MustGet("user").(model.User)
+	now := time.Now().UTC()
+	brand := c.MustGet(`_brand`).(int)
+	user := c.MustGet("user").(model.User)
 	// deviceInfo, _ := util.GetDeviceInfo(c)
-	// i18n := c.MustGet("i18n").(i18n.I18n)
+	i18n := c.MustGet("i18n").(i18n.I18n)
 
-	// p.UserId = user.ID
+	promotion, err := model.PromotionGetActive(c, brand, p.PromotionId, now)
+	if err != nil {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_not_found"), err)
+		return
+	}
+	incomingRequestAction := serializer.IncomingPromotionRequestAction{}
+	err = json.Unmarshal(promotion.Action, &incomingRequestAction)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	// // Insert into DB
+	isExceeded := false
+	for _, field := range incomingRequestAction.Fields {
+		if field.Type == "input-button" {
+			isExceeded, err = serializer.ParseButtonClickOption(c, field, p.PromotionId, user.ID)
+			if err != nil {
+				r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)
+				return
+			}
+		}
+	}
 
-	// // Get Ploustos Object
-	// joinEntry, _ := model.FindJoinCustomPromotionEntry(c, brand, p.ID)
+	if isExceeded {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_exceed"), err)
+		return
+	}
 
-	// // If joinEntry status is Rejected / Pending
-	// if joinEntry.Id == 0 {
-	// 	// request := parseIncomingPromotionJoin(p)
-	// 	request := PromotionJoin{
-	// 		ID: 81,
-	// 	}
-	// 	request.Input = append(request.Input, PromotionJoinRequest{})
-	// 	data := make(map[string]interface{})
+	jsonInput, _ := json.Marshal(p.Input)
 
-	// 	data["TestKey"] = "TestValue"
-	// 	data["How are you?"] = "I'm Fine"
-	// 	data["我谁?"] = "你Fine"
+	request := models.PromotionRequest{
+		PromotionId:  p.PromotionId,
+		UserId:       user.ID,
+		Status:       1, // Pending
+		InputDetails: jsonInput,
+	}
 
-	// 	jsonData, _ := json.Marshal(data)
-	// 	fmt.Println(string(jsonData))
-	// 	joinRecord := model.CreateJoinCustomPromotion(request)
-	// }
+	err = model.CreateJoinCustomPromotion(request)
 
-	// r.Data = nil
+	if err != nil {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)
+		return
+	}
+
+	r.Data = nil
 
 	return
 }
-
-// func parseIncomingPromotionJoin(p PromotionJoin) (request models.PromotionRequest) {
-
-// }

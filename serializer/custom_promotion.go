@@ -2,11 +2,15 @@ package serializer
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	model "web-api/model"
+
 	models "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 type IncomingPromotion struct {
@@ -67,9 +71,14 @@ type IncomingCustomPromotionRequestField struct {
 }
 
 type OutgoingCustomPromotionDetail struct {
-	ParentInfo           IncomingPromotion   `json:"parent_info"`
-	PromotionInfo        CustomPromotionPage `json:"promotion_info,omitempty"`
-	ChildrenPromotionIds []int               `json:"children_promotion_ids"`
+	ParentInfo         IncomingPromotion                `json:"parent_info"`
+	PromotionInfo      CustomPromotionPage              `json:"promotion_info,omitempty"`
+	ChildrenPromotions []OutgoingCustomPromotionPreview `json:"children_promotions"`
+}
+
+type OutgoingCustomPromotionPreview struct {
+	Id    int64  `json:"id"`
+	Title string `json:"title"`
 }
 
 type CustomPromotionDetail struct {
@@ -128,7 +137,7 @@ type CustomPromotionRequestField struct {
 	Weightage   int                              `json:"weightage,omitempty"`
 	Text        string                           `json:"text,omitempty"`
 	Options     []CustomPromotionRequestDropdown `json:"options"`
-	IntegerOnly bool                             `json:"integer_only,omitempty"`
+	IntegerOnly bool                             `json:"integer_only"`
 	ErrorMsg    string                           `json:"error_msg"`
 }
 
@@ -209,7 +218,7 @@ func BuildPromotionMatchList(incoming []IncomingPromotionMatchListItem, subPromo
 	return
 }
 
-func BuildPromotionAction(incoming IncomingPromotionRequestAction) (res CustomPromotionRequest) {
+func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestAction, promotionId int64, userId int64) (res CustomPromotionRequest) {
 
 	res.Title = incoming.Title
 
@@ -226,6 +235,16 @@ func BuildPromotionAction(incoming IncomingPromotionRequestAction) (res CustomPr
 
 		if requestField.Type == "button" {
 			requestField.Text = requestField.Title
+
+			isExceeded, err := ParseButtonClickOption(c, incomingField, promotionId, userId)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			res.IsSubmitted = isExceeded
+			if res.IsSubmitted {
+				res.Title = "感谢您的参与！"
+			}
 		}
 
 		if requestField.Type == "dropdown" {
@@ -244,7 +263,32 @@ func BuildPromotionAction(incoming IncomingPromotionRequestAction) (res CustomPr
 			requestField.Options = make([]CustomPromotionRequestDropdown, 0)
 		}
 
+		if requestField.Type == "keyin" {
+			contentTypeOption, _ := strconv.Atoi(incomingField.ContentType)
+			switch int64(contentTypeOption) {
+			case models.CustomPromotionTextboxOnlyInt:
+				requestField.IntegerOnly = true
+			}
+		}
+
 		res.Fields = append(res.Fields, requestField)
+	}
+
+	return
+}
+
+func ParseButtonClickOption(c *gin.Context, incoming IncomingCustomPromotionRequestField, promotionId, userId int64) (isExceeded bool, err error) {
+
+	buttonClickOption, _ := strconv.Atoi(incoming.MaxClick)
+	entryLimitType := int64(buttonClickOption)
+	if incoming.X == "" {
+		incoming.X = "0"
+	}
+	buttonClickTimes, _ := strconv.Atoi(incoming.X)
+
+	isExceeded, err = model.CheckIfCustomPromotionEntryExceededLimit(c, entryLimitType, promotionId, userId, buttonClickTimes)
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	return

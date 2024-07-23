@@ -5,6 +5,7 @@ import (
 	"time"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+	"gorm.io/gorm"
 )
 
 func PromotionList(c context.Context, brandID int, now time.Time) (list []models.Promotion, err error) {
@@ -39,10 +40,49 @@ func PromotionGetActivePassive(c context.Context, brandID int, now time.Time) (p
 // 	return
 // }
 
-// func CreateJoinCustomPromotion(request models.PromotionRequest) (err error) {
-// 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-// 		err = tx.Create(&request).Error
-// 		return
-// 	})
-// 	return
-// }
+func CreateJoinCustomPromotion(request models.PromotionRequest) (err error) {
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = tx.Create(&request).Error
+		return
+	})
+	return
+}
+
+func CheckIfCustomPromotionEntryExceededLimit(c context.Context, entryLimitType, promotionId, userId int64, x int) (isExceeded bool, err error) {
+	var list []models.PromotionRequest
+	err = DB.Debug().WithContext(c).Where("status = 2 OR status = 1").Where("promotion_id", promotionId).Where("user_id", userId).Scopes(CustomPromotionEntryLimit(entryLimitType)).Find(&list).Error
+
+	if err != nil || len(list) >= x {
+		isExceeded = true
+	}
+
+	return
+}
+
+func CustomPromotionEntryLimit(entryLimitType int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		now := time.Now().UTC()
+
+		switch entryLimitType {
+
+		// case models.CustomPromotionClickLimit:
+		// 	// Find Promotion Request to Check Total Entry Limit
+		// 	return db.Where("promotion_id = ?", promotionId)
+		case models.CustomPromotionClickDailyLimit:
+			// Find Promotion Request to Check Current Day Entry Limit
+			today := now.Format("2006-01-02")
+			return db.Where("DATE(created_at) = ?", today)
+		case models.CustomPromotionClickWeeklyLimit:
+			// Find Promotion Request to Check Current Week Entry Limit
+			_, week := now.ISOWeek()
+			return db.Where("WEEK(created_at, 1) = ?", week)
+		case models.CustomPromotionClickMonthlyLimit:
+			// Find Promotion Request to Check Current Month Entry Limit
+			month := now.Format("2006-01")
+			return db.Where("DATE_FORMAT(created_at, '%Y-%m') = ?", month)
+		default:
+			// No Constraint
+			return db
+		}
+	}
+}
