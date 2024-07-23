@@ -22,13 +22,7 @@ func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user, _ := u.(model.User)
-	// deviceInfo, _ := util.GetDeviceInfo(c)
-	deviceInfo := util.DeviceInfo{
-		Platform: "ios",
-		Uuid:     "100001",
-		Version:  "",
-		Channel:  "",
-	}
+	deviceInfo, _ := util.GetDeviceInfo(c)
 
 	vip, err := model.GetVipWithDefault(c, user.ID)
 	if err != nil {
