@@ -84,6 +84,15 @@ func MapSlice[T any, M any](a []T, f func(T) M) []M {
 	return n
 }
 
+func FindOrDefault[T any](a []T, f func(T) bool) (n T) {
+	for _, e := range a {
+		if f(e) {
+			return e
+		}
+	}
+	return n
+}
+
 func JSON(jsonObj any) string {
 	bytes, _ := json.Marshal(jsonObj)
 	return string(bytes)

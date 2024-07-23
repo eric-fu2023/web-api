@@ -2,7 +2,6 @@ package cashin
 
 import (
 	"context"
-	"math"
 	"strconv"
 	"time"
 	"web-api/model"
@@ -114,35 +113,23 @@ func HandleCashMethodPromotion(c context.Context, order model.CashOrder) {
 	util.GetLoggerEntry(c).Info("HandleCashMethodPromotion cashMethodPromotion.ID", cashMethodPromotion.ID) // wl: for staging debug
 
 	// check over payout limit or not
-	now := time.Now()
-	weeklyAmount, err := model.AggreCashMethodPromotionRecordAmountByCashMethodIdAndUserId(order.CashMethodId, order.UserId, now.AddDate(0, 0, -7), now, nil)
+	weeklyAmountRecord, dailyAmountRecord, err := model.GetWeeklyAndDailyCashMethodPromotionRecord(c, order.CashMethodId, order.UserId)
+	if cashMethodPromotion.ID == 0 {
+		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion no CashMethodPromotion", order.ID)
+		return
+	}
+	var weeklyAmount int64
+	if len(weeklyAmountRecord) > 0 {
+		weeklyAmount = weeklyAmountRecord[0].Amount
+	}
+	var dailyAmount int64
+	if len(dailyAmountRecord) > 0 {
+		dailyAmount = dailyAmountRecord[0].Amount
+	}
+	amount, err := model.GetMaxCashMethodPromotionAmount(c, weeklyAmount, dailyAmount, cashMethodPromotion, order.UserId, order.ActualCashInAmount, false)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion AggreCashMethodPromotionRecordAmountByCashMethodIdAndUserId", order.ID)
-		return
+		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetMaxAmountPayment", err, order.ID)
 	}
-	dailyAmount, err := model.AggreCashMethodPromotionRecordAmountByCashMethodIdAndUserId(order.CashMethodId, order.UserId, now.AddDate(0, 0, -1), now, nil)
-	if err != nil {
-		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion AggreCashMethodPromotionRecordAmountByCashMethodIdAndUserId", order.ID)
-		return
-	}
-	util.GetLoggerEntry(c).Info("HandleCashMethodPromotion weeklyAmount", weeklyAmount, order.CashMethodId, order.UserId, now.AddDate(0, 0, -7), now, order.ID) // wl: for staging debug
-	util.GetLoggerEntry(c).Info("HandleCashMethodPromotion dailyAmount", dailyAmount, order.CashMethodId, order.UserId, now.AddDate(0, 0, -1), now, order.ID)   // wl: for staging debug
-	if weeklyAmount >= cashMethodPromotion.WeeklyMaxPayout {
-		util.GetLoggerEntry(c).Info("HandleCashMethodPromotion weeklyAmount >= cashMethodPromotion.WeeklyMaxPayout", weeklyAmount, cashMethodPromotion.WeeklyMaxPayout, order.ID)
-		return
-	}
-	if dailyAmount >= cashMethodPromotion.DailyMaxPayout {
-		util.GetLoggerEntry(c).Info("HandleCashMethodPromotion dailyAmount >= cashMethodPromotion.DailyMaxPayout", dailyAmount, cashMethodPromotion.DailyMaxPayout, order.ID)
-		return
-	}
-
-	oriAmount := cashMethodPromotion.PayoutRate * float64(order.ActualCashInAmount)
-	maxDailyPayoutRemaining := float64(cashMethodPromotion.DailyMaxPayout - dailyAmount)
-	maxWeeklyPayoutRemaining := float64(cashMethodPromotion.WeeklyMaxPayout - weeklyAmount)
-
-	amount := int64(math.Min(oriAmount, maxDailyPayoutRemaining))
-	amount = int64(math.Min(float64(amount), maxWeeklyPayoutRemaining))
-	util.GetLoggerEntry(c).Info("HandleCashMethodPromotion get min amount", oriAmount, maxDailyPayoutRemaining, maxWeeklyPayoutRemaining, amount, order.ID) // wl: for staging debug
 
 	// cashMethodPromotion start
 	err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
