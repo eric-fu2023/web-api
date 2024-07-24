@@ -36,7 +36,7 @@ func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform st
 	}
 
 	now := time.Now().UTC()
-	q = q.Joins("CashMethodPromotion", DB.Where("CashMethodPromotion.start_at < ? and CashMethodPromotion.end_at > ?", now, now).Where("CashMethodPromotion.status = ?", 1).Where("CashMethodPromotion.vip_id = ?", vipID))
+	q = q.Joins("CashMethodPromotion", DB.Where("\"CashMethodPromotion\".start_at < ? and \"CashMethodPromotion\".end_at > ?", now, now).Where("\"CashMethodPromotion\".status = ?", 1).Where("\"CashMethodPromotion\".vip_id = ?", vipID))
 
 	err = q.Order("sort desc").Find(&t).Error
 	for i := range t {
