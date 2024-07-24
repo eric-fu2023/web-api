@@ -132,6 +132,7 @@ func NewRouter() *gin.Engine {
 		internal.POST("/withdraw-order/reject", middleware.RequestLogger("internal"), internal_api.RejectWithdrawal)
 		internal.POST("/withdraw-order/approve", middleware.RequestLogger("internal"), internal_api.ApproveWithdrawal)
 		internal.POST("/withdraw-order/insert", middleware.RequestLogger("internal"), internal_api.CustomOrder)
+		internal.POST("/withdraw-order/manual-approve", middleware.RequestLogger("internal"), internal_api.ManualCloseCashOut)
 		internal.PUT("/recall", middleware.RequestLogger("internal"), api.InternalRecallFund)
 		internal.POST("/promotions/batch-claim", middleware.RequestLogger("internal"), internal_api.InternalPromotion)
 		internal.POST("/promotions/custom", middleware.RequestLogger("internal"), internal_api.InternalPromotionRequest)
@@ -351,9 +352,9 @@ func NewRouter() *gin.Engine {
 				{
 					promotion.GET("/list", middleware.Cache(1*time.Minute, false), promotion_api.GetCoverList)
 					promotion.GET("/details", middleware.RequestLogger("get promotion details"), promotion_api.GetDetail)
-					promotion.GET("/custom-details", middleware.RequestLogger("get custom promotion details"), promotion_api.GetCustomDetail)
+					// promotion.GET("/custom-details", middleware.RequestLogger("get custom promotion details"), promotion_api.GetCustomDetail)
 					promotion.POST("/claim", middleware.RequestLogger("promotion claim"), promotion_api.PromotionClaim)
-					promotion.POST("/join", middleware.RequestLogger("promotion join"), promotion_api.PromotionJoin)
+					// promotion.POST("/join", middleware.RequestLogger("promotion join"), promotion_api.PromotionJoin)
 				}
 
 				voucher := user.Group("/voucher")

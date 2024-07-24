@@ -65,6 +65,47 @@ func (s CashOutOrderService) Approve(c *gin.Context) (r serializer.Response, err
 	return
 }
 
+type ManualCloseOrderService struct {
+	OrderNumber string `form:"order_number" json:"order_number" binding:"required"`
+}
+
+func (s ManualCloseOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
+	var cashOrder model.CashOrder
+	err = model.DB.Debug().Preload("UserAccountBinding").Where("id", s.OrderNumber).
+		Where("review_status", 2).
+		Where("status", models.CashOrderStatusPendingApproval).
+		First(&cashOrder).Error
+	if err != nil {
+		r = serializer.EnsureErr(c, err, r)
+		return
+	}
+
+	tx := model.DB.Begin()
+	_, err = cashout.CloseCashOutOrder(c, s.OrderNumber, int64(cashOrder.AppliedCashOutAmount), 0, 0, util.JSON(s), "", tx)
+	if err != nil {
+		tx.Rollback()
+		r = serializer.EnsureErr(c, err, r)
+		return
+	}
+	cashOrder.IsManualCashOut = true
+
+	err = tx.Debug().Select("IsManualCashOut").Updates(&cashOrder).Error
+	if err != nil {
+		tx.Rollback()
+		r = serializer.EnsureErr(c, err, r)
+		return
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		tx.Rollback()
+		r = serializer.EnsureErr(c, err, r)
+		return
+	}
+
+	return
+}
+
 // type CloseCashOutOrderService struct {
 // 	OrderNumber  string `form:"order_number" json:"order_number" binding:"required"`
 // 	ActualAmount int64  `form:"actual_amount" json:"actual_amount" binding:"required"`
