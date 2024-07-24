@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql"
 	"errors"
+	"time"
 	"web-api/conf/consts"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -22,24 +23,24 @@ type UserAccountBinding struct {
 func (UserAccountBinding) GetAccountByUser(c *gin.Context, userID, vipID int64) (list []UserAccountBinding, err error) {
 	// user := c.MustGet("user").(User)
 
-	// q := DB.Joins("CashMethod").
-	// 	Where("user_account_binding.user_id", userID).
-	// 	Where("user_account_binding.is_active").
-	// 	Order("user_account_binding.id desc")
+	q := DB.Joins("CashMethod").
+		Where("user_account_binding.user_id", userID).
+		Where("user_account_binding.is_active").
+		Order("user_account_binding.id desc")
 
 	// var restrictPaymentChannel []int64 = user.RestrictPaymentChannel
 	// if len(restrictPaymentChannel) != 0 {
 	// 	q = q.Where("\"CashMethod\".id NOT IN ?", restrictPaymentChannel)
 	// }
 
-	// now := time.Now().UTC()
-	// q = q.Joins("CashMethod.CashMethodPromotion", DB.
-	// 	Where("\"CashMethod__CashMethodPromotion\".start_at < ? and \"CashMethod__CashMethodPromotion\".end_at > ?", now, now).
-	// 	Where("\"CashMethod__CashMethodPromotion\".status = ?", 1).
-	// 	Where("\"CashMethod__CashMethodPromotion\".vip_id = ?", vipID),
-	// )
+	now := time.Now().UTC()
+	q = q.Joins("CashMethod.CashMethodPromotion", DB.
+		Where("\"CashMethod__CashMethodPromotion\".start_at < ? and \"CashMethod__CashMethodPromotion\".end_at > ?", now, now).
+		Where("\"CashMethod__CashMethodPromotion\".status = ?", 1).
+		Where("\"CashMethod__CashMethodPromotion\".vip_id = ?", vipID),
+	)
 
-	// err = q.Find(&list).Error
+	err = q.Find(&list).Error
 	return
 }
 
