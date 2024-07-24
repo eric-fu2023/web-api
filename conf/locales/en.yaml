@@ -631,3 +631,7 @@ chat_welcome_name: "System"
 invalid_username: "Invalid Username."
 
 send_de: "Sent"
+
+custom_promotion_not_found: "Promotion Not Found."
+custom_promotion_entry_exceed: "Promotion Entry Exceeded Limit."
+custom_promotion_entry_fail: "Promotion Entry Failed."
