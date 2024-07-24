@@ -140,7 +140,12 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 	if promotion.ParentId == 0 {
 		parentPromotion = promotion
 	} else {
+		outgoingRes.IsCustomPromotion = true
 		parentPromotion, err = model.PromotionGetActive(c, brand, promotion.ParentId, now)
+		if err != nil {
+			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+			return
+		}
 		childPromotion = promotion
 	}
 
@@ -164,6 +169,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		}
 
 		for _, subPromo := range subPromotions {
+			outgoingRes.IsCustomPromotion = true
 			outgoingRes.ChildrenPromotions = append(outgoingRes.ChildrenPromotions, serializer.OutgoingCustomPromotionPreview{
 				Id:    subPromo.ID,
 				Title: subPromo.Name,
