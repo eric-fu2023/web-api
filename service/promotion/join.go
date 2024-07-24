@@ -14,8 +14,12 @@ import (
 )
 
 type PromotionJoin struct {
-	PromotionId int64                  `form:"promotion_id" json:"promotion_id"`
-	Input       map[string]interface{} `form:"input" json:"input"`
+	PromotionId int64  `form:"promotion_id" json:"promotion_id"`
+	Input       string `form:"input" json:"input"`
+}
+
+type PromotionJoinError struct {
+	ErrorFields []int64 `json:"error_fields"`
 }
 
 func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error) {
@@ -24,6 +28,8 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 	user := c.MustGet("user").(model.User)
 	// deviceInfo, _ := util.GetDeviceInfo(c)
 	i18n := c.MustGet("i18n").(i18n.I18n)
+
+	var errorFields []int64
 
 	promotion, err := model.PromotionGetActive(c, brand, p.PromotionId, now)
 	if err != nil {
@@ -52,7 +58,14 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 		return
 	}
 
-	jsonInput, _ := json.Marshal(p.Input)
+	var requestInput map[string]interface{}
+	err = json.Unmarshal([]byte(p.Input), &requestInput)
+	if err != nil {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)
+		return
+	}
+
+	jsonInput, _ := json.Marshal(requestInput)
 
 	request := models.PromotionRequest{
 		PromotionId:  p.PromotionId,
@@ -68,7 +81,21 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 		return
 	}
 
+	if len(errorFields) > 0 {
+		r = serializer.Response{
+			Code: 50000,
+			Data: PromotionJoinError{
+				ErrorFields: errorFields,
+			},
+			Msg: i18n.T("custom_promotion_entry_field_error"),
+		}
+		return
+	}
 	r.Data = nil
 
+	r = serializer.Response{
+		Code: 0,
+		Msg:  i18n.T("success"),
+	}
 	return
 }
