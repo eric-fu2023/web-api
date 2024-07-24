@@ -8,8 +8,6 @@ import (
 	"web-api/serializer"
 	"web-api/util/i18n"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,7 +23,7 @@ type PromotionJoinError struct {
 func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error) {
 	now := time.Now().UTC()
 	brand := c.MustGet(`_brand`).(int)
-	user := c.MustGet("user").(model.User)
+	// user := c.MustGet("user").(model.User)
 	// deviceInfo, _ := util.GetDeviceInfo(c)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
@@ -42,44 +40,54 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 		fmt.Println(err)
 	}
 
-	isExceeded := false
-	for _, field := range incomingRequestAction.Fields {
-		if field.Type == "input-button" {
-			isExceeded, err = serializer.ParseButtonClickOption(c, field, p.PromotionId, user.ID)
-			if err != nil {
-				r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)
-				return
-			}
-		}
-	}
-
-	if isExceeded {
-		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_exceed"), err)
-		return
-	}
-
-	var requestInput map[string]interface{}
+	var requestInput map[string]string
 	err = json.Unmarshal([]byte(p.Input), &requestInput)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)
 		return
 	}
 
-	jsonInput, _ := json.Marshal(requestInput)
+	isExceeded := false
 
-	request := models.PromotionRequest{
-		PromotionId:  p.PromotionId,
-		UserId:       user.ID,
-		Status:       1, // Pending
-		InputDetails: jsonInput,
-	}
+	// for _, field := range incomingRequestAction.Fields {
+	// 	switch field.Type {
+	// 	case "input-button":
+	// 		isExceeded, err = serializer.ParseButtonClickOption(c, field, p.PromotionId, user.ID)
+	// 		if err != nil {
+	// 			r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)
+	// 			return
+	// 		}
+	// 	case "input-dropdown":
+	// 		if requestInput[strconv.Itoa(field.InputId)] != "" {
+	// 			if fieldType {
 
-	err = model.CreateJoinCustomPromotion(request)
+	// 			}
+	// 		}
+	// 	case "input-keyin":
 
-	if err != nil {
-		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)
+	// 	}
+	// }
+
+	if isExceeded {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_exceed"), err)
 		return
 	}
+
+	// jsonInput, _ := json.Marshal(requestInput)
+
+	// request := models.PromotionRequest{
+	// 	PromotionId:  p.PromotionId,
+	// 	UserId:       user.ID,
+	// 	Status:       1, // Pending
+	// 	InputDetails: jsonInput,
+	// }
+
+	// err = model.CreateJoinCustomPromotion(request)
+
+	// if err != nil {
+	// 	r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)
+	// 	return
+	// }
 
 	if len(errorFields) > 0 {
 		r = serializer.Response{

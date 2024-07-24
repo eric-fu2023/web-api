@@ -352,9 +352,9 @@ func NewRouter() *gin.Engine {
 				{
 					promotion.GET("/list", middleware.Cache(1*time.Minute, false), promotion_api.GetCoverList)
 					promotion.GET("/details", middleware.RequestLogger("get promotion details"), promotion_api.GetDetail)
-					// promotion.GET("/custom-details", middleware.RequestLogger("get custom promotion details"), promotion_api.GetCustomDetail)
+					promotion.GET("/custom-details", middleware.RequestLogger("get custom promotion details"), promotion_api.GetCustomDetail)
 					promotion.POST("/claim", middleware.RequestLogger("promotion claim"), promotion_api.PromotionClaim)
-					// promotion.POST("/join", middleware.RequestLogger("promotion join"), promotion_api.PromotionJoin)
+					promotion.POST("/join", middleware.RequestLogger("promotion join"), promotion_api.PromotionJoin)
 				}
 
 				voucher := user.Group("/voucher")
