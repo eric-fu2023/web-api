@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -245,4 +246,21 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 	return serializer.Response{
 		Data: serializer.BuildUserInfo(c, user),
 	}
+}
+
+type HeartbeatService struct {
+
+}
+
+func (service *HeartbeatService) UserHeartbeat(c *gin.Context) error {
+	u, _ := c.Get("user")
+	user := u.(model.User)
+
+	err := cache.SetUserOnline(c, user.IdAsString(), "", true)
+
+	if err != nil {
+		return err
+	}
+	
+	return nil 
 }
