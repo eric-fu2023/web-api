@@ -203,6 +203,11 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		customPromotionPageItem := serializer.BuildPromotionMatchList(content.List, childPromotion)
 		promotionPage.PageItemList = customPromotionPageItem
 
+		if childPromotion.Action == nil {
+			childPromotion.Action = parentPromotion.Action
+			childPromotion.ID = parentPromotion.ID
+		}
+
 		incomingRequestAction := serializer.IncomingPromotionRequestAction{}
 		err = json.Unmarshal(childPromotion.Action, &incomingRequestAction)
 		if err != nil {
