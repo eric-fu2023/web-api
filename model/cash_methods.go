@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 	"fmt"
-	"time"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
@@ -23,35 +22,35 @@ func (CashMethod) GetByID(c *gin.Context, id int64, brandID int) (item CashMetho
 }
 
 func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform string, brandID, vipID int) (list []CashMethod, err error) {
-	u, _ := c.Get("user")
-	user, _ := u.(User)
+	// u, _ := c.Get("user")
+	// user, _ := u.(User)
 
-	var t []CashMethod
-	q := DB.Preload("CashMethodChannel", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
-	if withdrawOnly {
-		q = q.Where("method_type < 0")
-	}
-	if topupOnly {
-		q = q.Where("method_type > 0")
-	}
-	var restrictPaymentChannel []int64 = user.RestrictPaymentChannel
-	if len(restrictPaymentChannel) != 0 {
-		q = q.Where("\"cash_methods\".id NOT IN ?", restrictPaymentChannel)
-	}
+	// var t []CashMethod
+	// q := DB.Preload("CashMethodChannel", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
+	// if withdrawOnly {
+	// 	q = q.Where("method_type < 0")
+	// }
+	// if topupOnly {
+	// 	q = q.Where("method_type > 0")
+	// }
+	// var restrictPaymentChannel []int64 = user.RestrictPaymentChannel
+	// if len(restrictPaymentChannel) != 0 {
+	// 	q = q.Where("\"cash_methods\".id NOT IN ?", restrictPaymentChannel)
+	// }
 
-	now := time.Now().UTC()
-	q = q.Joins("CashMethodPromotion", DB.Where("\"CashMethodPromotion\".start_at < ? and \"CashMethodPromotion\".end_at > ?", now, now).Where("\"CashMethodPromotion\".status = ?", 1).Where("\"CashMethodPromotion\".vip_id = ?", vipID))
+	// now := time.Now().UTC()
+	// q = q.Joins("CashMethodPromotion", DB.Where("\"CashMethodPromotion\".start_at < ? and \"CashMethodPromotion\".end_at > ?", now, now).Where("\"CashMethodPromotion\".status = ?", 1).Where("\"CashMethodPromotion\".vip_id = ?", vipID))
 
-	err = q.Order("sort desc").Find(&t).Error
-	for i := range t {
-		chns := FilterChannelByVip(c, user, t[i].CashMethodChannel)
-		if len(chns) == 0 {
-			continue
-		}
-		if t[i].IsSupportedPlatform(platform) {
-			list = append(list, t[i])
-		}
-	}
+	// err = q.Order("sort desc").Find(&t).Error
+	// for i := range t {
+	// 	chns := FilterChannelByVip(c, user, t[i].CashMethodChannel)
+	// 	if len(chns) == 0 {
+	// 		continue
+	// 	}
+	// 	if t[i].IsSupportedPlatform(platform) {
+	// 		list = append(list, t[i])
+	// 	}
+	// }
 	return
 }
 
