@@ -134,6 +134,7 @@ func NewRouter() *gin.Engine {
 		internal.POST("/withdraw-order/insert", middleware.RequestLogger("internal"), internal_api.CustomOrder)
 		internal.PUT("/recall", middleware.RequestLogger("internal"), api.InternalRecallFund)
 		internal.POST("/promotions/batch-claim", middleware.RequestLogger("internal"), internal_api.InternalPromotion)
+		internal.POST("/promotions/custom", middleware.RequestLogger("internal"), internal_api.InternalPromotionRequest)
 		internal.POST("/notification-push", middleware.RequestLogger("internal"), internal_api.Notification)
 	}
 
