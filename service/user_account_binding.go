@@ -25,7 +25,7 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}
 
-	list, err := model.UserAccountBinding{}.GetAccountByUser(user.ID, vip.VipRule.ID)
+	list, err := model.UserAccountBinding{}.GetAccountByUser(c, user.ID, vip.VipRule.ID)
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}

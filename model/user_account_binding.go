@@ -7,6 +7,7 @@ import (
 	"web-api/conf/consts"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -19,9 +20,18 @@ type UserAccountBinding struct {
 	CashMethod *CashMethod
 }
 
-func (UserAccountBinding) GetAccountByUser(userID, vipID int64) (list []UserAccountBinding, err error) {
+func (UserAccountBinding) GetAccountByUser(c *gin.Context, userID, vipID int64) (list []UserAccountBinding, err error) {
+	user := c.MustGet("user").(User)
 
-	q := DB.Joins("CashMethod").Where("user_account_binding.user_id", userID).Where("user_account_binding.is_active").Order("user_account_binding.id desc")
+	q := DB.Joins("CashMethod").
+		Where("user_account_binding.user_id", userID).
+		Where("user_account_binding.is_active").
+		Order("user_account_binding.id desc")
+
+	var restrictPaymentChannel []int64 = user.RestrictPaymentChannel
+	if len(restrictPaymentChannel) != 0 {
+		q = q.Where("\"CashMethod\".id NOT IN ?", restrictPaymentChannel)
+	}
 
 	now := time.Now().UTC()
 	q = q.Joins("CashMethod.CashMethodPromotion", DB.
