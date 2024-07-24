@@ -1,17 +1,9 @@
 package taya
 
 import (
-	"blgit.rfdev.tech/taya/game-service/fb/callback"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"gorm.io/gorm"
-	"gorm.io/plugin/dbresolver"
 	"strconv"
 	"time"
 	"web-api/cache"
@@ -20,6 +12,15 @@ import (
 	"web-api/service/common"
 	"web-api/service/promotion"
 	"web-api/util"
+
+	"blgit.rfdev.tech/taya/game-service/fb/callback"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 var TransferTypeCalculateWager = map[string]int64{
@@ -160,7 +161,7 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 			rewardAmount = loss
 		}
 		wagerChange := voucher.WagerMultiplier * rewardAmount
-		err = promotion.CreateCashOrder(tx, voucher.PromotionType, userId, rewardAmount, wagerChange, "")
+		err = promotion.CreateCashOrder(tx, voucher.PromotionType, userId, rewardAmount, wagerChange, "", "")
 		if err != nil {
 			return
 		}

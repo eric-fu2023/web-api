@@ -98,7 +98,7 @@ func Claim(c context.Context, now time.Time, promotion models.Promotion, session
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("nothing_to_claim"), err)
 		return
 	}
-	voucher, err = ClaimVoucherByType(c, promotion, session, template, userID, reward, now, meetGapType, vipIncrementDetail)
+	voucher, err = ClaimVoucherByType(c, promotion, session, template, userID, 0, reward, now, meetGapType, vipIncrementDetail)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
