@@ -298,6 +298,8 @@ func NewRouter() *gin.Engine {
 
 				user.POST("/gift-send", middleware.CheckAuth(), api.GiftSend)
 				user.GET("/gift-records", middleware.CheckAuth(), api.GiftRecordList)
+				
+				user.GET("/user-heartbeat", api.UserHeartbeat)
 
 				taya := user.Group("/taya")
 				{
