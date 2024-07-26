@@ -67,12 +67,6 @@ func CreateUserPredictionWithDB(tx *gorm.DB, userId int64, deviceId string, pred
 
 	// TODO : check if strategy exist
 
-	// obj := UserStrategy{UserStrategy: ploutos.UserStrategy{
-	// 	UserId: userId,
-	// 	DeviceId: deviceId,
-	// 	StrategyId: strategy_id,
-	// }}
-
 	obj := ploutos.UserPrediction{
 		UserId:       userId,
 		DeviceId:     deviceId,

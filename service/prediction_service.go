@@ -35,31 +35,25 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 	fmt.Printf("Getting data with device id %s\n", deviceInfo.Uuid)
 
-	strategy, err := model.GetUserPrediction(model.GetUserPredictionCond{DeviceId: deviceInfo.Uuid, UserId: 0})
+	predictions, err := model.GetUserPrediction(model.GetUserPredictionCond{DeviceId: deviceInfo.Uuid, UserId: 0})
 	if err != nil {
 		r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 		return
 	}
 
-	predictionIds := make([]int64, len(strategy))
-	for i, pred := range strategy {
-		predictionIds[i] = pred.PredictionId
-	}
+	// if len(predictions) == 0 {
 
-	if len(strategy) == 0 {
+	// 	// TODO : get random prediction
+	// 	model.CreateUserPrediction(0, deviceInfo.Uuid, 99)
 
-		// TODO : get random prediction
-		model.CreateUserPrediction(0, deviceInfo.Uuid, 99)
-		predictionIds = append(predictionIds, 99)
-
-		return serializer.Response{
-			Msg:  i18n.T("success"),
-			Data: predictionIds,
-		}, nil
-	}
+	// 	return serializer.Response{
+	// 		Msg:  i18n.T("success"),
+	// 		Data: serializer.BuildUserPredictionsList(),
+	// 	}, nil
+	// }
 
 	return serializer.Response{
 		Msg:  i18n.T("success"),
-		Data: predictionIds,
+		Data: serializer.BuildUserPredictionsList(predictions),
 	}, nil
 }
