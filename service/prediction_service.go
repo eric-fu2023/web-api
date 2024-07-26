@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -29,20 +28,15 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 	hasAuth := c.GetString("_token_string") != ""
 
-	fmt.Println(hasAuth)
-
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 		return
 	}
 
-
-	fmt.Printf("Getting data with device id %s\n", deviceInfo.Uuid)
-
 	if hasAuth {
 		u, _ := c.Get("user")
-		user := u.(model.User)		
+		user := u.(model.User)
 
 		hasPaymentToday, err := model.HasTopupToday(c, user.ID)
 
@@ -64,14 +58,12 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 				return r, err
 			}
 
-			fmt.Printf("len(preds) = %d", len(predictions))
-
 			var ids []int64
 			if len(predictions) < 3 {
 				ids = mockGetRandomPredictions(3 - int64(len(predictions)))
 				model.CreateUserPredictions(user.ID, user.LastLoginDeviceUuid, ids)
 			}
-			
+
 			return serializer.Response{
 				Msg:  i18n.T("success"),
 				Data: serializer.BuildUserPredictionsList(predictions, ids, 3),
@@ -91,7 +83,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 			ids = mockGetRandomPredictions(1)
 			model.CreateUserPredictions(0, deviceInfo.Uuid, ids)
 		}
-		
+
 		return serializer.Response{
 			Msg:  i18n.T("success"),
 			Data: serializer.BuildUserPredictionsList(predictions, ids, 1),
@@ -100,7 +92,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 }
 
-func mockGetRandomPredictions(length int64) []int64{
+func mockGetRandomPredictions(length int64) []int64 {
 	if length == 1 {
 		return []int64{99}
 	} else if length == 2 {
