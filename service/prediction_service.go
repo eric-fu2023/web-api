@@ -37,13 +37,18 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 		return
 	}
 
-	hasPaymentToday := false // TODO : query from db 
 
 	fmt.Printf("Getting data with device id %s\n", deviceInfo.Uuid)
 
 	if hasAuth {
 		u, _ := c.Get("user")
 		user := u.(model.User)		
+
+		hasPaymentToday, err := model.HasTopupToday(c, user.ID)
+
+		if err != nil {
+			return serializer.DBErr(c, service, i18n.T("general_error"), err), err
+		}
 
 		if hasPaymentToday {
 			return serializer.Response{
