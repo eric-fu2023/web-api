@@ -8,7 +8,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func SetUserOnline(ctx *gin.Context, userId string, page string, status bool) (error) {
+func SetUserOnline(ctx *gin.Context, userId string, page string, status bool) error {
 	// detail := OnlineStatusInfo{
 	// 	Id: userId,
 	// 	Page: page,
@@ -17,16 +17,16 @@ func SetUserOnline(ctx *gin.Context, userId string, page string, status bool) (e
 	// }
 
 	val := map[string]interface{}{
-		"id":    userId,
-		"page": page,
+		"id":     userId,
+		"page":   page,
 		"status": status,
 	}
-	key := fmt.Sprintf("online_user:%s", userId)
+	key := fmt.Sprintf("online_user_%s", userId)
 
 	res := RedisSessionClient.HSet(ctx, key, val)
 	if res.Err() != nil && res.Err() != redis.Nil {
 		return res.Err()
 	}
 	RedisSessionClient.Expire(ctx, key, 12*time.Second)
-	return nil 
+	return nil
 }
