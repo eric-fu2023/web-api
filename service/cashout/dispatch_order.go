@@ -50,11 +50,14 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 		cashoutAmount := int64(float64(updatedCashOrder.AppliedCashOutAmount) * er.AdjustedExchangeRate)
 
 		// Round cashoutAmount up, remove decimal
-		cashoutAmountRemainder := cashoutAmount % 100
-		if cashoutAmountRemainder > 0 {
-			cashoutAmount += 100
+		if er.AdjustedExchangeRate != 1 && er.AdjustedExchangeRate != 1 {
+			cashoutAmountRemainder := cashoutAmount % 100
+			if cashoutAmountRemainder > 0 {
+				cashoutAmount += 100
+			}
+			cashoutAmount = (cashoutAmount / 100) * 100
 		}
-		cashoutAmount = (cashoutAmount / 100) * 100
+
 		switch config.Type {
 		case "BANK_CARD":
 			bankInfo := accountBinding.GetBankInfo()
