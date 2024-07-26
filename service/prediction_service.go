@@ -37,7 +37,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 		return
 	}
 
-	hasPaymentToday := true // TODO : query from db 
+	hasPaymentToday := false // TODO : query from db 
 
 	fmt.Printf("Getting data with device id %s\n", deviceInfo.Uuid)
 
@@ -58,10 +58,18 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return r, err
 			}
+
+			fmt.Printf("len(preds) = %d", len(predictions))
+
+			var ids []int64
+			if len(predictions) < 3 {
+				ids = mockGetRandomPredictions(3 - int64(len(predictions)))
+				model.CreateUserPredictions(user.ID, user.LastLoginDeviceUuid, ids)
+			}
 			
 			return serializer.Response{
 				Msg:  i18n.T("success"),
-				Data: serializer.BuildUserPredictionsList(predictions),
+				Data: serializer.BuildUserPredictionsList(predictions, ids),
 			}, nil
 		}
 
@@ -72,23 +80,29 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 			r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 			return r, err
 		}
+
+		var ids []int64
+		if len(predictions) == 0 {
+			ids = mockGetRandomPredictions(1)
+			model.CreateUserPredictions(0, deviceInfo.Uuid, ids)
+		}
 		
 		return serializer.Response{
 			Msg:  i18n.T("success"),
-			Data: serializer.BuildUserPredictionsList(predictions),
+			Data: serializer.BuildUserPredictionsList(predictions, ids),
 		}, nil
 	}
 
-	// if len(predictions) == 0 {
+}
 
-	// 	// TODO : get random prediction
-	// 	model.CreateUserPrediction(0, deviceInfo.Uuid, 99)
-
-	// 	return serializer.Response{
-	// 		Msg:  i18n.T("success"),
-	// 		Data: serializer.BuildUserPredictionsList(),
-	// 	}, nil
-	// }
-
-	
+func mockGetRandomPredictions(length int64) []int64{
+	if length == 1 {
+		return []int64{99}
+	} else if length == 2 {
+		return []int64{150, 151}
+	} else if length == 3 {
+		return []int64{881, 882, 883}
+	} else {
+		return []int64{}
+	}
 }

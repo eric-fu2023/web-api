@@ -53,6 +53,18 @@ func GetUserPredictionWithDB(tx *gorm.DB, cond GetUserPredictionCond) ([]UserPre
 	return strategies, err
 }
 
+func CreateUserPredictions(userId int64, deviceId string, predictionIds []int64) error {
+	tx := DB.Begin()
+	for _, predictionId := range predictionIds {
+		err := CreateUserPredictionWithDB(tx, userId, deviceId, predictionId)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	return tx.Commit().Error
+}
+
 func CreateUserPrediction(userId int64, deviceId string, predictionId int64) error {
 	tx := DB.Begin()
 	err := CreateUserPredictionWithDB(tx, userId, deviceId, predictionId)
