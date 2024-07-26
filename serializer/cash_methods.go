@@ -53,7 +53,7 @@ func BuildCashMethod(a model.CashMethod, maxPromotionAmountByCashMethodId map[in
 	if a.CashMethodPromotion != nil {
 		cashMethod.CashMethodPromotion = &CashMethodPromotion{
 			PayoutRate:         a.CashMethodPromotion.PayoutRate,
-			MaxPromotionAmount: maxPromotionAmountByCashMethodId[a.ID],
+			MaxPromotionAmount: maxPromotionAmountByCashMethodId[a.ID] / 100,
 			DefaultOptionPromotionAmounts: util.MapSlice(a.DefaultOptions, func(b int32) (amount float64) {
 				amount = float64(b) * a.CashMethodPromotion.PayoutRate
 				maxAmount, exist := maxPromotionAmountByCashMethodId[a.ID]
