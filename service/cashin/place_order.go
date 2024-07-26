@@ -124,7 +124,9 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		cashinAmount := int64(float64(cashOrder.AppliedCashInAmount) * er.AdjustedExchangeRate)
 
 		// Round cashinAmount to nearest multiple 100, remove decimal
-		cashinAmount = (cashinAmount / 100) * 100
+		if er.AdjustedExchangeRate != 1 && er.AdjustedExchangeRate != 1 {
+			cashinAmount = (cashinAmount / 100) * 100
+		}
 
 		switch config.Type {
 		default:
