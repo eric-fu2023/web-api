@@ -36,7 +36,7 @@ func HandleCashMethodPromotion(c context.Context, order model.CashOrder) {
 	util.GetLoggerEntry(c).Info("HandleCashMethodPromotion vipRecord.VipRule.ID", vipRecord.VipRule.ID, order.ID) // wl: for staging debug
 
 	// check cash method and vip combination has promotion or not
-	cashMethodPromotion, err := model.FindCashMethodPromotionByCashMethodIdAndVipId(order.CashMethodId, vipRecord.VipRule.ID, nil)
+	cashMethodPromotion, err := model.FindActiveCashMethodPromotionByCashMethodIdAndVipId(order.CashMethodId, vipRecord.VipRule.ID, &order.CreatedAt, nil)
 	if err != nil {
 		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion Find CashMethodPromotion", err, order.ID)
 		return
