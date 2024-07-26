@@ -226,7 +226,9 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 	res.Title = incoming.Title
 
 	for _, incomingField := range incoming.Fields {
-
+		if incomingField.Switch == 0 {
+			continue
+		}
 		requestField := CustomPromotionRequestField{
 			Placeholder: incomingField.Hint,
 			Title:       incomingField.Title,

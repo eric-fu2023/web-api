@@ -53,6 +53,9 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 	data := make(map[string]string)
 	numOriFields := 0
 	for _, field := range incomingRequestAction.Fields {
+		if field.Switch == 0 {
+			continue
+		}
 		switch field.Type {
 		case "input-button":
 			// numOriFields++
