@@ -38,10 +38,10 @@ func (a AuthClaims) GetRedisSessionKey() string {
 	return fmt.Sprintf(`session:%d`, a.UserId)
 }
 
-func AuthRequired(getUser bool, checkBrand bool) gin.HandlerFunc {
+func AuthRequired(getUser bool, checkBrand bool, headerRequired bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		i18n := c.MustGet("i18n").(i18n.I18n)
-		err := doAuth(c, getUser, checkBrand)
+		err := doAuth(c, getUser, checkBrand, headerRequired)
 		if err != nil {
 			c.JSON(401, serializer.Response{
 				Code:  serializer.CodeCheckLogin,
@@ -57,16 +57,18 @@ func AuthRequired(getUser bool, checkBrand bool) gin.HandlerFunc {
 
 func CheckAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		doAuth(c, true, true)
+		doAuth(c, true, true, false)
 		c.Next()
 	}
 }
 
-func doAuth(c *gin.Context, getUser bool, checkBrand bool) (err error) {
+func doAuth(c *gin.Context, getUser bool, checkBrand bool, headerRequired bool) (err error) {
 	const BEARER_SCHEMA = "Bearer"
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
-		err = errors.New("no Authorization header")
+		if headerRequired {
+			err = errors.New("no Authorization header")
+		}
 		return
 	}
 	tokenString := strings.TrimSpace(authHeader[len(BEARER_SCHEMA):])
