@@ -1,10 +1,11 @@
 package cashout
 
 import (
-	"gorm.io/plugin/dbresolver"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+
+	"gorm.io/plugin/dbresolver"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
@@ -42,6 +43,9 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 
 		return
 	})
+	if err == nil {
+		go HandlePromotion(c.Copy(), updatedCashOrder)
+	}
 
 	return
 }
