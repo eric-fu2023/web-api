@@ -211,6 +211,12 @@ func NewRouter() *gin.Engine {
 		v1.GET("/rtc_tokens", middleware.CheckAuth(), api.RtcTokens)
 
 		v1.GET("/vips", middleware.Cache(5*time.Minute, false), api.VipLoad)
+		popup := v1.Group("/popup")
+		{
+			// popup.GET("/winlose", middleware.CheckAuth(), api.CsHistory)
+			// popup.GET("/vip", middleware.CheckAuth(), api.CsHistory)
+			popup.GET("/spin_items", api.SpinItems)
+		}
 
 		pm := v1.Group("/pm")
 		{
