@@ -5,7 +5,7 @@ import (
 )
 
 type SpinItem struct {
-	ID        string `json:"id"`
+	ID        int64 `json:"id"`
 	Name      string `json:"name"`
 	PicSrc    string `json:"pic_src"`
 	TextColor string `json:"text_color"`
@@ -14,11 +14,23 @@ type SpinItem struct {
 
 func BuildSpinItem(a ploutos.SpinItem) (b SpinItem) {
 	b = SpinItem{
-		ID:        *a.ID,
+		ID:        a.ID,
 		Name:      a.Name,
 		PicSrc:    a.PicSrc,
 		TextColor: a.TextColor,
 		BgColor:   a.BgColor,
+	}
+	return 
+}
+
+
+type SpinResult struct {
+	ID        int64 `json:"id"`
+}
+
+func BuildSpinResult(a ploutos.SpinItem) (b SpinResult) {
+	b = SpinResult{
+		ID:        a.ID,
 	}
 	return 
 }

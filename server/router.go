@@ -216,6 +216,7 @@ func NewRouter() *gin.Engine {
 			// popup.GET("/winlose", middleware.CheckAuth(), api.CsHistory)
 			// popup.GET("/vip", middleware.CheckAuth(), api.CsHistory)
 			popup.GET("/spin_items", api.SpinItems)
+			popup.GET("/spin_result", middleware.CheckAuth(),  api.SpinResult)
 		}
 
 		pm := v1.Group("/pm")
