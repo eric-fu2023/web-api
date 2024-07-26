@@ -20,7 +20,7 @@ func FindActiveCashMethodPromotionByCashMethodIdAndVipId(cashMethodId, vipId int
 	}
 	err = tx.
 		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
-		Where("\"CashMethodPromotion\".start_at < ? and \"CashMethodPromotion\".end_at > ?", promotionAt, promotionAt).Where("\"CashMethodPromotion\".status = ?", 1).
+		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).Where("status = ?", 1).
 		Find(&cashMethodPromotion).Error
 	if err != nil {
 		return
