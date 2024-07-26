@@ -298,7 +298,7 @@ func NewRouter() *gin.Engine {
 
 				user.POST("/gift-send", middleware.CheckAuth(), api.GiftSend)
 				user.GET("/gift-records", middleware.CheckAuth(), api.GiftRecordList)
-				
+
 				user.GET("/user-heartbeat", api.UserHeartbeat)
 
 				taya := user.Group("/taya")
@@ -384,6 +384,12 @@ func NewRouter() *gin.Engine {
 				}
 			}
 		}
+
+		prediction := v1.Group("/prediction")
+		{
+			prediction.GET("list", api.ListPredictions)
+		}
+
 		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)
 	}
 
