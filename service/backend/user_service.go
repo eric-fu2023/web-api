@@ -9,23 +9,26 @@ import (
 	"web-api/model/avatar"
 	"web-api/serializer"
 	"web-api/service"
+	"web-api/util"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type GetTokenService struct {
 	Username   string `form:"username" json:"username" binding:"required,username"`
 	BrandId    int64  `form:"brand_id" json:"brand_id" binding:"required"`
-	CurrencyId int64  `form:"currency_id" json:"currency_id"`
-	Nickname   string `form:"nickname" json:"nickname"`
+	CurrencyId int64  `form:"currency_id" json:"currency_id" binding:"required"`
+	Nickname   string `form:"nickname" json:"nickname" binding:"required"`
 	Pin        string `form:"pin" json:"pin"`
 	Code       string `form:"code" json:"code"`
 	Ip         string `form:"ip" json:"ip"`
 	DeviceUuid string `form:"device_uuid" json:"device_uuid"`
 	Platform   string `form:"platform" json:"platform"`
+	Channel    string `form:"channel" json:"channel"`
 }
 
 func (s *GetTokenService) Get(c *gin.Context) (r serializer.Response, err error) {
@@ -73,12 +76,26 @@ func (s *GetTokenService) Get(c *gin.Context) (r serializer.Response, err error)
 		if s.Pin != "" {
 			bytes, err := bcrypt.GenerateFromPassword([]byte(s.Pin), model.PassWordCost)
 			if err != nil {
-				r = serializer.Err(c, s, serializer.CodeGeneralError, "adding user secondary password failed", err)
+				util.GetLoggerEntry(c).Errorf("GenerateFromPassword error: %s", err.Error())
 			}
 			user.SecondaryPassword = string(bytes)
 		}
-		user.CreateWithDB(model.DB)
-		err = service.CreateUser(&user)
+		err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+			if len(s.Channel) > 0 {
+				user.Channel = s.Channel
+				service.ConnectChannelAgent(&user, tx)
+			}
+			err = user.CreateWithDB(model.DB)
+			if err != nil {
+				util.GetLoggerEntry(c).Errorf("CreateWithDB error: %s", err.Error())
+				return
+			}
+			err = service.CreateUser(&user)
+			if err != nil {
+				util.GetLoggerEntry(c).Errorf("CreateUser error: %s", err.Error())
+			}
+			return
+		})
 		if err != nil {
 			r = serializer.Err(c, s, serializer.CodeDBError, "adding new user failed", err)
 			return
@@ -124,7 +141,7 @@ func (s *PinService) Set(c *gin.Context) (r serializer.Response, err error) {
 	}
 	bytes, err := bcrypt.GenerateFromPassword([]byte(s.Pin), model.PassWordCost)
 	if err != nil {
-		r = serializer.Err(c, s, serializer.CodeGeneralError, "password encryption failed", err)
+		util.GetLoggerEntry(c).Errorf("GenerateFromPassword error: %s", err.Error())
 	}
 	err = model.DB.Model(&user).Update(`secondary_password`, string(bytes)).Error
 	if err != nil {
