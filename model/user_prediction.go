@@ -32,9 +32,9 @@ func GetUserPredictionWithDB(tx *gorm.DB, cond GetUserPredictionCond) ([]UserPre
 	db := tx.Table(UserPrediction{}.TableName())
 
 	db.Where("device_id = ?", cond.DeviceId)
-	if cond.UserId == 0 {
-		db.Where("user_id = 0")
-	}
+	// if cond.UserId == 0 {
+	// 	db.Where("user_id = 0")
+	// }
 	// db.Where("user_id = 0 OR user_id = ?", cond.UserId)
 
 	now, err := util.NowGMT8()

@@ -69,7 +69,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 			
 			return serializer.Response{
 				Msg:  i18n.T("success"),
-				Data: serializer.BuildUserPredictionsList(predictions, ids),
+				Data: serializer.BuildUserPredictionsList(predictions, ids, 3),
 			}, nil
 		}
 
@@ -89,7 +89,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 		
 		return serializer.Response{
 			Msg:  i18n.T("success"),
-			Data: serializer.BuildUserPredictionsList(predictions, ids),
+			Data: serializer.BuildUserPredictionsList(predictions, ids, 1),
 		}, nil
 	}
 
