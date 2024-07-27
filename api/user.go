@@ -346,3 +346,15 @@ func usernameValidationErrorWithMsg(c *gin.Context, service any, err error, i18n
 	}
 	return
 }
+
+func UserHeartbeat (c *gin.Context){ 
+	var service service.HeartbeatService
+	if err := c.ShouldBind(&service); err == nil {
+		err = service.UserHeartbeat(c)
+		c.JSON(200, serializer.Response{
+			Code: 0,
+		})
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}

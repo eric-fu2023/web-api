@@ -38,6 +38,7 @@ type IncomingPromotionMatchListItem struct {
 	RedirectType string                               `json:"redirect-type"`
 	Img          string                               `json:"img"`
 	Name         string                               `json:"name"`
+	Time         time.Time                            `json:"time"`
 }
 
 type IncomingPromotionMatchListItemTeam struct {
@@ -186,8 +187,9 @@ func BuildPromotionMatchList(incoming []IncomingPromotionMatchListItem, subPromo
 		outgoingPageItem := CustomPromotionPageItem{
 			PageItemId: int64(id),
 			// Type:       item.Type,
-			Title: subPromotion.Name,
-			Text:  "立即前往",
+			Title:         subPromotion.Name,
+			Text:          "立即前往",
+			StartDateTime: item.Time,
 		}
 
 		if item.Title != "" {
@@ -224,7 +226,9 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 	res.Title = incoming.Title
 
 	for _, incomingField := range incoming.Fields {
-
+		if incomingField.Switch == 0 {
+			continue
+		}
 		requestField := CustomPromotionRequestField{
 			Placeholder: incomingField.Hint,
 			Title:       incomingField.Title,

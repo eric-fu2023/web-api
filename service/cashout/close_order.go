@@ -1,10 +1,11 @@
 package cashout
 
 import (
-	"gorm.io/plugin/dbresolver"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+
+	"gorm.io/plugin/dbresolver"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, remark string, txDB *gorm.DB) (updatedCashOrder model.CashOrder, err error) {
+func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, remark string, allowPromotion bool, txDB *gorm.DB) (updatedCashOrder model.CashOrder, err error) {
 	err = txDB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("id", orderNumber).
@@ -42,6 +43,11 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 
 		return
 	})
+	if err == nil {
+		if allowPromotion {
+			go HandlePromotion(c.Copy(), updatedCashOrder)
+		}
+	}
 
 	return
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"web-api/api"
+	analyst_api "web-api/api/analyst"
 	dc_api "web-api/api/dc"
 	dollar_jackpot_api "web-api/api/dollar_jackpot"
 	fb_api "web-api/api/fb"
@@ -215,6 +216,12 @@ func NewRouter() *gin.Engine {
 		v1.GET("/rtc_tokens", middleware.CheckAuth(), api.RtcTokens)
 
 		v1.GET("/vips", middleware.Cache(5*time.Minute, false), api.VipLoad)
+		popup := v1.Group("/popup")
+		{
+			// popup.GET("/winlose", middleware.CheckAuth(), api.CsHistory)
+			// popup.GET("/vip", middleware.CheckAuth(), api.CsHistory)
+			popup.GET("/spin_items", api.SpinItems)
+		}
 
 		pm := v1.Group("/pm")
 		{
@@ -244,6 +251,7 @@ func NewRouter() *gin.Engine {
 		}
 
 		v1.GET("/gifts", middleware.Cache(1*time.Minute, false), api.GiftList)
+		v1.GET("/analysts", analyst_api.GetAnalystList)
 
 		auth := v1.Group("/user")
 		{
@@ -302,6 +310,8 @@ func NewRouter() *gin.Engine {
 
 				user.POST("/gift-send", middleware.CheckAuth(), api.GiftSend)
 				user.GET("/gift-records", middleware.CheckAuth(), api.GiftRecordList)
+
+				user.GET("/user-heartbeat", api.UserHeartbeat)
 
 				taya := user.Group("/taya")
 				{

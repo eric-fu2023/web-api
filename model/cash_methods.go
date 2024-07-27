@@ -34,10 +34,10 @@ func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform st
 	if topupOnly {
 		q = q.Where("method_type > 0")
 	}
-	// var restrictPaymentChannel []int64 = user.RestrictPaymentChannel
-	// if len(restrictPaymentChannel) != 0 {
-	// 	q = q.Where("\"cash_methods\".id NOT IN ?", restrictPaymentChannel)
-	// }
+	var restrictPaymentChannel []int64 = user.RestrictPaymentChannel
+	if len(restrictPaymentChannel) != 0 {
+		q = q.Where("\"cash_methods\".id NOT IN ?", restrictPaymentChannel)
+	}
 
 	now := time.Now().UTC()
 	q = q.Joins("CashMethodPromotion", DB.Where("\"CashMethodPromotion\".start_at < ? and \"CashMethodPromotion\".end_at > ?", now, now).Where("\"CashMethodPromotion\".status = ?", 1).Where("\"CashMethodPromotion\".vip_id = ?", vipID))
