@@ -154,9 +154,13 @@ func NewRouter() *gin.Engine {
 	// 	captcha.POST("/check", api.CaptchaCheck)
 	// }
 
-	// all APIs below will be encrypted
-	r.Use(middleware.EncryptPayload())
+	// all APIs below needs signature in the HTTP header
 	r.Use(middleware.CheckSignature())
+	r.GET("/init_app", api.DomainInitApp)
+
+	// all APIs below will be encrypted
+	// r.Use(middleware.CheckSignature())
+	r.Use(middleware.EncryptPayload())
 	r.Use(middleware.Ip())
 	r.Use(middleware.BrandAgent())
 	r.Use(middleware.Timezone())
