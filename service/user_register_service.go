@@ -162,7 +162,7 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 }
 
 func ConnectChannelAgent(user *model.User, tx *gorm.DB) (err error) {
-	fmt.Printf("=== PRE username - %s, channelCode - %s, userChannelId - %s, userAgentId - %s === \n", user.Username, user.Channel, strconv.Itoa(int(user.ChannelId)), strconv.Itoa(int(user.AgentId)))
+	// fmt.Printf("=== PRE username - %s, channelCode - %s, userChannelId - %s, userAgentId - %s === \n", user.Username, user.Channel, strconv.Itoa(int(user.ChannelId)), strconv.Itoa(int(user.AgentId)))
 	// Default AgentId and ChannelId if no channelCode
 	// Change to env later
 	agentIdString := os.Getenv("DEFAULT_AGENT_ID")
@@ -197,7 +197,7 @@ func ConnectChannelAgent(user *model.User, tx *gorm.DB) (err error) {
 		user.AgentId = int64(agentId)
 	}
 
-	fmt.Printf("=== POST username - %s, channelCode - %s, userChannelId - %s, userAgentId - %s === \n", user.Username, user.Channel, strconv.Itoa(int(user.ChannelId)), strconv.Itoa(int(user.AgentId)))
+	// fmt.Printf("=== POST username - %s, channelCode - %s, userChannelId - %s, userAgentId - %s === \n", user.Username, user.Channel, strconv.Itoa(int(user.ChannelId)), strconv.Itoa(int(user.AgentId)))
 
 	return
 }
