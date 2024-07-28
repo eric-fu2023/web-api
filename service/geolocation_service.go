@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	RedisKeyGeolocation           = "geolocation:"
-	RedisCacheDurationGeolocation = 60 * time.Second
+	RedisKeyGeolocation      = "geolocation:"
+	RedisDurationGeolocation = 7 * 24 * 60 * 60 * time.Second
 )
 
 const (
@@ -112,7 +112,7 @@ func retrieveGeolocationFromDB(ip string, c *gin.Context) ploutos.Geolocation {
 
 	// cache in Redis
 	if jsonStr, err := json.Marshal(geolocation); err == nil {
-		cache.RedisGeolocationClient.Set(context.TODO(), RedisKeyGeolocation+ip, jsonStr, RedisCacheDurationGeolocation)
+		cache.RedisGeolocationClient.Set(context.TODO(), RedisKeyGeolocation+ip, jsonStr, RedisDurationGeolocation)
 	} else {
 		util.GetLoggerEntry(c).Warn("retrieveGeolocationFromDB serializing json failed: ", err.Error())
 	}
@@ -142,7 +142,7 @@ func retrieveGeolocationFromVendor(ip string, c *gin.Context) ploutos.Geolocatio
 	if geolocation.ID > 0 {
 		// cache in Redis
 		if jsonStr, err := json.Marshal(geolocation); err == nil {
-			cache.RedisGeolocationClient.Set(context.TODO(), RedisKeyGeolocation+ip, jsonStr, RedisCacheDurationGeolocation)
+			cache.RedisGeolocationClient.Set(context.TODO(), RedisKeyGeolocation+ip, jsonStr, RedisDurationGeolocation)
 		} else {
 			util.GetLoggerEntry(c).Warn("retrieveGeolocationFromVendor serializing json failed: ", err.Error())
 		}
