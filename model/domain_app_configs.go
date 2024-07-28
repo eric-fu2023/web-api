@@ -5,6 +5,7 @@ import (
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 const (
@@ -29,8 +30,8 @@ func (DomainApiConfig) FindDomainConfigs(supportType string, c *gin.Context) []D
 		query.Where("support_type", supportType)
 	}
 	err := query.Find(&domains).Error
-	if err != nil {
-		util.GetLoggerEntry(c).Error("FindDomainsForApp failed: ", err.Error())
+	if err != nil && err != gorm.ErrRecordNotFound {
+		util.GetLoggerEntry(c).Warn("FindDomainsForApp failed: ", err.Error())
 	}
 	return domains
 }

@@ -145,7 +145,6 @@ func NewRouter() *gin.Engine {
 	r.GET("/ts", api.Ts)
 	// geolocations
 	r.GET("/v1/geolocation", api.GeolocationGet)
-	r.POST("/v1/geolocation", api.GeolocationCreate)
 	// payment
 	r.GET("/finpay_redirect", api.FinpayRedirect)
 	r.POST("/finpay_redirect", api.FinpayRedirect)
@@ -160,7 +159,6 @@ func NewRouter() *gin.Engine {
 	r.GET("/init_app", api.DomainInitApp)
 
 	// all APIs below will be encrypted
-	// r.Use(middleware.CheckSignature())
 	r.Use(middleware.EncryptPayload())
 	r.Use(middleware.Ip())
 	r.Use(middleware.BrandAgent())
