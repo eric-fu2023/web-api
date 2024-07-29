@@ -244,7 +244,7 @@ func NewRouter() *gin.Engine {
 		auth := v1.Group("/user")
 		{
 			userWithoutBrand := auth.Group("")
-			userWithoutBrand.Use(middleware.AuthRequired(true, false, true))
+			userWithoutBrand.Use(middleware.AuthRequired(true, false))
 			{
 				userWithoutBrand.GET("/me", api.Me)
 				userWithoutBrand.DELETE("/me", api.UserDelete)
@@ -256,7 +256,7 @@ func NewRouter() *gin.Engine {
 				userWithoutBrand.GET("/followings", api.UserFollowingList)
 			}
 			user := auth.Group("")
-			user.Use(middleware.AuthRequired(true, true, true))
+			user.Use(middleware.AuthRequired(true, true))
 			{
 				user.POST("/profile", api.ProfileUpdate)
 				user.POST("/nickname", api.NicknameUpdate)
@@ -385,12 +385,12 @@ func NewRouter() *gin.Engine {
 			}
 		}
 
-		prediction := v1.Group("/prediction", middleware.AuthRequired(true, true, false))
+		prediction := v1.Group("/prediction", middleware.CheckAuth())
 		{
 			prediction.GET("list", api.ListPredictions)
 		}
 
-		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false, true), api.Heartbeat)
+		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)
 	}
 
 	return r

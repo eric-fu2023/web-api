@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 	"os"
 	"strconv"
 	"strings"
@@ -14,6 +12,9 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util/i18n"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type AuthClaims struct {
@@ -38,10 +39,10 @@ func (a AuthClaims) GetRedisSessionKey() string {
 	return fmt.Sprintf(`session:%d`, a.UserId)
 }
 
-func AuthRequired(getUser bool, checkBrand bool, headerRequired bool) gin.HandlerFunc {
+func AuthRequired(getUser bool, checkBrand bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		i18n := c.MustGet("i18n").(i18n.I18n)
-		err := doAuth(c, getUser, checkBrand, headerRequired)
+		err := doAuth(c, getUser, checkBrand)
 		if err != nil {
 			c.JSON(401, serializer.Response{
 				Code:  serializer.CodeCheckLogin,
@@ -57,18 +58,16 @@ func AuthRequired(getUser bool, checkBrand bool, headerRequired bool) gin.Handle
 
 func CheckAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		doAuth(c, true, true, false)
+		doAuth(c, true, true)
 		c.Next()
 	}
 }
 
-func doAuth(c *gin.Context, getUser bool, checkBrand bool, headerRequired bool) (err error) {
+func doAuth(c *gin.Context, getUser bool, checkBrand bool) (err error) {
 	const BEARER_SCHEMA = "Bearer"
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
-		if headerRequired {
-			err = errors.New("no Authorization header")
-		}
+		err = errors.New("no Authorization header")
 		return
 	}
 	tokenString := strings.TrimSpace(authHeader[len(BEARER_SCHEMA):])

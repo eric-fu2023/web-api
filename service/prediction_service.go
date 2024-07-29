@@ -25,8 +25,15 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 	*/
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
+	u, _ := c.Get("user")
 
-	hasAuth := c.GetString("_token_string") != ""
+	user := model.User{}
+
+	if u != nil {
+		user = u.(model.User)
+	}
+
+	hasAuth := user.ID != 0
 
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
