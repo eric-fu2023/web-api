@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 	"os"
 	"strconv"
 	"strings"
@@ -14,6 +12,9 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util/i18n"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type AuthClaims struct {

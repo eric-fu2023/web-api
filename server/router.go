@@ -394,6 +394,12 @@ func NewRouter() *gin.Engine {
 				}
 			}
 		}
+
+		prediction := v1.Group("/prediction", middleware.CheckAuth())
+		{
+			prediction.GET("list", api.ListPredictions)
+		}
+
 		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)
 	}
 

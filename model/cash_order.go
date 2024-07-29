@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"time"
+	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -137,4 +138,29 @@ func ScopedTopupExceptAllTimeFirst(c context.Context, userID int64, start, end t
 			Where("status", ploutos.CashOrderStatusSuccess).Order("created_at asc").Limit(1)).
 		Order("created_at asc").Find(&list).Error
 	return
+}
+
+func HasTopupToday(c context.Context, userID int64) (bool, error) {
+	var hasCashInToday bool = false
+	
+	now, err := util.NowGMT8()
+
+	if err != nil {
+		return hasCashInToday, err
+	}
+
+	start := util.RoundDownTimeDay(now)
+	end := util.RoundUpTimeDay(now)
+	
+	db := DB.WithContext(c).Where("user_id", userID).Where("order_type", ploutos.CashOrderTypeCashIn).Where("status", ploutos.CashOrderStatusSuccess)
+	db.Where("created_at >= ?", start)
+	db.Where("created_at < ?", end)
+
+	err = db.First(&CashOrder{}).Error
+
+	if err == nil {
+		hasCashInToday = true
+	}
+
+	return hasCashInToday, nil
 }
