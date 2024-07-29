@@ -3,9 +3,11 @@ package model
 import (
 	"database/sql"
 	"errors"
+	"time"
 	"web-api/conf/consts"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -18,8 +20,27 @@ type UserAccountBinding struct {
 	CashMethod *CashMethod
 }
 
-func (UserAccountBinding) GetAccountByUser(userID int64) (list []UserAccountBinding, err error) {
-	err = DB.Preload("CashMethod").Where("user_id", userID).Where("is_active").Order("id desc").Find(&list).Error
+func (UserAccountBinding) GetAccountByUser(c *gin.Context, userID, vipID int64) (list []UserAccountBinding, err error) {
+	user := c.MustGet("user").(User)
+
+	q := DB.Joins("CashMethod").
+		Where("user_account_binding.user_id", userID).
+		Where("user_account_binding.is_active").
+		Order("user_account_binding.id desc")
+
+	var restrictPaymentChannel []int64 = user.RestrictPaymentChannel
+	if len(restrictPaymentChannel) != 0 {
+		q = q.Where("\"CashMethod\".id NOT IN ?", restrictPaymentChannel)
+	}
+
+	now := time.Now().UTC()
+	q = q.Joins("CashMethod.CashMethodPromotion", DB.
+		Where("\"CashMethod__CashMethodPromotion\".start_at < ? and \"CashMethod__CashMethodPromotion\".end_at > ?", now, now).
+		Where("\"CashMethod__CashMethodPromotion\".status = ?", 1).
+		Where("\"CashMethod__CashMethodPromotion\".vip_id = ?", vipID),
+	)
+
+	err = q.Find(&list).Error
 	return
 }
 

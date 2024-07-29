@@ -27,6 +27,7 @@ var RedisLockClient *redsync.Redsync
 var RedisConfigClient *redis.Client
 var RedisRecentGamesClient *redis.Client
 var RedisGeolocationClient *redis.Client
+var RedisDomainConfigClient *redis.Client
 
 func Redis() {
 	db, _ := strconv.ParseUint(os.Getenv("REDIS_DB"), 10, 64)
@@ -145,7 +146,7 @@ func RedisRecentGames() {
 }
 
 func RedisGeolocation() {
-	db, _ := strconv.ParseUint(os.Getenv("REDIS_GEOLOCATION_DB"), 10, 64)
+	db, _ := strconv.ParseUint(os.Getenv("REDIS_GEOLOCATIONS"), 10, 64)
 	client := redis.NewClient(&redis.Options{
 		Addr:       os.Getenv("REDIS_ADDR"),
 		Password:   os.Getenv("REDIS_PW"),
@@ -154,8 +155,24 @@ func RedisGeolocation() {
 	})
 
 	if _, err := client.Ping(context.TODO()).Result(); err != nil {
-		util.Log().Panic("Fail to connect to REDIS_GEOLOCATION_DB", err)
+		util.Log().Panic("Fail to connect to REDIS_GEOLOCATIONS", err)
 	}
 
 	RedisGeolocationClient = client
+}
+
+func RedisDomainConfigs() {
+	db, _ := strconv.ParseUint(os.Getenv("REDIS_DOMAIN_CONFIGS"), 10, 64)
+	client := redis.NewClient(&redis.Options{
+		Addr:       os.Getenv("REDIS_ADDR"),
+		Password:   os.Getenv("REDIS_PW"),
+		DB:         int(db),
+		MaxRetries: 1,
+	})
+
+	if _, err := client.Ping(context.TODO()).Result(); err != nil {
+		util.Log().Panic("Fail to connect to REDIS_DOMAIN_CONFIGS", err)
+	}
+
+	RedisDomainConfigClient = client
 }

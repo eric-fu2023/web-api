@@ -103,6 +103,10 @@ func BuildGenericCashOrder(p model.CashOrder, i18n i18n.I18n) GenericCashOrder {
 		effectiveAmount = p.EffectiveCashOutAmount
 	}
 
+	if p.Name != "" {
+		detail = p.Name
+	}
+
 	return GenericCashOrder{
 		OrderNo:         p.ID,
 		OrderStatus:     consts.CashOrderStatus[p.Status],

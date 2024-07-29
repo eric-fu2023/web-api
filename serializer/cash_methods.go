@@ -5,6 +5,12 @@ import (
 	"web-api/util"
 )
 
+type CashMethodPromotion struct {
+	PayoutRate                    float64   `json:"payout_rate"`
+	MaxPromotionAmount            int64     `json:"max_promotion_amount"`
+	DefaultOptionPromotionAmounts []float64 `json:"default_option_promotion_amounts"`
+}
+
 type CashMethod struct {
 	ID                  int64  `json:"id"`
 	Name                string `json:"name"`
@@ -18,14 +24,16 @@ type CashMethod struct {
 	DefaultOptions      []int  `json:"default_options"`
 	Currency            string `json:"currency"`
 	AccountNameRequired bool   `json:"account_name_required"`
+
+	CashMethodPromotion *CashMethodPromotion `json:"cash_method_promotion,omitempty"`
 }
 
-func BuildCashMethod(a model.CashMethod) CashMethod {
+func BuildCashMethod(a model.CashMethod, maxPromotionAmountByCashMethodId map[int64]int64) (cashMethod CashMethod) {
 	methodType := "top-up"
 	if a.MethodType < 0 {
 		methodType = "withdraw"
 	}
-	return CashMethod{
+	cashMethod = CashMethod{
 		ID:          a.ID,
 		Name:        a.Name,
 		IconURL:     Url(a.IconURL),
@@ -41,4 +49,21 @@ func BuildCashMethod(a model.CashMethod) CashMethod {
 		Currency:            a.Currency,
 		AccountNameRequired: a.AccountType == "bank_card",
 	}
+
+	if a.CashMethodPromotion != nil {
+		cashMethod.CashMethodPromotion = &CashMethodPromotion{
+			PayoutRate:         a.CashMethodPromotion.PayoutRate,
+			MaxPromotionAmount: maxPromotionAmountByCashMethodId[a.ID] / 100,
+			DefaultOptionPromotionAmounts: util.MapSlice(a.DefaultOptions, func(b int32) (amount float64) {
+				amount = float64(b) * a.CashMethodPromotion.PayoutRate
+				maxAmount, exist := maxPromotionAmountByCashMethodId[a.ID]
+				if exist && amount > float64(maxAmount) {
+					amount = float64(maxAmount)
+				}
+				return amount / 100
+			}),
+		}
+	}
+
+	return cashMethod
 }

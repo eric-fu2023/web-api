@@ -5,6 +5,7 @@ import (
 	"web-api/service/promotion"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 func GetCategoryList(c *gin.Context) {
@@ -37,9 +38,29 @@ func GetDetail(c *gin.Context) {
 	}
 }
 
+func GetCustomDetail(c *gin.Context) {
+	var service promotion.PromotionCustomDetail
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Handle(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
+
 func PromotionClaim(c *gin.Context) {
 	var service promotion.PromotionClaim
 	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Handle(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
+
+func PromotionJoin(c *gin.Context) {
+	var service promotion.PromotionJoin
+	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
 		res, _ := service.Handle(c)
 		c.JSON(200, res)
 	} else {

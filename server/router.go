@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"web-api/api"
+	analyst_api "web-api/api/analyst"
 	dc_api "web-api/api/dc"
 	dollar_jackpot_api "web-api/api/dollar_jackpot"
 	fb_api "web-api/api/fb"
@@ -132,8 +133,10 @@ func NewRouter() *gin.Engine {
 		internal.POST("/withdraw-order/reject", middleware.RequestLogger("internal"), internal_api.RejectWithdrawal)
 		internal.POST("/withdraw-order/approve", middleware.RequestLogger("internal"), internal_api.ApproveWithdrawal)
 		internal.POST("/withdraw-order/insert", middleware.RequestLogger("internal"), internal_api.CustomOrder)
+		internal.POST("/withdraw-order/manual-approve", middleware.RequestLogger("internal"), internal_api.ManualCloseCashOut)
 		internal.PUT("/recall", middleware.RequestLogger("internal"), api.InternalRecallFund)
 		internal.POST("/promotions/batch-claim", middleware.RequestLogger("internal"), internal_api.InternalPromotion)
+		internal.POST("/promotions/custom", middleware.RequestLogger("internal"), internal_api.InternalPromotionRequest)
 		internal.POST("/notification-push", middleware.RequestLogger("internal"), internal_api.Notification)
 	}
 
@@ -142,7 +145,6 @@ func NewRouter() *gin.Engine {
 	r.GET("/ts", api.Ts)
 	// geolocations
 	r.GET("/v1/geolocation", api.GeolocationGet)
-	r.POST("/v1/geolocation", api.GeolocationCreate)
 	// payment
 	r.GET("/finpay_redirect", api.FinpayRedirect)
 	r.POST("/finpay_redirect", api.FinpayRedirect)
@@ -152,9 +154,12 @@ func NewRouter() *gin.Engine {
 	// 	captcha.POST("/check", api.CaptchaCheck)
 	// }
 
+	// all APIs below needs signature in the HTTP header
+	r.Use(middleware.CheckSignature())
+	r.GET("/init_app", api.DomainInitApp)
+
 	// all APIs below will be encrypted
 	r.Use(middleware.EncryptPayload())
-	r.Use(middleware.CheckSignature())
 	r.Use(middleware.Ip())
 	r.Use(middleware.BrandAgent())
 	r.Use(middleware.Timezone())
@@ -199,14 +204,22 @@ func NewRouter() *gin.Engine {
 		v1.GET("/game_categories", middleware.Cache(5*time.Minute, false), game_integration_api.GameCategoryList)
 		v1.GET("/sub_games", middleware.Cache(5*time.Minute, false), game_integration_api.SubGames)
 
-		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Minute, false), promotion_api.GetCoverList)
-		v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
+		// v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Second, false), promotion_api.GetCoverList)
+		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(1*time.Minute, false), promotion_api.GetCoverList)
+		// v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
+		v1.GET("/promotion/details", middleware.CheckAuth(), promotion_api.GetDetail)
 		v1.GET("/promotion/categories", middleware.CheckAuth(), middleware.Cache(5*time.Minute, false), promotion_api.GetCategoryList)
 
 		v1.GET("/rtc_token", middleware.CheckAuth(), api.RtcToken)
 		v1.GET("/rtc_tokens", middleware.CheckAuth(), api.RtcTokens)
 
 		v1.GET("/vips", middleware.Cache(5*time.Minute, false), api.VipLoad)
+		popup := v1.Group("/popup")
+		{
+			// popup.GET("/winlose", middleware.CheckAuth(), api.CsHistory)
+			// popup.GET("/vip", middleware.CheckAuth(), api.CsHistory)
+			popup.GET("/spin_items", api.SpinItems)
+		}
 
 		pm := v1.Group("/pm")
 		{
@@ -236,6 +249,7 @@ func NewRouter() *gin.Engine {
 		}
 
 		v1.GET("/gifts", middleware.Cache(1*time.Minute, false), api.GiftList)
+		v1.GET("/analysts", analyst_api.GetAnalystList)
 
 		auth := v1.Group("/user")
 		{
@@ -295,6 +309,8 @@ func NewRouter() *gin.Engine {
 				user.POST("/gift-send", middleware.CheckAuth(), api.GiftSend)
 				user.GET("/gift-records", middleware.CheckAuth(), api.GiftRecordList)
 
+				user.GET("/user-heartbeat", api.UserHeartbeat)
+
 				taya := user.Group("/taya")
 				{
 					taya.GET("/token", taya_api.GetToken)
@@ -346,9 +362,11 @@ func NewRouter() *gin.Engine {
 
 				promotion := user.Group("/promotion")
 				{
-					promotion.GET("/list", middleware.Cache(5*time.Minute, false), promotion_api.GetCoverList)
+					promotion.GET("/list", middleware.Cache(1*time.Minute, false), promotion_api.GetCoverList)
 					promotion.GET("/details", middleware.RequestLogger("get promotion details"), promotion_api.GetDetail)
+					promotion.GET("/custom-details", middleware.RequestLogger("get custom promotion details"), promotion_api.GetCustomDetail)
 					promotion.POST("/claim", middleware.RequestLogger("promotion claim"), promotion_api.PromotionClaim)
+					promotion.POST("/join", middleware.RequestLogger("promotion join"), promotion_api.PromotionJoin)
 				}
 
 				voucher := user.Group("/voucher")

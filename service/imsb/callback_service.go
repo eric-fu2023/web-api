@@ -1,18 +1,9 @@
 package imsb
 
 import (
-	"blgit.rfdev.tech/taya/game-service/imsb"
-	"blgit.rfdev.tech/taya/game-service/imsb/callback"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"golang.org/x/exp/slices"
-	"gorm.io/gorm"
-	"gorm.io/plugin/dbresolver"
 	"strings"
 	"time"
 	"web-api/cache"
@@ -21,6 +12,16 @@ import (
 	"web-api/service/common"
 	"web-api/service/promotion"
 	"web-api/util"
+
+	"blgit.rfdev.tech/taya/game-service/imsb"
+	"blgit.rfdev.tech/taya/game-service/imsb/callback"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/exp/slices"
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 type Callback struct {
@@ -135,7 +136,7 @@ func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExist
 			rewardAmount = loss
 		}
 		wagerChange := voucher.WagerMultiplier * rewardAmount
-		err = promotion.CreateCashOrder(tx, voucher.PromotionType, userId, rewardAmount, wagerChange, "")
+		err = promotion.CreateCashOrder(tx, voucher.PromotionType, userId, rewardAmount, wagerChange, "", "")
 		if err != nil {
 			return
 		}
