@@ -7,10 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetAnalystList(c *gin.Context) {
+func ListAnalysts(c *gin.Context) {
 	var service service.AnalystService
 	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.GetList(c)
+		res, _ := service.GetAnalystList(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
+
+func ListFollowingAnalysts(c *gin.Context) {
+	var service service.AnalystService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.GetFollowingAnalystList(c)
 		c.JSON(200, res)
 	} else {
 		c.JSON(400, api.ErrorResponse(c, service, err))

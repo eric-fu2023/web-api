@@ -14,6 +14,7 @@ import (
 	imsb_api "web-api/api/imsb"
 	internal_api "web-api/api/internalapi"
 	"web-api/api/mock"
+	prediction_api "web-api/api/prediction"
 	promotion_api "web-api/api/promotion"
 	referral_alliance_api "web-api/api/referral_alliance"
 	saba_api "web-api/api/saba"
@@ -249,7 +250,6 @@ func NewRouter() *gin.Engine {
 		}
 
 		v1.GET("/gifts", middleware.Cache(1*time.Minute, false), api.GiftList)
-		v1.GET("/analysts", analyst_api.GetAnalystList)
 
 		auth := v1.Group("/user")
 		{
@@ -397,7 +397,13 @@ func NewRouter() *gin.Engine {
 
 		prediction := v1.Group("/prediction", middleware.CheckAuth())
 		{
-			prediction.GET("list", api.ListPredictions)
+			prediction.GET("list", prediction_api.ListPredictions)
+		}
+
+		analyst := v1.Group("/analyst", middleware.CheckAuth())
+		{
+			analyst.GET("/list", analyst_api.ListAnalysts)
+			analyst.GET("/following", analyst_api.ListFollowingAnalysts)
 		}
 
 		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)
