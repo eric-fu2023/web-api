@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"web-api/api"
+	analyst_api "web-api/api/analyst"
 	dc_api "web-api/api/dc"
 	dollar_jackpot_api "web-api/api/dollar_jackpot"
 	fb_api "web-api/api/fb"
@@ -144,7 +145,6 @@ func NewRouter() *gin.Engine {
 	r.GET("/ts", api.Ts)
 	// geolocations
 	r.GET("/v1/geolocation", api.GeolocationGet)
-	r.POST("/v1/geolocation", api.GeolocationCreate)
 	// payment
 	r.GET("/finpay_redirect", api.FinpayRedirect)
 	r.POST("/finpay_redirect", api.FinpayRedirect)
@@ -154,9 +154,12 @@ func NewRouter() *gin.Engine {
 	// 	captcha.POST("/check", api.CaptchaCheck)
 	// }
 
+	// all APIs below needs signature in the HTTP header
+	r.Use(middleware.CheckSignature())
+	r.GET("/init_app", api.DomainInitApp)
+
 	// all APIs below will be encrypted
 	r.Use(middleware.EncryptPayload())
-	r.Use(middleware.CheckSignature())
 	r.Use(middleware.Ip())
 	r.Use(middleware.BrandAgent())
 	r.Use(middleware.Timezone())
@@ -211,6 +214,12 @@ func NewRouter() *gin.Engine {
 		v1.GET("/rtc_tokens", middleware.CheckAuth(), api.RtcTokens)
 
 		v1.GET("/vips", middleware.Cache(5*time.Minute, false), api.VipLoad)
+		popup := v1.Group("/popup")
+		{
+			// popup.GET("/winlose", middleware.CheckAuth(), api.CsHistory)
+			// popup.GET("/vip", middleware.CheckAuth(), api.CsHistory)
+			popup.GET("/spin_items", api.SpinItems)
+		}
 
 		pm := v1.Group("/pm")
 		{
@@ -240,6 +249,7 @@ func NewRouter() *gin.Engine {
 		}
 
 		v1.GET("/gifts", middleware.Cache(1*time.Minute, false), api.GiftList)
+		v1.GET("/analysts", analyst_api.GetAnalystList)
 
 		auth := v1.Group("/user")
 		{

@@ -81,7 +81,7 @@ func (s ManualCloseOrderService) Do(c *gin.Context) (r serializer.Response, err 
 	}
 
 	tx := model.DB.Begin()
-	_, err = cashout.CloseCashOutOrder(c, s.OrderNumber, int64(cashOrder.AppliedCashOutAmount), 0, 0, util.JSON(s), "", tx)
+	_, err = cashout.CloseCashOutOrder(c, s.OrderNumber, int64(cashOrder.AppliedCashOutAmount), 0, 0, util.JSON(s), "", false, tx)
 	if err != nil {
 		tx.Rollback()
 		r = serializer.EnsureErr(c, err, r)

@@ -51,15 +51,21 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 
 	isExceeded := false
 	data := make(map[string]string)
+	numOriFields := 0
 	for _, field := range incomingRequestAction.Fields {
+		if field.Switch == 0 {
+			continue
+		}
 		switch field.Type {
 		case "input-button":
+			// numOriFields++
 			isExceeded, err = serializer.ParseButtonClickOption(c, field, p.PromotionId, user.ID)
 			if err != nil {
 				r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)
 				return
 			}
 		case "input-dropdown":
+			numOriFields++
 			if requestInput[strconv.Itoa(field.InputId)] != "" {
 				index, _ := strconv.Atoi(requestInput[strconv.Itoa(field.InputId)])
 				index--
@@ -73,10 +79,26 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 				}
 			}
 		case "input-keyin":
+			numOriFields++
 			if requestInput[strconv.Itoa(field.InputId)] != "" {
 				data[field.Title] = requestInput[strconv.Itoa(field.InputId)]
 			}
+			contentTypeOption, _ := strconv.Atoi(field.ContentType)
+			switch int64(contentTypeOption) {
+			case models.CustomPromotionTextboxOnlyInt:
+				// If cast error means contains char
+				_, castError := strconv.Atoi(requestInput[strconv.Itoa(field.InputId)])
+				if castError != nil {
+					r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_field_error"), err)
+					return
+				}
+			}
 		}
+	}
+
+	if numOriFields != len(data) {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_field_incomplete_error"), err)
+		return
 	}
 
 	if isExceeded {

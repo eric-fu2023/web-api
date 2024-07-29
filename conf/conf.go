@@ -32,6 +32,8 @@ func Init() {
 	cache.SetupRedisStore()
 	cache.RedisLock()
 	cache.RedisRecentGames()
+	cache.RedisGeolocation()
+	cache.RedisDomainConfigs()
 	model.SetupMongo(os.Getenv("MONGO_URI"))
 	aj_captcha.Init()
 

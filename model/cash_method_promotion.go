@@ -3,17 +3,25 @@ package model
 import (
 	"context"
 	"math"
+	"time"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 )
 
-func FindCashMethodPromotionByCashMethodIdAndVipId(cashMethodId, vipId int64, tx *gorm.DB) (cashMethodPromotion models.CashMethodPromotion, err error) {
+func FindActiveCashMethodPromotionByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Time, tx *gorm.DB) (cashMethodPromotion models.CashMethodPromotion, err error) {
+	if promotionAt == nil {
+		now := time.Now().UTC()
+		promotionAt = &now
+	}
 	if tx == nil {
 		tx = DB
 	}
-	err = tx.Where("cash_method_id", cashMethodId).Where("vip_id", vipId).Find(&cashMethodPromotion).Error
+	err = tx.
+		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
+		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).Where("status = ?", 1).
+		Find(&cashMethodPromotion).Error
 	if err != nil {
 		return
 	}
