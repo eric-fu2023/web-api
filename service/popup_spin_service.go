@@ -71,13 +71,12 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 
 	data := serializer.BuildSpinResult(resultSpinItem)
 
-	SpinRecord := ploutos.PopupRecord{
-		UserID     :user.ID,
-		Type       :3,
-		SpinResult :data.ID,
+	SpinResult := ploutos.SpinResult{
+		UserID:     user.ID,
+		SpinResult: data.ID,
+		Redeemed:   false,
 	}
-	err = model.DB.Create(&SpinRecord).Error
-
+	err = model.DB.Create(&SpinResult).Error
 
 	r = serializer.Response{
 		Data: data,
