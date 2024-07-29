@@ -1,6 +1,7 @@
 package api
 
 import (
+	"web-api/api"
 	"web-api/service"
 
 	"github.com/gin-gonic/gin"
@@ -35,6 +36,6 @@ func ListPredictions(c *gin.Context) {
 			c.Abort()
 		}
 	} else {
-		c.JSON(400, ErrorResponse(c, service, err))
+		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }

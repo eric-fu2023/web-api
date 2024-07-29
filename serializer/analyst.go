@@ -15,16 +15,21 @@ type Analyst struct {
 
 // func BuildAnalystList(analysts []models.Analyst) (res []Analyst) {
 
-// for _, analyst := range analysts {
+// 	for _, analyst := range analysts {
 
-// 	a := Analyst{
+// 		res = append(res, BuildAnalyst(analyst))
+// 	}
+
+// 	return
+// }
+
+// func BuildAnalyst(analyst models.Analyst) (a Analyst) {
+
+// 	a = Analyst{
 // 		AnalystId:     analyst.AnalystId,
 // 		AnalystName:   analyst.AnalystName,
 // 		AnalystSource: analyst.AnalystSource,
 // 	}
-
-// 	res = append(res, a)
-// }
 
 // 	return
 // }
