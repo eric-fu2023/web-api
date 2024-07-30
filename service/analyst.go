@@ -16,8 +16,8 @@ type AnalystService struct {
 }
 
 type FollowToggle struct {
-	AnalystId   int64 `json:"analyst_id"`
-	IsFollowing bool  `json:"is_following"`
+	AnalystId   int64 `json:"analyst_id" form:"analyst_id"`
+	// IsFollowing bool  `json:"is_following" form:"is_following"`
 }
 
 type IAnalystService interface {

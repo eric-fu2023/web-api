@@ -48,7 +48,7 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 }
 
 func GetFollowingAnalystStatus(c context.Context, userId, analystId int64) (following models.UserAnalystFollowing, err error) {
-	err = DB.WithContext(c).Where("user_id = ?", userId).Where("analyst_id = ?", analystId).First(&following).Error
+	err = DB.WithContext(c).Where("user_id = ?", userId).Where("analyst_id = ?", analystId).Limit(1).Find(&following).Error
 	return
 }
 
