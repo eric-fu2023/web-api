@@ -1,8 +1,9 @@
 package model
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
@@ -16,12 +17,13 @@ func (Analyst) List(page, limit int) (list []Analyst, err error) {
 	db := DB.Scopes(Paginate(page, limit))
 
 	err = db.
+		Preload("AnalystSource").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
 		Order("id DESC").
 		Find(&list).Error
-	return 
+	return
 }
 
 func (Analyst) GetDetail(id int) (target Analyst, err error) {
@@ -32,8 +34,9 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 		Order("created_at DESC").
 		Order("id DESC").
 		First(&target).Error
-	return 
+	return
 }
+
 // func GetAnalyst(c context.Context, analystId int64) (analyst models.Analyst, err error) {
 // 	err = DB.WithContext(c).Where("is_active").Where("id = ?", analystId).First(&analyst).Error
 // 	return
