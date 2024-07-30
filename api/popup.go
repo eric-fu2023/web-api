@@ -6,39 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func WinLose(c *gin.Context) {
-	var service service.WinLoseService
+func Show(c *gin.Context){
+	var service service.PopupService
 	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.Get(c)
-		c.JSON(200, res)
-	} else {
-		c.JSON(400, ErrorResponse(c, service, err))
-	}
-}
-func WinLoseShown(c *gin.Context) {
-	var service service.WinLoseService
-	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.Shown(c)
-		c.JSON(200, res)
-	} else {
-		c.JSON(400, ErrorResponse(c, service, err))
-	}
-}
-
-func Vip(c *gin.Context) {
-	var service service.VipService
-	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.Get(c)
-		c.JSON(200, res)
-	} else {
-		c.JSON(400, ErrorResponse(c, service, err))
-	}
-}
-
-func VipShown(c *gin.Context) {
-	var service service.VipService
-	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.Shown(c)
+		res, _ := service.ShowPopup(c)
 		c.JSON(200, res)
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
