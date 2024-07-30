@@ -243,9 +243,11 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 			user.Kyc = &kyc
 		}
 	}
-	popupType, err := model.GetPopupTypeForMe(user.ID)
+	popupType, err := model.GetPopupTypeForMe(user)
 	if err == nil {
 		user.PopupType = popupType
+	}else{
+		fmt.Print(err);
 	}
 	return serializer.Response{
 		Data: serializer.BuildUserInfo(c, user),

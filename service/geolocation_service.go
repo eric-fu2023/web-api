@@ -32,7 +32,7 @@ func (service *CreateGeolocationService) Create(c *gin.Context) serializer.Respo
 		Region:      service.Region,
 		City:        service.City,
 		Zipcode:     service.Zipcode,
-		Vendor:      ploutos.IP_API,
+		// Vendor:      ploutos.IP_API,
 	}
 
 	var err = model.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&geolocation).Error
