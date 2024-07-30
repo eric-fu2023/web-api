@@ -3,6 +3,7 @@ package serializer
 import (
 	"web-api/model"
 )
+import models "blgit.rfdev.tech/taya/ploutos-object"
 
 type Analyst struct {
 	AnalystId        int64        `json:"analyst_id"`
@@ -71,3 +72,8 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 
 // 	return
 // }
+
+func BuildFollowingList(followings []models.UserAnalystFollowing) (res []Analyst) {
+
+	return
+}
