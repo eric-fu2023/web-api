@@ -1,5 +1,7 @@
 package serializer
 
+import models "blgit.rfdev.tech/taya/ploutos-object"
+
 type Analyst struct {
 	AnalystId        int64        `json:"analyst_id"`
 	AnalystName      string       `json:"analyst_name"`
@@ -33,3 +35,8 @@ type Analyst struct {
 
 // 	return
 // }
+
+func BuildFollowingList(followings []models.UserAnalystFollowing) (res []Analyst) {
+
+	return
+}
