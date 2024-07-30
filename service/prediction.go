@@ -5,7 +5,6 @@ import (
 	repo "web-api/repository"
 	"web-api/serializer"
 	"web-api/service/common"
-	"web-api/util"
 	"web-api/util/i18n"
 
 	"github.com/gin-gonic/gin"
@@ -38,7 +37,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 	hasAuth := user.ID != 0
 
-	deviceInfo, err := util.GetDeviceInfo(c)
+	// deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 		return
@@ -64,7 +63,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 			// }
 			// r.Data = serializer.BuildPredictionList(predictions)
 
-			predictionRepo := repo.NewMockAnalystRepo()
+			predictionRepo := repo.NewMockPredictionRepo()
 			r, err = predictionRepo.GetList(c)
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
@@ -79,7 +78,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 			// }, nil
 
 		} else {
-			predictions, err := model.GetUserPrediction(model.GetUserPredictionCond{DeviceId: user.LastLoginDeviceUuid, UserId: user.ID})
+			predictions, err := model.MockGetUserPrediction(3)
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return r, err
@@ -93,27 +92,21 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 			return serializer.Response{
 				Msg:  i18n.T("success"),
-				Data: serializer.BuildUserPredictionsList(predictions, ids, 3),
+				Data: serializer.BuildPredictions(predictions),
 			}, nil
 		}
 
 	} else {
 		// no log in, query with device id and user id 0
-		predictions, err := model.GetUserPrediction(model.GetUserPredictionCond{DeviceId: deviceInfo.Uuid, UserId: 0})
+		predictions, err := model.MockGetUserPrediction(1)
 		if err != nil {
 			r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 			return r, err
 		}
 
-		var ids []int64
-		if len(predictions) == 0 {
-			ids = mockGetRandomPredictions(1)
-			model.CreateUserPredictions(0, deviceInfo.Uuid, ids)
-		}
-
 		return serializer.Response{
 			Msg:  i18n.T("success"),
-			Data: serializer.BuildUserPredictionsList(predictions, ids, 1),
+			Data: serializer.BuildPredictions(predictions),
 		}, nil
 	}
 

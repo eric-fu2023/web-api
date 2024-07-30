@@ -23,3 +23,12 @@ func BuildUserPredictionsList(predictions []model.UserPrediction, newPredictions
 
 	return resp
 }
+
+func BuildPredictions(userPreds []model.UserPrediction) []Prediction {
+	preds := []Prediction{}
+
+	for _, userPred := range userPreds {
+		preds = append(preds, Prediction{PredictionId: userPred.PredictionId, AnalystId: userPred.Prediction.AnalystId, PredictionTitle: userPred.Prediction.PredictionTitle, PredictionDesc: userPred.Prediction.PredictionDesc, IsLocked: userPred.IsLocked})
+	}
+	return preds
+}
