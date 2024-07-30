@@ -20,6 +20,7 @@ import (
 	saba_api "web-api/api/saba"
 	stream_game_api "web-api/api/stream_game"
 	taya_api "web-api/api/taya"
+	teamup_api "web-api/api/teamup"
 
 	"web-api/middleware"
 
@@ -404,6 +405,11 @@ func NewRouter() *gin.Engine {
 		{
 			analyst.GET("/list", analyst_api.ListAnalysts)
 			analyst.GET("/following", analyst_api.ListFollowingAnalysts)
+		}
+
+		teamup := v1.Group("/teamup")
+		{
+			teamup.GET("/chop", middleware.AuthRequired(true, false), teamup_api.ChopBet)
 		}
 
 		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)
