@@ -403,10 +403,10 @@ func NewRouter() *gin.Engine {
 
 		analyst := v1.Group("/analyst", middleware.CheckAuth())
 		{
-			analyst.GET("/list", analyst_api.ListAnalysts)
-			analyst.GET("/following", analyst_api.ListFollowingAnalysts)
 			analyst.GET("", analyst_api.GetAnalystDetail)
-			analyst.POST("/following", analyst_api.ToggleFollowAnalyst)
+			analyst.GET("/list", analyst_api.ListAnalysts)
+			analyst.GET("/following", middleware.AuthRequired(true, true) ,analyst_api.ListFollowingAnalysts)
+			analyst.POST("/following",  middleware.AuthRequired(true, true) ,analyst_api.ToggleFollowAnalyst)
 		}
 
 		teamup := v1.Group("/teamup")
