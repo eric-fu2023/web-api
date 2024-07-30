@@ -11,6 +11,7 @@ import (
 
 type PredictionService struct {
 	common.Page
+	AnalystId int64 `json:"analyst_id" form:"analyst_id"`
 }
 
 // func (service *StrategyService) List(c *gin.Context) (serializer.Response, error) {
@@ -64,7 +65,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 			// return
 
-			predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, -1)
+			predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, -1, service.AnalystId)
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return r, err
@@ -76,7 +77,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 			}, nil
 
 		} else {
-			predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, 3)
+			predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, 3, service.AnalystId)
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return r, err
@@ -90,7 +91,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 	} else {
 		// no log in, query with device id and user id 0
-		predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, 1)
+		predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, 1, service.AnalystId)
 		if err != nil {
 			r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 			return r, err

@@ -53,6 +53,18 @@ func (repo MockAnalystRepository) GetListPagination(ctx context.Context, page in
 	return
 }
 
+func (repo MockAnalystRepository) GetDetail(ctx context.Context, id int64) (r serializer.Response, err error) {
+	for _, analyst := range repo.Analysts {
+		if analyst.AnalystId == id {
+			analyst.Predictions = NewMockPredictionRepo().Predictions
+			r.Data = analyst
+			return 
+		}
+	}
+	err = errors.New("Invalid id")
+	r.Error = err.Error()
+	return 
+}
 
 func NewMockAnalystRepo() (repo MockAnalystRepository) {
 	return MockAnalystRepository{

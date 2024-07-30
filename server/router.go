@@ -408,6 +408,7 @@ func NewRouter() *gin.Engine {
 		{
 			analyst.GET("/list", analyst_api.ListAnalysts)
 			analyst.GET("/following", analyst_api.ListFollowingAnalysts)
+			analyst.GET("", analyst_api.GetAnalystDetail)
 		}
 
 		teamup := v1.Group("/teamup")

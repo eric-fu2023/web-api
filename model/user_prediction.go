@@ -102,8 +102,8 @@ func CreateUserPredictionWithDB(tx *gorm.DB, userId int64, deviceId string, pred
 
 }
 
-func MockGetUserPrediction(limit int, page int, unlockedAmount int) ([]UserPrediction, error) {
-	val := []UserPrediction{
+func MockGetUserPrediction(limit int, page int, unlockedAmount int, analystId int64) ([]UserPrediction, error) {
+	all := []UserPrediction{
 		{ 
 			IsLocked: true,
 			UserPrediction: ploutos.UserPrediction{
@@ -271,28 +271,40 @@ func MockGetUserPrediction(limit int, page int, unlockedAmount int) ([]UserPredi
 	}
 
 	for i := 0; i < unlockedAmount; i++ {
-		val[i].IsLocked = false
+		all[i].IsLocked = false
 	}
 
 	if unlockedAmount == -1 {
-		for i, _ := range val{
-			val[i].IsLocked = false
+		for i, _ := range all{
+			all[i].IsLocked = false
 		}
+	}
+	target := all
+	filtered := []UserPrediction{}
+
+	if analystId > 0 {
+		for _, pred := range all {
+			if pred.Prediction.AnalystId == analystId {
+				pred.IsLocked = false
+				filtered = append(filtered, pred)
+			}
+		}
+		target = filtered
 	}
 
 	start := limit * (page - 1)
 	end := start + limit
 
 	// Ensure start and end are within bounds
-	if start >= len(val) {
+	if start >= len(target) {
 		return []UserPrediction{}, nil
 	}
 
-	if end > len(val) {
-		end = len(val)
+	if end > len(target) {
+		end = len(target)
 	}
 
-	val = val[start:end]
+	target = target[start:end]
 
-	return val, nil
+	return target, nil
 }
