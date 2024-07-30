@@ -218,9 +218,12 @@ func NewRouter() *gin.Engine {
 		v1.GET("/vips", middleware.Cache(5*time.Minute, false), api.VipLoad)
 		popup := v1.Group("/popup")
 		{
-			// popup.GET("/winlose", middleware.CheckAuth(), api.CsHistory)
-			// popup.GET("/vip", middleware.CheckAuth(), api.CsHistory)
+			popup.GET("/winlose", middleware.CheckAuth(), api.WinLose)
+			popup.GET("/winlose_shown", middleware.CheckAuth(), api.WinLoseShown)
+			popup.GET("/vip", middleware.CheckAuth(), api.Vip)
+			popup.GET("/vip_shown", middleware.CheckAuth(),  api.VipShown)
 			popup.GET("/spin_items", api.SpinItems)
+			popup.GET("/spin_result", middleware.CheckAuth(),  api.SpinResult)
 		}
 
 		pm := v1.Group("/pm")
