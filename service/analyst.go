@@ -13,7 +13,6 @@ import (
 
 type AnalystService struct {
 	common.Page
-	Id int64 `json:"analyst_id"`
 }
 
 type FollowToggle struct {
@@ -38,25 +37,7 @@ func (p AnalystService) GetAnalystList(c *gin.Context) (r serializer.Response, e
 	// r.Data = serializer.BuildAnalystList(analysts)
 
 	analystRepo := repo.NewMockAnalystRepo()
-	r, err = analystRepo.GetList(c)
-
-	return
-}
-
-func (service AnalystService) GetAnalyst(c *gin.Context) (r serializer.Response, err error) {
-	// now := time.Now()
-	// brand := c.MustGet(`_brand`).(int)
-	// deviceInfo, _ := util.GetDeviceInfo(c)
-
-	// analyst, err = model.GetAnalyst(c, service.Id)
-	// if err != nil {
-	// 	r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
-	// 	return
-	// }
-	// r.Data = serializer.BuildAnalyst(analyst)
-
-	analystRepo := repo.NewMockAnalystRepo()
-	r, err = analystRepo.GetList(c)
+	r, err = analystRepo.GetListPagination(c, p.Page.Page, p.Limit)
 
 	return
 }
@@ -129,6 +110,22 @@ func (p AnalystService) GetFollowingAnalystList(c *gin.Context) (r serializer.Re
 
 	analystRepo := repo.NewMockAnalystRepo()
 	r, err = analystRepo.GetList(c)
+
+	return
+}
+
+type AnalystDetailService struct {
+	Id int64 `json:"analyst_id" form:"analyst_id"`
+}
+
+func (service AnalystDetailService) GetAnalyst(c *gin.Context) (r serializer.Response, err error) {
+	analystRepo := repo.NewMockAnalystRepo()
+	r, err = analystRepo.GetDetail(c, service.Id)
+
+	if err != nil {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, "", err)
+		return 
+	}
 
 	return
 }

@@ -8,8 +8,6 @@ import (
 	"web-api/service"
 	"web-api/service/promotion"
 	"web-api/util"
-
-	models "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 func HandlePromotion(c context.Context, order model.CashOrder) {
@@ -23,21 +21,21 @@ func HandleOneTimeB(c context.Context, order model.CashOrder) {
 		util.GetLoggerEntry(c).Error("get user error", err)
 		return
 	}
-	uaCond := model.GetUserAchievementCond{AchievementIds: []int64{
-		models.UserAchievementIdFirstDepositBonusTutorial,
-	}}
-	a, err := model.GetUserAchievements(order.UserId, uaCond)
-	if err != nil {
-		util.GetLoggerEntry(c).Error("get config error", err)
-		return
-	}
-	if len(a) == 0 {
-		return
-	}
-	if len(a) > 0 && order.CreatedAt.Sub(a[0].CreatedAt) > 1*time.Hour {
-		util.GetLoggerEntry(c).Info("not in reward timeframe", order.AppliedCashInAmount)
-		return
-	}
+	// uaCond := model.GetUserAchievementCond{AchievementIds: []int64{
+	// 	models.UserAchievementIdFirstDepositBonusTutorial,
+	// }}
+	// a, err := model.GetUserAchievements(order.UserId, uaCond)
+	// if err != nil {
+	// 	util.GetLoggerEntry(c).Error("get config error", err)
+	// 	return
+	// }
+	// if len(a) == 0 {
+	// 	return
+	// }
+	// if len(a) > 0 && order.CreatedAt.Sub(a[0].CreatedAt) > 1*time.Hour {
+	// 	util.GetLoggerEntry(c).Info("not in reward timeframe", order.AppliedCashInAmount)
+	// 	return
+	// }
 	amt, err := service.GetCachedConfigBranded(context.Background(), "static_promotion_one_time_bonus_min_amount", user.BrandId)
 	if err != nil {
 		util.GetLoggerEntry(c).Error("get config error", err)
