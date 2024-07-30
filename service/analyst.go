@@ -32,7 +32,7 @@ func (p AnalystService) GetAnalystList(c *gin.Context) (r serializer.Response, e
 	// r.Data = serializer.BuildAnalystList(analysts)
 
 	analystRepo := repo.NewMockAnalystRepo()
-	r, err = analystRepo.GetList(c)
+	r, err = analystRepo.GetListPagination(c, p.Page.Page, p.Limit)
 
 	return
 }

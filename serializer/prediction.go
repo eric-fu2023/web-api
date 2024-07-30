@@ -1,6 +1,7 @@
 package serializer
 
 type Prediction struct {
+	PredictionId     int64   `json:"prediction_id"`
 	AnalystId        int64   `json:"analyst_id"`
 	PredictedMatches []Match `json:"predicted_matches"`
 	PredictionTitle  string  `json:"prediction_title"`

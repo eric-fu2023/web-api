@@ -25,6 +25,35 @@ func (repo MockAnalystRepository) GetList(ctx context.Context) (r serializer.Res
 	return
 }
 
+func (repo MockAnalystRepository) GetListPagination(ctx context.Context, page int, limit int) (r serializer.Response, err error) {
+
+	if len(repo.Analysts) == 0 {
+		err = errors.New("")
+	}
+
+	for i, _ := range repo.Analysts {
+		repo.Analysts[i].Predictions = NewMockPredictionRepo().Predictions
+	}
+
+	start := limit * (page - 1)
+	end := start + limit
+
+	// Ensure start and end are within bounds
+	if start >= len(repo.Analysts) {
+		return
+	}
+
+	if end > len(repo.Analysts) {
+		end = len(repo.Analysts)
+	}
+
+	repo.Analysts = repo.Analysts[start:end]
+
+	r.Data = repo.Analysts
+	return
+}
+
+
 func NewMockAnalystRepo() (repo MockAnalystRepository) {
 	return MockAnalystRepository{
 		Analysts: []serializer.Analyst{

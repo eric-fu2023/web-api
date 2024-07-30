@@ -2,10 +2,8 @@ package service
 
 import (
 	"web-api/model"
-	repo "web-api/repository"
 	"web-api/serializer"
 	"web-api/service/common"
-	"web-api/util"
 	"web-api/util/i18n"
 
 	"github.com/gin-gonic/gin"
@@ -38,7 +36,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 	hasAuth := user.ID != 0
 
-	deviceInfo, err := util.GetDeviceInfo(c)
+	// deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 		return
@@ -48,8 +46,8 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 		u, _ := c.Get("user")
 		user := u.(model.User)
 
-		hasPaymentToday := false
-		hasPaymentToday, err = model.HasTopupToday(c, user.ID)
+		hasPaymentToday := true
+		_, err = model.HasTopupToday(c, user.ID)
 
 		if err != nil {
 			return serializer.DBErr(c, service, i18n.T("general_error"), err), err
@@ -57,63 +55,50 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 		if hasPaymentToday {
 
-			// predictions, err = model.PredictionList(c, p.Page, p.Limit)
+			// predictionRepo := repo.NewMockPredictionRepo()
+			// r, err = predictionRepo.GetList(c)
 			// if err != nil {
-			// 	r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+			// 	r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 			// 	return
 			// }
-			// r.Data = serializer.BuildPredictionList(predictions)
 
-			predictionRepo := repo.NewMockAnalystRepo()
-			r, err = predictionRepo.GetList(c)
-			if err != nil {
-				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
-				return
-			}
+			// return
 
-			return
-			// return serializer.Response{
-			// 	Msg:  i18n.T("success"),
-			// 	Data: "TODO: get all data :)",
-			// 	// TODO : ^^^^^
-			// }, nil
-
-		} else {
-			predictions, err := model.GetUserPrediction(model.GetUserPredictionCond{DeviceId: user.LastLoginDeviceUuid, UserId: user.ID})
+			predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, -1)
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return r, err
 			}
 
-			var ids []int64
-			if len(predictions) < 3 {
-				ids = mockGetRandomPredictions(3 - int64(len(predictions)))
-				model.CreateUserPredictions(user.ID, user.LastLoginDeviceUuid, ids)
+			return serializer.Response{
+				Msg:  i18n.T("success"),
+				Data: serializer.BuildPredictions(predictions),
+			}, nil
+
+		} else {
+			predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, 3)
+			if err != nil {
+				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
+				return r, err
 			}
 
 			return serializer.Response{
 				Msg:  i18n.T("success"),
-				Data: serializer.BuildUserPredictionsList(predictions, ids, 3),
+				Data: serializer.BuildPredictions(predictions),
 			}, nil
 		}
 
 	} else {
 		// no log in, query with device id and user id 0
-		predictions, err := model.GetUserPrediction(model.GetUserPredictionCond{DeviceId: deviceInfo.Uuid, UserId: 0})
+		predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, 1)
 		if err != nil {
 			r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 			return r, err
 		}
 
-		var ids []int64
-		if len(predictions) == 0 {
-			ids = mockGetRandomPredictions(1)
-			model.CreateUserPredictions(0, deviceInfo.Uuid, ids)
-		}
-
 		return serializer.Response{
 			Msg:  i18n.T("success"),
-			Data: serializer.BuildUserPredictionsList(predictions, ids, 1),
+			Data: serializer.BuildPredictions(predictions),
 		}, nil
 	}
 
