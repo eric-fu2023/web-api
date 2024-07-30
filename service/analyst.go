@@ -65,13 +65,14 @@ type AnalystDetailService struct {
 }
 
 func (service AnalystDetailService) GetAnalyst(c *gin.Context) (r serializer.Response, err error) {
-	analystRepo := repo.NewMockAnalystRepo()
-	r, err = analystRepo.GetDetail(c, service.Id)
+	data, err := model.Analyst{}.GetDetail(int(service.Id))
 
 	if err != nil {
-		r = serializer.Err(c, service, serializer.CodeGeneralError, "", err)
+		r = serializer.DBErr(c, service, "", err)
 		return 
 	}
+
+	r.Data = serializer.BuildAnalystDetail(data)
 
 	return
 }

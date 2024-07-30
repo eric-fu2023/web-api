@@ -35,6 +35,22 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 	return 
 }
 
+func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
+	resp = Analyst{
+		AnalystId: analyst.ID,
+		AnalystName: analyst.Name,
+		AnalystSource: analyst.Source.Name,
+		AnalystImage: "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
+		WinningStreak: 20,
+		Accuracy: 0,
+		AnalystDesc: analyst.Desc,
+		Predictions: []Prediction{},
+		NumFollowers: 0,
+		TotalPredictions: 0,
+	}
+	return 
+}
+
 // func BuildAnalystList(analysts []models.Analyst) (res []Analyst) {
 
 // 	for _, analyst := range analysts {

@@ -19,3 +19,14 @@ func (Analyst) List(page, limit int) (list []Analyst, err error) {
 		Find(&list).Error
 	return 
 }
+
+func (Analyst) GetDetail(id int) (target Analyst, err error) {
+	db := DB.Where("id", id)
+	err = db.
+		Where("is_active", true).
+		Where("deleted_at IS NULL").
+		Order("created_at DESC").
+		Order("id DESC").
+		First(&target).Error
+	return 
+}
