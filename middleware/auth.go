@@ -58,7 +58,10 @@ func AuthRequired(getUser bool, checkBrand bool) gin.HandlerFunc {
 
 func CheckAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		doAuth(c, true, true)
+		err:=doAuth(c, true, true)
+		if(err!=nil){
+			fmt.Print(err)
+		}
 		c.Next()
 	}
 }
