@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"web-api/model"
 	"web-api/serializer"
 
 	repo "web-api/repository"
@@ -30,8 +31,13 @@ func (p AnalystService) GetAnalystList(c *gin.Context) (r serializer.Response, e
 	// }
 	// r.Data = serializer.BuildAnalystList(analysts)
 
-	analystRepo := repo.NewMockAnalystRepo()
-	r, err = analystRepo.GetListPagination(c, p.Page.Page, p.Limit)
+	data, err := model.Analyst{}.List(p.Page.Page, p.Limit)
+
+	if err != nil {
+		r = serializer.DBErr(c, p, "", err)
+	}
+
+	r.Data = serializer.BuildAnalysts(data)
 
 	return
 }

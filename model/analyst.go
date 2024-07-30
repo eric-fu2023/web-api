@@ -1,24 +1,21 @@
 package model
 
-// import (
-// 	"context"
-// 	"web-api/model"
-// )
+import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+)
 
-// func AnalystList(c context.Context, page int, limit int, analystId int64) (list []models.Analyst, err error) {
-// 	// Get Analyst List By Pagination
-// 	err = DB.WithContext(c).Where("is_active").Scopes(model.Paginate(page, limit)).Order("created desc").Find(&list).Error
-// 	return
-// }
+type Analyst struct {
+	ploutos.Analyst
+}
 
-// func GetAnalyst(c context.Context, analystId int64) (analyst models.Analyst, err error) {
-// 	// Get Analyst List By Pagination
-// 	err = DB.WithContext(c).Where("is_active").Where("id = ?", analystId).First(&analyst).Error
-// 	return
-// }
+func (Analyst) List(page, limit int) (list []Analyst, err error) {
+	db := DB.Scopes(Paginate(page, limit))
 
-// func GetFollowingAnalystList(c context.Context, analystId int64) (analyst models.Analyst, err error) {
-// 	// Get Analyst List By Pagination
-// 	err = DB.WithContext(c).Where("is_active").Where("id = ?", analystId).First(&analyst).Error
-// 	return
-// }
+	err = db.
+		Where("is_active", true).
+		Where("deleted_at IS NULL").
+		Order("created_at DESC").
+		Order("id DESC").
+		Find(&list).Error
+	return 
+}

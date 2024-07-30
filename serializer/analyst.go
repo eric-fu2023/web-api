@@ -1,5 +1,9 @@
 package serializer
 
+import (
+	"web-api/model"
+)
+
 type Analyst struct {
 	AnalystId        int64        `json:"analyst_id"`
 	AnalystName      string       `json:"analyst_name"`
@@ -11,6 +15,24 @@ type Analyst struct {
 	Predictions      []Prediction `json:"predictions"`
 	NumFollowers     int          `json:"num_followers"`
 	TotalPredictions int          `json:"total_predictions"`
+}
+
+func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
+	for _, a := range analysts {
+		resp = append(resp, Analyst{
+			AnalystId: a.ID,
+			AnalystName: a.Name,
+			AnalystSource: a.Source.Name,
+			AnalystImage: "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
+			WinningStreak: 20,
+			Accuracy: 0,
+			AnalystDesc: a.Desc,
+			Predictions: []Prediction{},
+			NumFollowers: 0,
+			TotalPredictions: 0,
+		})
+	}
+	return 
 }
 
 // func BuildAnalystList(analysts []models.Analyst) (res []Analyst) {
