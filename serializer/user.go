@@ -62,7 +62,6 @@ type UserInfo struct {
 	IsDeposited                       bool     `json:"is_deposited"`
 	UnverifiedMobile                  string   `json:"unverified_mobile"`
 	UnverifiedCountryCode             string   `json:"unverified_country_code"`
-	PopupType                         []int8   `json:"popup_type"`
 }
 
 func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
@@ -88,7 +87,6 @@ func BuildUserInfo(c *gin.Context, user model.User) UserInfo {
 		ReferralCode:          user.ReferralCode,
 		Birthday:              user.Birthday,
 		IsDeposited:           user.IsDeposited,
-		PopupType:             user.PopupType,
 	}
 	if user.Username == "" {
 		u.SetupRequired = true
