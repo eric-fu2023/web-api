@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type PredictionService struct {
+type PredictionListService struct {
 	common.Page
 	AnalystId int64 `json:"analyst_id" form:"analyst_id"`
 }
@@ -21,7 +21,7 @@ type PredictionService struct {
 // 	return serializer.Response{}, nil
 // }
 
-func (service *PredictionService) List(c *gin.Context) (r serializer.Response, err error) {
+func (service *PredictionListService) List(c *gin.Context) (r serializer.Response, err error) {
 	/*
 		not logged in
 		logged in
@@ -39,7 +39,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
-		return 
+		return
 	}
 
 	hasAuth := user.ID != 0
@@ -104,9 +104,26 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 }
 
+type PredictionDetailService struct {
+	PredictionId int64 	`json:"prediction_id" form:"prediction_id"`
+}
+
+func (service *PredictionDetailService) GetDetail(c *gin.Context) (r serializer.Response, err error) {
+	data, err := model.GetPrediction(service.PredictionId)
+
+	if err != nil {
+		r = serializer.DBErr(c, service, "", err)
+		return 
+	}
+
+	r.Data = serializer.BuildPrediction(data)
+
+	return 
+}
+
 type AddUserPredictionService struct {
-	UserId       int64  `json:"user_id" form:"user_id"`
-	PredictionId int64  `json:"prediction_id" form:"prediction_id"`
+	UserId       int64 `json:"user_id" form:"user_id"`
+	PredictionId int64 `json:"prediction_id" form:"prediction_id"`
 }
 
 func (service *AddUserPredictionService) Add(c *gin.Context) (r serializer.Response, err error) {
@@ -120,11 +137,10 @@ func (service *AddUserPredictionService) Add(c *gin.Context) (r serializer.Respo
 
 	deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
-		return 
+		return
 	}
 
-
-	if (user.ID != 0) {
+	if user.ID != 0 {
 		var count int64
 		count, err = model.GetUserPredictionCount(user.LastLoginDeviceUuid)
 
@@ -132,7 +148,7 @@ func (service *AddUserPredictionService) Add(c *gin.Context) (r serializer.Respo
 			r = serializer.DBErr(c, service, "", err)
 			return
 		}
-	
+
 		if count >= 3 {
 			r = serializer.GeneralErr(c, errors.New("exceed limit"))
 			return
@@ -140,7 +156,7 @@ func (service *AddUserPredictionService) Add(c *gin.Context) (r serializer.Respo
 
 		err = model.CreateUserPrediction(user.ID, user.LastLoginDeviceUuid, service.PredictionId)
 
-		return 
+		return
 	} else {
 		var count int64
 		count, err = model.GetUserPredictionCount(deviceInfo.Uuid)
@@ -149,7 +165,7 @@ func (service *AddUserPredictionService) Add(c *gin.Context) (r serializer.Respo
 			r = serializer.DBErr(c, service, "", err)
 			return
 		}
-	
+
 		if count >= 1 {
 			r = serializer.GeneralErr(c, errors.New("exceed limit"))
 			return
@@ -157,7 +173,7 @@ func (service *AddUserPredictionService) Add(c *gin.Context) (r serializer.Respo
 
 		err = model.CreateUserPrediction(user.ID, deviceInfo.Uuid, service.PredictionId)
 
-		return 
+		return
 	}
 }
 

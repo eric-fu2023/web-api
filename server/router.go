@@ -398,6 +398,7 @@ func NewRouter() *gin.Engine {
 
 		prediction := v1.Group("/prediction", middleware.CheckAuth())
 		{
+			prediction.GET("", prediction_api.GetPredictionDetail)
 			prediction.GET("list", prediction_api.ListPredictions)
 			prediction.POST("add", prediction_api.AddUserPrediction)
 		}

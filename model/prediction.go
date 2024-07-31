@@ -30,3 +30,8 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 		
 	return 
 }
+
+func GetPrediction(predictionId int64) (pred Prediction, err error) {
+	err = DB.Preload("Analyst").Where("deleted_at IS NULL").Where("id = ?", predictionId).First(&pred).Error
+	return
+}

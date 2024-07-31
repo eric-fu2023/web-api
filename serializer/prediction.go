@@ -37,3 +37,15 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 	return 
 }
 
+func BuildPrediction(prediction model.Prediction) (pred Prediction) {
+	pred = Prediction{
+		PredictionId: prediction.ID,
+		AnalystId: prediction.AnalystId,
+		PredictionTitle: prediction.Title,
+		PredictionDesc: prediction.Description,
+		CreatedAt: prediction.CreatedAt,
+		ViewCount: prediction.Views,
+		IsLocked: false,
+	}
+	return
+}
