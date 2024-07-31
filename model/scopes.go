@@ -134,6 +134,17 @@ func ByOrderListConditions(userId int64, gameType []int64, status []int64, isPar
 	}
 }
 
+func ByOrderListConditionsGGR(userId int64, status []int64, start time.Time, end time.Time) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		db.Where(`user_id`, userId).Where(`status IN ?`, status)
+
+		if !start.IsZero() && !end.IsZero() {
+			db.Where(`bet_time >= ?`, start).Where(`bet_time <= ?`, end)
+		}
+		return db
+	}
+}
+
 func ByBetTimeSort(db *gorm.DB) *gorm.DB {
 	return db.Order(`bet_time DESC`)
 }

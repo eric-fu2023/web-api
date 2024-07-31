@@ -7,7 +7,7 @@ import (
 
 type CashMethodPromotion struct {
 	PayoutRate                    float64   `json:"payout_rate"`
-	MaxPromotionAmount            int64     `json:"max_promotion_amount"`
+	MaxPromotionAmount            float64   `json:"max_promotion_amount"`
 	DefaultOptionPromotionAmounts []float64 `json:"default_option_promotion_amounts"`
 }
 
@@ -53,7 +53,7 @@ func BuildCashMethod(a model.CashMethod, maxPromotionAmountByCashMethodId map[in
 	if a.CashMethodPromotion != nil {
 		cashMethod.CashMethodPromotion = &CashMethodPromotion{
 			PayoutRate:         a.CashMethodPromotion.PayoutRate,
-			MaxPromotionAmount: maxPromotionAmountByCashMethodId[a.ID] / 100,
+			MaxPromotionAmount: float64(maxPromotionAmountByCashMethodId[a.ID]) / 100,
 			DefaultOptionPromotionAmounts: util.MapSlice(a.DefaultOptions, func(b int32) (amount float64) {
 				amount = float64(b) * a.CashMethodPromotion.PayoutRate
 				maxAmount, exist := maxPromotionAmountByCashMethodId[a.ID]

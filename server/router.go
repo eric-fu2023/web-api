@@ -14,11 +14,13 @@ import (
 	imsb_api "web-api/api/imsb"
 	internal_api "web-api/api/internalapi"
 	"web-api/api/mock"
+	prediction_api "web-api/api/prediction"
 	promotion_api "web-api/api/promotion"
 	referral_alliance_api "web-api/api/referral_alliance"
 	saba_api "web-api/api/saba"
 	stream_game_api "web-api/api/stream_game"
 	taya_api "web-api/api/taya"
+	teamup_api "web-api/api/teamup"
 
 	"web-api/middleware"
 
@@ -216,9 +218,9 @@ func NewRouter() *gin.Engine {
 		v1.GET("/vips", middleware.Cache(5*time.Minute, false), api.VipLoad)
 		popup := v1.Group("/popup")
 		{
-			// popup.GET("/winlose", middleware.CheckAuth(), api.CsHistory)
-			// popup.GET("/vip", middleware.CheckAuth(), api.CsHistory)
+			popup.GET("/show", middleware.CheckAuth(), api.Show)
 			popup.GET("/spin_items", api.SpinItems)
+			popup.GET("/spin_result", middleware.CheckAuth(), api.SpinResult)
 		}
 
 		pm := v1.Group("/pm")
@@ -249,7 +251,6 @@ func NewRouter() *gin.Engine {
 		}
 
 		v1.GET("/gifts", middleware.Cache(1*time.Minute, false), api.GiftList)
-		v1.GET("/analysts", analyst_api.GetAnalystList)
 
 		auth := v1.Group("/user")
 		{
@@ -394,6 +395,25 @@ func NewRouter() *gin.Engine {
 				}
 			}
 		}
+
+		prediction := v1.Group("/prediction", middleware.CheckAuth())
+		{
+			prediction.GET("list", prediction_api.ListPredictions)
+		}
+
+		analyst := v1.Group("/analyst", middleware.CheckAuth())
+		{
+			analyst.GET("", analyst_api.GetAnalystDetail)
+			analyst.GET("/list", analyst_api.ListAnalysts)
+			analyst.GET("/following", middleware.AuthRequired(true, true) ,analyst_api.ListFollowingAnalysts)
+			analyst.POST("/following",  middleware.AuthRequired(true, true) ,analyst_api.ToggleFollowAnalyst)
+		}
+
+		teamup := v1.Group("/teamup")
+		{
+			teamup.GET("/chop", middleware.AuthRequired(true, false), teamup_api.ChopBet)
+		}
+
 		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)
 	}
 

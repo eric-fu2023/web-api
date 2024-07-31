@@ -27,7 +27,7 @@ type IncomingPromotionImages struct {
 type IncomingPromotionMatchList struct {
 	List     []IncomingPromotionMatchListItem `json:"list"`
 	Title    string                           `json:"title"`
-	ListType string                           `json:"list-type"`
+	ListType string                           `json:"list_type"`
 	Desc     []CustomPromotionPageDesc        `json:"desc"`
 }
 
@@ -35,17 +35,17 @@ type IncomingPromotionMatchListItem struct {
 	Id           string                               `json:"id"`
 	Teams        []IncomingPromotionMatchListItemTeam `json:"teams"`
 	Title        string                               `json:"title"`
-	RedirectType string                               `json:"redirect-type"`
+	RedirectType string                               `json:"redirect_type"`
 	Img          string                               `json:"img"`
 	Name         string                               `json:"name"`
 	Time         time.Time                            `json:"time"`
 }
 
 type IncomingPromotionMatchListItemTeam struct {
-	HomeName string `json:"home-name"`
-	HomeImg  string `json:"home-img"`
-	AwayName string `json:"away-name"`
-	AwayImg  string `json:"away-img"`
+	HomeName string `json:"home_name"`
+	HomeImg  string `json:"home_img"`
+	AwayName string `json:"away_name"`
+	AwayImg  string `json:"away_img"`
 }
 
 type IncomingPromotionRequestAction struct {
@@ -58,17 +58,17 @@ type IncomingCustomPromotionRequestField struct {
 	Hint        string              `json:"hint"`
 	Type        string              `json:"type"`
 	Title       string              `json:"title"`
-	InputId     int                 `json:"input-id"`
+	InputId     int                 `json:"input_id"`
 	Switch      int                 `json:"switch"`
 	Options     []map[string]string `json:"option"`
 	X           string              `json:"x"`
 	Weightage   int                 `json:"weightage"`
-	ErrorHint   string              `json:"error-hint,omitempty"`
-	OrderType   string              `json:"order-type"`
-	ContentType string              `json:"content-type"`
-	OrderStatus string              `json:"order-status"`
-	MaxClick    string              `json:"max-click"`
-	RedirectCs  bool                `json:"redirect-cs"`
+	ErrorHint   string              `json:"error_hint,omitempty"`
+	OrderType   string              `json:"order_type"`
+	ContentType string              `json:"content_type"`
+	OrderStatus string              `json:"order_status"`
+	MaxClick    string              `json:"max_click"`
+	RedirectCs  bool                `json:"redirect_cs"`
 }
 
 type OutgoingCustomPromotionDetail struct {
@@ -232,7 +232,7 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 		requestField := CustomPromotionRequestField{
 			Placeholder: incomingField.Hint,
 			Title:       incomingField.Title,
-			Type:        strings.Replace(incomingField.Type, "input-", "", -1),
+			Type:        strings.Replace(incomingField.Type, "input_", "", -1),
 			Id:          incomingField.InputId,
 			Weightage:   incomingField.Weightage,
 			ErrorMsg:    incomingField.ErrorHint,

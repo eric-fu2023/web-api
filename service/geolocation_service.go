@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 	"web-api/cache"
-	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
@@ -48,18 +46,18 @@ type GeolocationVendorResponse struct {
 }
 
 type GetGeolocationResponse struct {
-	IpAddress       string `json:"ip_address"`
-	ClientIpAddress string `json:"client_ip_address"`
-	CountryCode     string `json:"country_code,omitempty"`
-	CountryName     string `json:"country_name,omitempty"`
-	Region          string `json:"region,omitempty"`
-	City            string `json:"city,omitempty"`
-	Zipcode         string `json:"zipcode,omitempty"`
+	IpAddress string `json:"ip_address"`
+	// ClientIpAddress string `json:"client_ip_address"`
+	CountryCode string `json:"country_code"`
+	// CountryName     string `json:"country_name,omitempty"`
+	Region string `json:"region"`
+	City   string `json:"city"`
+	// Zipcode         string `json:"zipcode,omitempty"`
 }
 
 func (service *GetGeolocationService) Get(c *gin.Context) serializer.Response {
-	ip := retrieveClientIp(c)
-	clientIp := c.ClientIP()
+	// ip := retrieveClientIp(c)
+	ip := c.ClientIP()
 
 	// retrieve from Redis
 	geolocation := retrieveGeolocationFromRedis(ip, c)
@@ -74,19 +72,8 @@ func (service *GetGeolocationService) Get(c *gin.Context) serializer.Response {
 
 	return serializer.Response{
 		Msg:  "success",
-		Data: buildGeolocationResponse(ip, clientIp, geolocation),
+		Data: buildGeolocationResponse(ip, geolocation),
 	}
-}
-
-func retrieveClientIp(c *gin.Context) string {
-	clientIpStr := c.Request.Header.Get(consts.ClientIpHeader)
-	if len(clientIpStr) > 0 {
-		clientIps := strings.Split(clientIpStr, ",")
-		return strings.TrimSpace(clientIps[0])
-	}
-	// fallback IP
-	log.Printf("Cannot retrieve %s from header, using fallback IP instead", consts.ClientIpHeader)
-	return "219.75.27.16"
 }
 
 func retrieveGeolocationFromRedis(ip string, c *gin.Context) ploutos.Geolocation {
@@ -150,18 +137,18 @@ func retrieveGeolocationFromVendor(ip string, c *gin.Context) ploutos.Geolocatio
 	return geolocation
 }
 
-func buildGeolocationResponse(ip string, clientIp string, geolocation ploutos.Geolocation) GetGeolocationResponse {
+func buildGeolocationResponse(ip string, geolocation ploutos.Geolocation) GetGeolocationResponse {
 	res := GetGeolocationResponse{
-		IpAddress:       ip,
-		ClientIpAddress: clientIp,
-		CountryCode:     geolocation.CountryCode,
-		Region:          geolocation.Region,
-		City:            geolocation.City,
-		Zipcode:         geolocation.Zipcode,
+		IpAddress: ip,
+		// ClientIpAddress: clientIp,
+		CountryCode: geolocation.CountryCode,
+		Region:      geolocation.Region,
+		City:        geolocation.City,
+		// Zipcode:         geolocation.Zipcode,
 	}
-	if countryCode := geolocation.CountryCode; len(countryCode) > 0 {
-		res.CountryName = consts.CountryMap[countryCode]
-	}
+	// if countryCode := geolocation.CountryCode; len(countryCode) > 0 {
+	// 	res.CountryName = consts.CountryMap[countryCode]
+	// }
 	return res
 }
 

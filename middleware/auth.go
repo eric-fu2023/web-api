@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 	"os"
 	"strconv"
 	"strings"
@@ -14,6 +12,9 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util/i18n"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type AuthClaims struct {
@@ -57,7 +58,10 @@ func AuthRequired(getUser bool, checkBrand bool) gin.HandlerFunc {
 
 func CheckAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		doAuth(c, true, true)
+		err:=doAuth(c, true, true)
+		if(err!=nil){
+			fmt.Print(err)
+		}
 		c.Next()
 	}
 }
