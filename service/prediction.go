@@ -1,9 +1,11 @@
 package service
 
 import (
+	"errors"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/util"
 	"web-api/util/i18n"
 
 	"github.com/gin-gonic/gin"
@@ -103,6 +105,63 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 		}, nil
 	}
 
+}
+
+type AddUserPredictionService struct {
+	UserId       int64  `json:"user_id" form:"user_id"`
+	PredictionId int64  `json:"prediction_id" form:"prediction_id"`
+}
+
+func (service *AddUserPredictionService) Add(c *gin.Context) (r serializer.Response, err error) {
+	u, _ := c.Get("user")
+
+	user := model.User{}
+
+	if u != nil {
+		user = u.(model.User)
+	}
+
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil {
+		return 
+	}
+
+
+	if (user.ID != 0) {
+		var count int64
+		count, err = model.GetUserPredictionCount(user.LastLoginDeviceUuid)
+
+		if err != nil {
+			r = serializer.DBErr(c, service, "", err)
+			return
+		}
+	
+		if count >= 3 {
+			r = serializer.GeneralErr(c, errors.New("exceed limit"))
+			return
+		}
+
+		err = model.CreateUserPrediction(user.ID, user.LastLoginDeviceUuid, service.PredictionId)
+
+		return 
+	} else {
+		var count int64
+		count, err = model.GetUserPredictionCount(deviceInfo.Uuid)
+
+		if err != nil {
+			r = serializer.DBErr(c, service, "", err)
+			return
+		}
+	
+		if count >= 1 {
+			r = serializer.GeneralErr(c, errors.New("exceed limit"))
+			return
+		}
+
+		err = model.CreateUserPrediction(user.ID, deviceInfo.Uuid, service.PredictionId)
+
+		return 
+	}
 }
 
 func mockGetRandomPredictions(length int64) []int64 {

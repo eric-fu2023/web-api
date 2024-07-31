@@ -39,3 +39,16 @@ func ListPredictions(c *gin.Context) {
 		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }
+
+func AddUserPrediction(c *gin.Context) {
+	var service service.AddUserPredictionService
+	if err := c.ShouldBind(&service); err == nil {
+		res, e := service.Add(c)
+		c.JSON(200, res)
+		if e != nil {
+			c.Abort()
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
