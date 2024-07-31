@@ -150,11 +150,11 @@ func NewRouter() *gin.Engine {
 	// payment
 	r.GET("/finpay_redirect", api.FinpayRedirect)
 	r.POST("/finpay_redirect", api.FinpayRedirect)
-	// captcha := r.Group("/captcha")
-	// {
-	// 	captcha.POST("/get", api.CaptchaGet)
-	// 	captcha.POST("/check", api.CaptchaCheck)
-	// }
+	captcha := r.Group("/captcha")
+	{
+		captcha.POST("/get", api.CaptchaGet)
+		captcha.POST("/check", api.CaptchaCheck)
+	}
 
 	// all APIs below needs signature in the HTTP header
 	r.Use(middleware.CheckSignature())
@@ -405,8 +405,8 @@ func NewRouter() *gin.Engine {
 		{
 			analyst.GET("", analyst_api.GetAnalystDetail)
 			analyst.GET("/list", analyst_api.ListAnalysts)
-			analyst.GET("/following", middleware.AuthRequired(true, true) ,analyst_api.ListFollowingAnalysts)
-			analyst.POST("/following",  middleware.AuthRequired(true, true) ,analyst_api.ToggleFollowAnalyst)
+			analyst.GET("/following", middleware.AuthRequired(true, true), analyst_api.ListFollowingAnalysts)
+			analyst.POST("/following", middleware.AuthRequired(true, true), analyst_api.ToggleFollowAnalyst)
 		}
 
 		teamup := v1.Group("/teamup")
