@@ -37,9 +37,13 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 		user = u.(model.User)
 	}
 
+	deviceInfo, err := util.GetDeviceInfo(c)
+	if err != nil {
+		return 
+	}
+
 	hasAuth := user.ID != 0
 
-	// deviceInfo, err := util.GetDeviceInfo(c)
 	if err != nil {
 		r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 		return
@@ -49,8 +53,8 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 		u, _ := c.Get("user")
 		user := u.(model.User)
 
-		hasPaymentToday := true
-		_, err = model.HasTopupToday(c, user.ID)
+		hasPaymentToday := false
+		hasPaymentToday, err = model.HasTopupToday(c, user.ID)
 
 		if err != nil {
 			return serializer.DBErr(c, service, i18n.T("general_error"), err), err
@@ -58,16 +62,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 		if hasPaymentToday {
 
-			// predictionRepo := repo.NewMockPredictionRepo()
-			// r, err = predictionRepo.GetList(c)
-			// if err != nil {
-			// 	r = serializer.DBErr(c, service, i18n.T("general_error"), err)
-			// 	return
-			// }
-
-			// return
-
-			predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, -1, service.AnalystId)
+			predictions, err := model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId})
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return r, err
@@ -75,11 +70,12 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 			return serializer.Response{
 				Msg:  i18n.T("success"),
-				Data: serializer.BuildPredictions(predictions),
+				Data: serializer.BuildPredictionsList(predictions),
 			}, nil
 
 		} else {
-			predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, 3, service.AnalystId)
+			predictions, err := model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId})
+			userPredictions, err := model.GetUserPrediction(model.GetUserPredictionCond{DeviceId: user.LastLoginDeviceUuid, UserId: user.ID})
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return r, err
@@ -87,13 +83,14 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 			return serializer.Response{
 				Msg:  i18n.T("success"),
-				Data: serializer.BuildPredictions(predictions),
+				Data: serializer.BuildUserPredictionsWithLock(predictions, userPredictions),
 			}, nil
 		}
 
 	} else {
 		// no log in, query with device id and user id 0
-		predictions, err := model.MockGetUserPrediction(service.Limit, service.Page.Page, 1, service.AnalystId)
+		predictions, err := model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId})
+		userPredictions, err := model.GetUserPrediction(model.GetUserPredictionCond{DeviceId: deviceInfo.Uuid, UserId: 0})
 		if err != nil {
 			r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 			return r, err
@@ -101,7 +98,7 @@ func (service *PredictionService) List(c *gin.Context) (r serializer.Response, e
 
 		return serializer.Response{
 			Msg:  i18n.T("success"),
-			Data: serializer.BuildPredictions(predictions),
+			Data: serializer.BuildUserPredictionsWithLock(predictions, userPredictions[:1]),
 		}, nil
 	}
 

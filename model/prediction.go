@@ -1,12 +1,32 @@
 package model
 
-// import (
-// 	"context"
-// 	"web-api/model"
-// )
+import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+) 
 
-// func PredictionListByAnalystId(c context.Context, page int, limit int, analystId int64) (list []models.Prediction, err error) {
-// 	// Get Analyst Prediction List By Pagination
-// 	err = DB.WithContext(c).Where("is_active").Where("analyst_id = ?", analystId).Scopes(model.Paginate(page, limit)).Order("created desc").Find(&list).Error
-// 	return
-// }
+type Prediction struct {
+	ploutos.Predictions
+}
+
+type ListPredictionCond struct {
+	Page int
+	Limit int
+	AnalystId int64
+}
+
+func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
+
+	// TODO : filter status 
+	db := DB.
+		Preload("Analyst").
+		Scopes(Paginate(cond.Page, cond.Limit)).
+		Where("deleted_at IS NULL")
+
+	if (cond.AnalystId != 0) {
+		db.Where("analyst_id", cond.AnalystId)
+	}
+	
+	err = db.Find(&preds).Error
+		
+	return 
+}

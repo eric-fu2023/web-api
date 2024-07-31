@@ -1,6 +1,9 @@
 package serializer
 
-import "time"
+import (
+	"time"
+	"web-api/model"
+)
 
 type Prediction struct {
 	PredictionId      int64     `json:"prediction_id"`
@@ -19,18 +22,18 @@ type PredictedMatch struct {
 	Status  int64 `json:"status"`
 }
 
-// func BuildPredictionList(predictions []models.Prediction) (res []Prediction, err error) {
+func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
+	for _, p := range predictions {
+		preds = append(preds, Prediction{
+			PredictionId: p.ID,
+			AnalystId: p.AnalystId,
+			PredictionTitle: p.Title,
+			PredictionDesc: p.Description,
+			CreatedAt: p.CreatedAt,
+			ViewCount: p.Views,
+			IsLocked: false,
+		})
+	}
+	return 
+}
 
-// 	for _, prediction := range predictions {
-
-// 		p := Prediction{
-// 			AnalystId:       prediction.AnalystId,
-// 			PredictionTitle: prediction.PredictionTitle,
-// 			PredictionDesc:  prediction.PredictionDesc,
-// 		}
-
-// 		res = append(res, p)
-// 	}
-
-// 	return
-// }
