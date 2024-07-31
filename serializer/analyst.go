@@ -74,7 +74,20 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 // 	return
 // }
 
-func BuildFollowingList(followings []models.UserAnalystFollowing) (res []Analyst) {
-
+func BuildFollowingList(followings []models.UserAnalystFollowing) (resp []Analyst) {
+	for _, a := range followings {
+		resp = append(resp, Analyst{
+			AnalystId:        a.ID,
+			AnalystName:      a.Analyst.Name,
+			AnalystSource:    a.Analyst.AnalystSource.Name,
+			AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
+			WinningStreak:    20,
+			Accuracy:         0,
+			AnalystDesc:      a.Analyst.Desc,
+			Predictions:      []Prediction{},
+			NumFollowers:     0,
+			TotalPredictions: 0,
+		})
+	}
 	return
 }

@@ -5,7 +5,6 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 
-	repo "web-api/repository"
 	"web-api/service/common"
 
 	"github.com/gin-gonic/gin"
@@ -112,10 +111,6 @@ func (p AnalystService) GetFollowingAnalystList(c *gin.Context) (r serializer.Re
 		return
 	}
 	r.Data = serializer.BuildFollowingList(followings)
-
-	analystRepo := repo.NewMockAnalystRepo()
-	r, err = analystRepo.GetList(c)
-
 	return
 }
 

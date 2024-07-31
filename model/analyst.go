@@ -43,7 +43,7 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 // }
 
 func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (followings []models.UserAnalystFollowing, err error) {
-	err = DB.WithContext(c).Where("user_id = ?", userId).Scopes(Paginate(page, limit)).Find(&followings).Error
+	err = DB.Preload("Analyst").WithContext(c).Where("user_id = ?", userId).Where("is_deleted = ?", false).Find(&followings).Scopes(Paginate(page, limit)).Error
 	return
 }
 
