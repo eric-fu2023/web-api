@@ -1,12 +1,19 @@
 package serializer
 
+import (
+	"time"
+	"web-api/model"
+)
+
 type Prediction struct {
-	PredictionId     int64   `json:"prediction_id"`
-	AnalystId        int64   `json:"analyst_id"`
-	PredictedMatches []Match `json:"predicted_matches"`
-	PredictionTitle  string  `json:"prediction_title"`
-	PredictionDesc   string  `json:"prediction_desc"`
-	IsLocked         bool    `json:"is_locked"`
+	PredictionId      int64     `json:"prediction_id"`
+	AnalystId         int64     `json:"analyst_id"`
+	PredictedMatches  []Match   `json:"predicted_matches"`
+	PredictionTitle   string    `json:"prediction_title"`
+	PredictionDesc    string    `json:"prediction_desc"`
+	IsLocked          bool      `json:"is_locked"`
+	CreatedAt         time.Time `json:"created_at"`
+	ViewCount         int64     `json:"view_count"`
 }
 
 type PredictedMatch struct {
@@ -15,18 +22,30 @@ type PredictedMatch struct {
 	Status  int64 `json:"status"`
 }
 
-// func BuildPredictionList(predictions []models.Prediction) (res []Prediction, err error) {
+func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
+	for _, p := range predictions {
+		preds = append(preds, Prediction{
+			PredictionId: p.ID,
+			AnalystId: p.AnalystId,
+			PredictionTitle: p.Title,
+			PredictionDesc: p.Description,
+			CreatedAt: p.CreatedAt,
+			ViewCount: p.Views,
+			IsLocked: false,
+		})
+	}
+	return 
+}
 
-// 	for _, prediction := range predictions {
-
-// 		p := Prediction{
-// 			AnalystId:       prediction.AnalystId,
-// 			PredictionTitle: prediction.PredictionTitle,
-// 			PredictionDesc:  prediction.PredictionDesc,
-// 		}
-
-// 		res = append(res, p)
-// 	}
-
-// 	return
-// }
+func BuildPrediction(prediction model.Prediction) (pred Prediction) {
+	pred = Prediction{
+		PredictionId: prediction.ID,
+		AnalystId: prediction.AnalystId,
+		PredictionTitle: prediction.Title,
+		PredictionDesc: prediction.Description,
+		CreatedAt: prediction.CreatedAt,
+		ViewCount: prediction.Views,
+		IsLocked: false,
+	}
+	return
+}
