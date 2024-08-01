@@ -40,7 +40,7 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	predList := make([]model.Prediction, len(analyst.Predictions))
 	for i, pred := range analyst.Predictions {
-		predList[i] = model.Prediction{pred}
+		predList[i] = model.Prediction{pred, []models.PredictionsSelection{}}
 	}
 
 	resp = Analyst{
