@@ -29,7 +29,7 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 			WinningStreak:    20,
 			Accuracy:         0,
 			AnalystDesc:      a.Desc,
-			Predictions:      []Prediction{},
+			// Predictions:      []Prediction{},
 			NumFollowers:     0,
 			TotalPredictions: 0,
 		})
@@ -38,6 +38,11 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 }
 
 func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
+	predList := make([]model.Prediction, len(analyst.Predictions))
+	for i, pred := range analyst.Predictions {
+		predList[i] = model.Prediction{pred}
+	}
+
 	resp = Analyst{
 		AnalystId:        analyst.ID,
 		AnalystName:      analyst.Name,
@@ -46,9 +51,9 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		WinningStreak:    20,
 		Accuracy:         0,
 		AnalystDesc:      analyst.Desc,
-		Predictions:      []Prediction{},
+		Predictions:      BuildPredictionsList(predList),
 		NumFollowers:     0,
-		TotalPredictions: 0,
+		TotalPredictions: len(analyst.Predictions),
 	}
 	return
 }
@@ -84,7 +89,7 @@ func BuildFollowingList(followings []models.UserAnalystFollowing) (resp []Analys
 			WinningStreak:    20,
 			Accuracy:         0,
 			AnalystDesc:      a.Analyst.Desc,
-			Predictions:      []Prediction{},
+			// Predictions:      []Prediction{},
 			NumFollowers:     0,
 			TotalPredictions: 0,
 		})

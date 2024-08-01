@@ -29,6 +29,7 @@ func (Analyst) List(page, limit int) (list []Analyst, err error) {
 func (Analyst) GetDetail(id int) (target Analyst, err error) {
 	db := DB.Where("id", id)
 	err = db.
+		Preload("Prediction").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
