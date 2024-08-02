@@ -79,7 +79,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 // 	return
 // }
 
-func BuildFollowingList(followings []models.UserAnalystFollowing) (resp []Analyst) {
+func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst) {
 	for _, a := range followings {
 		resp = append(resp, Analyst{
 			AnalystId:        a.ID,
@@ -90,7 +90,7 @@ func BuildFollowingList(followings []models.UserAnalystFollowing) (resp []Analys
 			Accuracy:         0,
 			AnalystDesc:      a.Analyst.Desc,
 			// Predictions:      []Prediction{},
-			NumFollowers:     0,
+			NumFollowers:     len(a.Analyst.Followers),
 			TotalPredictions: 0,
 		})
 	}

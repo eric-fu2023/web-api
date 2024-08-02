@@ -46,17 +46,17 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 // 	return
 // }
 
-func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (followings []ploutos.UserAnalystFollowing, err error) {
-	err = DB.Preload("Analyst").WithContext(c).Where("user_id = ?", userId).Where("is_deleted = ?", false).Find(&followings).Scopes(Paginate(page, limit)).Error
+func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (followings []UserAnalystFollowing, err error) {
+	err = DB.Preload("Analyst").Preload("Analyst.Followers").WithContext(c).Where("user_id = ?", userId).Where("is_deleted = ?", false).Find(&followings).Scopes(Paginate(page, limit)).Error
 	return
 }
 
-func GetFollowingAnalystStatus(c context.Context, userId, analystId int64) (following ploutos.UserAnalystFollowing, err error) {
+func GetFollowingAnalystStatus(c context.Context, userId, analystId int64) (following UserAnalystFollowing, err error) {
 	err = DB.WithContext(c).Where("user_id = ?", userId).Where("analyst_id = ?", analystId).Limit(1).Find(&following).Error
 	return
 }
 
-func UpdateUserFollowAnalystStatus(following ploutos.UserAnalystFollowing) (err error) {
+func UpdateUserFollowAnalystStatus(following UserAnalystFollowing) (err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&following).Error
 		return
