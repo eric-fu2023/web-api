@@ -31,7 +31,7 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 			AnalystDesc:      a.Desc,
 			// Predictions:      []Prediction{},
 			NumFollowers:     len(a.Followers),
-			TotalPredictions: 0,
+			TotalPredictions: len(a.Predictions),
 		})
 	}
 	return
@@ -91,7 +91,7 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 			AnalystDesc:      a.Analyst.Desc,
 			// Predictions:      []Prediction{},
 			NumFollowers:     len(a.Analyst.Followers),
-			TotalPredictions: 0,
+			TotalPredictions: len(a.Analyst.Predictions),
 		})
 	}
 	return

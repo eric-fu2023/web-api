@@ -11,6 +11,7 @@ import (
 type Analyst struct {
 	ploutos.Analyst
 
+	Predictions []ploutos.Predictions `gorm:"foreignKey:AnalystId;references:ID"`
 	Followers []ploutos.UserAnalystFollowing `gorm:"foreignKey:AnalystId;references:ID"`
 }
 
@@ -20,6 +21,7 @@ func (Analyst) List(page, limit int) (list []Analyst, err error) {
 	err = db.
 		Preload("AnalystSource").
 		Preload("Followers").
+		Preload("Predictions").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
@@ -47,7 +49,11 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 // }
 
 func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (followings []UserAnalystFollowing, err error) {
-	err = DB.Preload("Analyst").Preload("Analyst.Followers").WithContext(c).Where("user_id = ?", userId).Where("is_deleted = ?", false).Find(&followings).Scopes(Paginate(page, limit)).Error
+	err = DB.Preload("Analyst").
+	Preload("Analyst.Followers").
+	Preload("Analyst.Predictions").
+	WithContext(c).
+	Where("user_id = ?", userId).Where("is_deleted = ?", false).Find(&followings).Scopes(Paginate(page, limit)).Error
 	return
 }
 
