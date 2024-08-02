@@ -7,7 +7,7 @@ import (
 type Prediction struct {
 	ploutos.Predictions
 
-	PredictionSelections []ploutos.PredictionsSelection `gorm:"foreignKey:PredictionId;references:ID"`
+	PredictionSelections []PredictionSelection `gorm:"foreignKey:PredictionId;references:ID"`
 }
 
 type ListPredictionCond struct {
@@ -33,6 +33,12 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 }
 
 func GetPrediction(predictionId int64) (pred Prediction, err error) {
-	err = DB.Preload("PredictionSelections").Where("deleted_at IS NULL").Where("id = ?", predictionId).First(&pred).Error
+	err = DB.
+		Preload("PredictionSelections").
+		Preload("PredictionSelections.FbOdds").
+		Preload("PredictionSelections.FbMatch").
+		Where("deleted_at IS NULL").
+		Where("id = ?", predictionId).
+		First(&pred).Error
 	return
 }

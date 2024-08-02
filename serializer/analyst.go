@@ -2,8 +2,6 @@ package serializer
 
 import (
 	"web-api/model"
-
-	models "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type Analyst struct {
@@ -40,7 +38,7 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	predList := make([]model.Prediction, len(analyst.Predictions))
 	for i, pred := range analyst.Predictions {
-		predList[i] = model.Prediction{pred, []models.PredictionsSelection{}}
+		predList[i] = model.Prediction{pred, []model.PredictionSelection{}}
 	}
 
 	resp = Analyst{

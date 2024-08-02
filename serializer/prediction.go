@@ -14,7 +14,7 @@ type Prediction struct {
 	CreatedAt       time.Time         `json:"created_at"`
 	ViewCount       int64             `json:"view_count"`
 	SelectionList   []SelectionDetail `json:"selection_list,omitempty"`
-	Result          int64             `json:"result"` 
+	Status          int64             `json:"status"` 
 }
 
 type PredictedMatch struct {
@@ -51,10 +51,10 @@ func BuildPrediction(prediction model.Prediction) (pred Prediction) {
 	for j, match := range prediction.PredictionSelections {
 		selectionList[j] = SelectionDetail{
 			MatchId:           match.MatchId,
-			MarketGroupType:   0,
-			MarketGroupPeriod: 0,
-			OrderMarketlineId: 0,
-			MatchType:         0,
+			MarketGroupType:   match.FbOdds.MarketGroupType,
+			MarketGroupPeriod: match.FbOdds.MarketGroupPeriod,
+			OrderMarketlineId: match.FbOdds.RecentMarketlineID,
+			MatchType:         int64(match.FbMatch.MatchType),
 		}
 	}
 
