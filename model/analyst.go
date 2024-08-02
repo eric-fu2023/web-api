@@ -5,12 +5,13 @@ import (
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 )
 
 type Analyst struct {
 	ploutos.Analyst
+
+	Followers []ploutos.UserAnalystFollowing `gorm:"foreignKey:AnalystId;references:ID"`
 }
 
 func (Analyst) List(page, limit int) (list []Analyst, err error) {
@@ -18,6 +19,7 @@ func (Analyst) List(page, limit int) (list []Analyst, err error) {
 
 	err = db.
 		Preload("AnalystSource").
+		Preload("Followers").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
@@ -30,6 +32,7 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 	db := DB.Where("id", id)
 	err = db.
 		Preload("Predictions").
+		Preload("Followers").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
@@ -43,17 +46,17 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 // 	return
 // }
 
-func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (followings []models.UserAnalystFollowing, err error) {
+func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (followings []ploutos.UserAnalystFollowing, err error) {
 	err = DB.Preload("Analyst").WithContext(c).Where("user_id = ?", userId).Where("is_deleted = ?", false).Find(&followings).Scopes(Paginate(page, limit)).Error
 	return
 }
 
-func GetFollowingAnalystStatus(c context.Context, userId, analystId int64) (following models.UserAnalystFollowing, err error) {
+func GetFollowingAnalystStatus(c context.Context, userId, analystId int64) (following ploutos.UserAnalystFollowing, err error) {
 	err = DB.WithContext(c).Where("user_id = ?", userId).Where("analyst_id = ?", analystId).Limit(1).Find(&following).Error
 	return
 }
 
-func UpdateUserFollowAnalystStatus(following models.UserAnalystFollowing) (err error) {
+func UpdateUserFollowAnalystStatus(following ploutos.UserAnalystFollowing) (err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&following).Error
 		return

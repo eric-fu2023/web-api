@@ -39,6 +39,7 @@ func (p AnalystService) GetAnalystList(c *gin.Context) (r serializer.Response, e
 
 	if err != nil {
 		r = serializer.DBErr(c, p, "", err)
+		return
 	}
 
 	r.Data = serializer.BuildAnalysts(data)

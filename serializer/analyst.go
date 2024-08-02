@@ -30,7 +30,7 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 			Accuracy:         0,
 			AnalystDesc:      a.Desc,
 			// Predictions:      []Prediction{},
-			NumFollowers:     0,
+			NumFollowers:     len(a.Followers),
 			TotalPredictions: 0,
 		})
 	}
@@ -52,7 +52,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		Accuracy:         0,
 		AnalystDesc:      analyst.Desc,
 		Predictions:      BuildPredictionsList(predList),
-		NumFollowers:     0,
+		NumFollowers:     len(analyst.Followers),
 		TotalPredictions: len(analyst.Predictions),
 	}
 	return

@@ -14,6 +14,7 @@ type Prediction struct {
 	CreatedAt       time.Time         `json:"created_at"`
 	ViewCount       int64             `json:"view_count"`
 	SelectionList   []SelectionDetail `json:"selection_list,omitempty"`
+	Result          int64             `json:"result"` 
 }
 
 type PredictedMatch struct {
@@ -65,7 +66,7 @@ func BuildPrediction(prediction model.Prediction) (pred Prediction) {
 		CreatedAt:       prediction.CreatedAt,
 		ViewCount:       prediction.Views,
 		IsLocked:        false,
-		SelectionList: selectionList,
+		SelectionList:   selectionList,
 	}
 	return
 }
