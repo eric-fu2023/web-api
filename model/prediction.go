@@ -20,6 +20,9 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 
 	// TODO : filter status 
 	db := DB.
+		Preload("PredictionSelections").
+		Preload("PredictionSelections.FbOdds").
+		Preload("PredictionSelections.FbMatch").
 		Scopes(Paginate(cond.Page, cond.Limit)).
 		Where("deleted_at IS NULL")
 

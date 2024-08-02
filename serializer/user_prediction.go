@@ -19,6 +19,18 @@ func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.Us
 	ls := make([]Prediction, len(preds))
 	for i, pred := range preds {
 		_, locked := userPredMap[uint(pred.ID)] // If PredictionId exists in userPredMap, locked will be true
+
+		selectionList := make([]SelectionDetail, len(pred.PredictionSelections))
+		for j, match := range pred.PredictionSelections {
+			selectionList[j] = SelectionDetail{
+				MatchId:           match.MatchId,
+				MarketGroupType:   match.FbOdds.MarketGroupType,
+				MarketGroupPeriod: match.FbOdds.MarketGroupPeriod,
+				OrderMarketlineId: match.FbOdds.RecentMarketlineID,
+				MatchType:         int64(match.FbMatch.MatchType),
+			}
+		}
+
 		ls[i] = Prediction{
 			PredictionId:    pred.ID,
 			AnalystId:       pred.AnalystId,
@@ -27,6 +39,7 @@ func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.Us
 			CreatedAt:       pred.CreatedAt,
 			ViewCount:       pred.Views,
 			IsLocked:        !locked, // If it's not in userPredMap, it's locked
+			SelectionList:   selectionList,
 		}
 	}
 

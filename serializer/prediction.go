@@ -33,6 +33,16 @@ type SelectionDetail struct {
 
 func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 	for _, p := range predictions {
+		selectionList := make([]SelectionDetail, len(p.PredictionSelections))
+		for j, match := range p.PredictionSelections {
+			selectionList[j] = SelectionDetail{
+				MatchId:           match.MatchId,
+				MarketGroupType:   match.FbOdds.MarketGroupType,
+				MarketGroupPeriod: match.FbOdds.MarketGroupPeriod,
+				OrderMarketlineId: match.FbOdds.RecentMarketlineID,
+				MatchType:         int64(match.FbMatch.MatchType),
+			}
+		}
 		preds = append(preds, Prediction{
 			PredictionId:    p.ID,
 			AnalystId:       p.AnalystId,
@@ -41,6 +51,7 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 			CreatedAt:       p.CreatedAt,
 			ViewCount:       p.Views,
 			IsLocked:        false,
+			SelectionList: 	 selectionList,
 		})
 	}
 	return
