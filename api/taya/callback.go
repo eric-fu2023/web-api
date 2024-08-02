@@ -3,6 +3,7 @@ package taya_api
 import (
 	"blgit.rfdev.tech/taya/game-service/fb/callback"
 	"github.com/gin-gonic/gin"
+	"log"
 	"web-api/api"
 	"web-api/service/taya"
 	"web-api/util"
@@ -15,6 +16,7 @@ func CallbackHealth(c *gin.Context) {
 }
 
 func CallbackBalance(c *gin.Context) {
+	log.Printf("taya/fb CallbackBalance...")
 	var req callback.BalanceRequest
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := taya.BalanceCallback(c, req); err != nil {

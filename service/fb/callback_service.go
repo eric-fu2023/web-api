@@ -178,7 +178,6 @@ const (
 
 func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.BaseResponse, err error) {
 	log.Printf("CallbackBalance fb.BalanceCallback() ... %#v \n", req)
-
 	gpu, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["fb"], req.MerchantUserId)
 
 	if err != nil {
