@@ -33,6 +33,7 @@ func (Analyst) List(page, limit int) (list []Analyst, err error) {
 func (Analyst) GetDetail(id int) (target Analyst, err error) {
 	db := DB.Where("id", id)
 	err = db.
+		Preload("AnalystSource").
 		Preload("Predictions").
 		Preload("Followers").
 		Where("is_active", true).
@@ -42,11 +43,6 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 		First(&target).Error
 	return
 }
-
-// func GetAnalyst(c context.Context, analystId int64) (analyst models.Analyst, err error) {
-// 	err = DB.WithContext(c).Where("is_active").Where("id = ?", analystId).First(&analyst).Error
-// 	return
-// }
 
 func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (followings []UserAnalystFollowing, err error) {
 	err = DB.Preload("Analyst").

@@ -7,14 +7,19 @@ import (
 type Analyst struct {
 	AnalystId        int64        `json:"analyst_id"`
 	AnalystName      string       `json:"analyst_name"`
-	AnalystSource    string       `json:"analyst_source"`
+	AnalystDesc      string       `json:"analyst_desc"`
+	AnalystSource    Source       `json:"analyst_source"`
 	AnalystImage     string       `json:"analyst_image"`
 	WinningStreak    int          `json:"winning_streak"`
 	Accuracy         int          `json:"accuracy"`
-	AnalystDesc      string       `json:"analyst_desc"`
-	Predictions      []Prediction `json:"predictions"`
 	NumFollowers     int          `json:"num_followers"`
 	TotalPredictions int          `json:"total_predictions"`
+	Predictions      []Prediction `json:"predictions"`
+}
+
+type Source struct {
+	Name string `json:"source_name"`
+	Icon string `json:"source_icon"`
 }
 
 func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
@@ -22,12 +27,12 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 		resp = append(resp, Analyst{
 			AnalystId:        a.ID,
 			AnalystName:      a.Name,
-			AnalystSource:    a.AnalystSource.Name,
+			AnalystSource:    Source{Name: a.AnalystSource.Name, Icon: a.AnalystSource.ImgIcon},
 			AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
 			WinningStreak:    20,
 			Accuracy:         0,
 			AnalystDesc:      a.Desc,
-			// Predictions:      []Prediction{},
+			Predictions:      []Prediction{},
 			NumFollowers:     len(a.Followers),
 			TotalPredictions: len(a.Predictions),
 		})
@@ -44,7 +49,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	resp = Analyst{
 		AnalystId:        analyst.ID,
 		AnalystName:      analyst.Name,
-		AnalystSource:    analyst.AnalystSource.Name,
+		AnalystSource:    Source{Name: analyst.AnalystSource.Name, Icon: analyst.AnalystSource.ImgIcon},
 		AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
 		WinningStreak:    20,
 		Accuracy:         0,
@@ -56,38 +61,17 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	return
 }
 
-// func BuildAnalystList(analysts []models.Analyst) (res []Analyst) {
-
-// 	for _, analyst := range analysts {
-
-// 		res = append(res, BuildAnalyst(analyst))
-// 	}
-
-// 	return
-// }
-
-// func BuildAnalyst(analyst models.Analyst) (a Analyst) {
-
-// 	a = Analyst{
-// 		AnalystId:     analyst.AnalystId,
-// 		AnalystName:   analyst.AnalystName,
-// 		AnalystSource: analyst.AnalystSource,
-// 	}
-
-// 	return
-// }
-
 func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst) {
 	for _, a := range followings {
 		resp = append(resp, Analyst{
 			AnalystId:        a.ID,
 			AnalystName:      a.Analyst.Name,
-			AnalystSource:    a.Analyst.AnalystSource.Name,
+			AnalystSource:    Source{Name: a.Analyst.AnalystSource.Name, Icon: a.Analyst.AnalystSource.ImgIcon},
 			AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
 			WinningStreak:    20,
 			Accuracy:         0,
 			AnalystDesc:      a.Analyst.Desc,
-			// Predictions:      []Prediction{},
+			Predictions:      []Prediction{},
 			NumFollowers:     len(a.Analyst.Followers),
 			TotalPredictions: len(a.Analyst.Predictions),
 		})
