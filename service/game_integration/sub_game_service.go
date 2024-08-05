@@ -80,7 +80,9 @@ func (service *SubGameService) FeaturedList(c *gin.Context) (serializer.Response
 		}, err
 	}
 
+	data := serializer.BuildFeaturedGames(subGames)
+
 	return serializer.Response{
-		Data: subGames,
+		Data: data,
 	}, nil
 }

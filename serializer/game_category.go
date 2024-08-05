@@ -142,3 +142,11 @@ func BuildSubGamesByGameType(subGamesModel []ploutos.SubGameBrand, gameTypeOrder
 
 	return m.AsSlice(gameTypeOrder)
 }
+
+func BuildFeaturedGames(subGames []ploutos.SubGameBrand) ([]ploutos.SubGameBrand) {
+	for index, sgb := range subGames {
+		subGames[index].WebIcon= Url(sgb.WebIcon)
+		subGames[index].AppIcon= Url(sgb.AppIcon)
+	}
+	return subGames
+}
