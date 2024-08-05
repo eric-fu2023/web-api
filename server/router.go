@@ -205,6 +205,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/stream_games", middleware.Cache(10*time.Minute, false), stream_game_api.StreamGameList)
 		v1.GET("/game_categories", middleware.Cache(5*time.Minute, false), game_integration_api.GameCategoryList)
 		v1.GET("/sub_games", middleware.Cache(5*time.Minute, false), game_integration_api.SubGames)
+		v1.GET("/featured_games", middleware.Cache(5*time.Minute, false), game_integration_api.FeaturedGames)
 
 		// v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Second, false), promotion_api.GetCoverList)
 		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(1*time.Minute, false), promotion_api.GetCoverList)
