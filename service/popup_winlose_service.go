@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 	"web-api/cache"
 	"web-api/model"
@@ -35,7 +36,6 @@ type WinLosePopupGGR struct {
 }
 
 func (service *WinLoseService) Get(c *gin.Context) (data WinLosePopupResponse, err error) {
-	settleStatus := []int64{5}
 	now := time.Now()
 	yesterdayStart := time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, now.Location())
 	yesterdayEnd := yesterdayStart.Add(24 * time.Hour)
@@ -47,57 +47,40 @@ func (service *WinLoseService) Get(c *gin.Context) (data WinLosePopupResponse, e
 		GGR    float64 `json:"ggr"`
 		UserID int64   `json:"user_id"`
 	}
-	var ggrRecords []GGRRecords
-	err = model.DB.Model(ploutos.BetReport{}).Where("status = ? AND bet_time BETWEEN ? AND ? ", settleStatus, yesterdayStart, yesterdayEnd).Select("user_id, SUM(win - bet) as ggr").Group("user_id").Order("ggr desc").Find(&ggrRecords).Error
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
+
+
+	key := "popup/win_lose/"+now.Format("2006-01-02")
+	total_ranking_key := "popup/win_lose/total_ranking/"+now.Format("2006-01-02")
+	current_ranking_key := "popup/win_lose/ranking/"+now.Format("2006-01-02")
+	res := cache.RedisClient.HGet(context.Background(), key, strconv.FormatInt(user.ID, 10))
+	GGR, err:= strconv.ParseFloat(res.Val(), 64)
+	if err!=nil{
+		fmt.Println("convert GGR to float64 failed!!!!")
 	}
-	var myGGRRecord GGRRecords
-	for _, record := range ggrRecords {
-		if record.UserID == user.ID {
-			myGGRRecord = record
-			break
-		}
+	myGGRRecord :=GGRRecords{
+		GGR: GGR,
+		UserID: user.ID,
 	}
-	total_ranking := len(ggrRecords)
-	current_ranking := 0
-	min := 80
-	max := 200
-	if myGGRRecord.GGR > 0 {
-		for index, record := range ggrRecords {
-			if record.GGR < 0 {
-				total_ranking = index - 1
-				break
-			}
-			if record.UserID == user.ID {
-				current_ranking = index + 1
-			}
-		}
-		random_multiplier := rand.Intn(max-min+1) + min
-		current_ranking = current_ranking * random_multiplier
-		total_ranking = (total_ranking + 1) * random_multiplier
-	} else if myGGRRecord.GGR < 0 {
-		for index, record := range ggrRecords {
-			if record.GGR > 0 {
-				total_ranking = total_ranking - 1
-			}
-			if record.UserID == user.ID {
-				current_ranking = len(ggrRecords) - index
-				break
-			}
-		}
-		random_multiplier := rand.Intn(max-min+1) + min
-		current_ranking = current_ranking * random_multiplier
-		total_ranking = (total_ranking + 1) * random_multiplier
+	var total_ranking int
+	var current_ranking int
+	current_ranking_string := cache.RedisClient.HGet(context.Background(), current_ranking_key, "lose").Val()
+	if GGR < 0 {
+		total_ranking_string := cache.RedisClient.HGet(context.Background(), total_ranking_key, "lose").Val()
+		total_ranking, err = strconv.Atoi(total_ranking_string)
+		current_ranking, err = strconv.Atoi(current_ranking_string)
+		current_ranking = -current_ranking
+	}else{
+		total_ranking_string := cache.RedisClient.HGet(context.Background(), total_ranking_key, "win").Val()
+		total_ranking, err = strconv.Atoi(total_ranking_string)
+		current_ranking, err = strconv.Atoi(current_ranking_string)
 	}
 	var members []WinLosePopupGGR
-	if myGGRRecord.GGR > 0 {
+	if GGR > 0 {
 		members = append(members,
 			generateMemberGGR(user.Nickname, myGGRRecord.GGR, rand.Intn(500), current_ranking, false, -1),
 			generateMemberGGR(user.Nickname, myGGRRecord.GGR, 0, current_ranking, true, 0),
 			generateMemberGGR(user.Nickname, myGGRRecord.GGR, -rand.Intn(500), current_ranking, false, 1))
-	} else if myGGRRecord.GGR < 0 {
+	} else if GGR < 0 {
 		members = append(members,
 			generateMemberGGR(user.Nickname, myGGRRecord.GGR, rand.Intn(500)+500, current_ranking, false, 2),
 			generateMemberGGR(user.Nickname, myGGRRecord.GGR, rand.Intn(500), current_ranking, false, 1),
@@ -142,7 +125,7 @@ func (service *WinLoseService) Shown(c *gin.Context) (r serializer.Response, err
 
 func generateMemberGGR(nickname string, ggr float64, delta int, ranking int, is_me bool, index int) WinLosePopupGGR {
 	var nicks []map[string]interface{}
-	model.DB.Table(`nicknames`).Find(&nicks)
+	model.DB.Table(`ranking_nicknames`).Find(&nicks)
 	var name string
 	if len(nicks) > 0 {
 		rand.Seed(time.Now().UnixNano())

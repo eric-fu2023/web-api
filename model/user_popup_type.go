@@ -75,3 +75,9 @@ func ShouldPopupVIP(user User) (bool, error) {
 	}
 	return false,err
 }
+
+func GetPopupList(condition int64) (resp_list []ploutos.Popups, err error) {
+	err = DB.Model(ploutos.Popups{}).Where("condition = ?", condition).
+		Find(&resp_list).Error
+	return
+}
