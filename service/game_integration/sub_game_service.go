@@ -61,3 +61,26 @@ func (service *SubGameService) List(c *gin.Context) (serializer.Response, error)
 		Data: data,
 	}, nil
 }
+
+func (service *SubGameService) FeaturedList(c *gin.Context) (serializer.Response, error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	brandId := c.MustGet("_brand").(int)
+
+	platform, ok := consts.PlatformIdToGameVendorColumn[service.Platform]
+	if !ok {
+		r := serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("invalid_platform"), nil)
+		return r, nil
+	}
+
+	var subGames []ploutos.SubGameBrand
+	tx := model.DB.Debug().Model(ploutos.SubGameBrand{}).Where(fmt.Sprintf("%s.brand_id = %d", ploutos.SubGameBrand{}.TableName(), brandId)).Where(fmt.Sprintf("%s.%s = ?", ploutos.SubGameBrand{}.TableName(), platform),1).Where("is_featured = true").Order("updated_at").Find(&subGames)
+	if err := tx.Error; err != nil {
+		return serializer.Response{
+			Data: []serializer.SubGamesBrandsByGameType{},
+		}, err
+	}
+
+	return serializer.Response{
+		Data: subGames,
+	}, nil
+}

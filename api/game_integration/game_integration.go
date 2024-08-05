@@ -45,3 +45,16 @@ func SubGames(c *gin.Context) {
 		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }
+
+func FeaturedGames(c *gin.Context) {
+	var service game_integration.SubGameService
+	if err := c.ShouldBind(&service); err == nil {
+		res, e := service.FeaturedList(c)
+		c.JSON(200, res)
+		if e != nil {
+			c.Abort()
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
