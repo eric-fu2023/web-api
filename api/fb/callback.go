@@ -1,11 +1,13 @@
 package fb_api
 
 import (
-	"blgit.rfdev.tech/taya/game-service/fb/callback"
-	"github.com/gin-gonic/gin"
 	"web-api/api"
 	"web-api/service/fb"
 	"web-api/util"
+
+	"blgit.rfdev.tech/taya/game-service/fb/callback"
+
+	"github.com/gin-gonic/gin"
 )
 
 func CallbackHealth(c *gin.Context) {
