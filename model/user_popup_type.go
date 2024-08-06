@@ -34,12 +34,19 @@ func ShouldPopupVIP(user User) (bool, error) {
 	err := DB.Model(ploutos.PopupRecord{}).Where("user_id = ?  AND type = 2", user.ID).
 		Order("created_at DESC").
 		First(&previous_vip).Error
+
+	if errors.Is(err, logger.ErrRecordNotFound) {
+		err = nil
+	}
 	if err != nil && !errors.Is(err, logger.ErrRecordNotFound) {
 		return false, err
 	}
 	if previous_vip.CreatedAt.Before(TodayStart) {
 		// check if user has VIP lvl up yesterday
 		vip, err := GetVipWithDefault(nil, user.ID)
+		if errors.Is(err, logger.ErrRecordNotFound) {
+			err = nil
+		}
 		if err != nil {
 			return false, err
 		}
@@ -47,7 +54,7 @@ func ShouldPopupVIP(user User) (bool, error) {
 		// if there is a level up
 		if previous_vip.VipLevel < currentVipRule.VIPLevel {
 			return true, nil
-		} else {
+		} else if previous_vip.VipLevel > currentVipRule.VIPLevel{
 			// if there is a vip downgrade, we need to update the deleted_at for the record
 			err = DB.Model(ploutos.PopupRecord{}).
 				Where("user_id = ? AND vip_level > ?  AND type = 2", user.ID, currentVipRule.VIPLevel).
