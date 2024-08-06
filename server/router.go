@@ -415,7 +415,10 @@ func NewRouter() *gin.Engine {
 
 		teamup := v1.Group("/teamup")
 		{
-			teamup.GET("/chop", middleware.AuthRequired(true, false), teamup_api.ChopBet)
+			teamup.GET("/", middleware.AuthRequired(true, false), teamup_api.GetTeamUpItem)
+			teamup.GET("/start", middleware.AuthRequired(true, false), teamup_api.StartTeamUp)
+			teamup.GET("/list", middleware.AuthRequired(true, false), teamup_api.ListStartedTeamUp)
+			teamup.POST("/chop", middleware.AuthRequired(true, false), teamup_api.ChopBet)
 		}
 
 		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)

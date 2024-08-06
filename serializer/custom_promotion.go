@@ -55,20 +55,20 @@ type IncomingPromotionRequestAction struct {
 }
 
 type IncomingCustomPromotionRequestField struct {
-	Hint        string              `json:"hint"`
-	Type        string              `json:"type"`
-	Title       string              `json:"title"`
-	InputId     int                 `json:"input_id"`
-	Switch      int                 `json:"switch"`
-	Options     []map[string]string `json:"option"`
-	X           string              `json:"x"`
-	Weightage   int                 `json:"weightage"`
-	ErrorHint   string              `json:"error_hint,omitempty"`
-	OrderType   string              `json:"order_type"`
-	ContentType string              `json:"content_type"`
-	OrderStatus string              `json:"order_status"`
-	MaxClick    string              `json:"max_click"`
-	RedirectCs  bool                `json:"redirect_cs"`
+	Hint         string              `json:"hint"`
+	Type         string              `json:"type"`
+	Title        string              `json:"title"`
+	InputId      int                 `json:"input_id"`
+	Switch       int                 `json:"switch"`
+	Options      []map[string]string `json:"option"`
+	X            string              `json:"x"`
+	Weightage    int                 `json:"weightage"`
+	ErrorHint    string              `json:"error_hint,omitempty"`
+	OrderType    string              `json:"order_type"`
+	ContentType  string              `json:"content_type"`
+	OrderStatus  string              `json:"order_status"`
+	MaxClick     string              `json:"max_click"`
+	RedirectType bool                `json:"redirect_type"`
 }
 
 type OutgoingCustomPromotionDetail struct {
