@@ -2,8 +2,10 @@ package service
 
 import (
 	"encoding/json"
+	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/util/i18n"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
@@ -18,7 +20,8 @@ type TeamupService struct {
 }
 
 type GetTeamupService struct {
-	TeamupId int64 `form:"teamup_id" json:"teamup_id"`
+	OrderId  string `form:"order_id" json:"order_id"`
+	TeamupId int64  `form:"teamup_id" json:"teamup_id"`
 }
 
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
@@ -32,6 +35,17 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 }
 
 func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	u, _ := c.Get("user")
+	user := u.(model.User)
+
+	var betReport ploutos.BetReport
+	err = model.DB.Where("business_id = ?", s.OrderId).First(&betReport).Error
+
+	if err != nil || user.ID != betReport.UserId {
+		r = serializer.DBErr(c, "", i18n.T("general_error"), err)
+		return
+	}
 
 	var teamup ploutos.Teamup
 
