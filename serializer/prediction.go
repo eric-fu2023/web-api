@@ -32,7 +32,8 @@ type SelectionDetail struct {
 }
 
 func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
-	for _, p := range predictions {
+	finalList := make([]Prediction, len(predictions))
+	for i, p := range predictions {
 		selectionList := make([]SelectionDetail, len(p.PredictionSelections))
 		for j, match := range p.PredictionSelections {
 			selectionList[j] = SelectionDetail{
@@ -43,7 +44,7 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 				MatchType:         int64(match.FbMatch.MatchType),
 			}
 		}
-		preds = append(preds, Prediction{
+		finalList[i] = Prediction{
 			PredictionId:    p.ID,
 			AnalystId:       p.AnalystId,
 			PredictionTitle: p.Title,
@@ -51,10 +52,10 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 			CreatedAt:       p.CreatedAt,
 			ViewCount:       p.Views,
 			IsLocked:        false,
-			SelectionList: 	 selectionList,
-		})
+			SelectionList:   selectionList,
+		}
 	}
-	return
+	return finalList
 }
 
 func BuildPrediction(prediction model.Prediction) (pred Prediction) {

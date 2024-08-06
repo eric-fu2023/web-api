@@ -15,11 +15,20 @@ type Analyst struct {
 	NumFollowers     int          `json:"num_followers"`
 	TotalPredictions int          `json:"total_predictions"`
 	Predictions      []Prediction `json:"predictions"`
+	RecentTotal	int `json:"recent_total"`
+	RecentWins int `json:"recent_wins"`
 }
 
 type Source struct {
 	Name string `json:"source_name"`
 	Icon string `json:"source_icon"`
+}
+
+type Achievement struct {
+	TotalPredictions int `json:"total_predictions"`
+	Accuracy int `json:"accuracy"`
+	WinningStreak int `json:"winning_streak"`
+	RecentResult []int `json:"recent_result"`
 }
 
 func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
@@ -32,7 +41,7 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 			WinningStreak:    20,
 			Accuracy:         0,
 			AnalystDesc:      a.Desc,
-			Predictions:      []Prediction{},
+			Predictions:      BuildPredictionsList(a.Predictions),
 			NumFollowers:     len(a.Followers),
 			TotalPredictions: len(a.Predictions),
 		})
@@ -41,10 +50,6 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 }
 
 func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
-	predList := make([]model.Prediction, len(analyst.Predictions))
-	for i, pred := range analyst.Predictions {
-		predList[i] = model.Prediction{pred, []model.PredictionSelection{}}
-	}
 
 	resp = Analyst{
 		AnalystId:        analyst.ID,
@@ -54,7 +59,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		WinningStreak:    20,
 		Accuracy:         0,
 		AnalystDesc:      analyst.Desc,
-		Predictions:      BuildPredictionsList(predList),
+		Predictions:      BuildPredictionsList(analyst.Predictions),
 		NumFollowers:     len(analyst.Followers),
 		TotalPredictions: len(analyst.Predictions),
 	}
@@ -71,10 +76,18 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 			WinningStreak:    20,
 			Accuracy:         0,
 			AnalystDesc:      a.Analyst.Desc,
-			Predictions:      []Prediction{},
+			Predictions:      BuildPredictionsList(a.Analyst.Predictions),
 			NumFollowers:     len(a.Analyst.Followers),
 			TotalPredictions: len(a.Analyst.Predictions),
 		})
 	}
 	return
+}
+
+func BuildAnalystAchievement() (resp Achievement) {
+	resp = Achievement{
+
+	}
+	// TODO : ^^^ add logic
+	return 
 }

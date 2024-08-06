@@ -11,7 +11,7 @@ import (
 type Analyst struct {
 	ploutos.TipsAnalyst
 
-	Predictions []ploutos.TipsAnalystPrediction `gorm:"foreignKey:AnalystId;references:ID"`
+	Predictions []Prediction `gorm:"foreignKey:AnalystId;references:ID"`
 	Followers []ploutos.UserAnalystFollowing `gorm:"foreignKey:AnalystId;references:ID"`
 }
 

@@ -219,9 +219,9 @@ func NewRouter() *gin.Engine {
 		v1.GET("/vips", middleware.Cache(5*time.Minute, false), api.VipLoad)
 		popup := v1.Group("/popup")
 		{
-			popup.GET("/show", middleware.CheckAuth(), api.Show)
+			popup.GET("/show", middleware.AuthRequired(true, true), api.Show)
 			popup.GET("/spin_items", api.SpinItems)
-			popup.GET("/spin_result", middleware.CheckAuth(), api.SpinResult)
+			popup.GET("/spin_result", middleware.AuthRequired(true, true),  api.SpinResult)
 		}
 
 		pm := v1.Group("/pm")
@@ -410,6 +410,7 @@ func NewRouter() *gin.Engine {
 			analyst.GET("/list", analyst_api.ListAnalysts)
 			analyst.GET("/following", middleware.AuthRequired(true, true), analyst_api.ListFollowingAnalysts)
 			analyst.POST("/following", middleware.AuthRequired(true, true), analyst_api.ToggleFollowAnalyst)
+			analyst.GET("/achievement", analyst_api.GetAnalystAchievement)
 		}
 
 		teamup := v1.Group("/teamup")
