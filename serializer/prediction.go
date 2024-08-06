@@ -14,7 +14,8 @@ type Prediction struct {
 	CreatedAt       time.Time         `json:"created_at"`
 	ViewCount       int64             `json:"view_count"`
 	SelectionList   []SelectionDetail `json:"selection_list,omitempty"`
-	Status          int64             `json:"status"` 
+	Status          int64             `json:"status"`
+	AnalystDetail   Analyst           `json:"analyst_detail"`
 }
 
 type PredictedMatch struct {
@@ -53,6 +54,7 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 			ViewCount:       p.Views,
 			IsLocked:        false,
 			SelectionList:   selectionList,
+			AnalystDetail: BuildAnalystDetail(p.AnalystDetail),
 		}
 	}
 	return finalList
@@ -79,6 +81,7 @@ func BuildPrediction(prediction model.Prediction) (pred Prediction) {
 		ViewCount:       prediction.Views,
 		IsLocked:        false,
 		SelectionList:   selectionList,
+		AnalystDetail: BuildAnalystDetail(prediction.AnalystDetail),
 	}
 	return
 }

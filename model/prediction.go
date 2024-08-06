@@ -8,6 +8,7 @@ type Prediction struct {
 	ploutos.TipsAnalystPrediction
 
 	PredictionSelections []PredictionSelection `gorm:"foreignKey:PredictionId;references:ID"`
+	AnalystDetail Analyst `gorm:"foreignKey:AnalystId;references:ID"`
 }
 
 type ListPredictionCond struct {
@@ -23,6 +24,10 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 		Preload("PredictionSelections").
 		Preload("PredictionSelections.FbOdds").
 		Preload("PredictionSelections.FbMatch").
+		Preload("AnalystDetail").
+		Preload("AnalystDetail.TipsAnalystSource").
+		// Preload("AnalystDetail.Followers").
+		// Preload("AnalystDetail.Predictions").
 		Scopes(Paginate(cond.Page, cond.Limit)).
 		Where("deleted_at IS NULL")
 
@@ -40,6 +45,10 @@ func GetPrediction(predictionId int64) (pred Prediction, err error) {
 		Preload("PredictionSelections").
 		Preload("PredictionSelections.FbOdds").
 		Preload("PredictionSelections.FbMatch").
+		Preload("AnalystDetail").
+		Preload("AnalystDetail.TipsAnalystSource").
+		// Preload("AnalystDetail.Followers").
+		// Preload("AnalystDetail.Predictions").
 		Where("deleted_at IS NULL").
 		Where("id = ?", predictionId).
 		First(&pred).Error
