@@ -36,8 +36,8 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 	PopupTypes, err := model.GetPopupList(service.Condition)
 
 	// check redis which one has been popup
-	key := service.buildKey(user.ID)
-	res := cache.RedisClient.Get(context.Background(), key)
+	key := "popup/records/" + time.Now().Format("2006-01-02")
+	res := cache.RedisConfigClient.HGet(context.Background(), key,strconv.FormatInt(user.ID, 10))
 	if res.Err() != nil && res.Err() != redis.Nil {
 		// if redis get error, return error
 		fmt.Print("Redis Get failed, ",res.Err())
@@ -81,7 +81,8 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if err != nil && err != redis.Nil {
 			return r, err
 		}
-		if redisPopup < 2 {
+		// this case should nvr happen because the less value is 1 in redis
+		if redisPopup < 1 {
 			shouldPopupWinLose, err := model.ShouldPopupWinLose(user)
 			if err != nil {
 				return r, err
@@ -97,7 +98,8 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				return r, err
 			}
 		}
-		if redisPopup < 3 {
+		//----------------------------------------------------------------------
+		if redisPopup < 2 {
 			// TODO: this is for Kan Dan
 			// shouldPopupWinLose, err := model.ShouldPopupWinLose(user)
 			// if shouldPopupWinLose {
@@ -105,7 +107,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			// 	return service.Get(c)
 			// }
 		}
-		if redisPopup < 4 {
+		if redisPopup < 3 {
 			ShouldVIP, err := model.ShouldPopupVIP(user)
 			if err != nil {
 				return r, err
@@ -121,7 +123,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				return r, err
 			}
 		}
-		if redisPopup < 5 {
+		if redisPopup < 4 {
 			// TODO: this is for spins
 			// shouldPopupWinLose, err := model.ShouldPopupWinLose(user)
 			// if shouldPopupWinLose {

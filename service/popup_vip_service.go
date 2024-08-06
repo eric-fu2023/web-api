@@ -3,12 +3,12 @@ package service
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
-
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,23 +37,14 @@ func (service *VipService) Get(c *gin.Context) (data map[string]int64, err error
 func (service *VipService) Shown(c *gin.Context) (r serializer.Response, err error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
-	vip, err := model.GetVipWithDefault(nil, user.ID)
 	if err != nil {
 		return
 	}
-	currentVipRule := vip.VipRule
-
-	PopupRecord := ploutos.PopupRecord{
-		UserID:   user.ID,
-		VipLevel: currentVipRule.VIPLevel,
-		Type:     2,
-	}
-	err = model.DB.Create(&PopupRecord).Error
-	
-	var popup_service PopupService
-	key := popup_service.buildKey(user.ID)
-	res := cache.RedisClient.Set(context.Background(), key, "3", time.Hour*24)
-	if res.Err() != nil{
+	key := "popup/records/" + time.Now().Format("2006-01-02")
+	res := cache.RedisConfigClient.HSet(context.Background(), key, user.ID, "2")
+	expire_time, err := strconv.Atoi(os.Getenv("POPUP_RECORD_EXPIRE_MINS"))
+	cache.RedisConfigClient.ExpireNX(context.Background(), key, time.Duration(expire_time) * time.Minute)
+	if res.Err() != nil {
 		fmt.Print("insert vip popup record into redis failed ", key)
 	}
 	return
