@@ -15,8 +15,8 @@ type Analyst struct {
 	NumFollowers     int          `json:"num_followers"`
 	TotalPredictions int          `json:"total_predictions"`
 	Predictions      []Prediction `json:"predictions"`
-	RecentTotal	int `json:"recent_total"`
-	RecentWins int `json:"recent_wins"`
+	RecentTotal      int          `json:"recent_total"`
+	RecentWins       int          `json:"recent_wins"`
 }
 
 type Source struct {
@@ -25,10 +25,10 @@ type Source struct {
 }
 
 type Achievement struct {
-	TotalPredictions int `json:"total_predictions"`
-	Accuracy int `json:"accuracy"`
-	WinningStreak int `json:"winning_streak"`
-	RecentResult []int `json:"recent_result"`
+	TotalPredictions int   `json:"total_predictions"`
+	Accuracy         int   `json:"accuracy"`
+	WinningStreak    int   `json:"winning_streak"`
+	RecentResult     []int `json:"recent_result"`
 }
 
 func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
@@ -85,9 +85,7 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 }
 
 func BuildAnalystAchievement() (resp Achievement) {
-	resp = Achievement{
-
-	}
+	resp = Achievement{}
 	// TODO : ^^^ add logic
-	return 
+	return
 }
