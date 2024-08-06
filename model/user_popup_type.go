@@ -1,48 +1,29 @@
 package model
 
 import (
+	"context"
 	"errors"
+	"strconv"
 	"time"
+	"web-api/cache"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm/logger"
 )
 
 func ShouldPopupWinLose(user User) (bool, error) {
 	now := time.Now()
-	TodayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	yesterdayStart := time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, now.Location())
-	yesterdayEnd := yesterdayStart.Add(24 * time.Hour)
-
-
-	// if not displayed today
-	var previous_win_lose ploutos.PopupRecord
-	err := DB.Model(ploutos.PopupRecord{}).Where("user_id = ? AND type = 1", user.ID).
-		Order("created_at DESC").
-		First(&previous_win_lose).Error
-	if err != nil && !errors.Is(err, logger.ErrRecordNotFound) {
-		return false, err
-	}
-	if previous_win_lose.CreatedAt.Before(TodayStart) {
-
-		// check if user has GGR yesterday
-		var count int64
-		settleStatus := []int64{5}
-		err = DB.Model(ploutos.BetReport{}).Scopes(ByOrderListConditionsGGR(user.ID, settleStatus, yesterdayStart, yesterdayEnd)).Count(&count).Error
-		if err != nil {
-			return false, err
-		}
-		if count > 0 {
-			// get user GGR
-			var ggr int64
-			err = DB.Model(ploutos.BetReport{}).Scopes(ByOrderListConditionsGGR(user.ID, settleStatus, yesterdayStart, yesterdayEnd)).Select("SUM(win-bet) as win").Find(&ggr).Error
-			if ggr != 0 {
-				// if user has win or lose
-				return true, nil
-			}
+	key := "popup/win_lose/"+now.Format("2006-01-02")
+	res := cache.RedisClient.HGet(context.Background(), key, strconv.FormatInt(user.ID, 10))
+	if res.Err() != nil {
+		if res.Err() == redis.Nil{
+			return false, nil
+		}else{
+			return false, res.Err()
 		}
 	}
-	return false, err
+	return true, nil
 }
 
 func ShouldPopupVIP(user User) (bool, error) {
@@ -74,4 +55,10 @@ func ShouldPopupVIP(user User) (bool, error) {
 		}
 	}
 	return false,err
+}
+
+func GetPopupList(condition int64) (resp_list []ploutos.Popups, err error) {
+	err = DB.Model(ploutos.Popups{}).Where("condition = ?", condition).
+		Find(&resp_list).Error
+	return
 }
