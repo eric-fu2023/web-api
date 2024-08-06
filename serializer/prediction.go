@@ -51,7 +51,7 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 			CreatedAt:       p.CreatedAt,
 			ViewCount:       p.Views,
 			IsLocked:        false,
-			SelectionList: 	 selectionList,
+			SelectionList:   selectionList,
 		})
 	}
 	return
