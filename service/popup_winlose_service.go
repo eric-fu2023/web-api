@@ -21,14 +21,14 @@ type WinLoseService struct {
 type WinLosePopupResponse struct {
 	CurrentRanking int               `json:"current_ranking"`
 	TotalRanking   int               `json:"total_ranking"`
-	GGR            float64           `json:"ggr"`
+	GGR            float64           `json:"win_lose"`
 	IsWin          bool              `json:"is_win"`
 	Start          int64             `json:"start"`
 	End            int64             `json:"end"`
 	Member         []WinLosePopupGGR `json:"Member"`
 }
 type WinLosePopupGGR struct {
-	GGR     float64 `json:"ggr"`
+	GGR     float64 `json:"win_lose"`
 	Ranking int     `json:"ranking"`
 	Name    string  `json:"name"`
 	PicSrc  string  `json:"pic_src"`
@@ -44,7 +44,7 @@ func (service *WinLoseService) Get(c *gin.Context) (data WinLosePopupResponse, e
 	user := u.(model.User)
 	// check if user has GGR yesterday
 	type GGRRecords struct {
-		GGR    float64 `json:"ggr"`
+		GGR    float64 `json:"win_lose"`
 		UserID int64   `json:"user_id"`
 	}
 
