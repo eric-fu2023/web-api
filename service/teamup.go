@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"strconv"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -42,14 +43,25 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	var betReport ploutos.BetReport
 	err = model.DB.Where("business_id = ?", s.OrderId).First(&betReport).Error
 
-	if err != nil || user.ID != betReport.UserId {
+	if err != nil {
 		r = serializer.DBErr(c, "", i18n.T("general_error"), err)
 		return
 	}
 
 	var teamup ploutos.Teamup
+	err = model.DB.Where("order_id = ?", s.OrderId).First(&teamup).Error
 
-	teamup.ID = 888888
+	if teamup.ID == 0 {
+		teamup.UserId = user.ID
+		orderId, _ := strconv.Atoi(s.OrderId)
+		teamup.OrderId = int64(orderId)
+		err = model.DB.Save(&teamup).Error
+	}
+
+	if err != nil {
+		r = serializer.DBErr(c, "", i18n.T("general_error"), err)
+		return
+	}
 
 	shareService, err := buildTeamupShareParamsService(serializer.BuildTeamup(teamup))
 	if err != nil {
