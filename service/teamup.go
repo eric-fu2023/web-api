@@ -14,9 +14,9 @@ import (
 )
 
 type TeamupService struct {
-	IsEnded *bool  `form:"is_ended" json:"is_ended"`
-	Start   string `form:"start" json:"start" binding:"required"`
-	End     string `form:"end" json:"end" binding:"required"`
+	Status int    `form:"status" json:"status"` // 0 = All, 1 = Ongoing, 2 = Ended
+	Start  string `form:"start" json:"start" binding:"required"`
+	End    string `form:"end" json:"end" binding:"required"`
 	common.Page
 }
 
@@ -26,6 +26,25 @@ type GetTeamupService struct {
 }
 
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
+	// i18n := c.MustGet("i18n").(i18n.I18n)
+	u, _ := c.Get("user")
+	user := u.(model.User)
+
+	teamupStatus := make([]int, 3)
+
+	switch s.Status {
+	case 1:
+		teamupStatus = []int{0}
+	case 2:
+		teamupStatus = []int{1, 2}
+	case 0:
+	default:
+		teamupStatus = []int{0, 1, 2}
+	}
+
+	teamups, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit)
+
+	r.Data = teamups
 
 	return
 }
@@ -49,13 +68,15 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	}
 
 	var teamup ploutos.Teamup
-	err = model.DB.Where("order_id = ?", s.OrderId).First(&teamup).Error
+	teamup, err = model.GetTeamUp("business_id", s.OrderId)
 
 	if teamup.ID == 0 {
 		teamup.UserId = user.ID
 		orderId, _ := strconv.Atoi(s.OrderId)
 		teamup.OrderId = int64(orderId)
-		err = model.DB.Save(&teamup).Error
+		teamup.TotalRequiredDeposit = 10 * 100
+
+		err = model.SaveTeamup(teamup)
 	}
 
 	if err != nil {

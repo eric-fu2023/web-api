@@ -27,7 +27,7 @@ func GetTeamUpItem(c *gin.Context) {
 	}
 }
 
-func ListStartedTeamUp(c *gin.Context) {
+func ListAllTeamUp(c *gin.Context) {
 	var service service.TeamupService
 	if err := c.ShouldBind(&service); err == nil {
 		res, _ := service.List(c)

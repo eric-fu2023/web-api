@@ -221,7 +221,7 @@ func NewRouter() *gin.Engine {
 		{
 			popup.GET("/show", middleware.AuthRequired(true, true), api.Show)
 			popup.GET("/spin_items", api.SpinItems)
-			popup.GET("/spin_result", middleware.AuthRequired(true, true),  api.SpinResult)
+			popup.GET("/spin_result", middleware.AuthRequired(true, true), api.SpinResult)
 		}
 
 		pm := v1.Group("/pm")
@@ -417,7 +417,7 @@ func NewRouter() *gin.Engine {
 		{
 			teamup.GET("/", middleware.AuthRequired(true, false), teamup_api.GetTeamUpItem)
 			teamup.GET("/start", middleware.AuthRequired(true, false), teamup_api.StartTeamUp)
-			teamup.GET("/list", middleware.AuthRequired(true, false), teamup_api.ListStartedTeamUp)
+			teamup.GET("/list", middleware.AuthRequired(true, false), teamup_api.ListAllTeamUp)
 			teamup.POST("/chop", middleware.AuthRequired(true, false), teamup_api.ChopBet)
 		}
 

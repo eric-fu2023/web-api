@@ -7,15 +7,39 @@ import (
 )
 
 type Teamup struct {
-	ploutos.TipsAnalyst
-
-	Predictions []ploutos.TipsAnalystPrediction `gorm:"foreignKey:AnalystId;references:ID"`
-	Followers   []ploutos.UserAnalystFollowing  `gorm:"foreignKey:AnalystId;references:ID"`
+	ploutos.Teamup
 }
 
-func StartTeamup(following UserAnalystFollowing) (err error) {
+func SaveTeamup(teamup ploutos.Teamup) (err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Save(&following).Error
+		err = tx.Save(&teamup).Error
+		return
+	})
+
+	return
+}
+
+func GetTeamUp(key string, value string) (teamup ploutos.Teamup, err error) {
+
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = tx.Where("? = ?", key, value).First(&teamup).Error
+		return
+	})
+
+	return
+}
+
+func GetAllTeamUps(userId int64, status []int, page, limit int) (teamups []ploutos.Teamup, err error) {
+
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		tx = tx.Where("user_id = ?", userId)
+
+		if len(status) > 0 {
+			tx = tx.Where("status in ?", status)
+		}
+
+		err = tx.Scopes(Paginate(page, limit)).Find(&teamups).Error
+
 		return
 	})
 
