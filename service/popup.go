@@ -66,6 +66,9 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if ShouldVIP {
 			var service VipService
 			data, err := service.Get(c)
+			if err != nil {
+				return r, err
+			}
 			r.Data = PopupResponse{
 				Type: 3,
 				CanFloat: VIPFloat(PopupTypes),
@@ -127,7 +130,8 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			// }
 		}
 	}
-
+	r.Msg = "no popup available"
+	r.Data = PopupResponse{Type:-1}
 	return
 }
 
