@@ -46,3 +46,13 @@ func ToggleFollowAnalyst(c *gin.Context) {
 		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }
+
+func GetAnalystAchievement(c *gin.Context) {
+	var service service.AnalystAchievementService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.GetRecord(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}

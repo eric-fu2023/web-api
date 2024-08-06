@@ -24,6 +24,13 @@ type Source struct {
 	Icon string `json:"source_icon"`
 }
 
+type Achievement struct {
+	TotalPredictions int `json:"total_predictions"`
+	Accuracy int `json:"accuracy"`
+	WinningStreak int `json:"winning_streak"`
+	RecentResult []int `json:"recent_result"`
+}
+
 func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 	for _, a := range analysts {
 		resp = append(resp, Analyst{
@@ -75,4 +82,12 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 		})
 	}
 	return
+}
+
+func BuildAnalystAchievement() (resp Achievement) {
+	resp = Achievement{
+
+	}
+	// TODO : ^^^ add logic
+	return 
 }

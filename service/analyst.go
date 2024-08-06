@@ -131,3 +131,14 @@ func (service AnalystDetailService) GetAnalyst(c *gin.Context) (r serializer.Res
 
 	return
 }
+
+type AnalystAchievementService struct {
+	AnalystId int64 `json:"analyst_id" form:"analyst_id"`
+	SportId int64 `json:"sport_id" form:"sport_id"`
+}
+
+func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer.Response, err error) {
+	// TODO : get data to fill in 
+	r.Data = serializer.BuildAnalystAchievement()
+	return 
+}
