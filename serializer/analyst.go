@@ -27,7 +27,7 @@ func BuildAnalysts(analysts []model.Analyst) (resp []Analyst) {
 		resp = append(resp, Analyst{
 			AnalystId:        a.ID,
 			AnalystName:      a.Name,
-			AnalystSource:    Source{Name: a.AnalystSource.Name, Icon: a.AnalystSource.ImgIcon},
+			AnalystSource:    Source{Name: a.TipsAnalystSource.Name, Icon: a.TipsAnalystSource.ImgIcon},
 			AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
 			WinningStreak:    20,
 			Accuracy:         0,
@@ -49,7 +49,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	resp = Analyst{
 		AnalystId:        analyst.ID,
 		AnalystName:      analyst.Name,
-		AnalystSource:    Source{Name: analyst.AnalystSource.Name, Icon: analyst.AnalystSource.ImgIcon},
+		AnalystSource:    Source{Name: analyst.TipsAnalystSource.Name, Icon: analyst.TipsAnalystSource.ImgIcon},
 		AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
 		WinningStreak:    20,
 		Accuracy:         0,
@@ -66,7 +66,7 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 		resp = append(resp, Analyst{
 			AnalystId:        a.ID,
 			AnalystName:      a.Analyst.Name,
-			AnalystSource:    Source{Name: a.Analyst.AnalystSource.Name, Icon: a.Analyst.AnalystSource.ImgIcon},
+			AnalystSource:    Source{Name: a.Analyst.TipsAnalystSource.Name, Icon: a.Analyst.TipsAnalystSource.ImgIcon},
 			AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
 			WinningStreak:    20,
 			Accuracy:         0,

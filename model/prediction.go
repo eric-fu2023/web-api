@@ -5,7 +5,7 @@ import (
 ) 
 
 type Prediction struct {
-	ploutos.Predictions
+	ploutos.TipsAnalystPrediction
 
 	PredictionSelections []PredictionSelection `gorm:"foreignKey:PredictionId;references:ID"`
 }

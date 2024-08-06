@@ -10,7 +10,7 @@ import (
 
 type UserPrediction struct {
 	ploutos.UserPrediction
-	Prediction *ploutos.Predictions `gorm:"foreignKey:PredictionId;references:ID"`
+	Prediction *ploutos.TipsAnalystPrediction `gorm:"foreignKey:PredictionId;references:ID"`
 }
 
 type GetUserPredictionCond struct {

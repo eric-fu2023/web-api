@@ -7,7 +7,7 @@ import (
 
 
 type PredictionSelection struct {
-	ploutos.PredictionsSelection
+	ploutos.TipsAnalystPredictionSelection
 
 	FbOdds ploutosFB.FbOdds `gorm:"foreignKey:SelectionId;references:ID"`
 	FbMatch ploutosFB.FbMatch `gorm:"foreignKey:MatchId;references:MatchID"`
