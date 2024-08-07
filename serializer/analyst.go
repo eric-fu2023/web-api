@@ -85,7 +85,12 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 }
 
 func BuildAnalystAchievement() (resp Achievement) {
-	resp = Achievement{}
+	resp = Achievement{
+		TotalPredictions: 323,
+		Accuracy: 78,
+		WinningStreak: 23,
+		RecentResult: []int{1,1,1,1,1,0,1,1,1,1},
+	}
 	// TODO : ^^^ add logic
 	return
 }
