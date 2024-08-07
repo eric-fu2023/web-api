@@ -15,18 +15,27 @@ type Analyst struct {
 	Followers []ploutos.UserAnalystFollowing `gorm:"foreignKey:AnalystId;references:ID"`
 }
 
-func (Analyst) List(page, limit int) (list []Analyst, err error) {
+func (Analyst) List(page, limit int, sportId int64) (list []Analyst, err error) {
 	db := DB.Scopes(Paginate(page, limit))
 
-	err = db.
+	db = db.
 		Preload("TipsAnalystSource").
 		Preload("Followers").
 		Preload("Predictions").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
-		Order("id DESC").
-		Find(&list).Error
+		Order("id DESC")
+
+	if sportId != 0 {
+		// TODO : Add filter for sport id when analyst struct finalised in backend API
+	}
+
+
+	err = db.
+		Find(&list).
+		Error
+	
 	return
 }
 

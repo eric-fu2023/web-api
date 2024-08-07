@@ -31,23 +31,22 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 		// Preload("AnalystDetail.Followers").
 		// Preload("AnalystDetail.Predictions").
 		Scopes(Paginate(cond.Page, cond.Limit)).
-		Where("tips_analyst_predictions.deleted_at IS NULL")
+		Where("tips_analyst_predictions.deleted_at IS NULL").
+		Joins("left join tips_analyst_prediction_selections on tips_analyst_prediction_selections.prediction_id = tips_analyst_predictions.id").
+		Joins("left join fb_matches on tips_analyst_prediction_selections.match_id = fb_matches.match_id").
+		Group("tips_analyst_predictions.id")
+
 
 	if (cond.AnalystId != 0) {
-		db = db.Where("analyst_id", cond.AnalystId)
+		db = db.Where("tips_analyst_predictions.analyst_id", cond.AnalystId)
 	}
 
 	if (cond.FbMatchId != 0) {
-		db = db.Joins("join tips_analyst_prediction_selections on tips_analyst_prediction_selections.prediction_id = tips_analyst_predictions.id").
-		Where("tips_analyst_prediction_selections.match_id = ?", cond.FbMatchId).
-		Group("tips_analyst_predictions.id")
+		db = db.Where("tips_analyst_prediction_selections.match_id = ?", cond.FbMatchId)
 	}
 
 	if (cond.SportId != 0) {
-		db = db.Joins("join tips_analyst_prediction_selections on tips_analyst_prediction_selections.prediction_id = tips_analyst_predictions.id").
-		Joins("join fb_matches on tips_analyst_prediction_selections.match_id = fb_matches.match_id").
-		Where("fb_matches.sports_id = ?", cond.SportId).
-		Group("tips_analyst_predictions.id")
+		db = db.Where("fb_matches.sports_id = ?", cond.SportId)
 	}
 	
 	err = db.Find(&preds).Error
