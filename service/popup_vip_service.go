@@ -28,6 +28,7 @@ func (service *VipService) Get(c *gin.Context) (data map[string]int64, err error
 	currentVipRule := vip.VipRule
 	data = map[string]int64{
 		"vip_level": currentVipRule.VIPLevel,
+		"vip_id":vip.VipID,
 	}
 	_, shown_err := service.Shown(c)
 	if shown_err != nil {
