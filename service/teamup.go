@@ -63,12 +63,12 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	err = model.DB.Where("business_id = ?", s.OrderId).First(&betReport).Error
 
 	if err != nil {
-		r = serializer.DBErr(c, "", i18n.T("general_error"), err)
+		r = serializer.DBErr(c, "", i18n.T("teamup_error"), err)
 		return
 	}
 
 	var teamup ploutos.Teamup
-	teamup, err = model.GetTeamUp("business_id", s.OrderId)
+	teamup, err = model.GetTeamUp(s.OrderId)
 
 	if teamup.ID == 0 {
 		teamup.UserId = user.ID
@@ -80,7 +80,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	}
 
 	if err != nil {
-		r = serializer.DBErr(c, "", i18n.T("general_error"), err)
+		r = serializer.DBErr(c, "", i18n.T("teamup_error"), err)
 		return
 	}
 
@@ -94,7 +94,8 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	return
 }
 
-func (s TeamupService) ChopBet(c *gin.Context) (r serializer.Response, err error) {
+func (s TeamupService) SlashBet(c *gin.Context) (r serializer.Response, err error) {
+
 	// now := time.Now()
 	// brand := c.MustGet(`_brand`).(int)
 	// deviceInfo, _ := util.GetDeviceInfo(c)

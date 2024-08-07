@@ -637,3 +637,5 @@ custom_promotion_entry_exceed: "参加该活动已达上限"
 custom_promotion_entry_fail: "参加活动失败"
 custom_promotion_entry_field_error: "输入错误"
 custom_promotion_entry_field_incomplete_error: "参加活动失败 - 未填完"
+
+teamup_error: "无法发起砍单"
