@@ -45,6 +45,7 @@ func HandleCashMethodPromotion(c context.Context, order model.CashOrder) {
 		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion no CashMethodPromotion", order.ID)
 		return
 	}
+
 	util.GetLoggerEntry(c).Info("HandleCashMethodPromotion cashMethodPromotion.ID", cashMethodPromotion.ID, order.ID) // wl: for staging debug
 
 	// check over payout limit or not
@@ -69,6 +70,11 @@ func HandleCashMethodPromotion(c context.Context, order model.CashOrder) {
 	coAmount := order.AppliedCashInAmount
 	if order.OrderType == -1 {
 		coAmount = order.AppliedCashOutAmount
+	}
+
+	if coAmount < cashMethodPromotion.MinPayout {
+		util.GetLoggerEntry(c).Error("Juicyy - MinPayout bigger than request amount, so no promotion", err, order.ID) // staging debug
+		return
 	}
 
 	amount, err := model.GetMaxCashMethodPromotionAmount(c, weeklyAmount, dailyAmount, cashMethodPromotion, order.UserId, coAmount, false)
