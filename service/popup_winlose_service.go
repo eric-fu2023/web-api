@@ -52,7 +52,7 @@ func (service *WinLoseService) Get(c *gin.Context) (data WinLosePopupResponse, e
 	key := "popup/win_lose/"+now.Format("2006-01-02")
 	total_ranking_key := "popup/win_lose/total_ranking/"+now.Format("2006-01-02")
 	current_ranking_key := "popup/win_lose/ranking/"+now.Format("2006-01-02")
-	res := cache.RedisConfigClient.HGet(context.Background(), key, strconv.FormatInt(user.ID, 10))
+	res := cache.RedisClient.HGet(context.Background(), key, strconv.FormatInt(user.ID, 10))
 	GGR, err:= strconv.ParseFloat(res.Val(), 64)
 	if err!=nil{
 		fmt.Println("convert GGR to float64 failed!!!!", err.Error())
@@ -63,14 +63,14 @@ func (service *WinLoseService) Get(c *gin.Context) (data WinLosePopupResponse, e
 	}
 	var total_ranking int
 	var current_ranking int
-	current_ranking_string := cache.RedisConfigClient.HGet(context.Background(), current_ranking_key,  strconv.FormatInt(user.ID, 10)).Val()
+	current_ranking_string := cache.RedisClient.HGet(context.Background(), current_ranking_key,  strconv.FormatInt(user.ID, 10)).Val()
 	if GGR < 0 {
-		total_ranking_string := cache.RedisConfigClient.HGet(context.Background(), total_ranking_key, "lose").Val()
+		total_ranking_string := cache.RedisClient.HGet(context.Background(), total_ranking_key, "lose").Val()
 		total_ranking, err = strconv.Atoi(total_ranking_string)
 		current_ranking, err = strconv.Atoi(current_ranking_string)
 		current_ranking = -current_ranking
 	}else{
-		total_ranking_string := cache.RedisConfigClient.HGet(context.Background(), total_ranking_key, "win").Val()
+		total_ranking_string := cache.RedisClient.HGet(context.Background(), total_ranking_key, "win").Val()
 		total_ranking, err = strconv.Atoi(total_ranking_string)
 		current_ranking, err = strconv.Atoi(current_ranking_string)
 	}
@@ -109,9 +109,9 @@ func (service *WinLoseService) Shown(c *gin.Context) (r serializer.Response, err
 		return
 	}
 	key := "popup/records/" + time.Now().Format("2006-01-02")
-	res := cache.RedisConfigClient.HSet(context.Background(), key, user.ID, "1")
+	res := cache.RedisClient.HSet(context.Background(), key, user.ID, "1")
 	expire_time, err := strconv.Atoi(os.Getenv("POPUP_RECORD_EXPIRE_MINS"))
-	cache.RedisConfigClient.ExpireNX(context.Background(), key, time.Duration(expire_time) * time.Minute)
+	cache.RedisClient.ExpireNX(context.Background(), key, time.Duration(expire_time) * time.Minute)
 	if res.Err() != nil {
 		fmt.Print("insert win lose popup record into redis failed ", key)
 	}

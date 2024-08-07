@@ -41,9 +41,9 @@ func (service *VipService) Shown(c *gin.Context) (r serializer.Response, err err
 		return
 	}
 	key := "popup/records/" + time.Now().Format("2006-01-02")
-	res := cache.RedisConfigClient.HSet(context.Background(), key, user.ID, "2")
+	res := cache.RedisClient.HSet(context.Background(), key, user.ID, "2")
 	expire_time, err := strconv.Atoi(os.Getenv("POPUP_RECORD_EXPIRE_MINS"))
-	cache.RedisConfigClient.ExpireNX(context.Background(), key, time.Duration(expire_time) * time.Minute)
+	cache.RedisClient.ExpireNX(context.Background(), key, time.Duration(expire_time) * time.Minute)
 	if res.Err() != nil {
 		fmt.Print("insert vip popup record into redis failed ", key)
 	}
