@@ -9,7 +9,7 @@ import (
 type Teamup struct {
 	Id                      int64     `json:"id"`
 	UserId                  int64     `json:"user_id"`
-	OrderId                 int64     `json:"order_id"`
+	OrderId                 string    `json:"order_id"`
 	TotalAccumulatedDeposit int64     `json:"total_accumulated_deposit"`
 	TotalTeamupDeposit      int64     `json:"total_teamup_deposit"`
 	TotalTeamUpTarget       int64     `json:"total_teamup_target"`

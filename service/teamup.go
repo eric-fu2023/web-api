@@ -2,7 +2,7 @@ package service
 
 import (
 	"encoding/json"
-	"strconv"
+	"math"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -42,9 +42,26 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 		teamupStatus = []int{0, 1, 2}
 	}
 
-	teamups, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit)
+	teamupRes, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit)
 
-	r.Data = teamups
+	for i, t := range teamupRes {
+
+		br := ploutos.BetReport{
+			GameType: t.GameType,
+			InfoJson: t.InfoJson,
+		}
+		br.ParseInfo()
+
+		teamupRes[i].TotalTeamupDeposit = teamupRes[i].TotalTeamupDeposit / 100
+		teamupRes[i].TotalTeamupTarget = teamupRes[i].TotalTeamupTarget / 100
+
+		teamupRes[i].TeamupProgress = (math.Min(teamupRes[i].TotalTeamupDeposit, teamupRes[i].TotalTeamupTarget) / teamupRes[i].TotalTeamupTarget) * 100
+
+		teamupRes[i].InfoJson = nil
+		teamupRes[i].Bets = br.Bets
+	}
+
+	r.Data = teamupRes
 
 	return
 }
@@ -72,8 +89,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 	if teamup.ID == 0 {
 		teamup.UserId = user.ID
-		orderId, _ := strconv.Atoi(s.OrderId)
-		teamup.OrderId = int64(orderId)
+		teamup.OrderId = s.OrderId
 		teamup.TotalTeamUpTarget = 10 * 100
 
 		err = model.SaveTeamup(teamup)
