@@ -16,7 +16,7 @@ func ShouldPopupWinLose(user User) (bool, error) {
 	now := time.Now()
 	key := "popup/win_lose/"+now.Format("2006-01-02")
 	// here we need to use db2 to get the task system redis data
-	res := cache.RedisConfigClient.HGet(context.Background(), key, strconv.FormatInt(user.ID, 10))
+	res := cache.RedisClient.HGet(context.Background(), key, strconv.FormatInt(user.ID, 10))
 	if res.Err() != nil {
 		if res.Err() == redis.Nil{
 			return false, nil

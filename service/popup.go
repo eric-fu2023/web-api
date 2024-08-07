@@ -37,7 +37,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 
 	// check redis which one has been popup
 	key := "popup/records/" + time.Now().Format("2006-01-02")
-	res := cache.RedisConfigClient.HGet(context.Background(), key,strconv.FormatInt(user.ID, 10))
+	res := cache.RedisClient.HGet(context.Background(), key,strconv.FormatInt(user.ID, 10))
 	if res.Err() != nil && res.Err() != redis.Nil {
 		// if redis get error, return error
 		fmt.Print("Redis Get failed, ",res.Err())
