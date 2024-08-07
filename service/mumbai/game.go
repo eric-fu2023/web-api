@@ -16,23 +16,23 @@ import (
 const defaultPassword = "qq123456"
 
 // login, if not found => register user, then login again.
-func (c *Mumbai) LoginWithCreateUser(userName string, password string, clientIP string, gameCode string) (api.LoginResponseBody, error) {
+func (c *Mumbai) LoginWithCreateUser(mbUserName string, password string, clientIP string, gameCode string) (api.LoginResponseBody, error) {
 	client, err := util.MumbaiFactory()
 	if err != nil {
 		return api.LoginResponseBody{}, err
 	}
 
-	res, err := client.LoginUser(userName, password, clientIP, gameCode)
+	res, err := client.LoginUser(mbUserName, password, clientIP, gameCode)
 	switch {
 	case err == nil:
 		return res, nil
 	case errors.Is(err, mumbai.ErrAccountNotFound): // try again once
-		_, regErr := client.RegisterUser(userName, password, clientIP)
+		_, regErr := client.RegisterUser(mbUserName, password, clientIP)
 		if regErr != nil {
-			log.Printf("Mumbai GetOrCreateUser mumbai username %s not found. register fail err: %v \n", userName, regErr)
+			log.Printf("Mumbai GetOrCreateUser mumbai username %s not found. register fail err: %v \n", mbUserName, regErr)
 			return api.LoginResponseBody{}, regErr
 		}
-		res, err = client.LoginUser(userName, password, clientIP, gameCode)
+		res, err = client.LoginUser(mbUserName, password, clientIP, gameCode)
 		if err != nil {
 			return api.LoginResponseBody{}, err
 		}
