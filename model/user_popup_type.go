@@ -38,8 +38,20 @@ func ShouldPopupVIP(user User) (bool, error) {
 
 	if errors.Is(err, logger.ErrRecordNotFound) {
 		err = nil
+		// if no vip level up record, we check if user vip level is more than 1
+		vip, err := GetVipWithDefault(nil, user.ID)
+		if errors.Is(err, logger.ErrRecordNotFound) {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		currentVipRule := vip.VipRule
+		if currentVipRule.VIPLevel > 1{
+			return true, nil
+		}
 	}
-	if err != nil && !errors.Is(err, logger.ErrRecordNotFound) {
+	if err != nil {
 		return false, err
 	}
 	if previous_vip.CreatedAt.Before(TodayStart) {
