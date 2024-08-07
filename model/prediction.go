@@ -16,6 +16,7 @@ type ListPredictionCond struct {
 	Limit int
 	AnalystId int64
 	FbMatchId int64
+	SportId int64
 }
 
 func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
@@ -39,6 +40,13 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 	if (cond.FbMatchId != 0) {
 		db = db.Joins("join tips_analyst_prediction_selections on tips_analyst_prediction_selections.prediction_id = tips_analyst_predictions.id").
 		Where("tips_analyst_prediction_selections.match_id = ?", cond.FbMatchId).
+		Group("tips_analyst_predictions.id")
+	}
+
+	if (cond.SportId != 0) {
+		db = db.Joins("join tips_analyst_prediction_selections on tips_analyst_prediction_selections.prediction_id = tips_analyst_predictions.id").
+		Joins("join fb_matches on tips_analyst_prediction_selections.match_id = fb_matches.match_id").
+		Where("fb_matches.sports_id = ?", cond.SportId).
 		Group("tips_analyst_predictions.id")
 	}
 	
