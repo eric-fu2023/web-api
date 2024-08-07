@@ -31,7 +31,7 @@ func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.Us
 				MatchType:         int64(match.FbMatch.MatchType),
 				MarketGroupName:   "让球",
 				LeagueName:        "欧洲杯",
-				MatchTime:         time.Now(),
+				MatchTime:         time.Now().UnixMilli(),
 				MatchName:         "法国vs比利时",
 			}
 		}

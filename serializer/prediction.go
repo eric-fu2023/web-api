@@ -32,7 +32,7 @@ type SelectionDetail struct {
 	MatchId           int64     `json:"match_id"`
 	MarketGroupName   string    `json:"mgnm"`
 	LeagueName        string    `json:"lgna"`
-	MatchTime         time.Time `json:"bt"`
+	MatchTime         int64		`json:"bt"`
 	MatchName         string    `json:"nm"`
 }
 
@@ -49,7 +49,7 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 				MatchType:         int64(match.FbMatch.MatchType),
 				MarketGroupName:   "让球",
 				LeagueName:        "欧洲杯",
-				MatchTime:         time.Now(),
+				MatchTime:         time.Now().UnixMilli(),
 				MatchName:         "法国vs比利时",
 			}
 		}
@@ -79,7 +79,7 @@ func BuildPrediction(prediction model.Prediction) (pred Prediction) {
 			MatchType:         int64(match.FbMatch.MatchType),
 			MarketGroupName:   "让球",
 			LeagueName:        "欧洲杯",
-			MatchTime:         time.Now(),
+			MatchTime:         time.Now().UnixMilli(),
 			MatchName:         "法国vs比利时",
 		}
 	}
