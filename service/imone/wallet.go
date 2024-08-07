@@ -19,7 +19,6 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 		return ErrGameCodeMapping
 	}
 	balance, err := client.GetWalletBalance(user.IdAsString(), productWallet)
-
 	if err != nil {
 		return err
 	}
