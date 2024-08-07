@@ -25,7 +25,7 @@ func (Analyst) List(page, limit int, sportId int64) (list []Analyst, err error) 
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
-		Order("id DESC").
+		Order("id DESC")
 
 	if sportId != 0 {
 		// TODO : Add filter for sport id when analyst struct finalised in backend API
