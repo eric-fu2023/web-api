@@ -12,6 +12,7 @@ import (
 
 type AnalystService struct {
 	common.Page
+	SportId int64 `json:"sport_id" form:"sport_id"`
 }
 
 type FollowToggle struct {
@@ -35,7 +36,7 @@ func (p AnalystService) GetAnalystList(c *gin.Context) (r serializer.Response, e
 	// }
 	// r.Data = serializer.BuildAnalystList(analysts)
 
-	data, err := model.Analyst{}.List(p.Page.Page, p.Limit)
+	data, err := model.Analyst{}.List(p.Page.Page, p.Limit, p.SportId)
 
 	if err != nil {
 		r = serializer.DBErr(c, p, "", err)

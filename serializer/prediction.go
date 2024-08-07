@@ -16,6 +16,7 @@ type Prediction struct {
 	SelectionList   []SelectionDetail `json:"selection_list,omitempty"`
 	Status          int64             `json:"status"`
 	AnalystDetail   Analyst           `json:"analyst_detail"`
+	SportId         int64             `json:"sport_id"`
 }
 
 type PredictedMatch struct {
@@ -25,15 +26,15 @@ type PredictedMatch struct {
 }
 
 type SelectionDetail struct {
-	MarketGroupType   int64     `json:"mty"`
-	MarketGroupPeriod int64     `json:"pe"`
-	OrderMarketlineId int64     `json:"id"`
-	MatchType         int64     `json:"ty"`
-	MatchId           int64     `json:"match_id"`
-	MarketGroupName   string    `json:"mgnm"`
-	LeagueName        string    `json:"lgna"`
-	MatchTime         time.Time `json:"bt"`
-	MatchName         string    `json:"nm"`
+	MarketGroupType   int64  `json:"mty"`
+	MarketGroupPeriod int64  `json:"pe"`
+	OrderMarketlineId int64  `json:"id"`
+	MatchType         int64  `json:"ty"`
+	MatchId           int64  `json:"match_id"`
+	MarketGroupName   string `json:"mgnm"`
+	LeagueName        string `json:"lgna"`
+	MatchTime         int64  `json:"bt"`
+	MatchName         string `json:"nm"`
 }
 
 func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
@@ -49,7 +50,7 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 				MatchType:         int64(match.FbMatch.MatchType),
 				MarketGroupName:   "让球",
 				LeagueName:        "欧洲杯",
-				MatchTime:         time.Now(),
+				MatchTime:         time.Now().UnixMilli(),
 				MatchName:         "法国vs比利时",
 			}
 		}
@@ -63,6 +64,7 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 			IsLocked:        false,
 			SelectionList:   selectionList,
 			AnalystDetail:   BuildAnalystDetail(p.AnalystDetail),
+			SportId:         GetPredictionSportId(p),
 		}
 	}
 	return finalList
@@ -79,7 +81,7 @@ func BuildPrediction(prediction model.Prediction) (pred Prediction) {
 			MatchType:         int64(match.FbMatch.MatchType),
 			MarketGroupName:   "让球",
 			LeagueName:        "欧洲杯",
-			MatchTime:         time.Now(),
+			MatchTime:         time.Now().UnixMilli(),
 			MatchName:         "法国vs比利时",
 		}
 	}
@@ -94,6 +96,15 @@ func BuildPrediction(prediction model.Prediction) (pred Prediction) {
 		IsLocked:        false,
 		SelectionList:   selectionList,
 		AnalystDetail:   BuildAnalystDetail(prediction.AnalystDetail),
+		SportId:         GetPredictionSportId(prediction),
 	}
 	return
+}
+
+func GetPredictionSportId(p model.Prediction) int64{
+	if len(p.PredictionSelections) == 0 {
+		return 0
+	} else {
+		return p.PredictionSelections[0].FbMatch.SportsID
+	}
 }
