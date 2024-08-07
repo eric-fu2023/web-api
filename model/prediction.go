@@ -15,6 +15,7 @@ type ListPredictionCond struct {
 	Page int
 	Limit int
 	AnalystId int64
+	FbMatchId int64
 }
 
 func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
@@ -29,10 +30,16 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 		// Preload("AnalystDetail.Followers").
 		// Preload("AnalystDetail.Predictions").
 		Scopes(Paginate(cond.Page, cond.Limit)).
-		Where("deleted_at IS NULL")
+		Where("tips_analyst_predictions.deleted_at IS NULL")
 
 	if (cond.AnalystId != 0) {
-		db.Where("analyst_id", cond.AnalystId)
+		db = db.Where("analyst_id", cond.AnalystId)
+	}
+
+	if (cond.FbMatchId != 0) {
+		db = db.Joins("join tips_analyst_prediction_selections on tips_analyst_prediction_selections.prediction_id = tips_analyst_predictions.id").
+		Where("tips_analyst_prediction_selections.match_id = ?", cond.FbMatchId).
+		Group("tips_analyst_predictions.id")
 	}
 	
 	err = db.Find(&preds).Error

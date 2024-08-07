@@ -14,6 +14,7 @@ import (
 type PredictionListService struct {
 	common.Page
 	AnalystId int64 `json:"analyst_id" form:"analyst_id"`
+	FbMatchId int64 `json:"fb_match_id" form:"fb_match_id"`
 }
 
 func (service *PredictionListService) List(c *gin.Context) (r serializer.Response, err error) {
@@ -54,7 +55,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 
 		if hasPaymentToday {
 			// logged in, has payment - show all
-			predictions, err = model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId})
+			predictions, err = model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId, FbMatchId: service.FbMatchId})
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return
@@ -66,7 +67,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 
 		} else {
 			// logged in, no payment - unlock 3 max
-			predictions, err = model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId})
+			predictions, err = model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId, FbMatchId: service.FbMatchId})
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return
@@ -84,7 +85,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 
 	} else {
 		// not logged in, unlock 1
-		predictions, err = model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId})
+		predictions, err = model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId, FbMatchId: service.FbMatchId})
 		if err != nil {
 			r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 			return
