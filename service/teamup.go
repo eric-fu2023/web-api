@@ -74,7 +74,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		teamup.UserId = user.ID
 		orderId, _ := strconv.Atoi(s.OrderId)
 		teamup.OrderId = int64(orderId)
-		teamup.TotalRequiredDeposit = 10 * 100
+		teamup.TotalTeamUpTarget = 10 * 100
 
 		err = model.SaveTeamup(teamup)
 	}
