@@ -1,12 +1,13 @@
 package fb_api
 
 import (
-	"blgit.rfdev.tech/taya/game-service/fb/callback"
-	"github.com/gin-gonic/gin"
-	"log"
 	"web-api/api"
 	"web-api/service/fb"
 	"web-api/util"
+
+	"blgit.rfdev.tech/taya/game-service/fb/callback"
+
+	"github.com/gin-gonic/gin"
 )
 
 func CallbackHealth(c *gin.Context) {
@@ -17,18 +18,13 @@ func CallbackHealth(c *gin.Context) {
 
 func CallbackBalance(c *gin.Context) {
 	var req callback.BalanceRequest
-
-	log.Printf("CallbackBalance... \n")
 	if err := c.ShouldBind(&req); err == nil {
 		if res, err := fb.BalanceCallback(c, req); err != nil {
-			log.Printf("CallbackBalance fb.BalanceCallback() err %v \n", err)
 			c.JSON(200, ErrorResponse(c, req, err))
 		} else {
-			log.Printf("CallbackBalance fb.BalanceCallback() ok %v \n", err)
 			c.JSON(200, res)
 		}
 	} else {
-		log.Printf("CallbackBalance... err %v \n", err)
 		c.JSON(400, api.ErrorResponse(c, req, err))
 	}
 }
