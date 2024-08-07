@@ -3,10 +3,13 @@ package service
 import (
 	"encoding/json"
 	"math"
+	"strings"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util/i18n"
+
+	"github.com/jinzhu/copier"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
@@ -58,7 +61,26 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 		teamupRes[i].TeamupProgress = (math.Min(teamupRes[i].TotalTeamupDeposit, teamupRes[i].TotalTeamupTarget) / teamupRes[i].TotalTeamupTarget) * 100
 
 		teamupRes[i].InfoJson = nil
-		teamupRes[i].Bets = br.Bets
+
+		if br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA || br.GameType == ploutos.GAME_DB_SPORT {
+			var betList []model.OutgoingBet
+
+			for _, bet := range br.Bets {
+				outgoingBet := model.OutgoingBet{}
+				copier.Copy(&outgoingBet, bet)
+				teams := strings.Split(outgoingBet.MatchName, " vs. ")
+				if len(teams) > 1 {
+					outgoingBet.HomeName = teams[0]
+					outgoingBet.AwayName = teams[1]
+				}
+				outgoingBet.HomeIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
+				outgoingBet.AwayIcon = "https://icons.iconarchive.com/icons/giannis-zographos/spanish-football-club/256/Real-Madrid-icon.png"
+				betList = append(betList, outgoingBet)
+			}
+
+			teamupRes[i].BetList = betList
+		}
+
 	}
 
 	r.Data = teamupRes

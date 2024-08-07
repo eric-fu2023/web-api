@@ -23,6 +23,22 @@ type TeamupCustomRes []struct {
 	InfoJson            []byte        `json:"info_json,omitempty"`
 	GameType            int64         `json:"game_type"`
 	Bets                []ploutos.Bet `json:"bets"`
+	BetList             []OutgoingBet `json:"bet_list"`
+}
+
+type OutgoingBet struct {
+	MarketName   string `json:"market_name"`
+	OptionName   string `json:"option_name"`
+	MatchName    string `json:"match_name"`
+	MatchTime    string `json:"match_time"`
+	HomeName     string `json:"home_name"`
+	AwayName     string `json:"away_name"`
+	HomeIcon     string `json:"home_icon"`
+	AwayIcon     string `json:"away_icon"`
+	SettleResult *int64 `json:"settle_result"`
+	IsInplay     *bool  `json:"is_inplay"`
+	BetScore     string `json:"bet_score"`
+	ExtraInfo    string `json:"extra_info"`
 }
 
 func SaveTeamup(teamup ploutos.Teamup) (err error) {
