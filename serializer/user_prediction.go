@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"time"
 	"web-api/model"
 )
 
@@ -28,6 +29,10 @@ func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.Us
 				MarketGroupPeriod: match.FbOdds.MarketGroupPeriod,
 				OrderMarketlineId: match.FbOdds.RecentMarketlineID,
 				MatchType:         int64(match.FbMatch.MatchType),
+				MarketGroupName:   "让球",
+				LeagueName:        "欧洲杯",
+				MatchTime:         time.Now(),
+				MatchName:         "法国vs比利时",
 			}
 		}
 
