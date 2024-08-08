@@ -69,7 +69,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst) {
 	for _, a := range followings {
 		resp = append(resp, Analyst{
-			AnalystId:        a.ID,
+			AnalystId:        a.AnalystId,
 			AnalystName:      a.Analyst.Name,
 			AnalystSource:    Source{Name: a.Analyst.TipsAnalystSource.Name, Icon: a.Analyst.TipsAnalystSource.ImgIcon},
 			AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
@@ -87,10 +87,17 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 func BuildAnalystAchievement() (resp Achievement) {
 	resp = Achievement{
 		TotalPredictions: 323,
-		Accuracy: 78,
-		WinningStreak: 23,
-		RecentResult: []int{1,1,1,1,1,0,1,1,1,1},
+		Accuracy:         78,
+		WinningStreak:    23,
+		RecentResult:     []int{1, 1, 1, 1, 1, 0, 1, 1, 1, 1},
 	}
 	// TODO : ^^^ add logic
+	return
+}
+
+func BuildFollowingAnalystIdsList(followings []model.UserAnalystFollowing) (resp []int64) {
+	for _, a := range followings {
+		resp = append(resp, a.AnalystId)
+	}
 	return
 }

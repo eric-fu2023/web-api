@@ -17,7 +17,7 @@ type AnalystService struct {
 }
 
 type FollowToggle struct {
-	AnalystId   int64 `json:"analyst_id" form:"analyst_id"`
+	AnalystId int64 `json:"analyst_id" form:"analyst_id"`
 	// IsFollowing bool  `json:"is_following" form:"is_following"`
 }
 
@@ -58,7 +58,7 @@ func (service FollowToggle) FollowAnalystToggle(c *gin.Context) (r serializer.Re
 		user = u.(model.User)
 	}
 
-	exist, err := model.AnalystExist(service.AnalystId) 
+	exist, err := model.AnalystExist(service.AnalystId)
 
 	if err != nil {
 		r = serializer.Err(c, "analyst", serializer.CodeGeneralError, "", err)
@@ -119,6 +119,25 @@ func (p AnalystService) GetFollowingAnalystList(c *gin.Context) (r serializer.Re
 	return
 }
 
+type FollowingAnalystIdsService struct{}
+
+func (p FollowingAnalystIdsService) GetIds(c *gin.Context) (r serializer.Response, err error) {
+	u, _ := c.Get("user")
+
+	user := model.User{}
+	if u != nil {
+		user = u.(model.User)
+	}
+
+	followings, err := model.GetFollowingAnalystList(c, user.ID, 1, 99999)
+	if err != nil {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		return
+	}
+	r.Data = serializer.BuildFollowingAnalystIdsList(followings)
+	return
+}
+
 type AnalystDetailService struct {
 	Id int64 `json:"analyst_id" form:"analyst_id"`
 }
@@ -128,7 +147,7 @@ func (service AnalystDetailService) GetAnalyst(c *gin.Context) (r serializer.Res
 
 	if err != nil {
 		r = serializer.DBErr(c, service, "", err)
-		return 
+		return
 	}
 
 	r.Data = serializer.BuildAnalystDetail(data)
@@ -138,11 +157,11 @@ func (service AnalystDetailService) GetAnalyst(c *gin.Context) (r serializer.Res
 
 type AnalystAchievementService struct {
 	AnalystId int64 `json:"analyst_id" form:"analyst_id"`
-	SportId int64 `json:"sport_id" form:"sport_id"`
+	SportId   int64 `json:"sport_id" form:"sport_id"`
 }
 
 func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer.Response, err error) {
-	// TODO : get data to fill in 
+	// TODO : get data to fill in
 	r.Data = serializer.BuildAnalystAchievement()
-	return 
+	return
 }

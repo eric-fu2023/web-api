@@ -410,6 +410,7 @@ func NewRouter() *gin.Engine {
 			analyst.GET("/list", analyst_api.ListAnalysts)
 			analyst.GET("/following", middleware.AuthRequired(true, true), analyst_api.ListFollowingAnalysts)
 			analyst.POST("/following", middleware.AuthRequired(true, true), analyst_api.ToggleFollowAnalyst)
+			analyst.GET("/following-ids", middleware.AuthRequired(true, true), analyst_api.GetFollowingAnalystIdsList)
 			analyst.GET("/achievement", analyst_api.GetAnalystAchievement)
 		}
 
