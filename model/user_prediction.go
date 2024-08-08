@@ -70,7 +70,15 @@ func CreateUserPredictionWithDB(tx *gorm.DB, userId int64, deviceId string, pred
 		return errors.New("tx is nil")
 	}
 
-	// TODO : check if strategy exist
+	exist, err := PredictionExist(predictionId)
+
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		return errors.New("prediction does not exist")
+	}
 
 	obj := ploutos.UserPrediction{
 		UserId:       userId,

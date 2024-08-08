@@ -173,6 +173,11 @@ func (service *AddUserPredictionService) Add(c *gin.Context) (r serializer.Respo
 
 		err = model.CreateUserPrediction(user.ID, deviceInfo.Uuid, service.PredictionId)
 
+		if err != nil {
+			r = serializer.GeneralErr(c, err)
+			return
+		}
+
 		return
 	}
 }
