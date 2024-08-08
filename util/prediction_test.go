@@ -14,15 +14,15 @@ type consecutiveWinCase struct {
 var consecutiveWinCases = []consecutiveWinCase{
 	{[]bool{true, true, true, true, true, false, true, true, true, false}, 5},
 	{[]bool{true, true, false, true, true, true, true, true, true, true, false}, 7},
-	{[]bool{true, true, false, false, true, true, true, true, true}, 2}, // not 4?
+	{[]bool{true, true, false, false, true, true, true, true, true}, 5}, 
 	{[]bool{true, true, true, true, true, true, true, true, true}, 9},
 	{[]bool{false, false, false, false, false, false, false, false, false}, 0},
-	{[]bool{false, false, true, true, false, false, false, false, false}, 0}, // not 2?
-
+	{[]bool{false, false, true, true, false, false, false, false, false}, 2}, 
 	{[]bool{true,true,true,false,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,false}, 19},
-	{[]bool{true,true,true,false,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,}, len("WWWWWWWWWWWWWWWWWWWWWWWWWWWW")},
-	// {[]bool{true,true,false,true,true,false,true,false,true,false,false,false,false,}, 0}, /// ?????? 2 or 0
-	{[]bool{true,false,true,true,false,true,true,true,true,true,true,true}, 2}, // ??? why not 7
+	{[]bool{true,true,true,false,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,}, 28},
+	{[]bool{true,true,false,true,true,false,true,false,true,false,false,false,false,}, 2},
+	{[]bool{true,false,true,true,false,true,true,true,true,true,true,true}, 7}, 
+	{[]bool{false, false, true, true, true, true, true, true, true}, 7},
 }
 
 func TestConsecutiveWins(t *testing.T) {

@@ -1,7 +1,10 @@
 package model
 
 import (
+	"errors"
+
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"gorm.io/gorm"
 ) 
 
 type Prediction struct {
@@ -67,4 +70,15 @@ func GetPrediction(predictionId int64) (pred Prediction, err error) {
 		Where("id = ?", predictionId).
 		First(&pred).Error
 	return
+}
+
+func PredictionExist(predictionId int64) (exist bool, err error) {
+	err = DB.Where("id", predictionId).First(&Prediction{}).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
