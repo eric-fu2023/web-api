@@ -68,7 +68,7 @@ type IncomingCustomPromotionRequestField struct {
 	ContentType  string              `json:"content_type"`
 	OrderStatus  string              `json:"order_status"`
 	MaxClick     string              `json:"max_click"`
-	RedirectType bool                `json:"redirect_type"`
+	RedirectType int                 `json:"redirect_type"`
 }
 
 type OutgoingCustomPromotionDetail struct {
@@ -135,12 +135,13 @@ type CustomPromotionRequestField struct {
 	Title       string `json:"title"`
 	Placeholder string `json:"placeholder"`
 	// Label       string                           `json:"label"`
-	Type        string                           `json:"type"`
-	Weightage   int                              `json:"weightage,omitempty"`
-	Text        string                           `json:"text,omitempty"`
-	Options     []CustomPromotionRequestDropdown `json:"options"`
-	IntegerOnly bool                             `json:"integer_only"`
-	ErrorMsg    string                           `json:"error_msg"`
+	Type         string                           `json:"type"`
+	Weightage    int                              `json:"weightage,omitempty"`
+	Text         string                           `json:"text,omitempty"`
+	Options      []CustomPromotionRequestDropdown `json:"options"`
+	IntegerOnly  bool                             `json:"integer_only"`
+	ErrorMsg     string                           `json:"error_msg"`
+	RedirectType int                              `json:"redirect_type"`
 }
 
 type CustomPromotionRequestDropdown struct {
@@ -241,14 +242,18 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 		if requestField.Type == "button" {
 			requestField.Text = requestField.Title
 
-			isExceeded, err := ParseButtonClickOption(c, incomingField, promotionId, userId)
-			if err != nil {
-				fmt.Println(err)
-			}
+			if incomingField.RedirectType == 0 {
+				isExceeded, err := ParseButtonClickOption(c, incomingField, promotionId, userId)
+				if err != nil {
+					fmt.Println(err)
+				}
 
-			res.IsSubmitted = isExceeded
-			if res.IsSubmitted {
-				res.Title = "感谢您的参与！"
+				res.IsSubmitted = isExceeded
+				if res.IsSubmitted {
+					res.Title = "感谢您的参与！"
+				}
+			} else {
+				requestField.RedirectType = incomingField.RedirectType
 			}
 		}
 
