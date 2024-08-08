@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 	"web-api/cache"
@@ -26,6 +27,26 @@ func ShouldPopupWinLose(user User) (bool, error) {
 	}
 	return true, nil
 }
+
+func ShouldPopupTeamUp(user User) (bool, error) {
+	now := time.Now()
+	TodayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	var team_up ploutos.Teamup
+	// status = 2 is success,    status = 0 is onging
+	err := DB.Model(ploutos.Teamup{}).Where("user_id = ? AND created_at < ? AND status in (2,0)", user.ID, TodayStart).Order("status DESC, total_teamup_deposit DESC").First(&team_up).Error
+		if errors.Is(err, logger.ErrRecordNotFound) {
+			err = nil
+			// if no team up record, we return nil
+			return false, err
+		}
+		if err != nil {
+			fmt.Println("ShouldPopupTeamUp teamup err", err.Error())
+			return false, err
+		}
+
+	return true, nil
+}
+
 
 func ShouldPopupVIP(user User) (bool, error) {
 	now := time.Now()
@@ -76,6 +97,27 @@ func ShouldPopupVIP(user User) (bool, error) {
 	}
 	return false,err
 }
+
+func ShouldPopupSpin(user User) (bool, error) {
+	now := time.Now()
+	TodayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	// if not displayed today
+	var spin_result ploutos.SpinResult
+	err := DB.Model(ploutos.SpinResult{}).Where("user_id = ?", user.ID).
+		Order("created_at DESC").
+		First(&spin_result).Error
+		if errors.Is(err, logger.ErrRecordNotFound) {
+			// if spin result not found
+			err = nil
+			return true, nil
+		}
+	if spin_result.CreatedAt.Before(TodayStart) {
+		return true, nil
+	}
+	return false, nil
+
+}
+
 
 func GetPopupList(condition int64) (resp_list []ploutos.Popups, err error) {
 	err = DB.Model(ploutos.Popups{}).Where("condition = ?", condition).
