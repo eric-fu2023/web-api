@@ -9,6 +9,7 @@ type CashMethodPromotion struct {
 	PayoutRate                    float64   `json:"payout_rate"`
 	MaxPromotionAmount            float64   `json:"max_promotion_amount"`
 	DefaultOptionPromotionAmounts []float64 `json:"default_option_promotion_amounts"`
+	MinAmountForPayout            float64   `json:"min_payout"`
 }
 
 type CashMethod struct {
@@ -62,6 +63,7 @@ func BuildCashMethod(a model.CashMethod, maxPromotionAmountByCashMethodId map[in
 				}
 				return amount / 100
 			}),
+			MinAmountForPayout: float64(a.CashMethodPromotion.MinPayout) / 100,
 		}
 	}
 
