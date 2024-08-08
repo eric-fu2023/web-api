@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"web-api/model"
 	"web-api/serializer"
 
@@ -57,15 +58,17 @@ func (service FollowToggle) FollowAnalystToggle(c *gin.Context) (r serializer.Re
 		user = u.(model.User)
 	}
 
-	// TODO: Check If Analyst Exist
+	exist, err := model.AnalystExist(service.AnalystId) 
 
-	// analyst, err := model.GetAnalyst(c, service.AnalystId)
-	// if analyst.Id == 0 || err != nil {
-	// 	if err != nil {
-	// 		r = serializer.Err(c, "analyst", serializer.CodeGeneralError, "", err)
-	// 		return
-	// 	}
-	// }
+	if err != nil {
+		r = serializer.Err(c, "analyst", serializer.CodeGeneralError, "", err)
+		return
+	}
+
+	if !exist {
+		r = serializer.Err(c, "analyst", serializer.CodeGeneralError, "", errors.New("analyst does not exist"))
+		return
+	}
 
 	following, err := model.GetFollowingAnalystStatus(c, user.ID, service.AnalystId)
 	if err != nil {

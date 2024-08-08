@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"errors"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
@@ -74,4 +75,15 @@ func UpdateUserFollowAnalystStatus(following UserAnalystFollowing) (err error) {
 	})
 
 	return
+}
+
+func AnalystExist(analystId int64) (exist bool, err error) {
+	err = DB.Where("id", analystId).First(&Analyst{}).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
