@@ -124,9 +124,10 @@ type CustomPromotionPageDesc struct {
 }
 
 type CustomPromotionRequest struct {
-	Title       string                        `json:"title"`
-	IsSubmitted bool                          `json:"is_submitted"`
-	Fields      []CustomPromotionRequestField `json:"fields"`
+	Title        string                        `json:"title"`
+	IsSubmitted  bool                          `json:"is_submitted"`
+	Fields       []CustomPromotionRequestField `json:"fields"`
+	RedirectType int                           `json:"redirect_type"`
 }
 
 type CustomPromotionRequestField struct {
@@ -135,13 +136,13 @@ type CustomPromotionRequestField struct {
 	Title       string `json:"title"`
 	Placeholder string `json:"placeholder"`
 	// Label       string                           `json:"label"`
-	Type         string                           `json:"type"`
-	Weightage    int                              `json:"weightage,omitempty"`
-	Text         string                           `json:"text,omitempty"`
-	Options      []CustomPromotionRequestDropdown `json:"options"`
-	IntegerOnly  bool                             `json:"integer_only"`
-	ErrorMsg     string                           `json:"error_msg"`
-	RedirectType int                              `json:"redirect_type"`
+	Type        string                           `json:"type"`
+	Weightage   int                              `json:"weightage,omitempty"`
+	Text        string                           `json:"text,omitempty"`
+	Options     []CustomPromotionRequestDropdown `json:"options"`
+	IntegerOnly bool                             `json:"integer_only"`
+	ErrorMsg    string                           `json:"error_msg"`
+	// RedirectType int                              `json:"redirect_type"`
 }
 
 type CustomPromotionRequestDropdown struct {
@@ -253,7 +254,8 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 					res.Title = "感谢您的参与！"
 				}
 			} else {
-				requestField.RedirectType = incomingField.RedirectType
+				// requestField.RedirectType = incomingField.RedirectType
+				res.RedirectType = incomingField.RedirectType
 			}
 		}
 
