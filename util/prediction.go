@@ -1,29 +1,23 @@
 package util
 
+import "slices"
+
 func ConsecutiveWins(arr []bool) int {
-	loseIndices := []int{}
+	consecutives := []int{}
+	current := 0 
 	for i, val := range arr {
 		if !val {
-			loseIndices = append(loseIndices, i)
+			consecutives = append(consecutives, current)
+			current = 0
+			continue
+		} else {
+			current += 1
+		}
+		if i == len(arr) - 1 {
+			consecutives = append(consecutives, current)
 		}
 	}
-
-	var firstSeg, secondSeg []bool 
-
-	if len(loseIndices) == 0{
-		firstSeg = arr
-		secondSeg = []bool{}
-	} else {
-		firstLose := loseIndices[0]
-		secondLose := len(arr)
-		if len(loseIndices) > 1 {
-			secondLose = loseIndices[1]
-		}
-		firstSeg = arr[:firstLose]
-		secondSeg = arr[firstLose+1 : secondLose]
-	}
-
-	return Max(consecutive(firstSeg), consecutive(secondSeg))
+	return slices.Max(consecutives)
 }
 
 func consecutive(segment []bool) int {
