@@ -50,6 +50,16 @@ func SaveTeamup(teamup ploutos.Teamup) (err error) {
 	return
 }
 
+func GetTeamUpBetReport(orderId string) (betReport ploutos.BetReport, err error) {
+
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = tx.Where("business_id = ?", orderId).First(&betReport).Error
+		return
+	})
+
+	return
+}
+
 func GetTeamUp(orderId string) (teamup ploutos.Teamup, err error) {
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {

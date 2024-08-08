@@ -418,6 +418,7 @@ func NewRouter() *gin.Engine {
 			teamup.GET("/", middleware.AuthRequired(true, false), teamup_api.GetTeamUpItem)
 			teamup.GET("/start", middleware.AuthRequired(true, false), teamup_api.StartTeamUp)
 			teamup.GET("/list", middleware.AuthRequired(true, false), teamup_api.ListAllTeamUp)
+			teamup.GET("/contribute/list", middleware.AuthRequired(true, false), teamup_api.ContributedList)
 			teamup.POST("/slash", middleware.AuthRequired(true, false), teamup_api.SlashBet)
 		}
 

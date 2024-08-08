@@ -37,6 +37,16 @@ func ListAllTeamUp(c *gin.Context) {
 	}
 }
 
+func ContributedList(c *gin.Context) {
+	var service service.GetTeamupService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.ContributedUserList(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
+
 func SlashBet(c *gin.Context) {
 	var service service.TeamupService
 	if err := c.ShouldBind(&service); err == nil {

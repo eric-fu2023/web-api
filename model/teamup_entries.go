@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
@@ -8,6 +10,13 @@ import (
 
 type TeamupEntry struct {
 	ploutos.TeamupEntry
+}
+
+type TeamupEntryCustomRes []struct {
+	ContributedAmount float64   `json:"contributed_amount"`
+	ContributedTime   time.Time `json:"contributed_time"`
+	Nickname          string    `json:"nickname"`
+	Avatar            string    `json:"avatar"`
 }
 
 func SaveTeamupEntry(teamupEntry ploutos.TeamupEntry) (err error) {
@@ -18,19 +27,20 @@ func SaveTeamupEntry(teamupEntry ploutos.TeamupEntry) (err error) {
 
 	return
 }
+func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustomRes, err error) {
 
-func GetAllTeamUpEntries(userId int64, status []int, page, limit int) (teamups []ploutos.Teamup, err error) {
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		tx = tx.Table("teamup_entries").
+			Select("teamup_entries.contributed_teamup_deposit as contributed_amount, teamup_entries.created_at as contributed_time, users.nickname as nickname, users.avatar as avatar").
+			Joins("left join users on teamup_entries.user_id = users.id").
+			Where("teamup_entries.teamup_id = ?", teamupId)
 
-	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		tx = tx.Where("user_id = ?", userId)
+		tx = tx.Scopes(Paginate(page, limit))
 
-		if len(status) > 0 {
-			tx = tx.Where("status in ?", status)
+		if err := tx.Scan(&res).Error; err != nil {
+			return err
 		}
-
-		err = tx.Scopes(Paginate(page, limit)).Find(&teamups).Error
-
-		return
+		return nil
 	})
 
 	return

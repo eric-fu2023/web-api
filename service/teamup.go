@@ -26,6 +26,7 @@ type TeamupService struct {
 type GetTeamupService struct {
 	OrderId  string `form:"order_id" json:"order_id"`
 	TeamupId int64  `form:"teamup_id" json:"teamup_id"`
+	common.Page
 }
 
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
@@ -98,8 +99,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	var betReport ploutos.BetReport
-	err = model.DB.Where("business_id = ?", s.OrderId).First(&betReport).Error
+	_, err = model.GetTeamUpBetReport(s.OrderId)
 
 	if err != nil {
 		r = serializer.DBErr(c, "", i18n.T("teamup_error"), err)
@@ -128,6 +128,32 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	}
 
 	r, err = shareService.Create()
+
+	return
+}
+
+func (s GetTeamupService) ContributedUserList(c *gin.Context) (r serializer.Response, err error) {
+	entries, err := model.GetAllTeamUpEntries(s.TeamupId, s.Page.Page, s.Limit)
+
+	for i, _ := range entries {
+		entries[i].ContributedAmount = entries[i].ContributedAmount / float64(100)
+	}
+
+	r.Data = entries
+
+	// now := time.Now()
+	// brand := c.MustGet(`_brand`).(int)
+	// deviceInfo, _ := util.GetDeviceInfo(c)
+
+	// analysts, err = model.AnalystList(c, p.Page, p.Limit)
+	// if err != nil {
+	// 	r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+	// 	return
+	// }
+	// r.Data = serializer.BuildAnalystList(analysts)
+
+	// analystRepo := repo.NewMockAnalystRepo()
+	// r, err = analystRepo.GetList(c)
 
 	return
 }
