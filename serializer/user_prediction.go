@@ -35,7 +35,7 @@ func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.Us
 				MatchName:         "法国vs比利时",
 			}
 		}
-
+		analyst := BuildAnalystDetail(pred.AnalystDetail)
 		ls[i] = Prediction{
 			PredictionId:    pred.ID,
 			AnalystId:       pred.AnalystId,
@@ -45,7 +45,7 @@ func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.Us
 			ViewCount:       pred.Views,
 			IsLocked:        !locked, // If it's not in userPredMap, it's locked
 			SelectionList:   selectionList,
-			AnalystDetail:   BuildAnalystDetail(pred.AnalystDetail),
+			AnalystDetail:   &analyst,
 			SportId:         GetPredictionSportId(pred),
 		}
 	}

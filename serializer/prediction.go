@@ -15,7 +15,7 @@ type Prediction struct {
 	ViewCount       int64             `json:"view_count"`
 	SelectionList   []SelectionDetail `json:"selection_list,omitempty"`
 	Status          int64             `json:"status"`
-	AnalystDetail   Analyst           `json:"analyst_detail"`
+	AnalystDetail   *Analyst           `json:"analyst_detail,omitempty"`
 	SportId         int64             `json:"sport_id"`
 }
 
@@ -40,12 +40,12 @@ type SelectionDetail struct {
 func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 	finalList := make([]Prediction, len(predictions))
 	for i, p := range predictions {
-		finalList[i] = BuildPrediction(p)
+		finalList[i] = BuildPrediction(p, false)
 	}
 	return finalList
 }
 
-func BuildPrediction(prediction model.Prediction) (pred Prediction) {
+func BuildPrediction(prediction model.Prediction, omitAnalyst bool) (pred Prediction) {
 	selectionList := make([]SelectionDetail, len(prediction.PredictionSelections))
 	for j, match := range prediction.PredictionSelections {
 		selectionList[j] = SelectionDetail{
@@ -61,17 +61,32 @@ func BuildPrediction(prediction model.Prediction) (pred Prediction) {
 		}
 	}
 
-	pred = Prediction{
-		PredictionId:    prediction.ID,
-		AnalystId:       prediction.AnalystId,
-		PredictionTitle: prediction.Title,
-		PredictionDesc:  prediction.Description,
-		CreatedAt:       prediction.CreatedAt,
-		ViewCount:       prediction.Views,
-		IsLocked:        false,
-		SelectionList:   selectionList,
-		AnalystDetail:   BuildAnalystDetail(prediction.AnalystDetail),
-		SportId:         GetPredictionSportId(prediction),
+	if omitAnalyst {
+		pred = Prediction{
+			PredictionId:    prediction.ID,
+			AnalystId:       prediction.AnalystId,
+			PredictionTitle: prediction.Title,
+			PredictionDesc:  prediction.Description,
+			CreatedAt:       prediction.CreatedAt,
+			ViewCount:       prediction.Views,
+			IsLocked:        false,
+			SelectionList:   selectionList,
+			SportId:         GetPredictionSportId(prediction),
+		}
+	} else {
+		analyst := BuildAnalystDetail(prediction.AnalystDetail)
+		pred = Prediction{
+			PredictionId:    prediction.ID,
+			AnalystId:       prediction.AnalystId,
+			PredictionTitle: prediction.Title,
+			PredictionDesc:  prediction.Description,
+			CreatedAt:       prediction.CreatedAt,
+			ViewCount:       prediction.Views,
+			IsLocked:        false,
+			SelectionList:   selectionList,
+			AnalystDetail:   &analyst,
+			SportId:         GetPredictionSportId(prediction),
+		}
 	}
 	return
 }

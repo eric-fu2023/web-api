@@ -40,6 +40,12 @@ func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
 
 func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 
+	predictions := make([]Prediction, len(analyst.Predictions))
+
+	for i, pred := range analyst.Predictions {
+		predictions[i] = BuildPrediction(pred, true)
+	}
+
 	resp = Analyst{
 		AnalystId:        analyst.ID,
 		AnalystName:      analyst.Name,
@@ -48,7 +54,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		WinningStreak:    20,
 		Accuracy:         99,
 		AnalystDesc:      analyst.Desc,
-		Predictions:      BuildPredictionsList(analyst.Predictions),
+		Predictions:      predictions,
 		NumFollowers:     len(analyst.Followers),
 		TotalPredictions: len(analyst.Predictions),
 	}
