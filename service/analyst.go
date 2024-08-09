@@ -44,7 +44,7 @@ func (p AnalystService) GetAnalystList(c *gin.Context) (r serializer.Response, e
 		return
 	}
 
-	r.Data = serializer.BuildAnalysts(data)
+	r.Data = serializer.BuildAnalystsList(data)
 
 	return
 }
