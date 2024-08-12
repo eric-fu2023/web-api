@@ -94,35 +94,18 @@ type FbSelectionInfo struct {
 func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 	finalList := make([]Prediction, len(predictions))
 	for i, p := range predictions {
-		finalList[i] = BuildPrediction(p, false)
+		finalList[i] = BuildPrediction(p, false, false)
 	}
 	return finalList
 }
 
-func BuildPrediction(prediction model.Prediction, omitAnalyst bool) (pred Prediction) {
-	// selectionList := make([]SelectionDetail, len(prediction.PredictionSelections))
-	// for j, match := range prediction.PredictionSelections {
-	// 	selectionList[j] = SelectionDetail{
-	// 		MatchId:           match.MatchId,
-	// 		MarketGroupType:   match.FbOdds.MarketGroupType,
-	// 		MarketGroupPeriod: match.FbOdds.MarketGroupPeriod,
-	// 		OrderMarketlineId: match.FbOdds.RecentMarketlineID,
-	// 		MatchType:         int64(match.FbMatch.MatchType),
-	// 		MarketGroupName:   "让球",
-	// 		LeagueName:        "欧洲杯",
-	// 		MatchTime:         time.Now().UnixMilli(),
-	// 		MatchName:         "法国vs比利时",
-	// 	}
-	// }
-
+func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
 	selectionList := make([]FbSelectionInfo, len(prediction.PredictionSelections))
-	mgList := make([]MarketGroupInfo, len(prediction.PredictionSelections))
-	for j, match := range prediction.PredictionSelections {
+	for j, selection := range prediction.PredictionSelections {
+		mgList := []MarketGroupInfo{}
+		opList := make([]OddDetail, len(selection.FbOdds.RelatedOdds))
 
-		// get selection detail using match.selectionid
-		opList := make([]OddDetail, len(match.FbOdds.RelatedOdds))
-
-		for oddIdx, odd := range match.FbOdds.RelatedOdds{
+		for oddIdx, odd := range selection.FbOdds.RelatedOdds{
 			opList[oddIdx] = OddDetail{
 				Na: odd.OddsName,
 				Nm: "", // TODO 
@@ -137,30 +120,32 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool) (pred Predic
 			Op: opList,
 		}
 
-		mgList[j] = MarketGroupInfo{
-			MarketGroupType: int(match.FbOdds.MarketGroupType),
-			MarketGroupPeriod: int(match.FbOdds.MarketGroupPeriod),
-			MarketGroupName: match.FbMatch.NameCn,
+		mgList = append(mgList, MarketGroupInfo{
+			MarketGroupType: int(selection.FbOdds.MarketGroupType),
+			MarketGroupPeriod: int(selection.FbOdds.MarketGroupPeriod),
+			MarketGroupName: selection.FbMatch.NameCn,
 			Mks: mks,
-		}
+		})
 
 		selectionList[j] = FbSelectionInfo{
-			Bt: match.FbMatch.StartTimeUtcTs,
-			ID: int(match.FbMatch.MatchID),
+			Bt: selection.FbMatch.StartTimeUtcTs,
+			ID: int(selection.FbMatch.MatchID),
 			Ts: []TeamInfo{
 				{
-					Na: match.FbMatch.HomeTeam.NameCn,
-					ID: int(match.FbMatch.HomeTeam.TeamID),
-					Lurl: match.FbMatch.HomeTeam.LogoURL,
+					Na: selection.FbMatch.HomeTeam.NameCn,
+					ID: int(selection.FbMatch.HomeTeam.TeamID),
+					Lurl: selection.FbMatch.HomeTeam.LogoURL,
 				},
 				{
-					Na: match.FbMatch.AwayTeam.NameCn,
-					ID: int(match.FbMatch.AwayTeam.TeamID),
-					Lurl: match.FbMatch.AwayTeam.LogoURL,
+					Na: selection.FbMatch.AwayTeam.NameCn,
+					ID: int(selection.FbMatch.AwayTeam.TeamID),
+					Lurl: selection.FbMatch.AwayTeam.LogoURL,
 				},
 			},
 			Mg: mgList,
-			// Lg: , // TODO 
+			Lg: LeagueInfo{
+				Na: "欧洲杯",
+			}, // TODO 
 		}
 	}
 
@@ -172,7 +157,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool) (pred Predic
 			PredictionDesc:  prediction.Description,
 			CreatedAt:       prediction.CreatedAt,
 			ViewCount:       prediction.Views,
-			IsLocked:        false,
+			IsLocked:        isLocked,
 			SelectionList:   selectionList,
 			SportId:         GetPredictionSportId(prediction),
 		}
@@ -185,7 +170,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool) (pred Predic
 			PredictionDesc:  prediction.Description,
 			CreatedAt:       prediction.CreatedAt,
 			ViewCount:       prediction.Views,
-			IsLocked:        false,
+			IsLocked:        isLocked,
 			SelectionList:   selectionList,
 			AnalystDetail:   &analyst,
 			SportId:         GetPredictionSportId(prediction),

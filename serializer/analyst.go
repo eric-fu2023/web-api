@@ -43,7 +43,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	predictions := make([]Prediction, len(analyst.Predictions))
 
 	for i, pred := range analyst.Predictions {
-		predictions[i] = BuildPrediction(pred, true)
+		predictions[i] = BuildPrediction(pred, true, false)
 	}
 
 	resp = Analyst{
