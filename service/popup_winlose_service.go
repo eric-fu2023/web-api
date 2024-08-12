@@ -77,14 +77,14 @@ func (service *WinLoseService) Get(c *gin.Context) (data WinLosePopupResponse, e
 	var members []WinLosePopupGGR
 	if GGR > 0 {
 		members = append(members,
-			generateMemberGGR(user.Nickname, myGGRRecord.GGR, rand.Intn(500), current_ranking, false, -1),
-			generateMemberGGR(user.Nickname, myGGRRecord.GGR, 0, current_ranking, true, 0),
-			generateMemberGGR(user.Nickname, myGGRRecord.GGR, -rand.Intn(500), current_ranking, false, 1))
+			generateMemberGGR(user, myGGRRecord.GGR, rand.Intn(500), current_ranking, false, -1),
+			generateMemberGGR(user, myGGRRecord.GGR, 0, current_ranking, true, 0),
+			generateMemberGGR(user, myGGRRecord.GGR, -rand.Intn(500), current_ranking, false, 1))
 	} else if GGR < 0 {
 		members = append(members,
-			generateMemberGGR(user.Nickname, myGGRRecord.GGR, rand.Intn(500)+500, current_ranking, false, 2),
-			generateMemberGGR(user.Nickname, myGGRRecord.GGR, rand.Intn(500), current_ranking, false, 1),
-			generateMemberGGR(user.Nickname, myGGRRecord.GGR, 0, current_ranking, true, 0))
+			generateMemberGGR(user, myGGRRecord.GGR, rand.Intn(500)+500, current_ranking, false, 2),
+			generateMemberGGR(user, myGGRRecord.GGR, rand.Intn(500), current_ranking, false, 1),
+			generateMemberGGR(user, myGGRRecord.GGR, 0, current_ranking, true, 0))
 	}
 	data = WinLosePopupResponse{
 		CurrentRanking: current_ranking,
@@ -118,10 +118,12 @@ func (service *WinLoseService) Shown(c *gin.Context) (r serializer.Response, err
 	return
 }
 
-func generateMemberGGR(nickname string, ggr float64, delta int, ranking int, is_me bool, index int) WinLosePopupGGR {
+func generateMemberGGR(user model.User, ggr float64, delta int, ranking int, is_me bool, index int) WinLosePopupGGR {
 	var nicks []map[string]interface{}
 	model.DB.Table(`ranking_nicknames`).Find(&nicks)
 	var name string
+	var avatar_pic_src string
+	avatar_pic_src = avatar.GetRandomAvatarUrl()
 	if len(nicks) > 0 {
 		rand.Seed(time.Now().UnixNano())
 		r1 := rand.Intn(len(nicks))
@@ -133,13 +135,14 @@ func generateMemberGGR(nickname string, ggr float64, delta int, ranking int, is_
 		delta = delta * -1
 	}
 	if is_me {
-		name = nickname
+		name = user.Nickname
+		avatar_pic_src = user.Avatar
 	}
 	resp := WinLosePopupGGR{
 		GGR:     (ggr + float64(delta)) / 100.0,
 		Ranking: ranking + index,
 		Name:    name,
-		PicSrc:  avatar.GetRandomAvatarUrl(),
+		PicSrc:  avatar_pic_src,
 		IsMe:    is_me,
 	}
 	return resp

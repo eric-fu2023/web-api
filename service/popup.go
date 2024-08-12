@@ -18,16 +18,11 @@ type PopupService struct {
 	Condition int64 `form:"condition" json:"condition"`
 }
 
-func (service *PopupService) buildKey(userId int64) (key string) {
-	now := time.Now()
-	return "popup_records/"+strconv.FormatInt(userId,10) +"/"+ now.Format("2006-01-02")
-}
-
 func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, err error) {
 	type PopupResponse struct {
-		Type int         `json:"type"`
-		CanFloat bool `json:"can_float"`
-		Data interface{} `json:"data"`
+		Type     int         `json:"type"`
+		CanFloat bool        `json:"can_float"`
+		Data     interface{} `json:"data"`
 	}
 
 	u, _ := c.Get("user")
@@ -37,10 +32,10 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 
 	// check redis which one has been popup
 	key := "popup/records/" + time.Now().Format("2006-01-02")
-	res := cache.RedisClient.HGet(context.Background(), key,strconv.FormatInt(user.ID, 10))
+	res := cache.RedisClient.HGet(context.Background(), key, strconv.FormatInt(user.ID, 10))
 	if res.Err() != nil && res.Err() != redis.Nil {
 		// if redis get error, return error
-		fmt.Print("Redis Get failed, ",res.Err())
+		fmt.Print("Redis Get failed, ", res.Err())
 		return r, res.Err()
 	} else if res.Err() == redis.Nil {
 		// if no display record found in redis, start finding the popup window
@@ -52,13 +47,12 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			var service WinLoseService
 			data, err := service.Get(c)
 			r.Data = PopupResponse{
-				Type: 1,
+				Type:     1,
 				CanFloat: WinLoseFloat(PopupTypes),
-				Data: data,
+				Data:     data,
 			}
 			return r, err
 		}
-
 
 		shouldPopupTeamUp, err := model.ShouldPopupTeamUp(user)
 		if err != nil {
@@ -68,13 +62,12 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			var service TeamUpService
 			data, err := service.Get(c)
 			r.Data = PopupResponse{
-				Type: data.Type,
+				Type:     data.Type,
 				CanFloat: false,
-				Data: data,
+				Data:     data,
 			}
 			return r, err
 		}
-
 
 		ShouldVIP, err := model.ShouldPopupVIP(user)
 		if err != nil {
@@ -87,9 +80,9 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				return r, err
 			}
 			r.Data = PopupResponse{
-				Type: 4,
+				Type:     4,
 				CanFloat: VIPFloat(PopupTypes),
-				Data: data,
+				Data:     data,
 			}
 			return r, err
 		}
@@ -100,9 +93,9 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		}
 		if ShouldPopupSpin && SpinAvailable(PopupTypes) {
 			r.Data = PopupResponse{
-				Type: 5,
+				Type:     5,
 				CanFloat: VIPFloat(PopupTypes),
-				Data: nil,
+				Data:     nil,
 			}
 			return r, err
 		}
@@ -117,13 +110,13 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if err != nil {
 				return r, err
 			}
-			if shouldPopupWinLose  && WinLoseAvailable(PopupTypes){
+			if shouldPopupWinLose && WinLoseAvailable(PopupTypes) {
 				var service WinLoseService
 				data, err := service.Get(c)
 				r.Data = PopupResponse{
-					Type: 1,
+					Type:     1,
 					CanFloat: WinLoseFloat(PopupTypes),
-					Data: data,
+					Data:     data,
 				}
 				return r, err
 			}
@@ -134,13 +127,13 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if err != nil {
 				return r, err
 			}
-			if should_popup && TeamUpAvailable(PopupTypes){
+			if should_popup && TeamUpAvailable(PopupTypes) {
 				var service TeamUpService
 				data, err := service.Get(c)
 				r.Data = PopupResponse{
-					Type: data.Type,
+					Type:     data.Type,
 					CanFloat: false,
-					Data: data,
+					Data:     data,
 				}
 				return r, err
 			}
@@ -150,13 +143,13 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if err != nil {
 				return r, err
 			}
-			if ShouldVIP && VIPAvailable(PopupTypes){
+			if ShouldVIP && VIPAvailable(PopupTypes) {
 				var service VipService
 				data, err := service.Get(c)
 				r.Data = PopupResponse{
-					Type: 4,
+					Type:     4,
 					CanFloat: VIPFloat(PopupTypes),
-					Data: data,
+					Data:     data,
 				}
 				return r, err
 			}
@@ -168,85 +161,83 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			}
 			if ShouldPopupSpin && SpinAvailable(PopupTypes) {
 				r.Data = PopupResponse{
-					Type: 5,
+					Type:     5,
 					CanFloat: VIPFloat(PopupTypes),
-					Data: nil,
+					Data:     nil,
 				}
 				return r, err
 			}
 		}
 	}
 	r.Msg = "no popup available"
-	r.Data = PopupResponse{Type:-1}
+	r.Data = PopupResponse{Type: -1}
 	return
 }
 
-
 func WinLoseAvailable(popups []models.Popups) bool {
-    for _, popup := range popups {
-        if popup.PopupType == 1 {
-            return true // Found a popup with PopupType == 1
-        }
-    }
-    return false // No popup with PopupType == 1 was found
+	for _, popup := range popups {
+		if popup.PopupType == 1 {
+			return true // Found a popup with PopupType == 1
+		}
+	}
+	return false // No popup with PopupType == 1 was found
 }
 
 func TeamUpAvailable(popups []models.Popups) bool {
-    for _, popup := range popups {
-        if popup.PopupType == 2 ||  popup.PopupType == 3{
-            return true // Found a popup with PopupType == 2
-        }
-    }
-    return false // No popup with PopupType == 2 was found
+	for _, popup := range popups {
+		if popup.PopupType == 2 || popup.PopupType == 3 {
+			return true // Found a popup with PopupType == 2
+		}
+	}
+	return false // No popup with PopupType == 2 was found
 }
 func VIPAvailable(popups []models.Popups) bool {
-    for _, popup := range popups {
-        if popup.PopupType == 4 {
-            return true // Found a popup with PopupType == 3
-        }
-    }
-    return false // No popup with PopupType == 3 was found
+	for _, popup := range popups {
+		if popup.PopupType == 4 {
+			return true // Found a popup with PopupType == 3
+		}
+	}
+	return false // No popup with PopupType == 3 was found
 }
 func SpinAvailable(popups []models.Popups) bool {
-    for _, popup := range popups {
-        if popup.PopupType == 5 {
-            return true // Found a popup with PopupType == 4
-        }
-    }
-    return false // No popup with PopupType == 4 was found
+	for _, popup := range popups {
+		if popup.PopupType == 5 {
+			return true // Found a popup with PopupType == 4
+		}
+	}
+	return false // No popup with PopupType == 4 was found
 }
-
 
 func WinLoseFloat(popups []models.Popups) bool {
-    for _, popup := range popups {
-        if popup.PopupType == 1 {
-            return popup.CanFloat // Found a popup with PopupType == 1
-        }
-    }
-    return false // No popup with PopupType == 1 was found
+	for _, popup := range popups {
+		if popup.PopupType == 1 {
+			return popup.CanFloat // Found a popup with PopupType == 1
+		}
+	}
+	return false // No popup with PopupType == 1 was found
 }
 
-// func KanDanFloat(popups []models.Popups) bool {
-//     for _, popup := range popups {
-//         if popup.PopupType == 2 {
-//             return popup.CanFloat // Found a popup with PopupType == 2
-//         }
-//     }
-//     return false // No popup with PopupType == 2 was found
-// }
+//	func KanDanFloat(popups []models.Popups) bool {
+//	    for _, popup := range popups {
+//	        if popup.PopupType == 2 {
+//	            return popup.CanFloat // Found a popup with PopupType == 2
+//	        }
+//	    }
+//	    return false // No popup with PopupType == 2 was found
+//	}
 func VIPFloat(popups []models.Popups) bool {
-    for _, popup := range popups {
-        if popup.PopupType == 4 {
-            return popup.CanFloat // Found a popup with PopupType == 3
-        }
-    }
-    return false // No popup with PopupType == 3 was found
+	for _, popup := range popups {
+		if popup.PopupType == 4 {
+			return popup.CanFloat // Found a popup with PopupType == 3
+		}
+	}
+	return false // No popup with PopupType == 3 was found
 }
 func SpinFloat(popups []models.Popups) bool {
-    for _, popup := range popups {
-        if popup.PopupType == 5 {
-            return popup.CanFloat // Found a popup with PopupType == 4
-        }
-    }
-    return false // No popup with PopupType == 4 was found
+	for _, popup := range popups {
+		if popup.PopupType == 5 {
+			return popup.CanFloat // Found a popup with PopupType == 4
+		}
+	}
+	return false // No popup with PopupType == 4 was found
 }
