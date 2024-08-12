@@ -60,6 +60,11 @@ type Page struct {
 	Limit int `form:"limit" json:"limit" binding:"min=1"`
 }
 
+type PageNoBinding struct {
+	Page  int `form:"page" json:"page"`
+	Limit int `form:"limit" json:"limit"`
+}
+
 type PageById struct {
 	IdFrom int `form:"id_from" json:"id_from"`
 	Limit  int `form:"limit" json:"limit" binding:"min=1"`

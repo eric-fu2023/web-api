@@ -26,7 +26,7 @@ type TeamupService struct {
 type GetTeamupService struct {
 	OrderId  string `form:"order_id" json:"order_id"`
 	TeamupId int64  `form:"teamup_id" json:"teamup_id"`
-	common.Page
+	common.PageNoBinding
 }
 
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
@@ -64,10 +64,14 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 		teamupRes[i].InfoJson = nil
 
 		if br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA || br.GameType == ploutos.GAME_DB_SPORT {
-			var betList []model.OutgoingBet
+			var outgoingBet model.OutgoingBet
+
+			var matchTime int64
 
 			for _, bet := range br.Bets {
-				outgoingBet := model.OutgoingBet{}
+				if matchTime == 0 {
+					// matchTime = bet.
+				}
 				copier.Copy(&outgoingBet, bet)
 				teams := strings.Split(outgoingBet.MatchName, " vs. ")
 				if len(teams) > 1 {
@@ -76,10 +80,13 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 				}
 				outgoingBet.HomeIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
 				outgoingBet.AwayIcon = "https://icons.iconarchive.com/icons/giannis-zographos/spanish-football-club/256/Real-Madrid-icon.png"
-				betList = append(betList, outgoingBet)
+
+				if teamupRes[i].IsParlay {
+					outgoingBet.MatchName = teamupRes[i].BetType
+				}
 			}
 
-			teamupRes[i].BetList = betList
+			teamupRes[i].Bet = outgoingBet
 		}
 
 	}
@@ -133,7 +140,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 }
 
 func (s GetTeamupService) ContributedUserList(c *gin.Context) (r serializer.Response, err error) {
-	entries, err := model.GetAllTeamUpEntries(s.TeamupId, s.Page.Page, s.Limit)
+	entries, err := model.GetAllTeamUpEntries(s.TeamupId, s.Page, s.Limit)
 
 	for i, _ := range entries {
 		entries[i].ContributedAmount = entries[i].ContributedAmount / float64(100)
