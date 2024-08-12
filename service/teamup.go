@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"strings"
+	"time"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -67,6 +68,14 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	user := u.(model.User)
 
 	br, err := model.GetTeamUpBetReport(s.OrderId)
+	br.ParseInfo()
+
+	var matchTime int64
+	for _, bet := range br.Bets {
+		if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
+			matchTime = *bet.GetMatchTime() - (600 * 100) // 600000 = 10 mins for timestamp
+		}
+	}
 
 	if err != nil {
 		r = serializer.DBErr(c, "", i18n.T("teamup_error"), err)
@@ -80,6 +89,8 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		teamup.UserId = user.ID
 		teamup.OrderId = s.OrderId
 		teamup.TotalTeamUpTarget = 10 * 100
+		teamup.TeamupEndTime = time.Unix(matchTime, 0)
+		teamup.TeamupCompletedTime = time.Unix(matchTime, 0)
 
 		err = model.SaveTeamup(teamup)
 	}
@@ -198,7 +209,7 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 			for _, bet := range br.Bets {
 				if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
-					matchTime = *bet.GetMatchTime()
+					matchTime = *bet.GetMatchTime() - (600 * 100) // 600000 = 10 mins for timestamp
 					copier.Copy(&outgoingBet, bet)
 					teams := strings.Split(outgoingBet.MatchName, " vs. ")
 					if len(teams) > 1 {
