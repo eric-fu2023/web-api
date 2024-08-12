@@ -116,7 +116,7 @@ func (service *PredictionDetailService) GetDetail(c *gin.Context) (r serializer.
 		return 
 	}
 
-	r.Data = serializer.BuildPrediction(data)
+	r.Data = serializer.BuildPrediction(data, false)
 
 	return 
 }

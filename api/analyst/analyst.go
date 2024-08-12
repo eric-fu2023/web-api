@@ -56,3 +56,13 @@ func GetAnalystAchievement(c *gin.Context) {
 		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }
+
+func GetFollowingAnalystIdsList(c *gin.Context) {
+	var service service.FollowingAnalystIdsService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.GetIds(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}

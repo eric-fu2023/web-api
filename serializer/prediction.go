@@ -15,7 +15,7 @@ type Prediction struct {
 	ViewCount       int64             `json:"view_count"`
 	SelectionList   []SelectionDetail `json:"selection_list,omitempty"`
 	Status          int64             `json:"status"`
-	AnalystDetail   Analyst           `json:"analyst_detail"`
+	AnalystDetail   *Analyst           `json:"analyst_detail,omitempty"`
 	SportId         int64             `json:"sport_id"`
 }
 
@@ -40,37 +40,12 @@ type SelectionDetail struct {
 func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 	finalList := make([]Prediction, len(predictions))
 	for i, p := range predictions {
-		selectionList := make([]SelectionDetail, len(p.PredictionSelections))
-		for j, match := range p.PredictionSelections {
-			selectionList[j] = SelectionDetail{
-				MatchId:           match.MatchId,
-				MarketGroupType:   match.FbOdds.MarketGroupType,
-				MarketGroupPeriod: match.FbOdds.MarketGroupPeriod,
-				OrderMarketlineId: match.FbOdds.RecentMarketlineID,
-				MatchType:         int64(match.FbMatch.MatchType),
-				MarketGroupName:   "让球",
-				LeagueName:        "欧洲杯",
-				MatchTime:         time.Now().UnixMilli(),
-				MatchName:         "法国vs比利时",
-			}
-		}
-		finalList[i] = Prediction{
-			PredictionId:    p.ID,
-			AnalystId:       p.AnalystId,
-			PredictionTitle: p.Title,
-			PredictionDesc:  p.Description,
-			CreatedAt:       p.CreatedAt,
-			ViewCount:       p.Views,
-			IsLocked:        false,
-			SelectionList:   selectionList,
-			AnalystDetail:   BuildAnalystDetail(p.AnalystDetail),
-			SportId:         GetPredictionSportId(p),
-		}
+		finalList[i] = BuildPrediction(p, false)
 	}
 	return finalList
 }
 
-func BuildPrediction(prediction model.Prediction) (pred Prediction) {
+func BuildPrediction(prediction model.Prediction, omitAnalyst bool) (pred Prediction) {
 	selectionList := make([]SelectionDetail, len(prediction.PredictionSelections))
 	for j, match := range prediction.PredictionSelections {
 		selectionList[j] = SelectionDetail{
@@ -86,17 +61,32 @@ func BuildPrediction(prediction model.Prediction) (pred Prediction) {
 		}
 	}
 
-	pred = Prediction{
-		PredictionId:    prediction.ID,
-		AnalystId:       prediction.AnalystId,
-		PredictionTitle: prediction.Title,
-		PredictionDesc:  prediction.Description,
-		CreatedAt:       prediction.CreatedAt,
-		ViewCount:       prediction.Views,
-		IsLocked:        false,
-		SelectionList:   selectionList,
-		AnalystDetail:   BuildAnalystDetail(prediction.AnalystDetail),
-		SportId:         GetPredictionSportId(prediction),
+	if omitAnalyst {
+		pred = Prediction{
+			PredictionId:    prediction.ID,
+			AnalystId:       prediction.AnalystId,
+			PredictionTitle: prediction.Title,
+			PredictionDesc:  prediction.Description,
+			CreatedAt:       prediction.CreatedAt,
+			ViewCount:       prediction.Views,
+			IsLocked:        false,
+			SelectionList:   selectionList,
+			SportId:         GetPredictionSportId(prediction),
+		}
+	} else {
+		analyst := BuildAnalystDetail(prediction.AnalystDetail)
+		pred = Prediction{
+			PredictionId:    prediction.ID,
+			AnalystId:       prediction.AnalystId,
+			PredictionTitle: prediction.Title,
+			PredictionDesc:  prediction.Description,
+			CreatedAt:       prediction.CreatedAt,
+			ViewCount:       prediction.Views,
+			IsLocked:        false,
+			SelectionList:   selectionList,
+			AnalystDetail:   &analyst,
+			SportId:         GetPredictionSportId(prediction),
+		}
 	}
 	return
 }
