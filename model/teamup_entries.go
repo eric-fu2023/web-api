@@ -19,7 +19,7 @@ type TeamupEntryCustomRes []struct {
 
 func FindTeamupEntryByTeamupId(teamupId int64) (res []ploutos.TeamupEntry, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) error {
-		tx = tx.Table("teamup_entries").Where("teamup_entries.teamup_id = ?", teamupId).Find(res)
+		tx = tx.Table("teamup_entries").Where("teamup_entries.teamup_id = ?", teamupId).Find(&res)
 		if err := tx.Scan(&res).Error; err != nil {
 			return err
 		}
@@ -48,7 +48,7 @@ func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustom
 	return
 }
 
-func CreateSlashBetRecord(teamupId, userId int64) (teamupEntry ploutos.TeamupEntry, err error) {
+func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 
 	// First entry - 85% ~ 92%
 	// Second entry onwards until N - 1 - 0.01% ~ 1%
@@ -63,8 +63,15 @@ func CreateSlashBetRecord(teamupId, userId int64) (teamupEntry ploutos.TeamupEnt
 		return
 	}
 
+	for _, entry := range teamupEntries {
+		if entry.UserId == userId {
+			return
+		}
+	}
+
 	// 10000 = 100%
 	maxPercentage := int64(10000)
+	ceilingPercentage := int64(9999)
 	totalProgress := util.Sum(teamupEntries, func(entry ploutos.TeamupEntry) int64 {
 		return entry.FakePercentageProgress
 	})
@@ -85,10 +92,13 @@ func CreateSlashBetRecord(teamupId, userId int64) (teamupEntry ploutos.TeamupEnt
 		UserId:   userId,
 	}
 
-	currentSlashProgress = maxPercentage - 1 - totalProgress
+	currentSlashProgress = 0
 
 	teamup, _ := GetTeamUpByTeamUpId(teamupId)
 	isSuccessTeamup := false
+
+	slashEntry.TeamupEndTime = teamup.TeamupEndTime
+	slashEntry.TeamupCompletedTime = teamup.TeamupCompletedTime
 
 	// Update status to SUCCESS if teamup deposit exceeded target
 	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
@@ -98,13 +108,26 @@ func CreateSlashBetRecord(teamupId, userId int64) (teamupEntry ploutos.TeamupEnt
 			err = tx.Save(&teamup).Error
 			return
 		})
+
+		if err != nil {
+			return
+		}
 	}
 
-	if totalProgress >= maxPercentage-1 {
-		if isSuccessTeamup {
-			currentSlashProgress = maxPercentage - totalProgress
+	if isSuccessTeamup {
+		// If already success, add the progress until 100%
+		currentSlashProgress = maxPercentage - totalProgress
+	} else if totalProgress >= maxPercentage-1 {
+		// If not success, and totalProgress more than or equals to 99.99%
+		if totalProgress-rNum >= ceilingPercentage {
+			// If not success, and totalProgress is 99.99%, current slash = 0.00%
+			currentSlashProgress = 0
+		} else {
+			// If not success, and totalProgress less than 99.99%, current slash = 99.99% - currentProgress = make it 99.99%
+			currentSlashProgress = ceilingPercentage - totalProgress
 		}
 	} else {
+		// If not success, normal random %
 		currentSlashProgress = rNum
 	}
 
@@ -114,6 +137,8 @@ func CreateSlashBetRecord(teamupId, userId int64) (teamupEntry ploutos.TeamupEnt
 		err = tx.Save(&slashEntry).Error
 		return
 	})
+
+	isSuccess = true
 
 	return
 }

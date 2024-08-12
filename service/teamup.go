@@ -130,8 +130,8 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	// now := time.Now()
 	// brand := c.MustGet(`_brand`).(int)
 	// deviceInfo, _ := util.GetDeviceInfo(c)
-	// u, _ := c.Get("user")
-	// user := u.(model.User)
+	u, _ := c.Get("user")
+	user := u.(model.User)
 
 	// analysts, err = model.AnalystList(c, p.Page, p.Limit)
 	// if err != nil {
@@ -144,11 +144,13 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	// r, err = analystRepo.GetList(c)
 
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
-	// _, _ := model.CreateSlashBetRecord(s.TeamupId, user.ID)
+	isSuccess, err := model.CreateSlashBetRecord(s.TeamupId, user.ID)
 
 	// Find user current slashed, find first not completed / expired
 
 	// topup will add to the very first
+
+	r.Data = isSuccess
 
 	return
 }

@@ -5,6 +5,7 @@ import (
 	"web-api/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 func StartTeamUp(c *gin.Context) {
@@ -49,7 +50,7 @@ func ContributedList(c *gin.Context) {
 
 func SlashBet(c *gin.Context) {
 	var service service.GetTeamupService
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
 		res, _ := service.SlashBet(c)
 		c.JSON(200, res)
 	} else {
