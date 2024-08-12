@@ -30,6 +30,7 @@ type TeamupCustomRes []struct {
 }
 
 type OutgoingBet struct {
+	MatchId      string `json:"match_id"`
 	MarketName   string `json:"market_name"`
 	OptionName   string `json:"option_name"`
 	MatchName    string `json:"match_name"`
@@ -85,6 +86,20 @@ func GetAllTeamUps(userId int64, status []int, page, limit int) (res TeamupCusto
 		}
 
 		err = tx.Scopes(Paginate(page, limit)).Scan(&res).Error
+		return
+	})
+
+	return
+}
+
+func GetTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) {
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		tx = tx.Table("teamups").Select("teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
+			Joins("left join bet_report on teamups.order_id = bet_report.business_id")
+
+		tx = tx.Where("teamups.id = ?", teamupId)
+
+		err = tx.Scan(&res).Error
 		return
 	})
 

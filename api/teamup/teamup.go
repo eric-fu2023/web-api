@@ -48,7 +48,7 @@ func ContributedList(c *gin.Context) {
 }
 
 func SlashBet(c *gin.Context) {
-	var service service.TeamupService
+	var service service.GetTeamupService
 	if err := c.ShouldBind(&service); err == nil {
 		res, _ := service.SlashBet(c)
 		c.JSON(200, res)

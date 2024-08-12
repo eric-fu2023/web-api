@@ -47,56 +47,18 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	}
 
 	teamupRes, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit)
-
-	for i, t := range teamupRes {
-
-		br := ploutos.BetReport{
-			GameType: t.GameType,
-			InfoJson: t.InfoJson,
-		}
-		br.ParseInfo()
-
-		teamupRes[i].TotalTeamupDeposit = teamupRes[i].TotalTeamupDeposit / 100
-		teamupRes[i].TotalTeamupTarget = teamupRes[i].TotalTeamupTarget / 100
-
-		teamupRes[i].TeamupProgress = (math.Min(teamupRes[i].TotalTeamupDeposit, teamupRes[i].TotalTeamupTarget) / teamupRes[i].TotalTeamupTarget) * 100
-
-		teamupRes[i].InfoJson = nil
-
-		if br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA || br.GameType == ploutos.GAME_DB_SPORT {
-			var outgoingBet model.OutgoingBet
-
-			var matchTime int64
-
-			for _, bet := range br.Bets {
-				if matchTime == 0 {
-					// matchTime = bet.
-				}
-				copier.Copy(&outgoingBet, bet)
-				teams := strings.Split(outgoingBet.MatchName, " vs. ")
-				if len(teams) > 1 {
-					outgoingBet.HomeName = teams[0]
-					outgoingBet.AwayName = teams[1]
-				}
-				outgoingBet.HomeIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
-				outgoingBet.AwayIcon = "https://icons.iconarchive.com/icons/giannis-zographos/spanish-football-club/256/Real-Madrid-icon.png"
-
-				if teamupRes[i].IsParlay {
-					outgoingBet.MatchName = teamupRes[i].BetType
-				}
-			}
-
-			teamupRes[i].Bet = outgoingBet
-		}
-
-	}
-
+	parseBetReport(teamupRes)
 	r.Data = teamupRes
 
 	return
 }
 
 func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error) {
+
+	teamupRes, err := model.GetTeamUpByTeamUpId(s.TeamupId)
+	parseBetReport(teamupRes)
+
+	r.Data = teamupRes
 
 	return
 }
@@ -165,11 +127,13 @@ func (s GetTeamupService) ContributedUserList(c *gin.Context) (r serializer.Resp
 	return
 }
 
-func (s TeamupService) SlashBet(c *gin.Context) (r serializer.Response, err error) {
+func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err error) {
 
 	// now := time.Now()
 	// brand := c.MustGet(`_brand`).(int)
 	// deviceInfo, _ := util.GetDeviceInfo(c)
+	// u, _ := c.Get("user")
+	// user := u.(model.User)
 
 	// analysts, err = model.AnalystList(c, p.Page, p.Limit)
 	// if err != nil {
@@ -180,6 +144,13 @@ func (s TeamupService) SlashBet(c *gin.Context) (r serializer.Response, err erro
 
 	// analystRepo := repo.NewMockAnalystRepo()
 	// r, err = analystRepo.GetList(c)
+
+	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
+	// _, _ := model.CreateSlashBetRecord(s.TeamupId, user.ID)
+
+	// Find user current slashed, find first not completed / expired
+
+	// topup will add to the very first
 
 	return
 }
@@ -196,6 +167,52 @@ func buildTeamupShareParamsService(teamup serializer.Teamup) (res CreateShareSer
 	res = CreateShareService{
 		Path:   "/shareteamup",
 		Params: jsonString,
+	}
+
+	return
+}
+
+func parseBetReport(teamupRes model.TeamupCustomRes) {
+	for i, t := range teamupRes {
+
+		br := ploutos.BetReport{
+			GameType: t.GameType,
+			InfoJson: t.InfoJson,
+		}
+		br.ParseInfo()
+
+		teamupRes[i].TotalTeamupDeposit = teamupRes[i].TotalTeamupDeposit / 100
+		teamupRes[i].TotalTeamupTarget = teamupRes[i].TotalTeamupTarget / 100
+
+		teamupRes[i].TeamupProgress = (math.Min(teamupRes[i].TotalTeamupDeposit, teamupRes[i].TotalTeamupTarget) / teamupRes[i].TotalTeamupTarget) * 100
+
+		teamupRes[i].InfoJson = nil
+
+		if br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA || br.GameType == ploutos.GAME_DB_SPORT {
+			var outgoingBet model.OutgoingBet
+
+			var matchTime int64
+
+			for _, bet := range br.Bets {
+				if matchTime == 0 {
+					// matchTime = bet.
+				}
+				copier.Copy(&outgoingBet, bet)
+				teams := strings.Split(outgoingBet.MatchName, " vs. ")
+				if len(teams) > 1 {
+					outgoingBet.HomeName = teams[0]
+					outgoingBet.AwayName = teams[1]
+				}
+				outgoingBet.HomeIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
+				outgoingBet.AwayIcon = "https://icons.iconarchive.com/icons/giannis-zographos/spanish-football-club/256/Real-Madrid-icon.png"
+
+				if teamupRes[i].IsParlay {
+					outgoingBet.MatchName = teamupRes[i].BetType
+				}
+			}
+
+			teamupRes[i].Bet = outgoingBet
+		}
 	}
 
 	return
