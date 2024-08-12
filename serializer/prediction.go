@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"slices"
 	"time"
 	"web-api/model"
 )
@@ -100,9 +101,20 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 }
 
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
-	selectionList := make([]FbSelectionInfo, len(prediction.PredictionSelections))
-	for j, selection := range prediction.PredictionSelections {
-		mgList := []MarketGroupInfo{}
+	selectionList := []FbSelectionInfo{}
+	for _, selection := range prediction.PredictionSelections {
+		selectionIdx := slices.IndexFunc(selectionList, func(s FbSelectionInfo) bool {
+			return s.ID == int(selection.FbMatch.MatchID)
+		})
+
+		var mgList []MarketGroupInfo 
+
+		if (selectionIdx == -1) {
+			mgList = []MarketGroupInfo{}
+		} else {
+			mgList = selectionList[selectionIdx].Mg
+		}
+
 		opList := make([]OddDetail, len(selection.FbOdds.RelatedOdds))
 
 		for oddIdx, odd := range selection.FbOdds.RelatedOdds{
@@ -127,26 +139,31 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			Mks: mks,
 		})
 
-		selectionList[j] = FbSelectionInfo{
-			Bt: selection.FbMatch.StartTimeUtcTs,
-			ID: int(selection.FbMatch.MatchID),
-			Ts: []TeamInfo{
-				{
-					Na: selection.FbMatch.HomeTeam.NameCn,
-					ID: int(selection.FbMatch.HomeTeam.TeamID),
-					Lurl: selection.FbMatch.HomeTeam.LogoURL,
+		if (selectionIdx == -1) {
+			selectionList = append(selectionList, FbSelectionInfo{
+				Bt: selection.FbMatch.StartTimeUtcTs,
+				ID: int(selection.FbMatch.MatchID),
+				Ts: []TeamInfo{
+					{
+						Na: selection.FbMatch.HomeTeam.NameCn,
+						ID: int(selection.FbMatch.HomeTeam.TeamID),
+						Lurl: selection.FbMatch.HomeTeam.LogoURL,
+					},
+					{
+						Na: selection.FbMatch.AwayTeam.NameCn,
+						ID: int(selection.FbMatch.AwayTeam.TeamID),
+						Lurl: selection.FbMatch.AwayTeam.LogoURL,
+					},
 				},
-				{
-					Na: selection.FbMatch.AwayTeam.NameCn,
-					ID: int(selection.FbMatch.AwayTeam.TeamID),
-					Lurl: selection.FbMatch.AwayTeam.LogoURL,
-				},
-			},
-			Mg: mgList,
-			Lg: LeagueInfo{
-				Na: "欧洲杯",
-			}, // TODO 
+				Mg: mgList,
+				Lg: LeagueInfo{
+					Na: "欧洲杯",
+				}, // TODO 
+			})
+		} else {
+			selectionList[selectionIdx].Mg = mgList
 		}
+		
 	}
 
 	if omitAnalyst {
