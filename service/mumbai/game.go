@@ -1,16 +1,46 @@
 package mumbai
 
 import (
-	"blgit.rfdev.tech/taya/game-service/mumbai"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+
 	"web-api/model"
 	"web-api/util"
+
+	"blgit.rfdev.tech/taya/game-service/mumbai"
+	"blgit.rfdev.tech/taya/game-service/mumbai/api"
 )
 
 const defaultPassword = "qq123456"
+
+// login, if not found => register user, then login again.
+func (c *Mumbai) LoginWithCreateUser(mbUserName string, password string, clientIP string, gameCode string) (api.LoginResponseBody, error) {
+	client, err := util.MumbaiFactory()
+	if err != nil {
+		return api.LoginResponseBody{}, err
+	}
+
+	res, err := client.LoginUser(mbUserName, password, clientIP, gameCode)
+	switch {
+	case err == nil:
+		return res, nil
+	case errors.Is(err, mumbai.ErrAccountNotFound): // try again once
+		_, regErr := client.RegisterUser(mbUserName, password, clientIP)
+		if regErr != nil {
+			log.Printf("Mumbai GetOrCreateUser mumbai username %s not found. register fail err: %v \n", mbUserName, regErr)
+			return api.LoginResponseBody{}, regErr
+		}
+		res, err = client.LoginUser(mbUserName, password, clientIP, gameCode)
+		if err != nil {
+			return api.LoginResponseBody{}, err
+		}
+		return res, nil
+	default:
+		return api.LoginResponseBody{}, err
+	}
+}
 
 func (c *Mumbai) GetGameUrl(user model.User, currency, tayaGameCode, tayaSubGameCode string, _ int64, extra model.Extra) (string, error) {
 	// creates the client so that we can call the login method.
@@ -25,27 +55,9 @@ func (c *Mumbai) GetGameUrl(user model.User, currency, tayaGameCode, tayaSubGame
 	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
 	log.Printf("Mumbai GetGameUrl mumbai username %s \n", username)
 
-	res, err := client.LoginUser(username, defaultPassword, extra.Ip, tayaSubGameCode) // check for error code.
+	res, err := c.LoginWithCreateUser(username, defaultPassword, extra.Ip, tayaSubGameCode) // check for error code.
 	if err != nil {
-		// check is it error with status code (EX002 - no account) , if yes then register new user.
-		if errors.Is(err, mumbai.ErrAccountNotFound) {
-			log.Printf("Mumbai GetGameUrl mumbai username %s not found. registering... \n", username)
-			// register new user.
-			_, regErr := client.RegisterUser(username, defaultPassword, extra.Ip)
-			if regErr != nil {
-				log.Printf("Mumbai GetGameUrl mumbai username %s not found. register fail err: %v \n", username, regErr)
-				return "", regErr
-			}
-			// successfully register, and now login in the user again to get the url.
-			loginResp, loginErr := client.LoginUser(username, defaultPassword, extra.Ip, tayaSubGameCode) // check for error code.
-			if loginErr != nil {
-				log.Printf("Mumbai GetGameUrl mumbai username %s not found. register success and login fail err: %v\n", username, loginErr)
-				return "", loginErr
-			}
-			return loginResp.Result.GameCenterAddress, nil
-		}
 		return "", err
 	}
-
 	return res.Result.GameCenterAddress, nil
 }

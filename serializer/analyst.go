@@ -49,7 +49,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	resp = Analyst{
 		AnalystId:        analyst.ID,
 		AnalystName:      analyst.Name,
-		AnalystSource:    Source{Name: analyst.TipsAnalystSource.Name, Icon: analyst.TipsAnalystSource.ImgIcon},
+		AnalystSource:    Source{Name: analyst.PredictionSource.SourceName, Icon: analyst.PredictionSource.IconUrl},
 		AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
 		WinningStreak:    20,
 		Accuracy:         99,

@@ -49,6 +49,10 @@ func (c *Mumbai) GetGameBalance(user model.User, currency, gameCode string, extr
 	}
 
 	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
+	_, err = c.LoginWithCreateUser(username, defaultPassword, extra.Ip, "")
+	if err != nil {
+		return 0, err
+	}
 	balanceFloat, err := client.CheckBalanceUser(username)
 	if err != nil {
 		return 0, ErrGetBalance
