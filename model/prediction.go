@@ -22,10 +22,8 @@ type ListPredictionCond struct {
 	SportId   int64
 }
 
-func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
-
-	// TODO : filter status
-	db := DB.
+func preloadPredictions() *gorm.DB{
+	return DB.
 		Preload("PredictionSelections").
 		Preload("PredictionSelections.FbOdds").
 		Preload("PredictionSelections.FbOdds.RelatedOdds").
@@ -33,9 +31,16 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 		Preload("AnalystDetail").
 		Preload("AnalystDetail.PredictionSource").
 		Preload("PredictionSelections.FbMatch.HomeTeam").
-		Preload("PredictionSelections.FbMatch.AwayTeam").
+		Preload("PredictionSelections.FbMatch.AwayTeam")
 		// Preload("AnalystDetail.Followers").
 		// Preload("AnalystDetail.Predictions").
+}
+
+func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
+
+	// TODO : filter status
+	db := preloadPredictions()
+	db = db.
 		Scopes(Paginate(cond.Page, cond.Limit)).
 		Where("tips_analyst_predictions.deleted_at IS NULL").
 		Joins("left join tips_analyst_prediction_selections on tips_analyst_prediction_selections.prediction_id = tips_analyst_predictions.id").
@@ -60,18 +65,7 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 }
 
 func GetPrediction(predictionId int64) (pred Prediction, err error) {
-	err = DB.
-		Debug().
-		Preload("PredictionSelections").
-		Preload("PredictionSelections.FbOdds").
-		Preload("PredictionSelections.FbOdds.RelatedOdds").
-		Preload("PredictionSelections.FbMatch").
-		Preload("AnalystDetail").
-		Preload("AnalystDetail.PredictionSource").
-		Preload("PredictionSelections.FbMatch.HomeTeam").
-		Preload("PredictionSelections.FbMatch.AwayTeam").
-		// Preload("AnalystDetail.Followers").
-		// Preload("AnalystDetail.Predictions").
+	err = preloadPredictions().
 		Where("deleted_at IS NULL").
 		Where("id = ?", predictionId).
 		First(&pred).Error
