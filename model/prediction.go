@@ -61,7 +61,7 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 
 func GetPrediction(predictionId int64) (pred Prediction, err error) {
 	err = DB.
-		// Debug().
+		Debug().
 		Preload("PredictionSelections").
 		Preload("PredictionSelections.FbOdds").
 		Preload("PredictionSelections.FbOdds.RelatedOdds").

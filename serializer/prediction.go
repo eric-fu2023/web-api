@@ -46,6 +46,7 @@ type OddDetail struct {
 	Bod      float64 `json:"bod"`
 	Odt      int     `json:"odt"`
 	Li       string  `json:"li"`
+	Selected bool    `json:"selected"`
 }
 
 type OddsInfo struct {
@@ -126,6 +127,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Bod: odd.Rate, // not sure
 				Odt: int(odd.OddsFormat),
 				Li: "", // not saved..
+				Selected: odd.ID == selection.FbOdds.ID,
 			}
 		}
 		mks := OddsInfo{
