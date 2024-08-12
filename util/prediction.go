@@ -17,7 +17,11 @@ func ConsecutiveWins(arr []bool) int {
 			consecutives = append(consecutives, current)
 		}
 	}
-	return slices.Max(consecutives)
+	if (len(consecutives) == 0) {
+		return 0
+	} else {
+		return slices.Max(consecutives)
+	}
 }
 
 func consecutive(segment []bool) int {
@@ -41,7 +45,7 @@ func consecutive(segment []bool) int {
 func NearXWinX(arr []bool) (near int, win int) {
 	highestAccuracy := 0.0
 	for i := range arr {
-		if i >= len(arr) - 5 {
+		if len(arr) > 5 && i >= len(arr) - 5 {
 			continue
 		}
 
