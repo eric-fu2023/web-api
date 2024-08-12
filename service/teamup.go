@@ -66,7 +66,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	_, err = model.GetTeamUpBetReport(s.OrderId)
+	br, err := model.GetTeamUpBetReport(s.OrderId)
 
 	if err != nil {
 		r = serializer.DBErr(c, "", i18n.T("teamup_error"), err)
@@ -89,7 +89,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		return
 	}
 
-	shareService, err := buildTeamupShareParamsService(serializer.BuildTeamup(teamup))
+	shareService, err := buildTeamupShareParamsService(serializer.BuildCustomTeamupHash(teamup, user, br))
 	if err != nil {
 		return
 	}
@@ -155,7 +155,7 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	return
 }
 
-func buildTeamupShareParamsService(teamup serializer.Teamup) (res CreateShareService, err error) {
+func buildTeamupShareParamsService(teamup serializer.OutgoingTeamupHash) (res CreateShareService, err error) {
 
 	teamupData, err := json.Marshal(teamup)
 	if err != nil {
@@ -197,24 +197,24 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 			var matchTime int64
 
 			for _, bet := range br.Bets {
-				if matchTime == 0 {
-					// matchTime = bet.
-				}
-				copier.Copy(&outgoingBet, bet)
-				teams := strings.Split(outgoingBet.MatchName, " vs. ")
-				if len(teams) > 1 {
-					outgoingBet.HomeName = teams[0]
-					outgoingBet.AwayName = teams[1]
-				}
-				outgoingBet.HomeIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
-				outgoingBet.AwayIcon = "https://icons.iconarchive.com/icons/giannis-zographos/spanish-football-club/256/Real-Madrid-icon.png"
+				if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
+					matchTime = *bet.GetMatchTime()
+					copier.Copy(&outgoingBet, bet)
+					teams := strings.Split(outgoingBet.MatchName, " vs. ")
+					if len(teams) > 1 {
+						outgoingBet.HomeName = teams[0]
+						outgoingBet.AwayName = teams[1]
+					}
+					outgoingBet.HomeIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
+					outgoingBet.AwayIcon = "https://icons.iconarchive.com/icons/giannis-zographos/spanish-football-club/256/Real-Madrid-icon.png"
 
-				if res[i].IsParlay {
-					outgoingBet.MatchName = res[i].BetType
+					if res[i].IsParlay {
+						outgoingBet.MatchName = res[i].BetType
+					}
+					res[i].Bet = outgoingBet
 				}
 			}
 
-			res[i].Bet = outgoingBet
 		}
 	}
 
