@@ -28,9 +28,12 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 	db := DB.
 		Preload("PredictionSelections").
 		Preload("PredictionSelections.FbOdds").
+		Preload("PredictionSelections.FbOdds.RelatedOdds").
 		Preload("PredictionSelections.FbMatch").
 		Preload("AnalystDetail").
 		Preload("AnalystDetail.PredictionSource").
+		Preload("PredictionSelections.FbMatch.HomeTeam").
+		Preload("PredictionSelections.FbMatch.AwayTeam").
 		// Preload("AnalystDetail.Followers").
 		// Preload("AnalystDetail.Predictions").
 		Scopes(Paginate(cond.Page, cond.Limit)).
@@ -58,11 +61,15 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 
 func GetPrediction(predictionId int64) (pred Prediction, err error) {
 	err = DB.
+		Debug().
 		Preload("PredictionSelections").
 		Preload("PredictionSelections.FbOdds").
+		Preload("PredictionSelections.FbOdds.RelatedOdds").
 		Preload("PredictionSelections.FbMatch").
 		Preload("AnalystDetail").
 		Preload("AnalystDetail.PredictionSource").
+		Preload("PredictionSelections.FbMatch.HomeTeam").
+		Preload("PredictionSelections.FbMatch.AwayTeam").
 		// Preload("AnalystDetail.Followers").
 		// Preload("AnalystDetail.Predictions").
 		Where("deleted_at IS NULL").

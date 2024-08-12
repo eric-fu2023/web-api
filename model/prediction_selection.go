@@ -1,7 +1,7 @@
 package model
 
 import (
-	ploutosFB "blgit.rfdev.tech/taya/ploutos-object/fb/model"
+	// ploutosFB "blgit.rfdev.tech/taya/ploutos-object/fb/model"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
@@ -9,6 +9,6 @@ import (
 type PredictionSelection struct {
 	ploutos.TipsAnalystPredictionSelection
 
-	FbOdds ploutosFB.FbOdds `gorm:"foreignKey:SelectionId;references:ID"`
-	FbMatch ploutosFB.FbMatch `gorm:"foreignKey:MatchId;references:MatchID"`
+	FbOdds FbOdds `gorm:"foreignKey:SelectionId;references:ID"`
+	FbMatch FbMatch `gorm:"foreignKey:MatchId;references:MatchID"`
 }
