@@ -44,7 +44,7 @@ func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.Us
 			CreatedAt:       pred.CreatedAt,
 			ViewCount:       pred.Views,
 			IsLocked:        !locked, // If it's not in userPredMap, it's locked
-			SelectionList:   selectionList,
+			// SelectionList:   selectionList,
 			AnalystDetail:   &analyst,
 			SportId:         GetPredictionSportId(pred),
 		}
