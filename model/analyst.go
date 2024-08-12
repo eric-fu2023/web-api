@@ -12,15 +12,15 @@ import (
 type Analyst struct {
 	ploutos.TipsAnalyst
 
-	Predictions []Prediction `gorm:"foreignKey:AnalystId;references:ID"`
-	Followers []ploutos.UserAnalystFollowing `gorm:"foreignKey:AnalystId;references:ID"`
+	Predictions []Prediction                   `gorm:"foreignKey:AnalystId;references:ID"`
+	Followers   []ploutos.UserAnalystFollowing `gorm:"foreignKey:AnalystId;references:ID"`
 }
 
 func (Analyst) List(page, limit int, sportId int64) (list []Analyst, err error) {
 	db := DB.Scopes(Paginate(page, limit))
 
 	db = db.
-		Preload("TipsAnalystSource").
+		Preload("PredictionSource").
 		Preload("Followers").
 		Preload("Predictions").
 		Where("is_active", true).
@@ -32,18 +32,17 @@ func (Analyst) List(page, limit int, sportId int64) (list []Analyst, err error) 
 		// TODO : Add filter for sport id when analyst struct finalised in backend API
 	}
 
-
 	err = db.
 		Find(&list).
 		Error
-	
+
 	return
 }
 
 func (Analyst) GetDetail(id int) (target Analyst, err error) {
 	db := DB.Where("id", id)
 	err = db.
-		Preload("TipsAnalystSource").
+		Preload("PredictionSource").
 		Preload("Predictions").
 		Preload("Followers").
 		Where("is_active", true).
@@ -56,10 +55,10 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 
 func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (followings []UserAnalystFollowing, err error) {
 	err = DB.Preload("Analyst").
-	Preload("Analyst.Followers").
-	Preload("Analyst.Predictions").
-	WithContext(c).
-	Where("user_id = ?", userId).Where("is_deleted = ?", false).Find(&followings).Scopes(Paginate(page, limit)).Error
+		Preload("Analyst.Followers").
+		Preload("Analyst.Predictions").
+		WithContext(c).
+		Where("user_id = ?", userId).Where("is_deleted = ?", false).Find(&followings).Scopes(Paginate(page, limit)).Error
 	return
 }
 
