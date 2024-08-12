@@ -47,18 +47,16 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	}
 
 	teamupRes, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit)
-	parseBetReport(teamupRes)
-	r.Data = teamupRes
+	r.Data = parseBetReport(teamupRes)
 
 	return
 }
 
 func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error) {
 
-	teamupRes, err := model.GetTeamUpByTeamUpId(s.TeamupId)
-	parseBetReport(teamupRes)
+	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
-	r.Data = teamupRes
+	r.Data = parseBetReport(teamupRes)
 
 	return
 }
@@ -172,8 +170,11 @@ func buildTeamupShareParamsService(teamup serializer.Teamup) (res CreateShareSer
 	return
 }
 
-func parseBetReport(teamupRes model.TeamupCustomRes) {
-	for i, t := range teamupRes {
+func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCustomRes) {
+
+	copier.Copy(&res, teamupRes)
+
+	for i, t := range res {
 
 		br := ploutos.BetReport{
 			GameType: t.GameType,
@@ -181,12 +182,12 @@ func parseBetReport(teamupRes model.TeamupCustomRes) {
 		}
 		br.ParseInfo()
 
-		teamupRes[i].TotalTeamupDeposit = teamupRes[i].TotalTeamupDeposit / 100
-		teamupRes[i].TotalTeamupTarget = teamupRes[i].TotalTeamupTarget / 100
+		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
+		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
 
-		teamupRes[i].TeamupProgress = (math.Min(teamupRes[i].TotalTeamupDeposit, teamupRes[i].TotalTeamupTarget) / teamupRes[i].TotalTeamupTarget) * 100
+		res[i].TeamupProgress = (math.Min(res[i].TotalTeamupDeposit, res[i].TotalTeamupTarget) / res[i].TotalTeamupTarget) * 100
 
-		teamupRes[i].InfoJson = nil
+		res[i].InfoJson = nil
 
 		if br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA || br.GameType == ploutos.GAME_DB_SPORT {
 			var outgoingBet model.OutgoingBet
@@ -206,12 +207,12 @@ func parseBetReport(teamupRes model.TeamupCustomRes) {
 				outgoingBet.HomeIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
 				outgoingBet.AwayIcon = "https://icons.iconarchive.com/icons/giannis-zographos/spanish-football-club/256/Real-Madrid-icon.png"
 
-				if teamupRes[i].IsParlay {
-					outgoingBet.MatchName = teamupRes[i].BetType
+				if res[i].IsParlay {
+					outgoingBet.MatchName = res[i].BetType
 				}
 			}
 
-			teamupRes[i].Bet = outgoingBet
+			res[i].Bet = outgoingBet
 		}
 	}
 

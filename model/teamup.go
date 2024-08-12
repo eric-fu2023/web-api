@@ -13,20 +13,34 @@ type Teamup struct {
 }
 
 type TeamupCustomRes []struct {
-	TeamupId            string        `json:"teamup_id"`
-	UserId              string        `json:"user_id"`
-	OrderId             string        `json:"order_id"`
-	TotalTeamupDeposit  float64       `json:"total_teamup_deposit"`
-	TotalTeamupTarget   float64       `json:"total_teamup_target"`
-	TeamupProgress      float64       `json:"teamup_progress"`
-	TeamupEndTime       time.Time     `json:"teamup_end_time"`
-	TeamupCompletedTime time.Time     `json:"teamup_completed_time"`
-	InfoJson            []byte        `json:"info_json,omitempty"`
-	GameType            int64         `json:"game_type"`
-	IsParlay            bool          `json:"is_parlay"`
-	BetType             string        `json:"bet_type"`
-	Bets                []ploutos.Bet `json:"bets"`
-	Bet                 OutgoingBet   `json:"bet"`
+	TeamupId            string    `json:"teamup_id"`
+	UserId              string    `json:"user_id"`
+	OrderId             string    `json:"order_id"`
+	TotalTeamupDeposit  float64   `json:"total_teamup_deposit"`
+	TotalTeamupTarget   float64   `json:"total_teamup_target"`
+	TeamupProgress      float64   `json:"teamup_progress"`
+	TeamupEndTime       time.Time `json:"teamup_end_time"`
+	TeamupCompletedTime time.Time `json:"teamup_completed_time"`
+	InfoJson            []byte    `json:"info_json,omitempty"`
+	GameType            int64     `json:"game_type"`
+	IsParlay            bool      `json:"is_parlay"`
+	BetType             string    `json:"bet_type"`
+}
+
+type OutgoingTeamupCustomRes []struct {
+	TeamupId            string      `json:"teamup_id"`
+	UserId              string      `json:"user_id"`
+	OrderId             string      `json:"order_id"`
+	TotalTeamupDeposit  float64     `json:"total_teamup_deposit"`
+	TotalTeamupTarget   float64     `json:"total_teamup_target"`
+	TeamupProgress      float64     `json:"teamup_progress"`
+	TeamupEndTime       time.Time   `json:"teamup_end_time"`
+	TeamupCompletedTime time.Time   `json:"teamup_completed_time"`
+	InfoJson            []byte      `json:"info_json,omitempty"`
+	GameType            int64       `json:"game_type"`
+	IsParlay            bool        `json:"is_parlay"`
+	BetType             string      `json:"bet_type"`
+	Bet                 OutgoingBet `json:"bet"`
 }
 
 type OutgoingBet struct {
@@ -92,7 +106,7 @@ func GetAllTeamUps(userId int64, status []int, page, limit int) (res TeamupCusto
 	return
 }
 
-func GetTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) {
+func GetCustomTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		tx = tx.Table("teamups").Select("teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
 			Joins("left join bet_report on teamups.order_id = bet_report.business_id")
@@ -100,6 +114,15 @@ func GetTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) {
 		tx = tx.Where("teamups.id = ?", teamupId)
 
 		err = tx.Scan(&res).Error
+		return
+	})
+
+	return
+}
+
+func GetTeamUpByTeamUpId(teamupId int64) (res ploutos.Teamup, err error) {
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = tx.Where("id = ?", teamupId).First(&res).Error
 		return
 	})
 
