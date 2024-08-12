@@ -38,6 +38,9 @@ func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode s
 	if err != nil {
 		return err
 	}
+	if mbBalance == 0 {
+		return nil
+	}
 	withdraw, err := client.WithdrawUser(username, transactionNo, fmt.Sprintf("%.2f", mbBalance))
 	if err != nil {
 		if err.Error() == string(api.ResponseCodeNotEnoughFundsError) {
