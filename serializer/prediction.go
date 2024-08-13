@@ -62,7 +62,7 @@ type MarketGroupInfo struct {
 	MarketGroupType int    `json:"mty"`
 	MarketGroupPeriod  int    `json:"pe"`
 	MarketGroupName  string `json:"nm"`
-	Mks OddsInfo `json:"mks"`
+	Mks []OddsInfo `json:"mks"`
 }
 
 type LeagueInfo struct {
@@ -130,8 +130,8 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Selected: odd.ID == selection.FbOdds.ID,
 			}
 		}
-		mks := OddsInfo{
-			Op: opList,
+		mks := []OddsInfo{
+			{Op: opList},
 		}
 
 		mgList = append(mgList, MarketGroupInfo{
