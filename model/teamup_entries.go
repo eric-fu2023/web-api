@@ -15,7 +15,7 @@ type TeamupEntryCustomRes []struct {
 	ContributedTime   time.Time `json:"contributed_time"`
 	Nickname          string    `json:"nickname"`
 	Avatar            string    `json:"avatar"`
-	Progress          string    `json:"progress"`
+	Progress          int64     `json:"progress"`
 }
 
 func FindTeamupEntryByTeamupId(teamupId int64) (res []ploutos.TeamupEntry, err error) {
@@ -118,6 +118,7 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 	if isSuccessTeamup {
 		// If already success, add the progress until 100%
 		currentSlashProgress = maxPercentage - totalProgress
+		teamup.TotalFakeProgress = maxPercentage
 	} else if totalProgress >= maxPercentage-1 {
 		// If not success, and totalProgress more than or equals to 99.99%
 		if totalProgress-rNum >= ceilingPercentage {
@@ -127,9 +128,19 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 			// If not success, and totalProgress less than 99.99%, current slash = 99.99% - currentProgress = make it 99.99%
 			currentSlashProgress = ceilingPercentage - totalProgress
 		}
+		teamup.TotalFakeProgress = 9999
 	} else {
 		// If not success, normal random %
 		currentSlashProgress = rNum
+		teamup.TotalFakeProgress = totalProgress + rNum
+	}
+
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = tx.Save(&teamup).Error
+		return
+	})
+	if err != nil {
+		return
 	}
 
 	slashEntry.FakePercentageProgress = currentSlashProgress
