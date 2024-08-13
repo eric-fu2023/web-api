@@ -10,8 +10,6 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,18 +38,9 @@ func (service *VipService) Get(c *gin.Context) (data map[string]int64, err error
 func (service *VipService) Shown(c *gin.Context) (r serializer.Response, err error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
-	vip, err := model.GetVipWithDefault(nil, user.ID)
 	if err != nil {
 		return
 	}
-	currentVipRule := vip.VipRule
-
-	PopupRecord := ploutos.PopupRecord{
-		UserID:   user.ID,
-		VipLevel: currentVipRule.VIPLevel,
-		Type:     2,
-	}
-	err = model.DB.Create(&PopupRecord).Error
 	
 	key := "popup/records/" + time.Now().Format("2006-01-02")
 	res := cache.RedisClient.HSet(context.Background(), key, user.ID, "4")
