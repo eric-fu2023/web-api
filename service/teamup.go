@@ -57,7 +57,10 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 
 	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
-	r.Data = parseBetReport(teamupRes)
+	outgoingRes := parseBetReport(teamupRes)
+	if len(outgoingRes) > 0 {
+		r.Data = outgoingRes[0]
+	}
 
 	return
 }
