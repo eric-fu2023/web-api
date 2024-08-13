@@ -22,7 +22,7 @@ type ListPredictionCond struct {
 	SportId   int64
 }
 
-func preloadPredictions() *gorm.DB{
+func preloadPredictions() *gorm.DB {
 	return DB.
 		Preload("PredictionSelections").
 		Preload("PredictionSelections.FbOdds").
@@ -32,8 +32,8 @@ func preloadPredictions() *gorm.DB{
 		Preload("AnalystDetail.PredictionSource").
 		Preload("PredictionSelections.FbMatch.HomeTeam").
 		Preload("PredictionSelections.FbMatch.AwayTeam")
-		// Preload("AnalystDetail.Followers").
-		// Preload("AnalystDetail.Predictions").
+	// Preload("AnalystDetail.Followers").
+	// Preload("AnalystDetail.Predictions").
 }
 
 func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
@@ -82,4 +82,29 @@ func PredictionExist(predictionId int64) (exist bool, err error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func GetPredictionBetReports(predictionId int64) (reports []ploutos.FbBetReport, err error) {
+	var pred Prediction
+
+	err = DB.
+		Preload("PredictionSelections").
+		Preload("PredictionSelections.FbOdds").
+		Preload("PredictionSelections.FbOdds.FbOddsOrderRequest").
+		Preload("PredictionSelections.FbOdds.FbOddsOrderRequest.FbBetReport").
+		Where("id", predictionId).
+		First(&pred).
+		Error
+
+	if err != nil {
+		return
+	}
+
+	for _, selection := range pred.PredictionSelections {
+		if selection.FbOdds.FbOddsOrderRequest.FbBetReport.ID != nil {
+			reports = append(reports, selection.FbOdds.FbOddsOrderRequest.FbBetReport)
+		}
+	}
+
+	return
 }

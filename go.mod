@@ -8,7 +8,7 @@ toolchain go1.21.1
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
-	blgit.rfdev.tech/taya/game-service v0.0.0-20240722024912-79f016fb798f
+	blgit.rfdev.tech/taya/game-service v0.0.0-20240813061921-9b078d9e2150
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240708033934-5ad34a45e507
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240813094909-6247ed332f70
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240703073351-55719e205f9b
@@ -40,10 +40,10 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	go.mongodb.org/mongo-driver v1.11.2
-	golang.org/x/crypto v0.25.0
+	golang.org/x/crypto v0.26.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
-	golang.org/x/sys v0.22.0
-	golang.org/x/text v0.16.0
+	golang.org/x/sys v0.23.0
+	golang.org/x/text v0.17.0
 	google.golang.org/api v0.156.0
 	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/yaml.v2 v2.4.0
@@ -154,7 +154,7 @@ require (
 	golang.org/x/image v0.14.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/appengine/v2 v2.0.2 // indirect
