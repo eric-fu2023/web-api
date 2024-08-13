@@ -16,7 +16,7 @@ type Prediction struct {
 	ViewCount       int64             `json:"view_count"`
 	SelectionList   []FbSelectionInfo `json:"selection_list,omitempty"`
 	Status          int64             `json:"status"`
-	AnalystDetail   *Analyst           `json:"analyst_detail,omitempty"`
+	AnalystDetail   *Analyst          `json:"analyst_detail,omitempty"`
 	SportId         int64             `json:"sport_id"`
 }
 
@@ -50,19 +50,19 @@ type OddDetail struct {
 }
 
 type OddsInfo struct {
-	Op []OddDetail `json:"op"`
-	ID  int    `json:"id"`
-	Ss  int    `json:"ss"`
-	Au  int    `json:"au"`
-	Mbl int    `json:"mbl"`
-	Li  string `json:"li"`
+	Op  []OddDetail `json:"op"`
+	ID  int         `json:"id"`
+	Ss  int         `json:"ss"`
+	Au  int         `json:"au"`
+	Mbl int         `json:"mbl"`
+	Li  string      `json:"li"`
 }
 
 type MarketGroupInfo struct {
-	MarketGroupType int    `json:"mty"`
-	MarketGroupPeriod  int    `json:"pe"`
-	MarketGroupName  string `json:"nm"`
-	Mks []OddsInfo `json:"mks"`
+	MarketGroupType   int        `json:"mty"`
+	MarketGroupPeriod int        `json:"pe"`
+	MarketGroupName   string     `json:"nm"`
+	Mks               []OddsInfo `json:"mks"`
 }
 
 type LeagueInfo struct {
@@ -85,13 +85,11 @@ type TeamInfo struct {
 }
 type FbSelectionInfo struct {
 	Mg []MarketGroupInfo `json:"mg"`
-	Lg LeagueInfo `json:"lg"`
-	Ts []TeamInfo `json:"ts"`
-	ID int   `json:"id"`
-	Bt int64 `json:"bt"`
+	Lg LeagueInfo        `json:"lg"`
+	Ts []TeamInfo        `json:"ts"`
+	ID int               `json:"id"`
+	Bt int64             `json:"bt"`
 }
-
-
 
 func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 	finalList := make([]Prediction, len(predictions))
@@ -108,9 +106,9 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			return s.ID == int(selection.FbMatch.MatchID)
 		})
 
-		var mgList []MarketGroupInfo 
+		var mgList []MarketGroupInfo
 
-		if (selectionIdx == -1) {
+		if selectionIdx == -1 {
 			mgList = []MarketGroupInfo{}
 		} else {
 			mgList = selectionList[selectionIdx].Mg
@@ -118,15 +116,15 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 
 		opList := make([]OddDetail, len(selection.FbOdds.RelatedOdds))
 
-		for oddIdx, odd := range selection.FbOdds.RelatedOdds{
+		for oddIdx, odd := range selection.FbOdds.RelatedOdds {
 			opList[oddIdx] = OddDetail{
-				Na: odd.OddsName,
-				Nm: "", // TODO 
-				Ty: int(odd.SelectionType),
-				Od: odd.Rate, // not sure
-				Bod: odd.Rate, // not sure
-				Odt: int(odd.OddsFormat),
-				Li: "", // not saved..
+				Na:       odd.OddsName,
+				Nm:       "", // TODO
+				Ty:       int(odd.SelectionType),
+				Od:       odd.Rate, // not sure
+				Bod:      odd.Rate, // not sure
+				Odt:      int(odd.OddsFormat),
+				Li:       "", // not saved..
 				Selected: odd.ID == selection.FbOdds.ID,
 			}
 		}
@@ -135,37 +133,37 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 
 		mgList = append(mgList, MarketGroupInfo{
-			MarketGroupType: int(selection.FbOdds.MarketGroupType),
+			MarketGroupType:   int(selection.FbOdds.MarketGroupType),
 			MarketGroupPeriod: int(selection.FbOdds.MarketGroupPeriod),
-			MarketGroupName: selection.FbMatch.NameCn,
-			Mks: mks,
+			MarketGroupName:   selection.FbMatch.NameCn,
+			Mks:               mks,
 		})
 
-		if (selectionIdx == -1) {
+		if selectionIdx == -1 {
 			selectionList = append(selectionList, FbSelectionInfo{
 				Bt: selection.FbMatch.StartTimeUtcTs,
 				ID: int(selection.FbMatch.MatchID),
 				Ts: []TeamInfo{
 					{
-						Na: selection.FbMatch.HomeTeam.NameCn,
-						ID: int(selection.FbMatch.HomeTeam.TeamID),
+						Na:   selection.FbMatch.HomeTeam.NameCn,
+						ID:   int(selection.FbMatch.HomeTeam.TeamID),
 						Lurl: selection.FbMatch.HomeTeam.LogoURL,
 					},
 					{
-						Na: selection.FbMatch.AwayTeam.NameCn,
-						ID: int(selection.FbMatch.AwayTeam.TeamID),
+						Na:   selection.FbMatch.AwayTeam.NameCn,
+						ID:   int(selection.FbMatch.AwayTeam.TeamID),
 						Lurl: selection.FbMatch.AwayTeam.LogoURL,
 					},
 				},
 				Mg: mgList,
 				Lg: LeagueInfo{
 					Na: "欧洲杯",
-				}, // TODO 
+				}, // TODO
 			})
 		} else {
 			selectionList[selectionIdx].Mg = mgList
 		}
-		
+
 	}
 
 	if omitAnalyst {
@@ -193,12 +191,13 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			SelectionList:   selectionList,
 			AnalystDetail:   &analyst,
 			SportId:         GetPredictionSportId(prediction),
+			Status:          0, // TODO : status win/lose/unsettled
 		}
 	}
 	return
 }
 
-func GetPredictionSportId(p model.Prediction) int64{
+func GetPredictionSportId(p model.Prediction) int64 {
 	if len(p.PredictionSelections) == 0 {
 		return 0
 	} else {

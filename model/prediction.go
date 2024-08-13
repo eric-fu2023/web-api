@@ -38,11 +38,11 @@ func preloadPredictions() *gorm.DB{
 
 func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 
-	// TODO : filter status
 	db := preloadPredictions()
 	db = db.
 		Scopes(Paginate(cond.Page, cond.Limit)).
 		Where("tips_analyst_predictions.deleted_at IS NULL").
+		Where("tips_analyst_predictions.is_active", true).
 		Joins("left join tips_analyst_prediction_selections on tips_analyst_prediction_selections.prediction_id = tips_analyst_predictions.id").
 		Joins("left join fb_matches on tips_analyst_prediction_selections.match_id = fb_matches.match_id").
 		Group("tips_analyst_predictions.id")
@@ -67,6 +67,7 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 func GetPrediction(predictionId int64) (pred Prediction, err error) {
 	err = preloadPredictions().
 		Where("deleted_at IS NULL").
+		Where("is_active", true).
 		Where("id = ?", predictionId).
 		First(&pred).Error
 	return
