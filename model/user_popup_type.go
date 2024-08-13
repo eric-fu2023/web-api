@@ -58,9 +58,11 @@ func ShouldPopupVIP(user User) (bool, error) {
 		// if no vip level up record, we check if user vip level is more than 0
 		if current_vip_level> 0{
 			return true, nil
+		}else{
+			return false, nil
 		}
 	}
-	if res.Err() != nil {
+	if res.Err() != nil && res.Err() != redis.Nil{
 		return false, res.Err()
 	}
 	previous_vip_level, err := strconv.ParseInt(res.Val(),10,64)
@@ -80,20 +82,23 @@ func ShouldPopupVIP(user User) (bool, error) {
 	return false,err
 }
 
-func ShouldPopupSpin(user User) (bool, error) {
+func ShouldPopupSpin(user User, spin_id int) (bool, error) {
+	// need to check if user has used all spin chances
 	now := time.Now()
-	TodayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+	var previous_spin_result []ploutos.SpinResult
+	err := DB.Model(ploutos.SpinResult{}).Where("user_id = ? AND spin_id = ?", user.ID, spin_id).Where("created_at > ?", startOfToday).Order("created_at DESC").Find(&previous_spin_result).Error
+	if errors.Is(err, logger.ErrRecordNotFound) {
+		// if spin result not found
+		err = nil
+		return true, nil
+	}
+	var spin ploutos.Spins
+	err = DB.Model(ploutos.Spins{}).Where("id = ?", spin_id).Find(&spin).Error
 	// if not displayed today
-	var spin_result ploutos.SpinResult
-	err := DB.Model(ploutos.SpinResult{}).Where("user_id = ?", user.ID).
-		Order("created_at DESC").
-		First(&spin_result).Error
-		if errors.Is(err, logger.ErrRecordNotFound) {
-			// if spin result not found
-			err = nil
-			return true, nil
-		}
-	if spin_result.CreatedAt.Before(TodayStart) {
+
+	if len(previous_spin_result) < spin.Counts {
 		return true, nil
 	}
 	return false, nil

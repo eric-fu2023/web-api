@@ -220,7 +220,7 @@ func NewRouter() *gin.Engine {
 		popup := v1.Group("/popup")
 		{
 			popup.GET("/show", middleware.AuthRequired(true, true), api.Show)
-			popup.GET("/spin_items", api.SpinItems)
+			popup.GET("/spin", middleware.CheckAuth(), api.Spin)
 			popup.GET("/spin_result", middleware.AuthRequired(true, true), api.SpinResult)
 		}
 
