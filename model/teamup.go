@@ -46,6 +46,8 @@ type OutgoingTeamupCustomRes []struct {
 type OutgoingBet struct {
 	MatchId      string `json:"match_id"`
 	MarketName   string `json:"market_name"`
+	LeagueName   string `json:"league_name"`
+	LeagueIcon   string `json:"league_icon"`
 	OptionName   string `json:"option_name"`
 	MatchName    string `json:"match_name"`
 	MatchTime    string `json:"match_time"`

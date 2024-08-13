@@ -216,6 +216,8 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 						outgoingBet.HomeName = teams[0]
 						outgoingBet.AwayName = teams[1]
 					}
+					outgoingBet.LeagueIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
+					outgoingBet.LeagueName = "欧美中联赛"
 					outgoingBet.HomeIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
 					outgoingBet.AwayIcon = "https://icons.iconarchive.com/icons/giannis-zographos/spanish-football-club/256/Real-Madrid-icon.png"
 

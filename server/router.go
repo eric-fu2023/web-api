@@ -414,13 +414,13 @@ func NewRouter() *gin.Engine {
 			analyst.GET("/achievement", analyst_api.GetAnalystAchievement)
 		}
 
-		teamup := v1.Group("/teamup")
+		teamup := v1.Group("/teamup", middleware.CheckAuth())
 		{
 			teamup.GET("/", middleware.AuthRequired(true, false), teamup_api.GetTeamUpItem)
-			teamup.GET("/detail", middleware.AuthRequired(true, false), teamup_api.GetTeamUpItem)
+			teamup.GET("/detail", teamup_api.GetTeamUpItem)
 			teamup.GET("/start", middleware.AuthRequired(true, false), teamup_api.StartTeamUp)
 			teamup.GET("/list", middleware.AuthRequired(true, false), teamup_api.ListAllTeamUp)
-			teamup.GET("/contribute/list", middleware.AuthRequired(true, false), teamup_api.ContributedList)
+			teamup.GET("/contribute/list", teamup_api.ContributedList)
 			teamup.POST("/slash", middleware.AuthRequired(true, false), teamup_api.SlashBet)
 		}
 
