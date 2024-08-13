@@ -7,7 +7,7 @@ import (
 
 func GetDollarJackpotByStreamerId(streamerId int64) (jackpot ploutos.DollarJackpot, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Where("streamer_id = ?", streamerId).First(&jackpot).Error
+		err = tx.Where("streamer_id = ?", streamerId).Where("status = ?", 1).First(&jackpot).Error
 		return
 	})
 
