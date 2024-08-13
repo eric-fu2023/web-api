@@ -48,8 +48,8 @@ func (service *SpinService) Get(c *gin.Context) (r serializer.Response, err erro
 	}
 	spin_results_counts := len(spin_results)
 
-	data := make([]serializer.Spin, 0)
-	data = append(data, serializer.BuildSpin(spin, spin_items, spin_results_counts))
+	var data serializer.Spin
+	data = serializer.BuildSpin(spin, spin_items, spin_results_counts)
 	r = serializer.Response{
 		Data: data,
 	}
