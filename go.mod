@@ -10,7 +10,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240722024912-79f016fb798f
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240708033934-5ad34a45e507
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240812075410-82dc6687d1db
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240813025720-ada22d3d76aa
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240703073351-55719e205f9b
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
@@ -38,6 +38,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.9.3
+	github.com/stretchr/testify v1.9.0
 	go.mongodb.org/mongo-driver v1.11.2
 	golang.org/x/crypto v0.25.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
@@ -131,6 +132,7 @@ require (
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.711 // indirect
