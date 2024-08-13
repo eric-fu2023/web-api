@@ -15,6 +15,7 @@ type TeamupEntryCustomRes []struct {
 	ContributedTime   time.Time `json:"contributed_time"`
 	Nickname          string    `json:"nickname"`
 	Avatar            string    `json:"avatar"`
+	Progress          string    `json:"progress"`
 }
 
 func FindTeamupEntryByTeamupId(teamupId int64) (res []ploutos.TeamupEntry, err error) {
@@ -33,7 +34,7 @@ func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustom
 
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		tx = tx.Table("teamup_entries").
-			Select("teamup_entries.contributed_teamup_deposit as contributed_amount, teamup_entries.created_at as contributed_time, users.nickname as nickname, users.avatar as avatar").
+			Select("teamup_entries.contributed_teamup_deposit as contributed_amount, teamup_entries.created_at as contributed_time, teamup_entries.fake_percentage_progress as progress, users.nickname as nickname, users.avatar as avatar").
 			Joins("left join users on teamup_entries.user_id = users.id").
 			Where("teamup_entries.teamup_id = ?", teamupId)
 
