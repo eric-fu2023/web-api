@@ -1,11 +1,12 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/gin-gonic/gin"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 type StreamerService struct {
@@ -60,6 +61,13 @@ func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err 
 	data := StreamerWithRecommends{
 		Streamer: serializer.BuildStreamer(c, streamer),
 	}
+
+	jackpot, err := model.GetDollarJackpotByStreamerId(data.ID)
+
+	if jackpot.ID != 0 {
+		data.HasJackpot = true
+	}
+
 	if len(streamer.LiveStreams) == 0 && service.RecommendCount > 0 {
 		if e := model.DB.Model(model.Stream{}).Select(`recommend_streamer_id`).
 			Where(`streamer_id`, streamer.ID).Where(`status`, 4).
