@@ -1,9 +1,13 @@
 package serializer
 
 import (
+	"log"
 	"slices"
 	"time"
 	"web-api/model"
+
+	fbService "blgit.rfdev.tech/taya/game-service/fb2/service"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type Prediction struct {
@@ -50,12 +54,13 @@ type OddDetail struct {
 }
 
 type OddsInfo struct {
-	Op  []OddDetail `json:"op"`
-	ID  int         `json:"id"`
-	Ss  int         `json:"ss"`
-	Au  int         `json:"au"`
-	Mbl int         `json:"mbl"`
-	Li  string      `json:"li"`
+	Op     []OddDetail `json:"op"`
+	ID     int         `json:"id"`
+	Ss     int         `json:"ss"`
+	Au     int         `json:"au"`
+	Mbl    int         `json:"mbl"`
+	Li     string      `json:"li"`
+	Status uint8       `json:"status"`
 }
 
 type MarketGroupInfo struct {
@@ -128,8 +133,9 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Selected: odd.ID == selection.FbOdds.ID,
 			}
 		}
+		selectionStatus := GetSelectionStatus(selection)
 		mks := []OddsInfo{
-			{Op: opList},
+			{Op: opList, Status: uint8(selectionStatus)},
 		}
 
 		mgList = append(mgList, MarketGroupInfo{
@@ -163,8 +169,9 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		} else {
 			selectionList[selectionIdx].Mg = mgList
 		}
-
 	}
+
+	predictionStatus := GetPredictionStatus(prediction)
 
 	if omitAnalyst {
 		pred = Prediction{
@@ -177,6 +184,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			IsLocked:        isLocked,
 			SelectionList:   selectionList,
 			SportId:         GetPredictionSportId(prediction),
+			Status:          int64(predictionStatus),
 		}
 	} else {
 		analyst := BuildAnalystDetail(prediction.AnalystDetail)
@@ -191,7 +199,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			SelectionList:   selectionList,
 			AnalystDetail:   &analyst,
 			SportId:         GetPredictionSportId(prediction),
-			Status:          0, // TODO : status win/lose/unsettled
+			Status:          int64(predictionStatus),
 		}
 	}
 	return
@@ -203,4 +211,37 @@ func GetPredictionSportId(p model.Prediction) int64 {
 	} else {
 		return p.PredictionSelections[0].FbMatch.SportsID
 	}
+}
+
+func GetSelectionStatus(selection model.PredictionSelection) (status fbService.SelectionOutCome) {
+	reports := []ploutos.FbBetReport{}
+
+	for _, request := range selection.FbOdds.FbOddsOrderRequestList {
+		reports = append(reports, request.FbBetReport)
+	}
+
+	status, err := fbService.ComputeOutcomeByOrderReport(reports)
+	if err != nil {
+		status = fbService.SelectionOutcomeUnknown
+		log.Printf("error getting selection status id %d. %s\n", selection.ID, err.Error())
+	}
+	return
+}
+
+func GetPredictionStatus(prediction model.Prediction) (status fbService.SelectionOutCome) {
+	selectionStatuses := []fbService.SelectionOutCome{}
+
+	for _, selection := range prediction.PredictionSelections {
+		selectionOutcome := GetSelectionStatus(selection)
+		selectionStatuses = append(selectionStatuses, selectionOutcome)
+	}
+
+	if slices.Contains(selectionStatuses, fbService.SelectionOutcomeUnknown) { // if has any unsettled, whole pred is unsettled
+		status = fbService.SelectionOutcomeUnknown
+	} else if slices.Contains(selectionStatuses, fbService.SelectionOutcomeBlack) { // if has any black, whole pred is black
+		status = fbService.SelectionOutcomeBlack
+	} else {
+		status = fbService.SelectionOutcomeRed
+	}
+	return
 }
