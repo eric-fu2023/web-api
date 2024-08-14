@@ -28,6 +28,7 @@ func preloadPredictions() *gorm.DB {
 		Preload("PredictionSelections.FbOdds").
 		Preload("PredictionSelections.FbOdds.RelatedOdds").
 		Preload("PredictionSelections.FbMatch").
+		Preload("PredictionSelections.FbMatch.LeagueInfo").
 		Preload("AnalystDetail").
 		Preload("AnalystDetail.PredictionSource").
 		Preload("PredictionSelections.FbMatch.HomeTeam").

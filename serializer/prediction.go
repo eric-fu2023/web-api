@@ -124,12 +124,12 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		for oddIdx, odd := range selection.FbOdds.RelatedOdds {
 			opList[oddIdx] = OddDetail{
 				Na:       odd.OddsNameCN,
-				Nm:       "", // TODO
+				Nm:       odd.ShortNameCN,
 				Ty:       int(odd.SelectionType),
 				Od:       odd.Rate, // not sure
 				Bod:      odd.Rate, // not sure
 				Odt:      int(odd.OddsFormat),
-				Li:       "", // not saved..
+				Li:       odd.OldNameCN, 
 				Selected: odd.ID == selection.FbOdds.ID,
 			}
 		}
@@ -163,8 +163,18 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				},
 				Mg: mgList,
 				Lg: LeagueInfo{
-					Na: "欧洲杯",
-				}, // TODO
+					Na: selection.FbMatch.LeagueInfo.LeagueNameCN,
+					ID: int(selection.FbMatch.LeagueInfo.LeagueId),
+					Or: int(selection.FbMatch.LeagueInfo.LeagueLevel),
+					Lurl: selection.FbMatch.LeagueInfo.LeagueUrl,
+					Sid: int(selection.FbMatch.LeagueInfo.SportId),
+					Rid: int(selection.FbMatch.LeagueInfo.RegionId),
+					Rnm: selection.FbMatch.LeagueInfo.RegionNameCN,
+					Rlg: selection.FbMatch.LeagueInfo.RegionLogoUrl,
+					Hot: selection.FbMatch.LeagueInfo.IsPopular,
+					Slid: int(selection.FbMatch.LeagueInfo.LeagueGroupId),
+
+				}, 
 			})
 		} else {
 			selectionList[selectionIdx].Mg = mgList
