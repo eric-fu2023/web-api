@@ -14,7 +14,7 @@ type Analyst struct {
 	AnalystSource    Source       `json:"analyst_source"`
 	AnalystImage     string       `json:"analyst_image"`
 	WinningStreak    int          `json:"winning_streak"`
-	Accuracy         int          `json:"accuracy"`
+	Accuracy         float64      `json:"accuracy"`
 	NumFollowers     int          `json:"num_followers"`
 	TotalPredictions int          `json:"total_predictions"`
 	Predictions      []Prediction `json:"predictions"`
@@ -28,10 +28,10 @@ type Source struct {
 }
 
 type Achievement struct {
-	TotalPredictions int   `json:"total_predictions"`
-	Accuracy         float64   `json:"accuracy"`
-	WinningStreak    int   `json:"winning_streak"`
-	RecentResult     []int `json:"recent_result"`
+	TotalPredictions int     `json:"total_predictions"`
+	Accuracy         float64 `json:"accuracy"`
+	WinningStreak    int     `json:"winning_streak"`
+	RecentResult     []int   `json:"recent_result"`
 }
 
 func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
@@ -45,9 +45,20 @@ func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
 func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 
 	predictions := make([]Prediction, len(analyst.Predictions))
+	statuses := make([]fbService.SelectionOutCome, len(analyst.Predictions))
 
 	for i, pred := range analyst.Predictions {
 		predictions[i] = BuildPrediction(pred, true, false)
+		statuses[i] = GetPredictionStatus(pred)
+	}
+
+	statusInBool, winCount := GetBoolOutcomes(statuses)
+	nearX, winX := util.NearXWinX(statusInBool)
+
+	winStreak := util.ConsecutiveWins(statusInBool)
+	accuracy := 0.0
+	if len(statusInBool) > 0 {
+		accuracy = float64(winCount) / float64(len(statusInBool))
 	}
 
 	resp = Analyst{
@@ -59,10 +70,10 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		Predictions:      predictions,
 		NumFollowers:     len(analyst.Followers),
 		TotalPredictions: len(analyst.Predictions),
-		WinningStreak:    20, // TODO
-		Accuracy:         99, // TODO
-		RecentTotal:      0,  // TODO
-		RecentWins:       0,  // TODO
+		WinningStreak:    winStreak,     // TODO
+		Accuracy:         accuracy, // TODO
+		RecentTotal:      nearX,         // TODO
+		RecentWins:       winX,          // TODO
 	}
 	return
 }
@@ -75,7 +86,7 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 }
 
 func BuildAnalystAchievement(results []fbService.SelectionOutCome) (resp Achievement) {
-	// total predictions 
+	// total predictions
 	numResults := len(results)
 
 	// win/lose for the last 10 predictions
@@ -93,10 +104,10 @@ func BuildAnalystAchievement(results []fbService.SelectionOutCome) (resp Achieve
 	// set up for winning streak and accuracy
 	resultInBool, winCount := GetBoolOutcomes(results)
 
-	// winning streak 
+	// winning streak
 	streak := util.ConsecutiveWins(resultInBool)
 
-	// accuracy 
+	// accuracy
 	accuracy := 0.0
 	if len(resultInBool) != 0 {
 		accuracy = float64(winCount) / float64(len(resultInBool))

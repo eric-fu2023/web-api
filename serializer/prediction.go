@@ -209,7 +209,7 @@ func GetPredictionSportId(p model.Prediction) int64 {
 	if len(p.PredictionSelections) == 0 {
 		return 0
 	} else {
-		return p.PredictionSelections[0].FbMatch.SportsID
+		return int64(p.PredictionSelections[0].FbMatch.SportsID)
 	}
 }
 
