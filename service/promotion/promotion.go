@@ -214,7 +214,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 			fmt.Println(err)
 		}
 
-		outgoingRequestAction := serializer.BuildPromotionAction(c, incomingRequestAction, childPromotion.ID, user.ID)
+		outgoingRequestAction := serializer.BuildPromotionAction(c, incomingRequestAction, childPromotion.ID, user.ID, int64(promotion.LoginStatus))
 		promotionPage.Action = outgoingRequestAction
 
 		outgoingRes.PromotionInfo = promotionPage

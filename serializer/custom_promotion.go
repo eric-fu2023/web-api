@@ -224,16 +224,17 @@ func BuildPromotionMatchList(incoming []IncomingPromotionMatchListItem, subPromo
 	return
 }
 
-func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestAction, promotionId int64, userId int64) (res CustomPromotionRequest) {
+func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestAction, promotionId int64, userId int64, loginStatusType int64) (res CustomPromotionRequest) {
 
 	res.Title = incoming.Title
 
-	if userId == 0 {
+	if userId == 0 && loginStatusType == models.CustomPromotionLoginStatusLogin {
 		res.Title = "立即参与，享受专属福利！"
 		res.RedirectType = models.CustomPromotionButtonRedirectTypeLogin
 		res.Fields = append(res.Fields, CustomPromotionRequestField{
 			Title: "立即登录，抢先参与",
 			Text:  "立即登录，抢先参与",
+			Type:  "button",
 		})
 
 		return
