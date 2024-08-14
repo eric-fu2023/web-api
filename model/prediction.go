@@ -84,27 +84,3 @@ func PredictionExist(predictionId int64) (exist bool, err error) {
 	return true, nil
 }
 
-// func GetPredictionBetReports(predictionId int64) (reports []ploutos.FbBetReport, err error) { // TODO remove when unused
-// 	var pred Prediction
-
-// 	err = DB.
-// 		Preload("PredictionSelections").
-// 		Preload("PredictionSelections.FbOdds").
-// 		Preload("PredictionSelections.FbOdds.FbOddsOrderRequest").
-// 		Preload("PredictionSelections.FbOdds.FbOddsOrderRequest.FbBetReport").
-// 		Where("id", predictionId).
-// 		First(&pred).
-// 		Error
-
-// 	if err != nil {
-// 		return
-// 	}
-
-// 	for _, selection := range pred.PredictionSelections {
-// 		if selection.FbOdds.FbOddsOrderRequest.FbBetReport.ID != nil {
-// 			reports = append(reports, selection.FbOdds.FbOddsOrderRequest.FbBetReport)
-// 		}
-// 	}
-
-// 	return
-// }

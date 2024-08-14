@@ -164,12 +164,6 @@ type AnalystAchievementService struct {
 }
 
 func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer.Response, err error) {
-	// TODO : get data to fill in
-	// get pred list the prediction list, --
-	// calculate the win/lose and store it in an array 
-	// pass the array to the builder 
-	// using the array, use the util func to calculate the result 
-
 	predictions, err := model.ListPredictions(model.ListPredictionCond{Page: 1, Limit: 99999, AnalystId: service.AnalystId, SportId: service.SportId})
 
 	// make sure the predictions is sorted (earliest first, latest last)

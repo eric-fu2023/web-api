@@ -55,12 +55,14 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		AnalystName:      analyst.Name,
 		AnalystSource:    Source{Name: analyst.PredictionSource.SourceName, Icon: analyst.PredictionSource.IconUrl},
 		AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
-		WinningStreak:    20,
-		Accuracy:         99,
 		AnalystDesc:      analyst.Desc,
 		Predictions:      predictions,
 		NumFollowers:     len(analyst.Followers),
 		TotalPredictions: len(analyst.Predictions),
+		WinningStreak:    20, // TODO
+		Accuracy:         99, // TODO
+		RecentTotal:      0,  // TODO
+		RecentWins:       0,  // TODO
 	}
 	return
 }
@@ -74,9 +76,9 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 
 func BuildAnalystAchievement(results []fbService.SelectionOutCome) (resp Achievement) {
 	numResults := len(results)
-	var last10results  []fbService.SelectionOutCome
-	if (numResults > 10) {
-		last10results =results[numResults-10:]
+	var last10results []fbService.SelectionOutCome
+	if numResults > 10 {
+		last10results = results[numResults-10:]
 	} else {
 		last10results = results
 	}
@@ -86,7 +88,7 @@ func BuildAnalystAchievement(results []fbService.SelectionOutCome) (resp Achieve
 	for _, result := range results {
 		if result == fbService.SelectionOutcomeRed {
 			resultInBool = append(resultInBool, true)
-			winCount ++
+			winCount++
 		} else if result == fbService.SelectionOutcomeBlack {
 			resultInBool = append(resultInBool, false)
 		} else {
@@ -98,7 +100,7 @@ func BuildAnalystAchievement(results []fbService.SelectionOutCome) (resp Achieve
 
 	accuracy := 0
 	if len(resultInBool) != 0 {
-		accuracy = winCount/len(resultInBool)
+		accuracy = winCount / len(resultInBool)
 	}
 
 	recentResult := make([]int, len(last10results))
