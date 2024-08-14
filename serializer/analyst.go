@@ -4,7 +4,7 @@ import (
 	"web-api/model"
 	"web-api/util"
 
-	fbService "blgit.rfdev.tech/taya/game-service/fb2/service"
+	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 )
 
 type Analyst struct {
@@ -43,7 +43,6 @@ func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
 }
 
 func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
-
 	predictions := make([]Prediction, len(analyst.Predictions))
 	statuses := make([]fbService.SelectionOutCome, len(analyst.Predictions))
 
@@ -70,10 +69,10 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		Predictions:      predictions,
 		NumFollowers:     len(analyst.Followers),
 		TotalPredictions: len(analyst.Predictions),
-		WinningStreak:    winStreak,     
-		Accuracy:         accuracy, 
-		RecentTotal:      nearX,         
-		RecentWins:       winX,          
+		WinningStreak:    winStreak,
+		Accuracy:         accuracy,
+		RecentTotal:      nearX,
+		RecentWins:       winX,
 	}
 	return
 }
