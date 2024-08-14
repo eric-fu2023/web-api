@@ -37,7 +37,7 @@ func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustom
 			Select("teamup_entries.contributed_teamup_deposit as contributed_amount, teamup_entries.created_at as contributed_time, teamup_entries.fake_percentage_progress as progress, users.nickname as nickname, users.avatar as avatar").
 			Joins("left join users on teamup_entries.user_id = users.id").
 			Where("teamup_entries.teamup_id = ?", teamupId).
-			Order(`teamup_entries.created_at ASC`)
+			Order(`teamup_entries.created_at DESC`)
 
 		tx = tx.Scopes(Paginate(page, limit))
 
