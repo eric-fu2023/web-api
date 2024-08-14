@@ -31,8 +31,9 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 	brand := c.MustGet(`_brand`).(int)
 	deviceInfo, _ := util.GetDeviceInfo(c)
 
-	// u, loggedIn := c.Get("user")
-	// user := u.(model.User)
+	u, _ := c.Get("user")
+	user := u.(model.User)
+
 	list, err := model.PromotionList(c, brand, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -45,7 +46,9 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 		if promotionCover.ParentId != 0 {
 			parentIdToPromotionMap[promotion.ParentId] = append(parentIdToPromotionMap[promotion.ParentId], promotionCover)
 		} else {
-			promotionCoverList = append(promotionCoverList, promotionCover)
+			if promotion.LoginStatus == int32(models.CustomPromotionLoginStatusAny) || (promotion.LoginStatus == int32(models.CustomPromotionLoginStatusLogin) && user.ID != 0) {
+				promotionCoverList = append(promotionCoverList, promotionCover)
+			}
 		}
 	}
 
@@ -214,7 +217,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 			fmt.Println(err)
 		}
 
-		outgoingRequestAction := serializer.BuildPromotionAction(c, incomingRequestAction, childPromotion.ID, user.ID, int64(promotion.LoginStatus))
+		outgoingRequestAction := serializer.BuildPromotionAction(c, incomingRequestAction, childPromotion.ID, user.ID)
 		promotionPage.Action = outgoingRequestAction
 
 		outgoingRes.PromotionInfo = promotionPage
