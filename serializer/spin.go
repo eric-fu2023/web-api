@@ -11,7 +11,7 @@ type Spin struct {
 	Button          string     `json:"button"`
 	Counts          int        `json:"counts"`
 	RemainingCounts int        `json:"remaining_counts"`
-	PromotionId     int8        `json:"promotion_id"`
+	PromotionId     int8       `json:"promotion_id"`
 	SpinItems       []SpinItem `json:"items"`
 }
 type SpinItem struct {
@@ -30,14 +30,14 @@ func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_co
 		spin_items_resp = append(spin_items_resp, BuildSpinItem(item))
 	}
 	spin_resp = Spin{
-		ID:        spin.ID,
-		Name:      spin.Name,
-		Description: spin.Description,    
-		Button: spin.Button,         
-		Counts: spin.Counts,         
-		RemainingCounts: spin.Counts-spin_result_counts,
-		PromotionId: spin.PromotionId,    
-		SpinItems: spin_items_resp,      
+		ID:              spin.ID,
+		Name:            spin.Name,
+		Description:     spin.Description,
+		Button:          spin.Button,
+		Counts:          spin.Counts,
+		RemainingCounts: spin.Counts - spin_result_counts,
+		PromotionId:     spin.PromotionId,
+		SpinItems:       spin_items_resp,
 	}
 	return
 }
@@ -49,19 +49,20 @@ func BuildSpinItem(a ploutos.SpinItem) (b SpinItem) {
 		PicSrc:    a.PicSrc,
 		TextColor: a.TextColor,
 		BgColor:   a.BgColor,
+		IsWin:     a.IsWin,
 	}
 	return
 }
 
 type SpinResult struct {
-	ID int64 `json:"id"`
-	RemainingCounts int `json:"remaining_counts"`
+	ID              int64 `json:"id"`
+	RemainingCounts int   `json:"remaining_counts"`
 }
 
 func BuildSpinResult(a ploutos.SpinItem, remaining_counts int) (b SpinResult) {
 	b = SpinResult{
-		ID: a.ID,
-		RemainingCounts:remaining_counts,
+		ID:              a.ID,
+		RemainingCounts: remaining_counts,
 	}
 	return
 }
