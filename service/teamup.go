@@ -80,7 +80,9 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		}
 	}
 
-	if err != nil {
+	nowTs := time.Now().UTC().Unix()
+
+	if err != nil || nowTs >= matchTime {
 		r = serializer.DBErr(c, "", i18n.T("teamup_error"), err)
 		return
 	}
