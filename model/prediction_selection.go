@@ -13,24 +13,24 @@ type PredictionSelection struct {
 	FbMatch FbMatch `gorm:"foreignKey:MatchId;references:MatchID"`
 }
 
-func GetSelectionBetReport(selectionId int64) (report ploutos.FbBetReport, err error) {
-	var selection PredictionSelection
+// func GetSelectionBetReport(selectionId int64) (reports []ploutos.FbBetReport, err error) { //TODO remove when unused
+// 	var selection PredictionSelection
 
-	err = DB.
-		Preload("FbOdds").
-		Preload("FbOdds.FbOddsOrderRequest").
-		Preload("FbOdds.FbOddsOrderRequest.FbBetReport").
-		Where("id", selectionId).
-		First(&selection).
-		Error
+// 	err = DB.
+// 		Preload("FbOdds").
+// 		Preload("FbOdds.FbOddsOrderRequest").
+// 		Preload("FbOdds.FbOddsOrderRequest.FbBetReport").
+// 		Where("id", selectionId).
+// 		First(&selection).
+// 		Error
 
-	if err != nil {
-		return 
-	}
+// 	if err != nil {
+// 		return 
+// 	}
 	
-	if selection.FbOdds.FbOddsOrderRequest.FbBetReport.ID != nil {
-		report = selection.FbOdds.FbOddsOrderRequest.FbBetReport
-	}
+// 	for _, report := range selection.FbOdds.FbOddsOrderRequestList {
+// 		reports = append(reports, report.FbBetReport)
+// 	}
 
-	return 
-}
+// 	return 
+// }

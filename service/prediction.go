@@ -3,11 +3,15 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"slices"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	fbService "blgit.rfdev.tech/taya/game-service/fb2/service"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 )
@@ -637,4 +641,39 @@ func (service *AddUserPredictionService) Add(c *gin.Context) (r serializer.Respo
 
 		return
 	}
+}
+
+func GetSelectionStatus(selection model.PredictionSelection) (status fbService.SelectionOutCome, err error) {
+   reports := []ploutos.FbBetReport{}
+
+   for _, request := range selection.FbOdds.FbOddsOrderRequestList{
+      reports = append(reports, request.FbBetReport)
+   }
+
+   status, err = fbService.ComputeOutcomeByOrderReport(reports)
+   return
+}
+
+func GetPredictionStatus(prediction model.Prediction) (status fbService.SelectionOutCome, err error) {
+   selectionStatuses := []fbService.SelectionOutCome{}
+
+   for _, selection := range prediction.PredictionSelections {
+      selectionOutcome, sErr := GetSelectionStatus(selection)
+
+      if sErr != nil {
+         err = sErr
+         break
+      }
+
+      selectionStatuses = append(selectionStatuses, selectionOutcome)
+   }
+
+   if slices.Contains(selectionStatuses, fbService.SelectionOutcomeUnknown) { // if has any unsettled, whole pred is unsettled
+      status = fbService.SelectionOutcomeUnknown
+   } else if slices.Contains(selectionStatuses, fbService.SelectionOutcomeBlack) { // if has any black, whole pred is black 
+      status = fbService.SelectionOutcomeBlack
+   } else {
+      status = fbService.SelectionOutcomeRed
+   }
+   return
 }

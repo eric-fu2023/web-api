@@ -9,7 +9,7 @@ type FbOdds struct {
 	ploutosFB.FbOdds
 
 	RelatedOdds []ploutosFB.FbOdds `gorm:"foreignKey:SportsID,MatchID,MarketGroupType,MarketGroupPeriod,MarketlineValue;references:SportsID,MatchID,MarketGroupType,MarketGroupPeriod,MarketlineValue"`
-	FbOddsOrderRequest FbOddsOrderRequest `gorm:"foreignKey:SportsID,MatchID,MarketGroupType,MarketGroupPeriod,MarketlineValue;references:SportsID,MatchID,MarketGroupType,MarketGroupPeriod,MarketlineValue"`
+	FbOddsOrderRequestList []FbOddsOrderRequest `gorm:"foreignKey:SportsID,MatchID,MarketGroupType,MarketGroupPeriod,MarketlineValue;references:SportsID,MatchID,MarketGroupType,MarketGroupPeriod,MarketlineValue"`
 }
 
 type FbOddsOrderRequest struct {
