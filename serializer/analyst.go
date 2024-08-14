@@ -14,7 +14,7 @@ type Analyst struct {
 	AnalystSource    Source       `json:"analyst_source"`
 	AnalystImage     string       `json:"analyst_image"`
 	WinningStreak    int          `json:"winning_streak"`
-	Accuracy         int          `json:"accuracy"`
+	Accuracy         float64      `json:"accuracy"`
 	NumFollowers     int          `json:"num_followers"`
 	TotalPredictions int          `json:"total_predictions"`
 	Predictions      []Prediction `json:"predictions"`
@@ -28,10 +28,10 @@ type Source struct {
 }
 
 type Achievement struct {
-	TotalPredictions int   `json:"total_predictions"`
-	Accuracy         int   `json:"accuracy"`
-	WinningStreak    int   `json:"winning_streak"`
-	RecentResult     []int `json:"recent_result"`
+	TotalPredictions int     `json:"total_predictions"`
+	Accuracy         float64 `json:"accuracy"`
+	WinningStreak    int     `json:"winning_streak"`
+	RecentResult     []int   `json:"recent_result"`
 }
 
 func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
@@ -45,9 +45,20 @@ func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
 func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 
 	predictions := make([]Prediction, len(analyst.Predictions))
+	statuses := make([]fbService.SelectionOutCome, len(analyst.Predictions))
 
 	for i, pred := range analyst.Predictions {
 		predictions[i] = BuildPrediction(pred, true, false)
+		statuses[i] = GetPredictionStatus(pred)
+	}
+
+	statusInBool, winCount := GetBoolOutcomes(statuses)
+	nearX, winX := util.NearXWinX(statusInBool)
+
+	winStreak := util.ConsecutiveWins(statusInBool)
+	accuracy := 0.0
+	if len(statusInBool) > 0 {
+		accuracy = float64(winCount) / float64(len(statusInBool))
 	}
 
 	resp = Analyst{
@@ -55,12 +66,14 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		AnalystName:      analyst.Name,
 		AnalystSource:    Source{Name: analyst.PredictionSource.SourceName, Icon: analyst.PredictionSource.IconUrl},
 		AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
-		WinningStreak:    20,
-		Accuracy:         99,
 		AnalystDesc:      analyst.Desc,
 		Predictions:      predictions,
 		NumFollowers:     len(analyst.Followers),
 		TotalPredictions: len(analyst.Predictions),
+		WinningStreak:    winStreak,     
+		Accuracy:         accuracy, 
+		RecentTotal:      nearX,         
+		RecentWins:       winX,          
 	}
 	return
 }
@@ -73,37 +86,31 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 }
 
 func BuildAnalystAchievement(results []fbService.SelectionOutCome) (resp Achievement) {
+	// total predictions
 	numResults := len(results)
-	var last10results  []fbService.SelectionOutCome
-	if (numResults > 10) {
-		last10results =results[numResults-10:]
+
+	// win/lose for the last 10 predictions
+	var last10results []fbService.SelectionOutCome
+	if numResults > 10 {
+		last10results = results[numResults-10:]
 	} else {
 		last10results = results
 	}
-
-	resultInBool := []bool{}
-	winCount := 0
-	for _, result := range results {
-		if result == fbService.SelectionOutcomeRed {
-			resultInBool = append(resultInBool, true)
-			winCount ++
-		} else if result == fbService.SelectionOutcomeBlack {
-			resultInBool = append(resultInBool, false)
-		} else {
-			continue // dont consider unsetteled/unknown statuses
-		}
-	}
-
-	streak := util.ConsecutiveWins(resultInBool)
-
-	accuracy := 0
-	if len(resultInBool) != 0 {
-		accuracy = winCount/len(resultInBool)
-	}
-
 	recentResult := make([]int, len(last10results))
 	for i, res := range last10results {
 		recentResult[i] = int(res)
+	}
+
+	// set up for winning streak and accuracy
+	resultInBool, winCount := GetBoolOutcomes(results)
+
+	// winning streak
+	streak := util.ConsecutiveWins(resultInBool)
+
+	// accuracy
+	accuracy := 0.0
+	if len(resultInBool) != 0 {
+		accuracy = float64(winCount) / float64(len(resultInBool))
 	}
 
 	resp = Achievement{
@@ -118,6 +125,22 @@ func BuildAnalystAchievement(results []fbService.SelectionOutCome) (resp Achieve
 func BuildFollowingAnalystIdsList(followings []model.UserAnalystFollowing) (resp []int64) {
 	for _, a := range followings {
 		resp = append(resp, a.AnalystId)
+	}
+	return
+}
+
+func GetBoolOutcomes(results []fbService.SelectionOutCome) (resultInBool []bool, winCount int) {
+	resultInBool = []bool{}
+	winCount = 0
+	for _, result := range results {
+		if result == fbService.SelectionOutcomeRed {
+			resultInBool = append(resultInBool, true)
+			winCount++
+		} else if result == fbService.SelectionOutcomeBlack {
+			resultInBool = append(resultInBool, false)
+		} else {
+			continue // dont consider unsetteled/unknown statuses
+		}
 	}
 	return
 }

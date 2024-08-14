@@ -124,12 +124,12 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		for oddIdx, odd := range selection.FbOdds.RelatedOdds {
 			opList[oddIdx] = OddDetail{
 				Na:       odd.OddsNameCN,
-				Nm:       "", // TODO
+				Nm:       odd.ShortNameCN,
 				Ty:       int(odd.SelectionType),
 				Od:       odd.Rate, // not sure
 				Bod:      odd.Rate, // not sure
 				Odt:      int(odd.OddsFormat),
-				Li:       "", // not saved..
+				Li:       odd.OldNameCN, 
 				Selected: odd.ID == selection.FbOdds.ID,
 			}
 		}
@@ -163,8 +163,18 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				},
 				Mg: mgList,
 				Lg: LeagueInfo{
-					Na: "欧洲杯",
-				}, // TODO
+					Na: selection.FbMatch.LeagueInfo.LeagueNameCN,
+					ID: int(selection.FbMatch.LeagueInfo.LeagueId),
+					Or: int(selection.FbMatch.LeagueInfo.LeagueLevel),
+					Lurl: selection.FbMatch.LeagueInfo.LeagueUrl,
+					Sid: int(selection.FbMatch.LeagueInfo.SportId),
+					Rid: int(selection.FbMatch.LeagueInfo.RegionId),
+					Rnm: selection.FbMatch.LeagueInfo.RegionNameCN,
+					Rlg: selection.FbMatch.LeagueInfo.RegionLogoUrl,
+					Hot: selection.FbMatch.LeagueInfo.IsPopular,
+					Slid: int(selection.FbMatch.LeagueInfo.LeagueGroupId),
+
+				}, 
 			})
 		} else {
 			selectionList[selectionIdx].Mg = mgList
@@ -209,7 +219,7 @@ func GetPredictionSportId(p model.Prediction) int64 {
 	if len(p.PredictionSelections) == 0 {
 		return 0
 	} else {
-		return p.PredictionSelections[0].FbMatch.SportsID
+		return int64(p.PredictionSelections[0].FbMatch.SportsID)
 	}
 }
 
@@ -236,7 +246,7 @@ func GetPredictionStatus(prediction model.Prediction) (status fbService.Selectio
 		selectionStatuses = append(selectionStatuses, selectionOutcome)
 	}
 
-	if slices.Contains(selectionStatuses, fbService.SelectionOutcomeUnknown) { // if has any unsettled, whole pred is unsettled
+	if len(selectionStatuses) == 0 || slices.Contains(selectionStatuses, fbService.SelectionOutcomeUnknown) { // if has any unsettled, whole pred is unsettled
 		status = fbService.SelectionOutcomeUnknown
 	} else if slices.Contains(selectionStatuses, fbService.SelectionOutcomeBlack) { // if has any black, whole pred is black
 		status = fbService.SelectionOutcomeBlack
