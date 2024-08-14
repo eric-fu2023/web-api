@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"fmt"
 	"log"
 	"slices"
 	"time"
@@ -70,6 +71,7 @@ type MarketGroupInfo struct {
 	MarketGroupPeriod int        `json:"pe"`
 	MarketGroupName   string     `json:"nm"`
 	Mks               []OddsInfo `json:"mks"`
+	InternalIdentifier string      `json:"-"`
 }
 
 type LeagueInfo struct {
@@ -108,7 +110,16 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
 	selectionList := []FbSelectionInfo{}
+
+	// get all odds id that the analyst had selected
+	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
+	for i, selection := range prediction.PredictionSelections {
+		allSelectedOddsId[i] = selection.FbOdds.ID
+	}
+
 	for _, selection := range prediction.PredictionSelections {
+		marketGroupKey := fmt.Sprintf("%d-%d-%d-%d-%s", selection.FbOdds.SportsID, selection.FbOdds.MatchID, selection.FbOdds.MarketGroupType, selection.FbOdds.MarketGroupPeriod, selection.FbOdds.MarketlineValue)
+
 		selectionIdx := slices.IndexFunc(selectionList, func(s FbSelectionInfo) bool {
 			return s.ID == int(selection.FbMatch.MatchID)
 		})
@@ -132,7 +143,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Bod:      odd.Rate, // not sure
 				Odt:      int(odd.OddsFormat),
 				Li:       odd.OldNameCN,
-				Selected: odd.ID == selection.FbOdds.ID,
+				Selected: slices.Contains(allSelectedOddsId, selection.FbOdds.ID),
 			}
 		}
 		selectionStatus := GetSelectionStatus(selection)
@@ -140,12 +151,21 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			{Op: opList, Status: uint8(selectionStatus)},
 		}
 
-		mgList = append(mgList, MarketGroupInfo{
-			MarketGroupType:   int(selection.FbOdds.MarketGroupType),
-			MarketGroupPeriod: int(selection.FbOdds.MarketGroupPeriod),
-			MarketGroupName:   selection.FbMatch.NameCn,
-			Mks:               mks,
+		mgListIdx := slices.IndexFunc(mgList, func(s MarketGroupInfo) bool {
+			return s.InternalIdentifier == marketGroupKey
 		})
+
+		if mgListIdx == -1 {
+			// market group doesn't exist. add into list for the first time. 
+			mgList = append(mgList, MarketGroupInfo{
+				MarketGroupType:   int(selection.FbOdds.MarketGroupType),
+				MarketGroupPeriod: int(selection.FbOdds.MarketGroupPeriod),
+				MarketGroupName:   selection.FbMatch.NameCn,
+				Mks:               mks,
+				InternalIdentifier: marketGroupKey,
+			})
+		}
+
 
 		if selectionIdx == -1 {
 			selectionList = append(selectionList, FbSelectionInfo{
