@@ -52,6 +52,7 @@ type OddDetail struct {
 	Odt      int     `json:"odt"`
 	Li       string  `json:"li"`
 	Selected bool    `json:"selected"`
+	Status   int     `json:"status"`
 }
 
 type OddsInfo struct {
