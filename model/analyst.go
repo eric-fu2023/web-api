@@ -14,9 +14,16 @@ type Analyst struct {
 
 	Predictions []Prediction                   `gorm:"foreignKey:AnalystId;references:ID"`
 	Followers   []ploutos.UserAnalystFollowing `gorm:"foreignKey:AnalystId;references:ID"`
+	AnalystSport 		AnalystSport 					`gorm:"foreignKey:ID;references:AnalystId"`
 }
 
-func (Analyst) List(page, limit int, sportId int64) (list []Analyst, err error) {
+type AnalystSport struct {
+	ploutos.AnalystSport 
+
+	Sport []ploutos.SportType `gorm:"foreignKey:ID;references:SportId"`
+}
+
+func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error) {
 	db := DB.Scopes(Paginate(page, limit))
 
 	db = db.
@@ -24,12 +31,14 @@ func (Analyst) List(page, limit int, sportId int64) (list []Analyst, err error) 
 		Preload("Followers").
 		Preload("Predictions").
 		Where("is_active", true).
-		Where("deleted_at IS NULL").
 		Order("created_at DESC").
 		Order("id DESC")
 
-	if sportId != 0 {
-		// TODO : Add filter for sport id when analyst struct finalised in backend API
+	if fbSportId != 0 {
+		db = db.
+		Joins("JOIN analyst_sport ON analyst_sport.analyst_id = tips_analysts.id").
+		Joins("JOIN sport_type ON analyst_sport.sport_id = sport_type.id").
+		Where("fb_sport_id = ?", fbSportId)
 	}
 
 	err = db.
