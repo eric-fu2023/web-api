@@ -187,6 +187,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		promotionPage := serializer.CustomPromotionPage{
 			Title:       childPromotion.Name,
 			PromotionId: childPromotion.ID,
+			LoginStatus: models.CustomPromotionTypeLogin,
 		}
 
 		switch content.ListType {

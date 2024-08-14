@@ -57,14 +57,14 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 			continue
 		}
 		switch field.Type {
-		case "input-button":
+		case "input_button":
 			// numOriFields++
 			isExceeded, err = serializer.ParseButtonClickOption(c, field, p.PromotionId, user.ID)
 			if err != nil {
 				r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)
 				return
 			}
-		case "input-dropdown":
+		case "input_dropdown":
 			numOriFields++
 			if requestInput[strconv.Itoa(field.InputId)] != "" {
 				index, _ := strconv.Atoi(requestInput[strconv.Itoa(field.InputId)])
@@ -78,7 +78,7 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 					data[field.Title] = value
 				}
 			}
-		case "input-keyin":
+		case "input_keyin":
 			numOriFields++
 			if requestInput[strconv.Itoa(field.InputId)] != "" {
 				data[field.Title] = requestInput[strconv.Itoa(field.InputId)]

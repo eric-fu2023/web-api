@@ -90,6 +90,7 @@ type CustomPromotionDetail struct {
 type CustomPromotionPage struct {
 	Title            string                    `json:"title"`
 	PromotionId      int64                     `json:"promotion_id"`
+	LoginStatus      int64                     `json:"login_status"`
 	PageItemListType int64                     `json:"list_type"`
 	PageItemList     []CustomPromotionPageItem `json:"list"`
 	Desc             []CustomPromotionPageDesc `json:"desc"`
