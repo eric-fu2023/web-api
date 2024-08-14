@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"sort"
+
 	"web-api/model"
 	"web-api/serializer"
-
 	"web-api/service/common"
 
-	"github.com/gin-gonic/gin"
+	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 
-	fbService "blgit.rfdev.tech/taya/game-service/fb2/service"
+	"github.com/gin-gonic/gin"
 )
 
 type AnalystService struct {
