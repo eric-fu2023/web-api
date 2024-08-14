@@ -128,7 +128,7 @@ type CustomPromotionRequest struct {
 	Title        string                        `json:"title"`
 	IsSubmitted  bool                          `json:"is_submitted"`
 	Fields       []CustomPromotionRequestField `json:"fields"`
-	RedirectType int                           `json:"redirect_type"`
+	RedirectType int64                         `json:"redirect_type"`
 }
 
 type CustomPromotionRequestField struct {
@@ -228,6 +228,17 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 
 	res.Title = incoming.Title
 
+	if userId == 0 {
+		res.Title = "立即参与，享受专属福利！"
+		res.RedirectType = models.CustomPromotionButtonRedirectTypeLogin
+		res.Fields = append(res.Fields, CustomPromotionRequestField{
+			Title: "立即登录，抢先参与",
+			Text:  "立即登录，抢先参与",
+		})
+
+		return
+	}
+
 	for _, incomingField := range incoming.Fields {
 		if incomingField.Switch == 0 {
 			continue
@@ -256,7 +267,7 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 				}
 			} else {
 				// requestField.RedirectType = incomingField.RedirectType
-				res.RedirectType = incomingField.RedirectType
+				res.RedirectType = int64(incomingField.RedirectType)
 			}
 		}
 

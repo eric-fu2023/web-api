@@ -118,7 +118,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 
 		for oddIdx, odd := range selection.FbOdds.RelatedOdds {
 			opList[oddIdx] = OddDetail{
-				Na:       odd.OddsName,
+				Na:       odd.OddsNameCN,
 				Nm:       "", // TODO
 				Ty:       int(odd.SelectionType),
 				Od:       odd.Rate, // not sure
