@@ -29,7 +29,7 @@ type Source struct {
 
 type Achievement struct {
 	TotalPredictions int   `json:"total_predictions"`
-	Accuracy         int   `json:"accuracy"`
+	Accuracy         float64   `json:"accuracy"`
 	WinningStreak    int   `json:"winning_streak"`
 	RecentResult     []int `json:"recent_result"`
 }
@@ -75,37 +75,31 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 }
 
 func BuildAnalystAchievement(results []fbService.SelectionOutCome) (resp Achievement) {
+	// total predictions 
 	numResults := len(results)
+
+	// win/lose for the last 10 predictions
 	var last10results []fbService.SelectionOutCome
 	if numResults > 10 {
 		last10results = results[numResults-10:]
 	} else {
 		last10results = results
 	}
-
-	resultInBool := []bool{}
-	winCount := 0
-	for _, result := range results {
-		if result == fbService.SelectionOutcomeRed {
-			resultInBool = append(resultInBool, true)
-			winCount++
-		} else if result == fbService.SelectionOutcomeBlack {
-			resultInBool = append(resultInBool, false)
-		} else {
-			continue // dont consider unsetteled/unknown statuses
-		}
-	}
-
-	streak := util.ConsecutiveWins(resultInBool)
-
-	accuracy := 0
-	if len(resultInBool) != 0 {
-		accuracy = winCount / len(resultInBool)
-	}
-
 	recentResult := make([]int, len(last10results))
 	for i, res := range last10results {
 		recentResult[i] = int(res)
+	}
+
+	// set up for winning streak and accuracy
+	resultInBool, winCount := GetBoolOutcomes(results)
+
+	// winning streak 
+	streak := util.ConsecutiveWins(resultInBool)
+
+	// accuracy 
+	accuracy := 0.0
+	if len(resultInBool) != 0 {
+		accuracy = float64(winCount) / float64(len(resultInBool))
 	}
 
 	resp = Achievement{
@@ -120,6 +114,22 @@ func BuildAnalystAchievement(results []fbService.SelectionOutCome) (resp Achieve
 func BuildFollowingAnalystIdsList(followings []model.UserAnalystFollowing) (resp []int64) {
 	for _, a := range followings {
 		resp = append(resp, a.AnalystId)
+	}
+	return
+}
+
+func GetBoolOutcomes(results []fbService.SelectionOutCome) (resultInBool []bool, winCount int) {
+	resultInBool = []bool{}
+	winCount = 0
+	for _, result := range results {
+		if result == fbService.SelectionOutcomeRed {
+			resultInBool = append(resultInBool, true)
+			winCount++
+		} else if result == fbService.SelectionOutcomeBlack {
+			resultInBool = append(resultInBool, false)
+		} else {
+			continue // dont consider unsetteled/unknown statuses
+		}
 	}
 	return
 }
