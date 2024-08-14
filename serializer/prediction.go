@@ -236,7 +236,7 @@ func GetPredictionStatus(prediction model.Prediction) (status fbService.Selectio
 		selectionStatuses = append(selectionStatuses, selectionOutcome)
 	}
 
-	if slices.Contains(selectionStatuses, fbService.SelectionOutcomeUnknown) { // if has any unsettled, whole pred is unsettled
+	if len(selectionStatuses) == 0 || slices.Contains(selectionStatuses, fbService.SelectionOutcomeUnknown) { // if has any unsettled, whole pred is unsettled
 		status = fbService.SelectionOutcomeUnknown
 	} else if slices.Contains(selectionStatuses, fbService.SelectionOutcomeBlack) { // if has any black, whole pred is black
 		status = fbService.SelectionOutcomeBlack

@@ -70,10 +70,10 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		Predictions:      predictions,
 		NumFollowers:     len(analyst.Followers),
 		TotalPredictions: len(analyst.Predictions),
-		WinningStreak:    winStreak,     // TODO
-		Accuracy:         accuracy, // TODO
-		RecentTotal:      nearX,         // TODO
-		RecentWins:       winX,          // TODO
+		WinningStreak:    winStreak,     
+		Accuracy:         accuracy, 
+		RecentTotal:      nearX,         
+		RecentWins:       winX,          
 	}
 	return
 }
