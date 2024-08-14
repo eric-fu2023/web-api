@@ -50,7 +50,7 @@ type OutgoingBet struct {
 	LeagueIcon   string `json:"league_icon"`
 	OptionName   string `json:"option_name"`
 	MatchName    string `json:"match_name"`
-	MatchTime    string `json:"match_time"`
+	MatchTime    int64  `json:"match_time"`
 	HomeName     string `json:"home_name"`
 	AwayName     string `json:"away_name"`
 	HomeIcon     string `json:"home_icon"`

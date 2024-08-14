@@ -242,6 +242,8 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 					if res[i].IsParlay {
 						outgoingBet.MatchName = res[i].BetType
 					}
+
+					outgoingBet.MatchTime = matchTime
 					res[i].Bet = outgoingBet
 				}
 			}
