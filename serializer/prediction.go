@@ -67,11 +67,11 @@ type OddsInfo struct {
 }
 
 type MarketGroupInfo struct {
-	MarketGroupType   int        `json:"mty"`
-	MarketGroupPeriod int        `json:"pe"`
-	MarketGroupName   string     `json:"nm"`
-	Mks               []OddsInfo `json:"mks"`
-	InternalIdentifier string      `json:"-"`
+	MarketGroupType    int        `json:"mty"`
+	MarketGroupPeriod  int        `json:"pe"`
+	MarketGroupName    string     `json:"nm"`
+	Mks                []OddsInfo `json:"mks"`
+	InternalIdentifier string     `json:"-"`
 }
 
 type LeagueInfo struct {
@@ -134,7 +134,29 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 
 		opList := make([]OddDetail, len(selection.FbOdds.RelatedOdds))
 
+		// for all odds related to the selection
 		for oddIdx, odd := range selection.FbOdds.RelatedOdds {
+			var oddStatus int
+			if slices.Contains(allSelectedOddsId, odd.ID) {
+				// if this odd is selected
+				// compute this odd's outcome 
+				idx := slices.IndexFunc(prediction.PredictionSelections, func(s model.PredictionSelection) bool {
+					return s.FbOdds.ID == selection.FbOdds.ID
+				})
+				target := prediction.PredictionSelections[idx]
+				reports := []ploutos.FbBetReport{}
+				for _, order := range target.FbOdds.FbOddsOrderRequestList {
+					reports = append(reports, order.FbBetReport)
+				}
+				outcome, err := fbService.ComputeOutcomeByOrderReport(reports)
+				if err != nil {
+					log.Printf("error calculating odds outcome")
+				}
+			
+				oddStatus = int(outcome)
+
+			}
+
 			opList[oddIdx] = OddDetail{
 				Na:       odd.OddsNameCN,
 				Nm:       odd.ShortNameCN,
@@ -143,7 +165,8 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Bod:      odd.Rate, // not sure
 				Odt:      int(odd.OddsFormat),
 				Li:       odd.OldNameCN,
-				Selected: slices.Contains(allSelectedOddsId, selection.FbOdds.ID),
+				Selected: slices.Contains(allSelectedOddsId, odd.ID),
+				Status:   oddStatus, // TODO
 			}
 		}
 		selectionStatus := GetSelectionStatus(selection)
@@ -156,16 +179,15 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		})
 
 		if mgListIdx == -1 {
-			// market group doesn't exist. add into list for the first time. 
+			// market group doesn't exist. add into list for the first time.
 			mgList = append(mgList, MarketGroupInfo{
-				MarketGroupType:   int(selection.FbOdds.MarketGroupType),
-				MarketGroupPeriod: int(selection.FbOdds.MarketGroupPeriod),
-				MarketGroupName:   selection.FbMatch.NameCn,
-				Mks:               mks,
+				MarketGroupType:    int(selection.FbOdds.MarketGroupType),
+				MarketGroupPeriod:  int(selection.FbOdds.MarketGroupPeriod),
+				MarketGroupName:    selection.FbMatch.NameCn,
+				Mks:                mks,
 				InternalIdentifier: marketGroupKey,
 			})
 		}
-
 
 		if selectionIdx == -1 {
 			selectionList = append(selectionList, FbSelectionInfo{
