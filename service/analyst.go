@@ -3,12 +3,15 @@ package service
 import (
 	"context"
 	"errors"
+	"sort"
 	"web-api/model"
 	"web-api/serializer"
 
 	"web-api/service/common"
 
 	"github.com/gin-gonic/gin"
+
+	fbService "blgit.rfdev.tech/taya/game-service/fb2/service"
 )
 
 type AnalystService struct {
@@ -162,6 +165,23 @@ type AnalystAchievementService struct {
 
 func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer.Response, err error) {
 	// TODO : get data to fill in
-	r.Data = serializer.BuildAnalystAchievement()
+	// get pred list the prediction list, --
+	// calculate the win/lose and store it in an array 
+	// pass the array to the builder 
+	// using the array, use the util func to calculate the result 
+
+	predictions, err := model.ListPredictions(model.ListPredictionCond{Page: 1, Limit: 99999, AnalystId: service.AnalystId, SportId: service.SportId})
+
+	// make sure the predictions is sorted (earliest first, latest last)
+	sort.Slice(predictions, func(i, j int) bool {
+		return predictions[i].CreatedAt.Before(predictions[j].CreatedAt)
+	})
+
+	predictionResults := make([]fbService.SelectionOutCome, len(predictions))
+	for i, pred := range predictions {
+		predictionResults[i] = serializer.GetPredictionStatus(pred) // FIXME : possible import cycle
+	}
+
+	r.Data = serializer.BuildAnalystAchievement(predictionResults)
 	return
 }
