@@ -1,13 +1,10 @@
 package serializer
 
 import (
-	"fmt"
 	"log"
 	"slices"
 	"time"
 	"web-api/model"
-
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 )
@@ -58,12 +55,11 @@ type OddDetail struct {
 
 type OddsInfo struct {
 	Op     []OddDetail `json:"op"`
-	ID     int         `json:"id"`
-	Ss     int         `json:"ss"`
-	Au     int         `json:"au"`
-	Mbl    int         `json:"mbl"`
-	Li     string      `json:"li"`
-	Status uint8       `json:"status"`
+	ID     int         `json:"-"`
+	Ss     int         `json:"-"`
+	Au     int         `json:"-"`
+	Mbl    int         `json:"-"`
+	Li     string      `json:"-"`
 }
 
 type MarketGroupInfo struct {
@@ -72,6 +68,7 @@ type MarketGroupInfo struct {
 	MarketGroupName    string     `json:"nm"`
 	Mks                []OddsInfo `json:"mks"`
 	InternalIdentifier string     `json:"-"`
+	Status int       `json:"status"`
 }
 
 type LeagueInfo struct {
@@ -111,6 +108,7 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
 	selectionList := []FbSelectionInfo{}
 
+	allMarketGroups := []fbService.MarketGroup{}
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
 	for i, selection := range prediction.PredictionSelections {
@@ -118,7 +116,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 	}
 
 	for _, selection := range prediction.PredictionSelections {
-		marketGroupKey := fmt.Sprintf("%d-%d-%d-%d-%s", selection.FbOdds.SportsID, selection.FbOdds.MatchID, selection.FbOdds.MarketGroupType, selection.FbOdds.MarketGroupPeriod, selection.FbOdds.MarketlineValue)
+		marketGroupKey := model.GenerateMarketGroupKeyFromSelection(selection)
 
 		selectionIdx := slices.IndexFunc(selectionList, func(s FbSelectionInfo) bool {
 			return s.ID == int(selection.FbMatch.MatchID)
@@ -133,28 +131,13 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 
 		opList := make([]OddDetail, len(selection.FbOdds.RelatedOdds))
-
 		// for all odds related to the selection
 		for oddIdx, odd := range selection.FbOdds.RelatedOdds {
-			var oddStatus int
-			if slices.Contains(allSelectedOddsId, odd.ID) {
-				// if this odd is selected
-				// compute this odd's outcome 
-				idx := slices.IndexFunc(prediction.PredictionSelections, func(s model.PredictionSelection) bool {
-					return s.FbOdds.ID == selection.FbOdds.ID
-				})
-				target := prediction.PredictionSelections[idx]
-				reports := []ploutos.FbBetReport{}
-				for _, order := range target.FbOdds.FbOddsOrderRequestList {
-					reports = append(reports, order.FbBetReport)
-				}
-				outcome, err := fbService.ComputeOutcomeByOrderReport(reports)
-				if err != nil {
-					log.Printf("error calculating odds outcome")
-				}
-			
-				oddStatus = int(outcome)
+			orders := model.GetOrderByOddFromSelection(selection, odd.ID)
+			oddStatus, err := fbService.ComputeOutcomeByOrderReportI(orders);
 
+			if err != nil {
+				log.Printf("error computing outcome for Odds [ID:%d]\n", odd.ID)
 			}
 
 			opList[oddIdx] = OddDetail{
@@ -166,12 +149,12 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Odt:      int(odd.OddsFormat),
 				Li:       odd.OldNameCN,
 				Selected: slices.Contains(allSelectedOddsId, odd.ID),
-				Status:   oddStatus, // TODO
+				Status:   int(oddStatus), 
 			}
 		}
-		selectionStatus := GetSelectionStatus(selection)
+
 		mks := []OddsInfo{
-			{Op: opList, Status: uint8(selectionStatus)},
+			{Op: opList},
 		}
 
 		mgListIdx := slices.IndexFunc(mgList, func(s MarketGroupInfo) bool {
@@ -180,12 +163,19 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 
 		if mgListIdx == -1 {
 			// market group doesn't exist. add into list for the first time.
+			marketGroup := model.GetMarketGroupOrdersByKeyFromPrediction(prediction, marketGroupKey)
+			marketgroupStatus, err := fbService.ComputeMarketGroupOutcomesByOrderReport(marketGroup)
+			if err != nil {
+				log.Printf("error computing marketgroup status")
+			}
+
 			mgList = append(mgList, MarketGroupInfo{
 				MarketGroupType:    int(selection.FbOdds.MarketGroupType),
 				MarketGroupPeriod:  int(selection.FbOdds.MarketGroupPeriod),
 				MarketGroupName:    selection.FbMatch.NameCn,
 				Mks:                mks,
 				InternalIdentifier: marketGroupKey,
+				Status: int(marketgroupStatus),
 			})
 		}
 
@@ -224,7 +214,11 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 	}
 
-	predictionStatus := GetPredictionStatus(prediction)
+	predictionStatus, err := fbService.ComputePredictionOutcomesByOrderReport(fbService.Prediction{MarketGroups: allMarketGroups}) 
+
+	if err != nil {
+		log.Println("error computing prediction outcome")
+	}
 
 	if omitAnalyst {
 		pred = Prediction{
@@ -264,37 +258,4 @@ func GetPredictionSportId(p model.Prediction) int64 {
 	} else {
 		return int64(p.PredictionSelections[0].FbMatch.SportsID)
 	}
-}
-
-func GetSelectionStatus(selection model.PredictionSelection) (status fbService.SelectionOutCome) {
-	reports := []ploutos.FbBetReport{}
-
-	for _, request := range selection.FbOdds.FbOddsOrderRequestList {
-		reports = append(reports, request.FbBetReport)
-	}
-
-	status, err := fbService.ComputeOutcomeByOrderReport(reports)
-	if err != nil {
-		status = fbService.SelectionOutcomeUnknown
-		log.Printf("error getting selection status id %d. %s\n", selection.ID, err.Error())
-	}
-	return
-}
-
-func GetPredictionStatus(prediction model.Prediction) (status fbService.SelectionOutCome) {
-	selectionStatuses := []fbService.SelectionOutCome{}
-
-	for _, selection := range prediction.PredictionSelections {
-		selectionOutcome := GetSelectionStatus(selection)
-		selectionStatuses = append(selectionStatuses, selectionOutcome)
-	}
-
-	if len(selectionStatuses) == 0 || slices.Contains(selectionStatuses, fbService.SelectionOutcomeUnknown) { // if has any unsettled, whole pred is unsettled
-		status = fbService.SelectionOutcomeUnknown
-	} else if slices.Contains(selectionStatuses, fbService.SelectionOutcomeBlack) { // if has any black, whole pred is black
-		status = fbService.SelectionOutcomeBlack
-	} else {
-		status = fbService.SelectionOutcomeRed
-	}
-	return
 }

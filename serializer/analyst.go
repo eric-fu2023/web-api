@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"log"
 	"web-api/model"
 	"web-api/util"
 
@@ -44,11 +45,16 @@ func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
 
 func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	predictions := make([]Prediction, len(analyst.Predictions))
-	statuses := make([]fbService.SelectionOutCome, len(analyst.Predictions))
+	statuses := make([]fbService.PredictionOutcome, len(analyst.Predictions))
 
 	for i, pred := range analyst.Predictions {
 		predictions[i] = BuildPrediction(pred, true, false)
-		statuses[i] = GetPredictionStatus(pred)
+		_pred := model.GetPredictionFromPrediction(pred)
+		outcome, err := fbService.ComputePredictionOutcomesByOrderReport(_pred) 
+		if err != nil {
+			log.Printf("error computing outcome of prediction[ID:%d]", pred.ID)
+		}
+		statuses[i] = outcome 
 	}
 
 	statusInBool, winCount := GetBoolOutcomes(statuses)
@@ -85,12 +91,12 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 	return
 }
 
-func BuildAnalystAchievement(results []fbService.SelectionOutCome) (resp Achievement) {
+func BuildAnalystAchievement(results []fbService.PredictionOutcome) (resp Achievement) {
 	// total predictions
 	numResults := len(results)
 
 	// win/lose for the last 10 predictions
-	var last10results []fbService.SelectionOutCome
+	var last10results []fbService.PredictionOutcome
 	if numResults > 10 {
 		last10results = results[numResults-10:]
 	} else {
@@ -129,14 +135,14 @@ func BuildFollowingAnalystIdsList(followings []model.UserAnalystFollowing) (resp
 	return
 }
 
-func GetBoolOutcomes(results []fbService.SelectionOutCome) (resultInBool []bool, winCount int) {
+func GetBoolOutcomes(results []fbService.PredictionOutcome) (resultInBool []bool, winCount int) {
 	resultInBool = []bool{}
 	winCount = 0
 	for _, result := range results {
-		if result == fbService.SelectionOutcomeRed {
+		if result == fbService.PredictionOutcomeOutcomeRed {
 			resultInBool = append(resultInBool, true)
 			winCount++
-		} else if result == fbService.SelectionOutcomeBlack {
+		} else if result == fbService.PredictionOutcomeOutcomeBlack {
 			resultInBool = append(resultInBool, false)
 		} else {
 			continue // dont consider unsetteled/unknown statuses
