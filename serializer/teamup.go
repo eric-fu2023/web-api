@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 	"web-api/model"
+	"web-api/model/avatar"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/jinzhu/copier"
@@ -52,6 +53,7 @@ type OtherTeamupContribution struct {
 	Nickname string `json:"nickname"`
 	Time     int64  `json:"time"`
 	Amount   int64  `json:"amount"`
+	Avatar   string `json:"avatar"`
 }
 
 func BuildTeamup(a models.Teamup) (res Teamup) {
@@ -95,6 +97,7 @@ func GenerateOtherTeamups(nicknames []string) (res []OtherTeamupContribution) {
 			Nickname: nicknames[i],
 			Time:     time.Now().UTC().Unix() + int64(rand.Intn(1799)) + 1,
 			Amount:   int64(rand.Intn(499) + 1),
+			Avatar:   avatar.GetRandomAvatarUrl(),
 		}
 		res = append(res, item)
 	}
