@@ -212,8 +212,8 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		}
 
 		promotionPage := serializer.CustomPromotionPage{
-			Title:       childPromotion.Name,
-			PromotionId: childPromotion.ID,
+			Title:       parentPromotion.Name,
+			PromotionId: parentPromotion.ID,
 		}
 
 		switch content.ListType {
