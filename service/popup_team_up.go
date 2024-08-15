@@ -22,6 +22,7 @@ type TeamUpService struct {
 }
 
 type TeamUpPopupResponse struct {
+	Id                 int64                   `json:"id"`
 	OrderId            string                  `json:"order_id"`
 	Status             int                     `json:"status"`
 	TotalTeamupDeposit int64                   `json:"total_deposit"`
@@ -71,6 +72,7 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 		teamup_type = 2
 	}
 	data = TeamUpPopupResponse{
+		Id:                 team_up.ID,
 		OrderId:            team_up.OrderId,
 		Status:             team_up.Status,
 		TotalTeamupDeposit: team_up.TotalTeamupDeposit / 100,
@@ -117,12 +119,12 @@ func GenerateMembersForTeamUpSuccess(user model.User, total_team_up_target int64
 	}
 	resp := make([]TeamUpPopupMemberInfo, 0)
 
-	team_up_ranking_param_a, err :=strconv.ParseInt(os.Getenv("TEAMUP_RANKING_PARAM_A"), 10, 64)
-	if err!=nil{
+	team_up_ranking_param_a, err := strconv.ParseInt(os.Getenv("TEAMUP_RANKING_PARAM_A"), 10, 64)
+	if err != nil {
 		fmt.Println("There is a error in strconv for min team up value, TEAMUP_RANKING_PARAM_A")
 	}
-	team_up_ranking_param_b, err :=strconv.ParseInt(os.Getenv("TEAMUP_RANKING_PARAM_B"), 10, 64)
-	if err!=nil{
+	team_up_ranking_param_b, err := strconv.ParseInt(os.Getenv("TEAMUP_RANKING_PARAM_B"), 10, 64)
+	if err != nil {
 		fmt.Println("There is a error in strconv for min team up value, TEAMUP_RANKING_PARAM_B")
 	}
 
@@ -146,8 +148,8 @@ func GenerateMembersForTeamUpSuccess(user model.User, total_team_up_target int64
 	})
 
 	ranking_lower_total_target := total_team_up_target - rand.Int63n(50)
-	team_up_min, err :=strconv.ParseInt(os.Getenv("TEAMUP_MIN"), 10, 64)
-	if err!=nil{
+	team_up_min, err := strconv.ParseInt(os.Getenv("TEAMUP_MIN"), 10, 64)
+	if err != nil {
 		fmt.Println("There is a error in strconv for min team up value, TEAMUP_MIN")
 	}
 	if ranking_lower_total_target < team_up_min {
