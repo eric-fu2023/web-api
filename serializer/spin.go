@@ -11,7 +11,7 @@ type Spin struct {
 	Button          string     `json:"button"`
 	Counts          int        `json:"counts"`
 	RemainingCounts int        `json:"remaining_counts"`
-	PromotionId     int8       `json:"promotion_id"`
+	PromotionId     int64       `json:"promotion_id"`
 	SpinItems       []SpinItem `json:"items"`
 }
 type SpinItem struct {
