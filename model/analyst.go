@@ -30,6 +30,9 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 		Preload("PredictionSource").
 		Preload("Followers").
 		Preload("Predictions").
+		Preload("Predictions.PredictionSelections").
+		Preload("Predictions.PredictionSelections.FbOdds").
+		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
 		Where("is_active", true).
 		Order("created_at DESC").
 		Order("id DESC")
@@ -53,6 +56,9 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 	err = db.
 		Preload("PredictionSource").
 		Preload("Predictions").
+		Preload("Predictions.PredictionSelections").
+		Preload("Predictions.PredictionSelections.FbOdds").
+		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
 		Preload("Followers").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").

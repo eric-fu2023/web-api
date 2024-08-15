@@ -3,9 +3,10 @@ package model
 import (
 	"errors"
 	"fmt"
+	"slices"
 
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 )
 
@@ -117,6 +118,17 @@ func GetMarketGroupOrdersByKeyFromPrediction(prediction Prediction, key string) 
 	return
 }
 
+func GetPredictionFromPrediction(prediction Prediction) (outPred fbService.Prediction) {
+	existingMgKeys := []string{}
+	for _, selection := range prediction.PredictionSelections {
+		mgKey := GenerateMarketGroupKeyFromSelection(selection)
+		if slices.Contains(existingMgKeys, mgKey) {
+			continue
+		}
+		outPred.MarketGroups = append(outPred.MarketGroups, GetMarketGroupOrdersByKeyFromPrediction(prediction, mgKey))
+	}
+	return 
+}
 /*
 one prediction has many selection
 one selection has one odd
