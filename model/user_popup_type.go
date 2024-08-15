@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 	"web-api/cache"
@@ -82,6 +83,7 @@ func ShouldPopupVIP(user User) (bool, error) {
 	return false,err
 }
 
+// here we only check if user has remaining counts.
 func ShouldPopupSpin(user User, spin_id int) (bool, error) {
 	// need to check if user has used all spin chances
 	now := time.Now()
@@ -92,22 +94,33 @@ func ShouldPopupSpin(user User, spin_id int) (bool, error) {
 	if errors.Is(err, logger.ErrRecordNotFound) {
 		// if spin result not found
 		err = nil
+		Shown(user)
 		return true, nil
 	}
 	var spin ploutos.Spins
 	err = DB.Model(ploutos.Spins{}).Where("id = ?", spin_id).Find(&spin).Error
 	// if not displayed today
-
 	if len(previous_spin_result) < spin.Counts {
+		Shown(user)
 		return true, nil
 	}
 	return false, nil
 
 }
 
-
 func GetPopupList(condition int64) (resp_list []ploutos.Popups, err error) {
 	err = DB.Model(ploutos.Popups{}).Where("condition = ?", condition).
 		Find(&resp_list).Error
+	return
+}
+
+func Shown(user User) ( err error) {
+	key := "popup/records/" + time.Now().Format("2006-01-02")
+	res := cache.RedisClient.HSet(context.Background(), key, user.ID, "5")
+	expire_time, err := strconv.Atoi(os.Getenv("POPUP_RECORD_EXPIRE_MINS"))
+	cache.RedisClient.ExpireNX(context.Background(), key, time.Duration(expire_time)*time.Minute)
+	if res.Err() != nil {
+		fmt.Print("insert win lose popup record into redis failed ", key)
+	}
 	return
 }
