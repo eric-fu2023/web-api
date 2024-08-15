@@ -32,11 +32,38 @@ type PopupFloat struct {
 }
 
 func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, err error) {
-	u, _ := c.Get("user")
-	user := u.(model.User)
 	// check what to popup
 	PopupTypes, err := model.GetPopupList(service.Condition)
 
+	u, isUser := c.Get("user")
+	if !isUser{
+		// if not login, show spin only
+		should_spin, spin_id := SpinAvailable(PopupTypes)
+		spin_id_int, _ := strconv.Atoi(spin_id)
+
+		var floats []PopupFloat
+
+		if should_spin {
+			floats = append(floats, PopupFloat{
+				Type: 5,
+				Id: spin_id_int,
+			})
+			spin_id_data := PopupSpinId{
+				SpinId: spin_id_int,
+			}
+			r.Data = PopupResponse{
+				Type:     5,
+				Float:    floats,
+				Data:     spin_id_data,
+			}
+			return r, err
+		}
+		r.Msg = "no popup available"
+		r.Data = PopupResponse{Type: -1,Float: floats}
+		return
+	}
+
+	user := u.(model.User)
 	floats, err := GetFloatWindow(user, PopupTypes)
 
 	// check redis which one has been popup
