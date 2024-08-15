@@ -56,12 +56,11 @@ type OddDetail struct {
 
 type OddsInfo struct {
 	Op     []OddDetail `json:"op"`
-	ID     int         `json:"id"`
-	Ss     int         `json:"ss"`
-	Au     int         `json:"au"`
-	Mbl    int         `json:"mbl"`
-	Li     string      `json:"li"`
-	Status uint8       `json:"status"`
+	ID     int         `json:"-"`
+	Ss     int         `json:"-"`
+	Au     int         `json:"-"`
+	Mbl    int         `json:"-"`
+	Li     string      `json:"-"`
 }
 
 type MarketGroupInfo struct {
@@ -70,6 +69,7 @@ type MarketGroupInfo struct {
 	MarketGroupName    string     `json:"nm"`
 	Mks                []OddsInfo `json:"mks"`
 	InternalIdentifier string     `json:"-"`
+	Status int       `json:"status"`
 }
 
 type LeagueInfo struct {
@@ -131,7 +131,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 
 		opList := make([]OddDetail, len(selection.FbOdds.RelatedOdds))
-
+		marketGroupOrders := []fbService.Selection{}
 		// for all odds related to the selection
 		for oddIdx, odd := range selection.FbOdds.RelatedOdds {
 			var oddStatus int
@@ -146,6 +146,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				for _, order := range target.FbOdds.FbOddsOrderRequestList {
 					reports = append(reports, order.FbBetReport)
 				}
+				marketGroupOrders = append(marketGroupOrders, fbService.Selection{Orders: reports})
 				outcome, err := fbService.ComputeOutcomeByOrderReportI(reports)
 				if err != nil {
 					log.Printf("error calculating odds outcome")
@@ -167,9 +168,9 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Status:   oddStatus, // TODO
 			}
 		}
-		selectionStatus := 0 // TODO 
+
 		mks := []OddsInfo{
-			{Op: opList, Status: uint8(selectionStatus)},
+			{Op: opList},
 		}
 
 		mgListIdx := slices.IndexFunc(mgList, func(s MarketGroupInfo) bool {
@@ -178,12 +179,23 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 
 		if mgListIdx == -1 {
 			// market group doesn't exist. add into list for the first time.
+
+			marketGroup := fbService.MarketGroup{
+				Selections: marketGroupOrders,
+				GroupType: selection.FbOdds.MarketGroupType,
+			}
+			marketgroupStatus, err := fbService.ComputeMarketGroupOutcomesByOrderReport(marketGroup)
+			if err != nil {
+				log.Printf("error computing marketgroup status")
+			}
+
 			mgList = append(mgList, MarketGroupInfo{
 				MarketGroupType:    int(selection.FbOdds.MarketGroupType),
 				MarketGroupPeriod:  int(selection.FbOdds.MarketGroupPeriod),
 				MarketGroupName:    selection.FbMatch.NameCn,
 				Mks:                mks,
 				InternalIdentifier: marketGroupKey,
+				Status: int(marketgroupStatus),
 			})
 		}
 
