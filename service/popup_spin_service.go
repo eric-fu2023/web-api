@@ -142,3 +142,21 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 	}
 	return
 }
+
+func (service *SpinService) GetRemainingSpinCount(user model.User, spin_id int) (remaining_counts int, err error) {
+	var spin ploutos.Spins
+	err = model.DB.Model(ploutos.Spins{}).Where("id = ?", spin_id).Find(&spin).Error
+	if err != nil {
+		return
+	}
+	now := time.Now()
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	var spin_results []ploutos.SpinResult
+	err = model.DB.Debug().Model(ploutos.SpinResult{}).Where("spin_id = ?", spin_id).Where("user_id = ?", user.ID).Where("created_at > ?", startOfToday).Find(&spin_results).Error
+	if err != nil {
+		return
+	}
+	spin_results_counts := len(spin_results)
+
+	return spin.Counts - spin_results_counts, err
+}
