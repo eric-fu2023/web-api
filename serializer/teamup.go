@@ -95,7 +95,7 @@ func GenerateOtherTeamups(nicknames []string) (res []OtherTeamupContribution) {
 	for i := 0; i < len(nicknames); i++ {
 		item := OtherTeamupContribution{
 			Nickname: nicknames[i],
-			Time:     time.Now().UTC().Unix() + int64(rand.Intn(1799)) + 1,
+			Time:     time.Now().UTC().Unix() - (int64(rand.Intn(1799)) + 1),
 			Amount:   int64(rand.Intn(499) + 1),
 			Avatar:   avatar.GetRandomAvatarUrl(),
 		}
