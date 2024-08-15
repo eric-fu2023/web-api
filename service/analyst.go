@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"sort"
 
 	"web-api/model"
@@ -171,9 +172,14 @@ func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer
 		return predictions[i].CreatedAt.Before(predictions[j].CreatedAt)
 	})
 
-	predictionResults := make([]fbService.SelectionOutCome, len(predictions))
+	predictionResults := make([]fbService.PredictionOutcome, len(predictions))
 	for i, pred := range predictions {
-		predictionResults[i] = serializer.GetPredictionStatus(pred) // FIXME : possible import cycle
+		_pred := model.GetPredictionFromPrediction(pred)
+		outcome, err := fbService.ComputePredictionOutcomesByOrderReport(_pred) 
+		if err != nil {
+			log.Printf("error computing outcome of prediction[ID:%d]", pred.ID)
+		}
+		predictionResults[i] =  outcome
 	}
 
 	r.Data = serializer.BuildAnalystAchievement(predictionResults)
