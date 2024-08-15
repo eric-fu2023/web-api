@@ -241,6 +241,13 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 			fmt.Println(err)
 		}
 
+		if len(incomingRequestAction.Fields) == 0 {
+			err = json.Unmarshal(parentPromotion.Action, &incomingRequestAction)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+
 		outgoingRequestAction := serializer.BuildPromotionAction(c, incomingRequestAction, childPromotion.ID, user.ID)
 		promotionPage.Action = outgoingRequestAction
 
