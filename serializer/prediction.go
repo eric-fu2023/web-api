@@ -109,6 +109,7 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
 	selectionList := []FbSelectionInfo{}
 
+	allMarketGroups := []fbService.MarketGroup{}
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
 	for i, selection := range prediction.PredictionSelections {
@@ -184,6 +185,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Selections: marketGroupOrders,
 				GroupType: selection.FbOdds.MarketGroupType,
 			}
+			allMarketGroups = append(allMarketGroups, marketGroup)
 			marketgroupStatus, err := fbService.ComputeMarketGroupOutcomesByOrderReport(marketGroup)
 			if err != nil {
 				log.Printf("error computing marketgroup status")
@@ -234,7 +236,11 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 	}
 
-	predictionStatus := 0 // TODO 
+	predictionStatus, err := fbService.ComputePredictionOutcomesByOrderReport(fbService.Prediction{MarketGroups: allMarketGroups}) 
+
+	if err != nil {
+		log.Println("error computing prediction outcome")
+	}
 
 	if omitAnalyst {
 		pred = Prediction{
