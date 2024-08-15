@@ -20,17 +20,24 @@ type PopupService struct {
 type PopupSpinId struct {
 	SpinId int `json:"spin_id"`
 }
-func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, err error) {
-	type PopupResponse struct {
-		Type     int         `json:"type"`
-		CanFloat bool        `json:"can_float"`
-		Data     interface{} `json:"data"`
-	}
+type PopupResponse struct {
+	Type  int          `json:"type"`
+	Float []PopupFloat `json:"float"`
+	Data  interface{}  `json:"data"`
+}
 
+type PopupFloat struct {
+	Type int64 `json:"type"`
+	Id   int `json:"id"`
+}
+
+func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, err error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 	// check what to popup
 	PopupTypes, err := model.GetPopupList(service.Condition)
+
+	floats, err := GetFloatWindow(user, PopupTypes)
 
 	// check redis which one has been popup
 	key := "popup/records/" + time.Now().Format("2006-01-02")
@@ -42,6 +49,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 	} else if res.Err() == redis.Nil {
 		// if no display record found in redis, start finding the popup window
 		shouldPopupWinLose, err := model.ShouldPopupWinLose(user)
+		fmt.Println("shouldPopupWinLose", shouldPopupWinLose)
 		if err != nil {
 			return r, err
 		}
@@ -50,13 +58,14 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			data, err := service.Get(c)
 			r.Data = PopupResponse{
 				Type:     1,
-				CanFloat: WinLoseFloat(PopupTypes),
+				Float: floats,
 				Data:     data,
 			}
 			return r, err
 		}
 
 		shouldPopupTeamUp, err := model.ShouldPopupTeamUp(user)
+		fmt.Println("shouldPopupTeamUp", shouldPopupTeamUp)
 		if err != nil {
 			return r, err
 		}
@@ -65,18 +74,18 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			data, err := service.Get(c)
 			r.Data = PopupResponse{
 				Type:     data.Type,
-				CanFloat: false,
+				Float: floats,
 				Data:     data,
 			}
 			return r, err
 		}
 
 		ShouldVIP, err := model.ShouldPopupVIP(user)
+		fmt.Println("ShouldVIP", ShouldVIP)
 		if err != nil {
 			return r, err
 		}
 		if ShouldVIP && VIPAvailable(PopupTypes) {
-			fmt.Println("redis.Nil ShouldPopupVIP")
 			var service VipService
 			data, err := service.Get(c)
 			if err != nil {
@@ -84,25 +93,27 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			}
 			r.Data = PopupResponse{
 				Type:     4,
-				CanFloat: VIPFloat(PopupTypes),
+				Float: floats,
 				Data:     data,
 			}
 			return r, err
 		}
 
-		should_spin, spin_id :=SpinAvailable(PopupTypes)
+		should_spin, spin_id := SpinAvailable(PopupTypes)
 		spin_id_int, _ := strconv.Atoi(spin_id)
 		ShouldPopupSpin, err := model.ShouldPopupSpin(user, spin_id_int)
+		fmt.Println("ShouldPopupSpin", ShouldPopupSpin)
+		fmt.Println("should_spin", should_spin)
 		if err != nil {
 			return r, err
 		}
-		if ShouldPopupSpin &&  should_spin{
+		if ShouldPopupSpin && should_spin {
 			spin_id_data := PopupSpinId{
 				SpinId: spin_id_int,
 			}
 			r.Data = PopupResponse{
 				Type:     5,
-				CanFloat: VIPFloat(PopupTypes),
+				Float: floats,
 				Data:     spin_id_data,
 			}
 			return r, err
@@ -123,7 +134,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				data, err := service.Get(c)
 				r.Data = PopupResponse{
 					Type:     1,
-					CanFloat: WinLoseFloat(PopupTypes),
+					Float: floats,
 					Data:     data,
 				}
 				return r, err
@@ -140,7 +151,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				data, err := service.Get(c)
 				r.Data = PopupResponse{
 					Type:     data.Type,
-					CanFloat: false,
+					Float: floats,
 					Data:     data,
 				}
 				return r, err
@@ -152,19 +163,18 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				return r, err
 			}
 			if ShouldVIP && VIPAvailable(PopupTypes) {
-				fmt.Println("ShouldPopupVIP")
 				var service VipService
 				data, err := service.Get(c)
 				r.Data = PopupResponse{
 					Type:     4,
-					CanFloat: VIPFloat(PopupTypes),
+					Float: floats,
 					Data:     data,
 				}
 				return r, err
 			}
 		}
 		if redisPopup < 5 {
-			should_spin, spin_id :=SpinAvailable(PopupTypes)
+			should_spin, spin_id := SpinAvailable(PopupTypes)
 			spin_id_int, _ := strconv.Atoi(spin_id)
 			ShouldPopupSpin, err := model.ShouldPopupSpin(user, spin_id_int)
 			if err != nil {
@@ -176,7 +186,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				}
 				r.Data = PopupResponse{
 					Type:     5,
-					CanFloat: VIPFloat(PopupTypes),
+					Float: floats,
 					Data:     spin_id_data,
 				}
 				return r, err
@@ -184,7 +194,34 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		}
 	}
 	r.Msg = "no popup available"
-	r.Data = PopupResponse{Type: -1}
+	r.Data = PopupResponse{Type: -1,Float: floats}
+	return
+}
+
+
+
+func GetFloatWindow(user model.User, popup_types []models.Popups) (floats []PopupFloat, err error){
+	for _, popup_type := range popup_types{
+		if popup_type.CanFloat{
+			if popup_type.PopupType == 5{
+				// spin popup float
+				var service SpinService
+				spin_id_int, _ := strconv.Atoi(popup_type.Meta)
+				// check if user still has spin chances
+				remaining_spin_counts, err := service.GetRemainingSpinCount(user, spin_id_int)
+				if err != nil {
+					return nil, err
+				}
+				if remaining_spin_counts > 0{
+					// user still can spin, then we add the spin popup to float list.
+					floats=append(floats, PopupFloat{
+						Type: 5,
+						Id:spin_id_int,
+					})
+				}
+			}
+		}
+	}
 	return
 }
 
@@ -216,10 +253,10 @@ func VIPAvailable(popups []models.Popups) bool {
 func SpinAvailable(popups []models.Popups) (bool, string) {
 	for _, popup := range popups {
 		if popup.PopupType == 5 {
-			return true,popup.Meta // Found a popup with PopupType == 4
+			return true, popup.Meta // Found a popup with PopupType == 4
 		}
 	}
-	return false,"" // No popup with PopupType == 4 was found
+	return false, "" // No popup with PopupType == 4 was found
 }
 
 func WinLoseFloat(popups []models.Popups) bool {
