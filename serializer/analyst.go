@@ -78,6 +78,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 }
 
 func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst) {
+	resp = []Analyst{}
 	for _, a := range followings {
 		resp = append(resp, BuildAnalystDetail(a.Analyst))
 	}
