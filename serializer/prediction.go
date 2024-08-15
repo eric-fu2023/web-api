@@ -7,8 +7,6 @@ import (
 	"time"
 	"web-api/model"
 
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 )
 
@@ -144,11 +142,11 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 					return s.FbOdds.ID == selection.FbOdds.ID
 				})
 				target := prediction.PredictionSelections[idx]
-				reports := []ploutos.FbBetReport{}
+				reports := []fbService.SelectionOrder{}
 				for _, order := range target.FbOdds.FbOddsOrderRequestList {
 					reports = append(reports, order.FbBetReport)
 				}
-				outcome, err := fbService.ComputeOutcomeByOrderReport(reports)
+				outcome, err := fbService.ComputeOutcomeByOrderReportI(reports)
 				if err != nil {
 					log.Printf("error calculating odds outcome")
 				}
@@ -169,7 +167,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Status:   oddStatus, // TODO
 			}
 		}
-		selectionStatus := GetSelectionStatus(selection)
+		selectionStatus := 0 // TODO 
 		mks := []OddsInfo{
 			{Op: opList, Status: uint8(selectionStatus)},
 		}
@@ -224,7 +222,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 	}
 
-	predictionStatus := GetPredictionStatus(prediction)
+	predictionStatus := 0 // TODO 
 
 	if omitAnalyst {
 		pred = Prediction{
@@ -266,35 +264,35 @@ func GetPredictionSportId(p model.Prediction) int64 {
 	}
 }
 
-func GetSelectionStatus(selection model.PredictionSelection) (status fbService.SelectionOutCome) {
-	reports := []ploutos.FbBetReport{}
+// func GetSelectionStatus(selection model.PredictionSelection) (status fbService.SelectionOutCome) {
+// 	reports := []ploutos.FbBetReport{}
 
-	for _, request := range selection.FbOdds.FbOddsOrderRequestList {
-		reports = append(reports, request.FbBetReport)
-	}
+// 	for _, request := range selection.FbOdds.FbOddsOrderRequestList {
+// 		reports = append(reports, request.FbBetReport)
+// 	}
 
-	status, err := fbService.ComputeOutcomeByOrderReport(reports)
-	if err != nil {
-		status = fbService.SelectionOutcomeUnknown
-		log.Printf("error getting selection status id %d. %s\n", selection.ID, err.Error())
-	}
-	return
-}
+// 	status, err := fbService.ComputeOutcomeByOrderReport(reports)
+// 	if err != nil {
+// 		status = fbService.SelectionOutcomeUnknown
+// 		log.Printf("error getting selection status id %d. %s\n", selection.ID, err.Error())
+// 	}
+// 	return
+// }
 
-func GetPredictionStatus(prediction model.Prediction) (status fbService.SelectionOutCome) {
-	selectionStatuses := []fbService.SelectionOutCome{}
+// func GetPredictionStatus(prediction model.Prediction) (status fbService.SelectionOutCome) {
+// 	selectionStatuses := []fbService.SelectionOutCome{}
 
-	for _, selection := range prediction.PredictionSelections {
-		selectionOutcome := GetSelectionStatus(selection)
-		selectionStatuses = append(selectionStatuses, selectionOutcome)
-	}
+// 	for _, selection := range prediction.PredictionSelections {
+// 		selectionOutcome := GetSelectionStatus(selection)
+// 		selectionStatuses = append(selectionStatuses, selectionOutcome)
+// 	}
 
-	if len(selectionStatuses) == 0 || slices.Contains(selectionStatuses, fbService.SelectionOutcomeUnknown) { // if has any unsettled, whole pred is unsettled
-		status = fbService.SelectionOutcomeUnknown
-	} else if slices.Contains(selectionStatuses, fbService.SelectionOutcomeBlack) { // if has any black, whole pred is black
-		status = fbService.SelectionOutcomeBlack
-	} else {
-		status = fbService.SelectionOutcomeRed
-	}
-	return
-}
+// 	if len(selectionStatuses) == 0 || slices.Contains(selectionStatuses, fbService.SelectionOutcomeUnknown) { // if has any unsettled, whole pred is unsettled
+// 		status = fbService.SelectionOutcomeUnknown
+// 	} else if slices.Contains(selectionStatuses, fbService.SelectionOutcomeBlack) { // if has any black, whole pred is black
+// 		status = fbService.SelectionOutcomeBlack
+// 	} else {
+// 		status = fbService.SelectionOutcomeRed
+// 	}
+// 	return
+// }

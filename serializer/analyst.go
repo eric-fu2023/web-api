@@ -48,7 +48,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 
 	for i, pred := range analyst.Predictions {
 		predictions[i] = BuildPrediction(pred, true, false)
-		statuses[i] = GetPredictionStatus(pred)
+		statuses[i] = 0 // TODO 
 	}
 
 	statusInBool, winCount := GetBoolOutcomes(statuses)

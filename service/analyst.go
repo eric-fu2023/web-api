@@ -172,8 +172,8 @@ func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer
 	})
 
 	predictionResults := make([]fbService.SelectionOutCome, len(predictions))
-	for i, pred := range predictions {
-		predictionResults[i] = serializer.GetPredictionStatus(pred) // FIXME : possible import cycle
+	for i, _ := range predictions {
+		predictionResults[i] = 0 // TODO  // FIXME : possible import cycle
 	}
 
 	r.Data = serializer.BuildAnalystAchievement(predictionResults)
