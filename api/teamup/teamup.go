@@ -39,9 +39,9 @@ func ListAllTeamUp(c *gin.Context) {
 }
 
 func OtherTeamups(c *gin.Context) {
-	var service service.TeamupService
+	var service service.DummyTeamupsService
 	if err := c.ShouldBind(&service); err == nil {
-		res, _ := service.List(c)
+		res, _ := service.OtherTeamupList(c)
 		c.JSON(200, res)
 	} else {
 		c.JSON(400, api.ErrorResponse(c, service, err))
