@@ -208,10 +208,10 @@ func NewRouter() *gin.Engine {
 		v1.GET("/featured_games", middleware.Cache(5*time.Minute, false), game_integration_api.FeaturedGames)
 
 		// v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Second, false), promotion_api.GetCoverList)
-		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(1*time.Minute, false), promotion_api.GetCoverList)
+		v1.GET("/promotion/list", middleware.CheckAuth(), promotion_api.GetCoverList)
 		// v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
 		v1.GET("/promotion/details", middleware.CheckAuth(), promotion_api.GetDetail)
-		v1.GET("/promotion/custom-details", middleware.RequestLogger("get custom promotion details"), promotion_api.GetCustomDetail)
+		v1.GET("/promotion/custom-details", middleware.CheckAuth(), middleware.RequestLogger("get custom promotion details"), promotion_api.GetCustomDetail)
 		v1.GET("/promotion/categories", middleware.CheckAuth(), middleware.Cache(5*time.Minute, false), promotion_api.GetCategoryList)
 
 		v1.GET("/rtc_token", middleware.CheckAuth(), api.RtcToken)

@@ -135,7 +135,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 	var parentPromotion models.Promotion
 	var childPromotion models.Promotion
 
-	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
+	promotion, err := model.PromotionGetActiveNoCheckStartEnd(c, brand, p.ID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return

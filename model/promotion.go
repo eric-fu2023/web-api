@@ -18,8 +18,13 @@ func PromotionGetActive(c context.Context, brandID int, promotionID int64, now t
 	return
 }
 
+func PromotionGetActiveNoCheckStartEnd(c context.Context, brandID int, promotionID int64, now time.Time) (p models.Promotion, err error) {
+	err = DB.Debug().WithContext(c).Where("brand_id = ? or brand_id = 0", brandID).Where("is_active").Where("id", promotionID).First(&p).Error
+	return
+}
+
 func PromotionGetSubActive(c context.Context, brandID int, promotionID int64, now time.Time) (p []models.Promotion, err error) {
-	err = DB.Debug().WithContext(c).Where("brand_id = ? or brand_id = 0", brandID).Where("is_active").Where("parent_id", promotionID).Scopes(Ongoing(now, "start_at", "end_at")).Find(&p).Error
+	err = DB.Debug().WithContext(c).Where("brand_id = ? or brand_id = 0", brandID).Where("is_active").Where("parent_id", promotionID).Find(&p).Error
 	return
 }
 
