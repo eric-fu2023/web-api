@@ -84,10 +84,8 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 }
 
 func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst) {
-	// FIXME : preload will return default if analyst not exist.. for now, filter away id = 0
 	resp = []Analyst{}
 	for _, a := range followings {
-		if (a.ID == 0) {continue}
 		resp = append(resp, BuildAnalystDetail(a.Analyst))
 	}
 	return

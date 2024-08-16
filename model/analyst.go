@@ -73,6 +73,7 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 	err = DB.
 		Scopes(Paginate(page, limit)).
 		Preload("Analyst").
+		Preload("Analyst.PredictionAnalystSource").
 		Preload("Analyst.PredictionAnalystFollowers").
 		Preload("Analyst.Predictions", "is_published = ?", true).
 		Joins("JOIN prediction_analysts on user_analyst_following.analyst_id = prediction_analysts.id").
