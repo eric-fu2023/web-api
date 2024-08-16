@@ -147,7 +147,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 			return
 		}
 
-		var leagueIcon, homeIcon, awayIcon string
+		var leagueIcon, homeIcon, awayIcon, leagueName string
 
 		if len(br.Bets) > 0 {
 			_, ok := br.Bets[0].(ploutos.BetFb)
@@ -158,6 +158,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 				if err == nil {
 					fmt.Print(matchDetail)
 					leagueIcon = matchDetail.Data.League.LeagueIconUrl
+					leagueName = matchDetail.Data.League.Name
 
 					if len(matchDetail.Data.Teams) > 1 {
 						homeIcon = matchDetail.Data.Teams[0].LogoUrl
@@ -176,6 +177,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		teamup.LeagueIcon = leagueIcon
 		teamup.HomeIcon = homeIcon
 		teamup.AwayIcon = awayIcon
+		teamup.LeagueName = leagueName
 
 		err = model.SaveTeamup(teamup)
 	}
@@ -308,7 +310,7 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 					outgoingBet.HomeIcon = res[i].HomeIcon
 					outgoingBet.AwayIcon = res[i].AwayIcon
 
-					outgoingBet.LeagueName = "欧美中联赛"
+					outgoingBet.LeagueName = res[i].LeagueName
 
 					if res[i].IsParlay {
 						outgoingBet.MatchName = res[i].BetType

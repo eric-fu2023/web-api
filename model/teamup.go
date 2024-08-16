@@ -25,6 +25,7 @@ type TeamupCustomRes []struct {
 	BetType             string  `json:"bet_type"`
 	TotalFakeProgress   int64   `json:"total_fake_progress"`
 	LeagueIcon          string  `json:"league_icon"`
+	LeagueName          string  `json:"league_name"`
 	HomeIcon            string  `json:"home_icon"`
 	AwayIcon            string  `json:"away_icon"`
 	Status              int64   `json:"status"`
@@ -46,6 +47,7 @@ type OutgoingTeamupCustomRes []struct {
 	Bet                 OutgoingBet `json:"bet"`
 	TotalFakeProgress   int64       `json:"total_fake_progress"`
 	LeagueIcon          string      `json:"league_icon"`
+	LeagueName          string      `json:"league_name"`
 	HomeIcon            string      `json:"home_icon"`
 	AwayIcon            string      `json:"away_icon"`
 	Status              int64       `json:"status"`
