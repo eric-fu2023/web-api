@@ -208,9 +208,10 @@ func NewRouter() *gin.Engine {
 		v1.GET("/featured_games", middleware.Cache(5*time.Minute, false), game_integration_api.FeaturedGames)
 
 		// v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(5*time.Second, false), promotion_api.GetCoverList)
-		v1.GET("/promotion/list", middleware.CheckAuth(), middleware.Cache(1*time.Minute, false), promotion_api.GetCoverList)
+		v1.GET("/promotion/list", middleware.CheckAuth(), promotion_api.GetCoverList)
 		// v1.GET("/promotion/details", middleware.CheckAuth(), middleware.CacheForGuest(5*time.Minute), promotion_api.GetDetail)
 		v1.GET("/promotion/details", middleware.CheckAuth(), promotion_api.GetDetail)
+		v1.GET("/promotion/custom-details", middleware.CheckAuth(), middleware.RequestLogger("get custom promotion details"), promotion_api.GetCustomDetail)
 		v1.GET("/promotion/categories", middleware.CheckAuth(), middleware.Cache(5*time.Minute, false), promotion_api.GetCategoryList)
 
 		v1.GET("/rtc_token", middleware.CheckAuth(), api.RtcToken)
@@ -220,8 +221,8 @@ func NewRouter() *gin.Engine {
 		popup := v1.Group("/popup")
 		{
 			popup.GET("/show", middleware.CheckAuth(), api.Show)
-			popup.GET("/spin_items", api.SpinItems)
-			popup.GET("/spin_result", middleware.CheckAuth(), api.SpinResult)
+			popup.GET("/spin", middleware.CheckAuth(), api.Spin)
+			popup.GET("/spin_result", middleware.AuthRequired(true, true), api.SpinResult)
 		}
 
 		pm := v1.Group("/pm")
@@ -366,7 +367,6 @@ func NewRouter() *gin.Engine {
 				{
 					promotion.GET("/list", middleware.Cache(1*time.Minute, false), promotion_api.GetCoverList)
 					promotion.GET("/details", middleware.RequestLogger("get promotion details"), promotion_api.GetDetail)
-					promotion.GET("/custom-details", middleware.RequestLogger("get custom promotion details"), promotion_api.GetCustomDetail)
 					promotion.POST("/claim", middleware.RequestLogger("promotion claim"), promotion_api.PromotionClaim)
 					promotion.POST("/join", middleware.RequestLogger("promotion join"), promotion_api.PromotionJoin)
 				}
@@ -399,7 +399,9 @@ func NewRouter() *gin.Engine {
 
 		prediction := v1.Group("/prediction", middleware.CheckAuth())
 		{
+			prediction.GET("", prediction_api.GetPredictionDetail)
 			prediction.GET("list", prediction_api.ListPredictions)
+			prediction.POST("add", prediction_api.AddUserPrediction)
 		}
 
 		analyst := v1.Group("/analyst", middleware.CheckAuth())
@@ -408,11 +410,21 @@ func NewRouter() *gin.Engine {
 			analyst.GET("/list", analyst_api.ListAnalysts)
 			analyst.GET("/following", middleware.AuthRequired(true, true), analyst_api.ListFollowingAnalysts)
 			analyst.POST("/following", middleware.AuthRequired(true, true), analyst_api.ToggleFollowAnalyst)
+			analyst.GET("/following-ids", middleware.AuthRequired(true, true), analyst_api.GetFollowingAnalystIdsList)
+			analyst.GET("/achievement", analyst_api.GetAnalystAchievement)
 		}
 
-		teamup := v1.Group("/teamup")
+		teamup := v1.Group("/teamup", middleware.CheckAuth())
 		{
-			teamup.GET("/chop", middleware.AuthRequired(true, false), teamup_api.ChopBet)
+			teamup.GET("/", middleware.AuthRequired(true, false), teamup_api.GetTeamUpItem)
+			teamup.GET("/detail", teamup_api.GetTeamUpItem)
+			teamup.GET("/start", middleware.AuthRequired(true, false), teamup_api.StartTeamUp)
+			teamup.GET("/list", middleware.AuthRequired(true, false), teamup_api.ListAllTeamUp)
+			teamup.GET("/others", teamup_api.OtherTeamups)
+			teamup.GET("/contribute/list", teamup_api.ContributedList)
+			teamup.POST("/slash", middleware.AuthRequired(true, false), teamup_api.SlashBet)
+
+			teamup.POST("/testdeposit", teamup_api.TestDeposit)
 		}
 
 		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)

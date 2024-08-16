@@ -38,7 +38,7 @@ type IncomingPromotionMatchListItem struct {
 	RedirectType string                               `json:"redirect_type"`
 	Img          string                               `json:"img"`
 	Name         string                               `json:"name"`
-	Time         time.Time                            `json:"time"`
+	Time         time.Time                            `json:"open_time"`
 }
 
 type IncomingPromotionMatchListItemTeam struct {
@@ -55,20 +55,20 @@ type IncomingPromotionRequestAction struct {
 }
 
 type IncomingCustomPromotionRequestField struct {
-	Hint        string              `json:"hint"`
-	Type        string              `json:"type"`
-	Title       string              `json:"title"`
-	InputId     int                 `json:"input_id"`
-	Switch      int                 `json:"switch"`
-	Options     []map[string]string `json:"option"`
-	X           string              `json:"x"`
-	Weightage   int                 `json:"weightage"`
-	ErrorHint   string              `json:"error_hint,omitempty"`
-	OrderType   string              `json:"order_type"`
-	ContentType string              `json:"content_type"`
-	OrderStatus string              `json:"order_status"`
-	MaxClick    string              `json:"max_click"`
-	RedirectCs  bool                `json:"redirect_cs"`
+	Hint         string              `json:"hint"`
+	Type         string              `json:"type"`
+	Title        string              `json:"title"`
+	InputId      int                 `json:"input_id"`
+	Switch       int                 `json:"switch"`
+	Options      []map[string]string `json:"option"`
+	X            string              `json:"x"`
+	Weightage    int                 `json:"weightage"`
+	ErrorHint    string              `json:"error_hint,omitempty"`
+	OrderType    string              `json:"order_type"`
+	ContentType  string              `json:"content_type"`
+	OrderStatus  string              `json:"order_status"`
+	MaxClick     string              `json:"max_click"`
+	RedirectType int                 `json:"redirect_type"`
 }
 
 type OutgoingCustomPromotionDetail struct {
@@ -90,6 +90,7 @@ type CustomPromotionDetail struct {
 type CustomPromotionPage struct {
 	Title            string                    `json:"title"`
 	PromotionId      int64                     `json:"promotion_id"`
+	LoginStatus      int64                     `json:"login_status"`
 	PageItemListType int64                     `json:"list_type"`
 	PageItemList     []CustomPromotionPageItem `json:"list"`
 	Desc             []CustomPromotionPageDesc `json:"desc"`
@@ -124,9 +125,10 @@ type CustomPromotionPageDesc struct {
 }
 
 type CustomPromotionRequest struct {
-	Title       string                        `json:"title"`
-	IsSubmitted bool                          `json:"is_submitted"`
-	Fields      []CustomPromotionRequestField `json:"fields"`
+	Title        string                        `json:"title"`
+	IsSubmitted  bool                          `json:"is_submitted"`
+	Fields       []CustomPromotionRequestField `json:"fields"`
+	RedirectType int64                         `json:"redirect_type"`
 }
 
 type CustomPromotionRequestField struct {
@@ -141,6 +143,7 @@ type CustomPromotionRequestField struct {
 	Options     []CustomPromotionRequestDropdown `json:"options"`
 	IntegerOnly bool                             `json:"integer_only"`
 	ErrorMsg    string                           `json:"error_msg"`
+	// RedirectType int                              `json:"redirect_type"`
 }
 
 type CustomPromotionRequestDropdown struct {
@@ -165,15 +168,15 @@ func BuildCustomPromotionDetail(progress, reward int64, platform string, p model
 		StartAt:                p.StartAt.Unix(),
 		EndAt:                  p.EndAt.Unix(),
 		ResetAt:                s.EndAt.Unix(),
-		Type:                   p.Type,
-		RewardType:             p.RewardType,
-		RecurringDay:           p.RecurringDay,
-		RewardDistributionType: p.RewardDistributionType,
+		Type:                   int64(p.Type),
+		RewardType:             int64(p.RewardType),
+		RecurringDay:           int64(p.RecurringDay),
+		RewardDistributionType: int64(p.RewardDistributionType),
 		ClaimStatus:            cl,
 		PromotionProgress:      BuildPromotionProgress(progress, p.GetRewardDetails()),
 		Reward:                 float64(reward) / 100,
 		Voucher:                v,
-		Category:               p.Category,
+		Category:               int64(p.Category),
 		IsVipAssociated:        p.VipAssociated,
 		DisplayOnly:            p.DisplayOnly,
 		Extra:                  extra,
@@ -225,6 +228,18 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 
 	res.Title = incoming.Title
 
+	if userId == 0 {
+		res.Title = "立即参与，享受专属福利！"
+		res.RedirectType = models.CustomPromotionButtonRedirectTypeLogin
+		res.Fields = append(res.Fields, CustomPromotionRequestField{
+			Title: "立即登录，抢先参与",
+			Text:  "立即登录，抢先参与",
+			Type:  "button",
+		})
+
+		return
+	}
+
 	for _, incomingField := range incoming.Fields {
 		if incomingField.Switch == 0 {
 			continue
@@ -241,14 +256,19 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 		if requestField.Type == "button" {
 			requestField.Text = requestField.Title
 
-			isExceeded, err := ParseButtonClickOption(c, incomingField, promotionId, userId)
-			if err != nil {
-				fmt.Println(err)
-			}
+			if incomingField.RedirectType == 0 {
+				isExceeded, err := ParseButtonClickOption(c, incomingField, promotionId, userId)
+				if err != nil {
+					fmt.Println(err)
+				}
 
-			res.IsSubmitted = isExceeded
-			if res.IsSubmitted {
-				res.Title = "感谢您的参与！"
+				res.IsSubmitted = isExceeded
+				if res.IsSubmitted {
+					res.Title = "感谢您的参与！"
+				}
+			} else {
+				// requestField.RedirectType = incomingField.RedirectType
+				res.RedirectType = int64(incomingField.RedirectType)
 			}
 		}
 

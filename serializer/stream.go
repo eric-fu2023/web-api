@@ -1,12 +1,13 @@
 package serializer
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"math/rand"
 	"web-api/model"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 type Stream struct {
@@ -28,6 +29,7 @@ type Stream struct {
 	Width                int64                  `json:"width,omitempty"`
 	Height               int64                  `json:"height,omitempty"`
 	MgRoomId             *string                `json:"mg_room_id,omitempty"`
+	LiveChatGroupId                string                 `json:"live_chat_group_id"`
 	Match                *Match                 `json:"match,omitempty"`
 	Streamer             *Streamer              `json:"streamer,omitempty"`
 }
@@ -47,6 +49,7 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 		Width:                a.Width,
 		Height:               a.Height,
 		MgRoomId:             a.MgRoomId,
+		LiveChatGroupId: a.LiveChatGroupId,
 	}
 	if a.ImgUrl != "" {
 		b.ImgUrl = Url(a.ImgUrl)

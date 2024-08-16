@@ -2,20 +2,27 @@ package service
 
 import (
 	"context"
+	"errors"
+	"log"
+	"sort"
+
 	"web-api/model"
 	"web-api/serializer"
-
 	"web-api/service/common"
+
+	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AnalystService struct {
 	common.Page
+	SportId int64 `json:"sport_id" form:"sport_id"`
 }
 
 type FollowToggle struct {
-	AnalystId   int64 `json:"analyst_id" form:"analyst_id"`
+	AnalystId int64 `json:"analyst_id" form:"analyst_id"`
 	// IsFollowing bool  `json:"is_following" form:"is_following"`
 }
 
@@ -35,13 +42,14 @@ func (p AnalystService) GetAnalystList(c *gin.Context) (r serializer.Response, e
 	// }
 	// r.Data = serializer.BuildAnalystList(analysts)
 
-	data, err := model.Analyst{}.List(p.Page.Page, p.Limit)
+	data, err := model.Analyst{}.List(p.Page.Page, p.Limit, p.SportId)
 
 	if err != nil {
 		r = serializer.DBErr(c, p, "", err)
+		return
 	}
 
-	r.Data = serializer.BuildAnalysts(data)
+	r.Data = serializer.BuildAnalystsList(data)
 
 	return
 }
@@ -55,15 +63,17 @@ func (service FollowToggle) FollowAnalystToggle(c *gin.Context) (r serializer.Re
 		user = u.(model.User)
 	}
 
-	// TODO: Check If Analyst Exist
+	exist, err := model.AnalystExist(service.AnalystId)
 
-	// analyst, err := model.GetAnalyst(c, service.AnalystId)
-	// if analyst.Id == 0 || err != nil {
-	// 	if err != nil {
-	// 		r = serializer.Err(c, "analyst", serializer.CodeGeneralError, "", err)
-	// 		return
-	// 	}
-	// }
+	if err != nil {
+		r = serializer.Err(c, "analyst", serializer.CodeGeneralError, "", err)
+		return
+	}
+
+	if !exist {
+		r = serializer.Err(c, "analyst", serializer.CodeGeneralError, "", errors.New("analyst does not exist"))
+		return
+	}
 
 	following, err := model.GetFollowingAnalystStatus(c, user.ID, service.AnalystId)
 	if err != nil {
@@ -84,8 +94,13 @@ func (service FollowToggle) FollowAnalystToggle(c *gin.Context) (r serializer.Re
 		return
 	}
 
-	following.IsDeleted = !following.IsDeleted
-	err = model.UpdateUserFollowAnalystStatus(following)
+	if (following.DeletedAt == gorm.DeletedAt{}) {
+		model.SoftDeleteUserFollowAnalyst(following)
+	} else {
+		model.RestoreUserFollowAnalyst(following)
+	}
+
+	// err = model.UpdateUserFollowAnalystStatus(following)
 	if err != nil {
 		r = serializer.Err(c, "analyst", serializer.CodeGeneralError, "", err)
 		return
@@ -114,6 +129,25 @@ func (p AnalystService) GetFollowingAnalystList(c *gin.Context) (r serializer.Re
 	return
 }
 
+type FollowingAnalystIdsService struct{}
+
+func (p FollowingAnalystIdsService) GetIds(c *gin.Context) (r serializer.Response, err error) {
+	u, _ := c.Get("user")
+
+	user := model.User{}
+	if u != nil {
+		user = u.(model.User)
+	}
+
+	followings, err := model.GetFollowingAnalystList(c, user.ID, 1, 99999)
+	if err != nil {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		return
+	}
+	r.Data = serializer.BuildFollowingAnalystIdsList(followings)
+	return
+}
+
 type AnalystDetailService struct {
 	Id int64 `json:"analyst_id" form:"analyst_id"`
 }
@@ -123,10 +157,37 @@ func (service AnalystDetailService) GetAnalyst(c *gin.Context) (r serializer.Res
 
 	if err != nil {
 		r = serializer.DBErr(c, service, "", err)
-		return 
+		return
 	}
 
 	r.Data = serializer.BuildAnalystDetail(data)
 
+	return
+}
+
+type AnalystAchievementService struct {
+	AnalystId int64 `json:"analyst_id" form:"analyst_id"`
+	SportId   int64 `json:"sport_id" form:"sport_id"`
+}
+
+func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer.Response, err error) {
+	predictions, err := model.ListPredictions(model.ListPredictionCond{Page: 1, Limit: 99999, AnalystId: service.AnalystId, SportId: service.SportId})
+
+	// make sure the predictions is sorted (earliest first, latest last)
+	sort.Slice(predictions, func(i, j int) bool {
+		return predictions[i].CreatedAt.Before(predictions[j].CreatedAt)
+	})
+
+	predictionResults := make([]fbService.PredictionOutcome, len(predictions))
+	for i, pred := range predictions {
+		_pred := model.GetPredictionFromPrediction(pred)
+		outcome, err := fbService.ComputePredictionOutcomesByOrderReport(_pred) 
+		if err != nil {
+			log.Printf("error computing outcome of prediction[ID:%d]", pred.ID)
+		}
+		predictionResults[i] =  outcome
+	}
+
+	r.Data = serializer.BuildAnalystAchievement(predictionResults)
 	return
 }

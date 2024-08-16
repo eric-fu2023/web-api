@@ -16,7 +16,7 @@ func Show(c *gin.Context){
 	}
 }
 
-func SpinItems(c *gin.Context) {
+func Spin(c *gin.Context) {
 	var service service.SpinService
 	if err := c.ShouldBind(&service); err == nil {
 		res, _ := service.Get(c)

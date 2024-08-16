@@ -1,34 +1,27 @@
 package serializer
 
-import "web-api/model"
+import (
+	"web-api/model"
+)
 
 type UserPrediction struct {
 	PredictionId int64 `json:"prediction_id"`
 }
 
-func BuildUserPredictionsList(predictions []model.UserPrediction, newPredictions []int64, maxElems int) []UserPrediction {
-	var resp []UserPrediction
-	for _, pred := range predictions {
-		if len(resp) >= maxElems {break}
-		resp = append(resp, UserPrediction{
-			PredictionId: pred.PredictionId,
-		})
-	}
-	for _, predId := range newPredictions {
-		if len(resp) >= maxElems {break}
-		resp = append(resp, UserPrediction{
-			PredictionId: predId,
-		})
+func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.UserPrediction) []Prediction {
+	// Create a map to quickly check if a PredictionId is in userPreds
+	userPredMap := make(map[uint]bool, len(userPreds))
+	for _, up := range userPreds {
+		userPredMap[uint(up.PredictionId)] = true
 	}
 
-	return resp
-}
+	// Build the list of predictions
+	ls := make([]Prediction, len(preds))
+	for i, pred := range preds {
+		_, exist := userPredMap[uint(pred.ID)] // If PredictionId exists in userPredMap, locked will be true
 
-func BuildPredictions(userPreds []model.UserPrediction) []Prediction {
-	preds := []Prediction{}
-
-	for _, userPred := range userPreds {
-		preds = append(preds, Prediction{PredictionId: userPred.PredictionId, AnalystId: userPred.Prediction.AnalystId, PredictionTitle: userPred.Prediction.PredictionTitle, PredictionDesc: userPred.Prediction.PredictionDesc, IsLocked: userPred.IsLocked})
+		ls[i] = BuildPrediction(pred, false, !exist)
 	}
-	return preds
+
+	return ls
 }

@@ -1,8 +1,9 @@
 package serializer
 
 import (
-	"github.com/gin-gonic/gin"
 	"web-api/model"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Streamer struct {
@@ -18,6 +19,7 @@ type Streamer struct {
 	LiveStream        *Stream           `json:"live,omitempty"`
 	StreamerGalleries []StreamerGallery `json:"gallery,omitempty"`
 	Tags              []UserTag         `json:"tags,omitempty"`
+	HasJackpot        bool              `json:"has_jackpot"`
 }
 
 func BuildStreamer(c *gin.Context, a model.Streamer) (b Streamer) {

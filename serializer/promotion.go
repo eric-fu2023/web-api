@@ -11,6 +11,7 @@ import (
 type PromotionCover struct {
 	ID                     int64           `json:"id"`
 	Name                   string          `json:"name"`
+	Title                  string          `json:"title"`
 	Description            json.RawMessage `json:"description"`
 	Image                  string          `json:"image"`
 	StartAt                int64           `json:"start_at"`
@@ -24,6 +25,7 @@ type PromotionCover struct {
 	DisplayOnly            bool            `json:"display_only"`
 	ParentId               int64           `json:"parent_id"`
 	IsCustom               bool            `json:"is_custom"`
+	SubpageContent         json.RawMessage `json:"subpage_content"`
 
 	ChildrenPromotions []PromotionCover `json:"children_promotions"`
 }
@@ -102,14 +104,16 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 		Image:                  Url(image),
 		StartAt:                p.StartAt.Unix(),
 		EndAt:                  p.EndAt.Unix(),
-		Type:                   p.Type,
-		RewardType:             p.RewardType,
-		RewardDistributionType: p.RewardDistributionType,
-		Category:               p.Category,
-		Label:                  p.Label,
+		Type:                   int64(p.Type),
+		RewardType:             int64(p.RewardType),
+		RewardDistributionType: int64(p.RewardDistributionType),
+		Category:               int64(p.Category),
+		Label:                  int64(p.Label),
 		IsVipAssociated:        p.VipAssociated,
 		DisplayOnly:            p.DisplayOnly,
 		ParentId:               p.ParentId,
+
+		SubpageContent: p.SubpageContent,
 	}
 }
 
@@ -130,15 +134,15 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		StartAt:                p.StartAt.Unix(),
 		EndAt:                  p.EndAt.Unix(),
 		ResetAt:                s.EndAt.Unix(),
-		Type:                   p.Type,
-		RewardType:             p.RewardType,
-		RecurringDay:           p.RecurringDay,
-		RewardDistributionType: p.RewardDistributionType,
+		Type:                   int64(p.Type),
+		RewardType:             int64(p.RewardType),
+		RecurringDay:           int64(p.RecurringDay),
+		RewardDistributionType: int64(p.RewardDistributionType),
 		ClaimStatus:            cl,
 		PromotionProgress:      BuildPromotionProgress(progress, p.GetRewardDetails()),
 		Reward:                 float64(reward) / 100,
 		Voucher:                v,
-		Category:               p.Category,
+		Category:               int64(p.Category),
 		IsVipAssociated:        p.VipAssociated,
 		DisplayOnly:            p.DisplayOnly,
 		Extra:                  extra,

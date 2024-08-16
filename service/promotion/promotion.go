@@ -3,6 +3,7 @@ package promotion
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 	"web-api/model"
 	"web-api/serializer"
@@ -31,8 +32,12 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 	brand := c.MustGet(`_brand`).(int)
 	deviceInfo, _ := util.GetDeviceInfo(c)
 
-	// u, loggedIn := c.Get("user")
-	// user := u.(model.User)
+	u, _ := c.Get("user")
+	var user model.User
+	if u != nil {
+		user = u.(model.User)
+	}
+
 	list, err := model.PromotionList(c, brand, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -41,11 +46,26 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 	parentIdToPromotionMap := make(map[int64][]serializer.PromotionCover)
 	promotionCoverList := []serializer.PromotionCover{}
 	for _, promotion := range list {
+
+		// Skip if not allow device.platform
+		if len(promotion.DisplayDevices) != 0 {
+			s := string(promotion.DisplayDevices)
+			if !strings.Contains(s, string(models.PromotionDevice[deviceInfo.Platform])) {
+				continue
+			}
+		}
+
 		promotionCover := serializer.BuildPromotionCover(promotion, deviceInfo.Platform)
 		if promotionCover.ParentId != 0 {
+			content := serializer.IncomingPromotionMatchList{}
+			_ = json.Unmarshal(promotionCover.SubpageContent, &content)
+			promotionCover.Name = content.Title
+			promotionCover.Title = content.Title
 			parentIdToPromotionMap[promotion.ParentId] = append(parentIdToPromotionMap[promotion.ParentId], promotionCover)
 		} else {
-			promotionCoverList = append(promotionCoverList, promotionCover)
+			if promotion.LoginStatus == int32(models.CustomPromotionLoginStatusAny) || (promotion.LoginStatus == int32(models.CustomPromotionLoginStatusLogin) && user.ID != 0) {
+				promotionCoverList = append(promotionCoverList, promotionCover)
+			}
 		}
 	}
 
@@ -129,7 +149,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 	var parentPromotion models.Promotion
 	var childPromotion models.Promotion
 
-	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
+	promotion, err := model.PromotionGetActiveNoCheckStartEnd(c, brand, p.ID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
@@ -170,11 +190,38 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 
 		for _, subPromo := range subPromotions {
 			outgoingRes.IsCustomPromotion = true
+			incomingMatchList := serializer.IncomingPromotionMatchList{}
+			_ = json.Unmarshal(subPromo.SubpageContent, &incomingMatchList)
+
+			if incomingMatchList.Title == "" {
+				continue
+			}
 			outgoingRes.ChildrenPromotions = append(outgoingRes.ChildrenPromotions, serializer.OutgoingCustomPromotionPreview{
 				Id:    subPromo.ID,
-				Title: subPromo.Name,
+				Title: incomingMatchList.Title,
 			})
 		}
+
+		promotionPage := serializer.CustomPromotionPage{
+			Title:       parentPromotion.Name,
+			PromotionId: parentPromotion.ID,
+		}
+
+		if childPromotion.Action == nil {
+			childPromotion.Action = parentPromotion.Action
+			childPromotion.ID = parentPromotion.ID
+		}
+
+		incomingRequestAction := serializer.IncomingPromotionRequestAction{}
+		err = json.Unmarshal(childPromotion.Action, &incomingRequestAction)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		outgoingRequestAction := serializer.BuildPromotionAction(c, incomingRequestAction, childPromotion.ID, user.ID)
+		promotionPage.Action = outgoingRequestAction
+
+		outgoingRes.PromotionInfo = promotionPage
 	} else {
 		// IS CHILD
 		var content serializer.IncomingPromotionMatchList
@@ -185,8 +232,8 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		}
 
 		promotionPage := serializer.CustomPromotionPage{
-			Title:       childPromotion.Name,
-			PromotionId: childPromotion.ID,
+			Title:       parentPromotion.Name,
+			PromotionId: parentPromotion.ID,
 		}
 
 		switch content.ListType {
@@ -212,6 +259,13 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		err = json.Unmarshal(childPromotion.Action, &incomingRequestAction)
 		if err != nil {
 			fmt.Println(err)
+		}
+
+		if len(incomingRequestAction.Fields) == 0 {
+			err = json.Unmarshal(parentPromotion.Action, &incomingRequestAction)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 
 		outgoingRequestAction := serializer.BuildPromotionAction(c, incomingRequestAction, childPromotion.ID, user.ID)

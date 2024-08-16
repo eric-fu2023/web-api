@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 	"web-api/cache"
@@ -176,12 +177,16 @@ const (
 )
 
 func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.BaseResponse, err error) {
+	log.Printf("CallbackBalance fb.BalanceCallback() ... %#v \n", req)
 	gpu, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["fb"], req.MerchantUserId)
+
 	if err != nil {
+		log.Printf("CallbackBalance fb.BalanceCallback() err %#v gpu %v, balance %v \n", err, gpu, balance)
 		return
 	}
 	currency, err := strconv.Atoi(gpu.ExternalCurrency)
 	if err != nil {
+		log.Printf("CallbackBalance fb.BalanceCallback() ExternalCurrency err %#v gpu %v, balance %v \n", err, gpu, balance)
 		return
 	}
 	data := callback.BalanceResponse{
@@ -192,6 +197,7 @@ func BalanceCallback(c *gin.Context, req callback.BalanceRequest) (res callback.
 		Code: 0,
 		Data: []callback.BalanceResponse{data},
 	}
+	log.Printf("CallbackBalance fb.BalanceCallback() END currency err %#v data %v, res %v \n", err, data, res)
 	return
 }
 
