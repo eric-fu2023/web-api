@@ -45,18 +45,18 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 	db := preloadPredictions()
 	db = db.
 		Scopes(Paginate(cond.Page, cond.Limit)).
-		Where("tips_analyst_predictions.deleted_at IS NULL").
-		Where("tips_analyst_predictions.is_active", true).
-		Joins("left join tips_analyst_prediction_selections on tips_analyst_prediction_selections.prediction_id = tips_analyst_predictions.id").
-		Joins("left join fb_matches on tips_analyst_prediction_selections.match_id = fb_matches.match_id").
-		Group("tips_analyst_predictions.id")
+		Where("prediction_articles.deleted_at IS NULL").
+		Where("prediction_articles.is_published", true).
+		Joins("left join prediction_article_bets on prediction_article_bets.article_id = prediction_articles.id").
+		Joins("left join fb_matches on prediction_article_bets.fb_match_id = fb_matches.match_id").
+		Group("prediction_articles.id")
 
 	if cond.AnalystId != 0 {
-		db = db.Where("tips_analyst_predictions.analyst_id", cond.AnalystId)
+		db = db.Where("prediction_articles.analyst_id", cond.AnalystId)
 	}
 
 	if cond.FbMatchId != 0 {
-		db = db.Where("tips_analyst_prediction_selections.match_id = ?", cond.FbMatchId)
+		db = db.Where("prediction_article_bets.match_id = ?", cond.FbMatchId)
 	}
 
 	if cond.SportId != 0 {
@@ -71,7 +71,7 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 func GetPrediction(predictionId int64) (pred Prediction, err error) {
 	err = preloadPredictions().
 		Where("deleted_at IS NULL").
-		Where("is_active", true).
+		Where("is_published", true).
 		Where("id = ?", predictionId).
 		First(&pred).Error
 	return
