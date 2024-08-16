@@ -14,6 +14,7 @@ import (
 	"web-api/util/i18n"
 
 	"github.com/jinzhu/copier"
+	"gorm.io/gorm"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	// fbService "blgit.rfdev.tech/taya/game-service/fb2/client/"
@@ -34,6 +35,11 @@ type GetTeamupService struct {
 	OrderId  string `form:"order_id" json:"order_id"`
 	TeamupId int64  `form:"teamup_id" json:"teamup_id"`
 	common.PageNoBinding
+}
+
+type TestDepositService struct {
+	UserId        int64 `form:"user_id" json:"user_id"`
+	DepositAmount int64 `form:"deposit_amount" json:"deposit_amount"`
 }
 
 type DummyTeamupsService struct {
@@ -316,6 +322,43 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 		}
 	}
+
+	return
+}
+
+func (s TestDepositService) TestDeposit(c *gin.Context) (r serializer.Response, err error) {
+
+	slashMultiplierString, _ := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
+	slashMultiplier, _ := strconv.Atoi(slashMultiplierString)
+
+	// Convert cash amount into slash progress by dividing multiplier
+	contributedSlashProgress := s.DepositAmount / int64(slashMultiplier)
+
+	err = updateTeamupProgress(s.UserId, s.DepositAmount, contributedSlashProgress)
+
+	return
+}
+
+func updateTeamupProgress(userId, amount, slashProgress int64) (err error) {
+	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+		teamupEntry, err := model.FindOngoingTeamupEntriesByUserId(userId)
+		if err != nil {
+			return
+		}
+
+		err = model.UpdateFirstTeamupEntryProgress(teamupEntry.ID, amount, slashProgress)
+
+		if err != nil {
+			return
+		}
+
+		err = model.UpdateTeamupProgress(teamupEntry.TeamupId, amount, slashProgress)
+
+		if err != nil {
+			return
+		}
+		return
+	})
 
 	return
 }

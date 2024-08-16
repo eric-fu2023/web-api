@@ -165,31 +165,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
 
 	// 查看是否有砍单记录，添加进度到砍单任务
-	slashMultiplierString, _ := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
-	slashMultiplier, _ := strconv.Atoi(slashMultiplierString)
-
-	// Convert cash amount into slash progress by dividing multiplier
-	contributedSlashProgress := cashOrder.AppliedCashInAmount / int64(slashMultiplier)
-
-	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
-		teamupEntry, err := model.FindOngoingTeamupEntriesByUserId(user.ID)
-		if err != nil {
-			return
-		}
-
-		err = model.UpdateFirstTeamupEntryProgress(teamupEntry.ID, cashOrder.AppliedCashInAmount, contributedSlashProgress)
-
-		if err != nil {
-			return
-		}
-
-		err = model.UpdateTeamupProgress(teamupEntry.TeamupId, cashOrder.AppliedCashInAmount, contributedSlashProgress)
-
-		if err != nil {
-			return
-		}
-		return
-	})
+	err = calculateTeamupSlashProgress(cashOrder, user.ID)
 
 	return
 }
@@ -237,4 +213,39 @@ func processCashInMethod(m model.CashMethod) (err error) {
 		return errors.New("cash method not permitted")
 	}
 	return nil
+}
+
+func calculateTeamupSlashProgress(cashOrder model.CashOrder, userId int64) (err error) {
+	slashMultiplierString, _ := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
+	slashMultiplier, _ := strconv.Atoi(slashMultiplierString)
+
+	// Convert cash amount into slash progress by dividing multiplier
+	contributedSlashProgress := cashOrder.AppliedCashInAmount / int64(slashMultiplier)
+	err = updateTeamupProgress(userId, cashOrder.AppliedCashInAmount, contributedSlashProgress)
+
+	return
+}
+
+func updateTeamupProgress(userId, amount, slashProgress int64) (err error) {
+	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+		teamupEntry, err := model.FindOngoingTeamupEntriesByUserId(userId)
+		if err != nil {
+			return
+		}
+
+		err = model.UpdateFirstTeamupEntryProgress(teamupEntry.ID, amount, slashProgress)
+
+		if err != nil {
+			return
+		}
+
+		err = model.UpdateTeamupProgress(teamupEntry.TeamupId, amount, slashProgress)
+
+		if err != nil {
+			return
+		}
+		return
+	})
+
+	return
 }

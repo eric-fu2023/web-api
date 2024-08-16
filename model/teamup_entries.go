@@ -63,7 +63,7 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 
 	teamup, _ := GetTeamUpByTeamUpId(teamupId)
 
-	if teamup.UserId == userId || teamup.TeamupEndTime > time.Now().UTC().Unix() {
+	if teamup.UserId == userId || teamup.TeamupEndTime < time.Now().UTC().Unix() {
 		return false, fmt.Errorf("unable to slash bet")
 	}
 
@@ -168,7 +168,7 @@ func FindOngoingTeamupEntriesByUserId(userId int64) (res ploutos.TeamupEntry, er
 			Select("teamup_entries.*"). // Select fields from the teamup_entries table
 			Joins("JOIN teamups ON teamups.id = teamup_entries.teamup_id").
 			Where("teamup_entries.user_id = ?", userId).
-			Where("teamup.status = 0").
+			Where("teamups.status = 0").
 			Order("teamup_entries.created_at ASC").
 			First(&res) // Fetch the first matching record
 

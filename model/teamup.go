@@ -154,7 +154,7 @@ func UpdateTeamupProgress(teamupId, amount, slashAmount int64) error {
 			"total_teamup_deposit":      gorm.Expr("total_teamup_deposit + ?", slashAmount),
 		}
 
-		if err := tx.Table("teamup").
+		if err := tx.Table("teamups").
 			Where("id = ?", teamupId).
 			Limit(1).
 			Updates(updates).Error; err != nil {

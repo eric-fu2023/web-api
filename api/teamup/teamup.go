@@ -67,3 +67,13 @@ func SlashBet(c *gin.Context) {
 		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }
+
+func TestDeposit(c *gin.Context) {
+	var service service.TestDepositService
+	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
+		res, _ := service.TestDeposit(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
