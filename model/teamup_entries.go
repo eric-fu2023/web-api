@@ -112,6 +112,7 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
 		isSuccessTeamup = true
 		teamup.Status = int(ploutos.TeamupStatusSuccess)
+		teamup.TeamupCompletedTime = time.Now().UTC().Unix()
 		err = DB.Transaction(func(tx *gorm.DB) (err error) {
 			err = tx.Save(&teamup).Error
 			return
