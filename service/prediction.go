@@ -8,7 +8,6 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,7 +15,7 @@ type PredictionListService struct {
 	common.Page
 	AnalystId int64 `json:"analyst_id" form:"analyst_id"`
 	FbMatchId int64 `json:"fb_match_id" form:"fb_match_id"`
-	SportId int64 `json:"sports_id" form:"sports_id"`
+	SportId   int64 `json:"sports_id" form:"sports_id"`
 }
 
 func (service *PredictionListService) List(c *gin.Context) (r serializer.Response, err error) {
@@ -52,7 +51,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 
 		if err != nil {
 			r = serializer.DBErr(c, service, i18n.T("general_error"), err)
-			return 
+			return
 		}
 
 		if hasPaymentToday {
@@ -106,30 +105,36 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 }
 
 type PredictionDetailService struct {
-	PredictionId int64 	`json:"prediction_id" form:"prediction_id"`
+	PredictionId int64 `json:"prediction_id" form:"prediction_id"`
 }
 
 func (service *PredictionDetailService) GetDetail(c *gin.Context) (r serializer.Response, err error) {
+
 	data, err := model.GetPrediction(service.PredictionId)
 
 	// if (service.PredictionId == 8) {
 	// 	var jsonData map[string]interface{}
 	// 	err = json.Unmarshal([]byte(dummyJson), &jsonData)
 	// 	if err != nil {
-	// 		return 
+	// 		return
 	// 	}
 	// 	r.Data = jsonData
-	// 	return 
+	// 	return
 	// }
 
 	if err != nil {
 		r = serializer.DBErr(c, service, "", err)
-		return 
+		return
+	}
+
+	if err = model.IncreasePredictionViewCountBy1(data); err != nil {
+		r = serializer.DBErr(c, service, "", err)
+		return
 	}
 
 	r.Data = serializer.BuildPrediction(data, false, false)
 
-	return 
+	return
 }
 
 type AddUserPredictionService struct {

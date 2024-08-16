@@ -99,7 +99,7 @@ func GetOrderByOddFromSelection(selection PredictionSelection, oddId int64) (rep
 	return
 }
 
-func GenerateMarketGroupKeyFromSelection(selection PredictionSelection) (string) {
+func GenerateMarketGroupKeyFromSelection(selection PredictionSelection) string {
 	marketGroupKey := fmt.Sprintf("%d-%d-%d-%d-%s", selection.FbOdds.SportsID, selection.FbOdds.MatchID, selection.FbOdds.MarketGroupType, selection.FbOdds.MarketGroupPeriod, selection.FbOdds.MarketlineValue)
 	return marketGroupKey
 }
@@ -129,14 +129,12 @@ func GetPredictionFromPrediction(prediction Prediction) (outPred fbService.Predi
 		}
 		outPred.MarketGroups = append(outPred.MarketGroups, GetMarketGroupOrdersByKeyFromPrediction(prediction, mgKey))
 	}
-	return 
+	return
 }
-/*
-one prediction has many selection
-one selection has one odd
-one odd has many orderRequest - one orderRequest has one fbReport ∴ one odd has one fbReport
 
-one prediction has many match 
-one match has many market group 
-one market group has many odd
-*/
+func IncreasePredictionViewCountBy1(prediction Prediction) error {
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		return tx.Model(&prediction.PredictionArticle).Update("Views", prediction.Views + 1).Error
+	})
+	return err
+}
