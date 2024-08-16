@@ -38,7 +38,7 @@ func preloadPredictions() *gorm.DB {
 		Preload("PredictionSelections.FbMatch.HomeTeam").
 		Preload("PredictionSelections.FbMatch.AwayTeam").
 		Joins("join prediction_analysts on prediction_analysts.id = prediction_articles.analyst_id").
-		Where("prediction_analysts.is_active", true)
+		Where("prediction_analysts.is_active", true).Where("prediction_analysts.deleted_at IS null")
 	// Preload("AnalystDetail.Followers").
 	// Preload("AnalystDetail.Predictions").
 }
