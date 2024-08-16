@@ -28,7 +28,7 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 	db = db.
 		Preload("PredictionAnalystSource").
 		Preload("PredictionAnalystFollowers").
-		Preload("Predictions").
+		Preload("Predictions", "is_published = ?", true).
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
@@ -54,7 +54,7 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 	db := DB.Where("id", id)
 	err = db.
 		Preload("PredictionAnalystSource").
-		Preload("Predictions").
+		Preload("Predictions", "is_published = ?", true).
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
@@ -72,7 +72,7 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 		Scopes(Paginate(page, limit)).
 		Preload("Analyst").
 		Preload("Analyst.PredictionAnalystFollowers").
-		Preload("Analyst.Predictions").
+		Preload("Analyst.Predictions", "is_published = ?", true).
 		WithContext(c).
 		Where("user_id = ?", userId).Where("is_deleted = ?", false).
 		Find(&followings).Error
