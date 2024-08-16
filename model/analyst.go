@@ -10,10 +10,10 @@ import (
 )
 
 type Analyst struct {
-	ploutos.TipsAnalyst
+	ploutos.PredictionAnalyst
 
 	Predictions []Prediction                   `gorm:"foreignKey:AnalystId;references:ID"`
-	Followers   []ploutos.UserAnalystFollowing `gorm:"foreignKey:AnalystId;references:ID"`
+	Followers   []ploutos.PredictionAnalystFollower `gorm:"foreignKey:AnalystId;references:ID"`
 	AnalystSport 		AnalystSport 					`gorm:"foreignKey:ID;references:AnalystId"`
 }
 
@@ -27,7 +27,7 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 	db := DB.Scopes(Paginate(page, limit))
 
 	db = db.
-		Preload("PredictionSource").
+		Preload("PredictionAnalystSource").
 		Preload("Followers").
 		Preload("Predictions").
 		Preload("Predictions.PredictionSelections").
@@ -54,7 +54,7 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 func (Analyst) GetDetail(id int) (target Analyst, err error) {
 	db := DB.Where("id", id)
 	err = db.
-		Preload("PredictionSource").
+		Preload("PredictionAnalystSource").
 		Preload("Predictions").
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").

@@ -11,9 +11,9 @@ import (
 )
 
 type Prediction struct {
-	ploutos.TipsAnalystPrediction
+	ploutos.PredictionArticle
 
-	PredictionSelections []PredictionSelection `gorm:"foreignKey:PredictionId;references:ID"`
+	PredictionSelections []PredictionSelection `gorm:"foreignKey:ArticleId;references:ID"`
 	AnalystDetail        Analyst               `gorm:"foreignKey:AnalystId;references:ID"`
 }
 
@@ -33,7 +33,7 @@ func preloadPredictions() *gorm.DB {
 		Preload("PredictionSelections.FbMatch").
 		Preload("PredictionSelections.FbMatch.LeagueInfo").
 		Preload("AnalystDetail").
-		Preload("AnalystDetail.PredictionSource").
+		Preload("AnalystDetail.PredictionAnalystSource").
 		Preload("PredictionSelections.FbMatch.HomeTeam").
 		Preload("PredictionSelections.FbMatch.AwayTeam")
 	// Preload("AnalystDetail.Followers").

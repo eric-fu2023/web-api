@@ -68,10 +68,10 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 
 	resp = Analyst{
 		AnalystId:        analyst.ID,
-		AnalystName:      analyst.Name,
-		AnalystSource:    Source{Name: analyst.PredictionSource.SourceName, Icon: analyst.PredictionSource.IconUrl},
-		AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
-		AnalystDesc:      analyst.Desc,
+		AnalystName:      analyst.AnalystName,
+		AnalystSource:    Source{Name: analyst.PredictionAnalystSource.SourceName, Icon: analyst.PredictionAnalystSource.IconUrl},
+		AnalystImage:     analyst.AvatarUrl,
+		AnalystDesc:      analyst.AnalystDesc,
 		Predictions:      predictions,
 		NumFollowers:     len(analyst.Followers),
 		TotalPredictions: len(analyst.Predictions),
