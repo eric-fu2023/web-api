@@ -1,8 +1,6 @@
 package model
 
 import (
-	"time"
-
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
@@ -90,7 +88,7 @@ func GetTeamUp(orderId string) (teamup ploutos.Teamup, err error) {
 	return
 }
 
-func GetAllTeamUps(userId int64, status []int, page, limit int, start time.Time, end time.Time) (res TeamupCustomRes, err error) {
+func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64) (res TeamupCustomRes, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		tx = tx.Table("teamups").Select("teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
 			Joins("left join bet_report on teamups.order_id = bet_report.business_id")
@@ -101,7 +99,7 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start time.Time,
 			tx = tx.Where("teamups.status in ?", status)
 		}
 
-		if !start.IsZero() && !end.IsZero() {
+		if start != 0 && end != 0 {
 			tx = tx.Where(`teamup_end_time >= ?`, start).Where(`teamup_end_time <= ?`, end)
 		}
 

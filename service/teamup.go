@@ -39,16 +39,16 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	var start, end time.Time
+	var start, end int64
 	loc := c.MustGet("_tz").(*time.Location)
 	if s.Start != "" {
 		if v, e := time.ParseInLocation(time.DateOnly, s.Start, loc); e == nil {
-			start = v.UTC().Add(-10 * time.Minute)
+			start = v.UTC().Add(-10 * time.Minute).Unix()
 		}
 	}
 	if s.End != "" {
 		if v, e := time.ParseInLocation(time.DateOnly, s.End, loc); e == nil {
-			end = v.UTC().Add(24*time.Hour - 1*time.Second).Add(-10 * time.Minute)
+			end = v.UTC().Add(24*time.Hour - 1*time.Second).Add(-10 * time.Minute).Unix()
 		}
 	}
 
