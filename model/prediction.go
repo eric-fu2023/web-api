@@ -36,7 +36,9 @@ func preloadPredictions() *gorm.DB {
 		Preload("AnalystDetail").
 		Preload("AnalystDetail.PredictionAnalystSource").
 		Preload("PredictionSelections.FbMatch.HomeTeam").
-		Preload("PredictionSelections.FbMatch.AwayTeam")
+		Preload("PredictionSelections.FbMatch.AwayTeam").
+		Joins("join prediction_analysts on prediction_analysts.id = prediction_articles.analyst_id").
+		Where("prediction_analysts.is_active", true)
 	// Preload("AnalystDetail.Followers").
 	// Preload("AnalystDetail.Predictions").
 }
@@ -46,11 +48,11 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 	db := preloadPredictions()
 	db = db.
 		Scopes(Paginate(cond.Page, cond.Limit)).
-		Where("prediction_articles.deleted_at IS NULL").
 		Where("prediction_articles.is_published", true).
 		Joins("left join prediction_article_bets on prediction_article_bets.article_id = prediction_articles.id").
 		Joins("left join fb_matches on prediction_article_bets.fb_match_id = fb_matches.match_id").
-		Group("prediction_articles.id")
+		Group("prediction_articles.id").
+		Order("prediction_articles.created_at DESC")
 
 	if cond.AnalystId != 0 {
 		db = db.Where("prediction_articles.analyst_id", cond.AnalystId)
@@ -71,9 +73,8 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 
 func GetPrediction(predictionId int64) (pred Prediction, err error) {
 	err = preloadPredictions().
-		Where("deleted_at IS NULL").
 		Where("is_published", true).
-		Where("id = ?", predictionId).
+		Where("prediction_articles.id = ?", predictionId).
 		First(&pred).Error
 	return
 }
@@ -98,7 +99,7 @@ func GetOrderByOddFromSelection(selection PredictionSelection, oddId int64) (rep
 	return
 }
 
-func GenerateMarketGroupKeyFromSelection(selection PredictionSelection) (string) {
+func GenerateMarketGroupKeyFromSelection(selection PredictionSelection) string {
 	marketGroupKey := fmt.Sprintf("%d-%d-%d-%d-%s", selection.FbOdds.SportsID, selection.FbOdds.MatchID, selection.FbOdds.MarketGroupType, selection.FbOdds.MarketGroupPeriod, selection.FbOdds.MarketlineValue)
 	return marketGroupKey
 }
@@ -128,14 +129,12 @@ func GetPredictionFromPrediction(prediction Prediction) (outPred fbService.Predi
 		}
 		outPred.MarketGroups = append(outPred.MarketGroups, GetMarketGroupOrdersByKeyFromPrediction(prediction, mgKey))
 	}
-	return 
+	return
 }
-/*
-one prediction has many selection
-one selection has one odd
-one odd has many orderRequest - one orderRequest has one fbReport ∴ one odd has one fbReport
 
-one prediction has many match 
-one match has many market group 
-one market group has many odd
-*/
+func IncreasePredictionViewCountBy1(prediction Prediction) error {
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		return tx.Model(&prediction.PredictionArticle).Update("Views", prediction.Views + 1).Error
+	})
+	return err
+}
