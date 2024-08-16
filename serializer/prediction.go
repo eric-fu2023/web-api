@@ -172,7 +172,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			mgList = append(mgList, MarketGroupInfo{
 				MarketGroupType:    int(selection.FbOdds.MarketGroupType),
 				MarketGroupPeriod:  int(selection.FbOdds.MarketGroupPeriod),
-				MarketGroupName:    selection.FbMatch.NameCn,
+				MarketGroupName:    selection.FbOdds.MarketGroupInfo.FullNameCn,
 				Mks:                mks,
 				InternalIdentifier: marketGroupKey,
 				Status: int(marketgroupStatus),
