@@ -70,8 +70,8 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	resp = Analyst{
 		AnalystId:        analyst.ID,
 		AnalystName:      analyst.AnalystName,
-		AnalystSource:    Source{Name: analyst.PredictionAnalystSource.SourceName, Icon: analyst.PredictionAnalystSource.IconUrl},
-		AnalystImage:     analyst.AvatarUrl,
+		AnalystSource:    Source{Name: analyst.PredictionAnalystSource.SourceName, Icon: Url(analyst.PredictionAnalystSource.IconUrl)},
+		AnalystImage:     Url(analyst.AvatarUrl),
 		AnalystDesc:      analyst.AnalystDesc,
 		Predictions:      predictions,
 		NumFollowers:     len(analyst.PredictionAnalystFollowers),
