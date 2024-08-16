@@ -36,7 +36,9 @@ func preloadPredictions() *gorm.DB {
 		Preload("AnalystDetail").
 		Preload("AnalystDetail.PredictionAnalystSource").
 		Preload("PredictionSelections.FbMatch.HomeTeam").
-		Preload("PredictionSelections.FbMatch.AwayTeam")
+		Preload("PredictionSelections.FbMatch.AwayTeam").
+		Joins("join prediction_analysts on prediction_analysts.id = prediction_articles.analyst_id").
+		Where("prediction_analysts.is_active", true)
 	// Preload("AnalystDetail.Followers").
 	// Preload("AnalystDetail.Predictions").
 }
@@ -46,7 +48,6 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 	db := preloadPredictions()
 	db = db.
 		Scopes(Paginate(cond.Page, cond.Limit)).
-		Where("prediction_articles.deleted_at IS NULL").
 		Where("prediction_articles.is_published", true).
 		Joins("left join prediction_article_bets on prediction_article_bets.article_id = prediction_articles.id").
 		Joins("left join fb_matches on prediction_article_bets.fb_match_id = fb_matches.match_id").
@@ -72,9 +73,8 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 
 func GetPrediction(predictionId int64) (pred Prediction, err error) {
 	err = preloadPredictions().
-		Where("deleted_at IS NULL").
 		Where("is_published", true).
-		Where("id = ?", predictionId).
+		Where("prediction_articles.id = ?", predictionId).
 		First(&pred).Error
 	return
 }
