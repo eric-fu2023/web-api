@@ -71,9 +71,10 @@ type OutgoingBet struct {
 	ExtraInfo    string `json:"extra_info"`
 }
 
-func SaveTeamup(teamup ploutos.Teamup) (err error) {
+func SaveTeamup(teamup ploutos.Teamup) (t ploutos.Teamup, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&teamup).Error
+		t = teamup
 		return
 	})
 

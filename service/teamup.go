@@ -134,6 +134,8 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	var teamup ploutos.Teamup
 	teamup, err = model.GetTeamUp(s.OrderId)
 
+	var t ploutos.Teamup
+
 	if teamup.ID == 0 {
 
 		tayaUrl, _ := model.GetAppConfigWithCache("taya_url", "apiServerAddress")
@@ -175,15 +177,10 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		teamup.AwayIcon = awayIcon
 		teamup.LeagueName = leagueName
 
-		err = model.SaveTeamup(teamup)
+		t, _ = model.SaveTeamup(teamup)
 	}
 
-	if err != nil {
-		r = serializer.DBErr(c, "", i18n.T("teamup_error"), err)
-		return
-	}
-
-	shareService, err := buildTeamupShareParamsService(serializer.BuildCustomTeamupHash(teamup, user, br))
+	shareService, err := buildTeamupShareParamsService(serializer.BuildCustomTeamupHash(t, user, br))
 	if err != nil {
 		return
 	}
