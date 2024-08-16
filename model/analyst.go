@@ -12,12 +12,12 @@ import (
 type Analyst struct {
 	ploutos.PredictionAnalyst
 
-	Predictions []Prediction                   `gorm:"foreignKey:AnalystId;references:ID"`
-	AnalystSport 		AnalystSport 					`gorm:"foreignKey:ID;references:AnalystId"`
+	Predictions  []Prediction `gorm:"foreignKey:AnalystId;references:ID"`
+	AnalystSport AnalystSport `gorm:"foreignKey:ID;references:AnalystId"`
 }
 
 type AnalystSport struct {
-	ploutos.AnalystSport 
+	ploutos.AnalystSport
 
 	Sport []ploutos.SportType `gorm:"foreignKey:ID;references:SportId"`
 }
@@ -34,14 +34,13 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Where("is_active", true).
-		Order("created_at DESC").
-		Order("id DESC")
-
+		Order("sort DESC")
+		
 	if fbSportId != 0 {
 		db = db.
-		Joins("JOIN analyst_sport ON analyst_sport.analyst_id = prediction_analysts.id").
-		Joins("JOIN sport_type ON analyst_sport.sport_id = sport_type.id").
-		Where("fb_sport_id = ?", fbSportId)
+			Joins("JOIN analyst_sport ON analyst_sport.analyst_id = prediction_analysts.id").
+			Joins("JOIN sport_type ON analyst_sport.sport_id = sport_type.id").
+			Where("fb_sport_id = ?", fbSportId)
 	}
 
 	err = db.
