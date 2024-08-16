@@ -145,3 +145,21 @@ func GetTeamUpByTeamUpId(teamupId int64) (res ploutos.Teamup, err error) {
 
 	return
 }
+
+func UpdateTeamupProgress(teamupId, amount, slashAmount int64) error {
+	return DB.Transaction(func(tx *gorm.DB) error {
+
+		updates := map[string]interface{}{
+			"total_accumulated_deposit": gorm.Expr("total_accumulated_deposit + ?", amount),
+			"total_teamup_deposit":      gorm.Expr("total_teamup_deposit + ?", slashAmount),
+		}
+
+		if err := tx.Table("teamup").
+			Where("id = ?", teamupId).
+			Limit(1).
+			Updates(updates).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}

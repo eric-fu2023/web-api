@@ -161,3 +161,41 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 
 	return
 }
+
+func FindOngoingTeamupEntriesByUserId(userId int64) (res ploutos.TeamupEntry, err error) {
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		tx = tx.Table("teamup_entries").
+			Select("teamup_entries.*"). // Select fields from the teamup_entries table
+			Joins("JOIN teamups ON teamups.id = teamup_entries.teamup_id").
+			Where("teamup_entries.user_id = ?", userId).
+			Where("teamup.status = 0").
+			Order("teamup_entries.created_at ASC").
+			First(&res) // Fetch the first matching record
+
+		if err := tx.Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return
+}
+
+func UpdateFirstTeamupEntryProgress(teamupEntryId, amount, slashAmount int64) error {
+	return DB.Transaction(func(tx *gorm.DB) error {
+
+		updates := map[string]interface{}{
+			"total_deposit":              gorm.Expr("total_deposit + ?", amount),
+			"contributed_teamup_deposit": gorm.Expr("contributed_teamup_deposit + ?", slashAmount),
+		}
+
+		if err := tx.Table("teamup_entries").
+			Where("id = ?", teamupEntryId).
+			Limit(1).
+			Updates(updates).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}

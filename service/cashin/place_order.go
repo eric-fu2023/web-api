@@ -3,6 +3,7 @@ package cashin
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/exchange"
@@ -13,6 +14,7 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
 )
 
 type TopUpOrderService struct {
@@ -161,6 +163,34 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		cashOrder.Status = models.CashOrderStatusPending
 	}
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
+
+	// 查看是否有砍单记录，添加进度到砍单任务
+	slashMultiplierString, _ := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
+	slashMultiplier, _ := strconv.Atoi(slashMultiplierString)
+
+	// Convert cash amount into slash progress by dividing multiplier
+	contributedSlashProgress := cashOrder.AppliedCashInAmount / int64(slashMultiplier)
+
+	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
+		teamupEntry, err := model.FindOngoingTeamupEntriesByUserId(user.ID)
+		if err != nil {
+			return
+		}
+
+		err = model.UpdateFirstTeamupEntryProgress(teamupEntry.ID, cashOrder.AppliedCashInAmount, contributedSlashProgress)
+
+		if err != nil {
+			return
+		}
+
+		err = model.UpdateTeamupProgress(teamupEntry.TeamupId, cashOrder.AppliedCashInAmount, contributedSlashProgress)
+
+		if err != nil {
+			return
+		}
+		return
+	})
+
 	return
 }
 
