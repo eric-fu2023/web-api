@@ -110,7 +110,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	var matchTime int64
 	for _, bet := range br.Bets {
 		if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
-			matchTime = *bet.GetMatchTime() - (600 * 100) // 600000 = 10 mins for timestamp
+			matchTime = *bet.GetMatchTime() - (600) // 600000 = 10 mins for timestamp
 		}
 	}
 
@@ -128,8 +128,8 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		teamup.UserId = user.ID
 		teamup.OrderId = s.OrderId
 		teamup.TotalTeamUpTarget = 10 * 100
-		teamup.TeamupEndTime = time.Unix(matchTime, 0)
-		teamup.TeamupCompletedTime = time.Unix(matchTime, 0)
+		teamup.TeamupEndTime = matchTime
+		teamup.TeamupCompletedTime = matchTime
 
 		err = model.SaveTeamup(teamup)
 	}
@@ -248,7 +248,8 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 			for _, bet := range br.Bets {
 				if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
-					matchTime = *bet.GetMatchTime() - (600 * 100) // 600000 = 10 mins for timestamp
+					matchTime = *bet.GetMatchTime()
+					teamupEndTime := matchTime - 600 // 600 seconds = 10 minutes
 					copier.Copy(&outgoingBet, bet)
 					teams := strings.Split(outgoingBet.MatchName, " vs. ")
 					if len(teams) > 1 {
@@ -264,7 +265,7 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 						outgoingBet.MatchName = res[i].BetType
 					}
 
-					outgoingBet.MatchTime = matchTime
+					outgoingBet.MatchTime = teamupEndTime
 					res[i].Bet = outgoingBet
 				}
 			}

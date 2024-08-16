@@ -13,18 +13,18 @@ type Teamup struct {
 }
 
 type TeamupCustomRes []struct {
-	TeamupId            string    `json:"teamup_id"`
-	UserId              string    `json:"user_id"`
-	OrderId             string    `json:"order_id"`
-	TotalTeamupDeposit  float64   `json:"total_teamup_deposit"`
-	TotalTeamupTarget   float64   `json:"total_teamup_target"`
-	TeamupProgress      float64   `json:"teamup_progress"`
-	TeamupEndTime       time.Time `json:"teamup_end_time"`
-	TeamupCompletedTime time.Time `json:"teamup_completed_time"`
-	InfoJson            []byte    `json:"info_json,omitempty"`
-	GameType            int64     `json:"game_type"`
-	IsParlay            bool      `json:"is_parlay"`
-	BetType             string    `json:"bet_type"`
+	TeamupId            string  `json:"teamup_id"`
+	UserId              string  `json:"user_id"`
+	OrderId             string  `json:"order_id"`
+	TotalTeamupDeposit  float64 `json:"total_teamup_deposit"`
+	TotalTeamupTarget   float64 `json:"total_teamup_target"`
+	TeamupProgress      float64 `json:"teamup_progress"`
+	TeamupEndTime       int64   `json:"teamup_end_time"`
+	TeamupCompletedTime int64   `json:"teamup_completed_time"`
+	InfoJson            []byte  `json:"info_json,omitempty"`
+	GameType            int64   `json:"game_type"`
+	IsParlay            bool    `json:"is_parlay"`
+	BetType             string  `json:"bet_type"`
 }
 
 type OutgoingTeamupCustomRes []struct {
@@ -34,8 +34,8 @@ type OutgoingTeamupCustomRes []struct {
 	TotalTeamupDeposit  float64     `json:"total_teamup_deposit"`
 	TotalTeamupTarget   float64     `json:"total_teamup_target"`
 	TeamupProgress      float64     `json:"teamup_progress"`
-	TeamupEndTime       time.Time   `json:"teamup_end_time"`
-	TeamupCompletedTime time.Time   `json:"teamup_completed_time"`
+	TeamupEndTime       int64       `json:"teamup_end_time"`
+	TeamupCompletedTime int64       `json:"teamup_completed_time"`
 	InfoJson            []byte      `json:"info_json,omitempty"`
 	GameType            int64       `json:"game_type"`
 	IsParlay            bool        `json:"is_parlay"`
