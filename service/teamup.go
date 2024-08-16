@@ -133,10 +133,6 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 	var teamup ploutos.Teamup
 	teamup, err = model.GetTeamUp(s.OrderId)
-	if err != nil {
-		r = serializer.DBErr(c, "", i18n.T("teamup_error"), err)
-		return
-	}
 
 	if teamup.ID == 0 {
 
