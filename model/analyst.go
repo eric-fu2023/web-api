@@ -38,7 +38,7 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 
 	if fbSportId != 0 {
 		db = db.
-		Joins("JOIN analyst_sport ON analyst_sport.analyst_id = tips_analysts.id").
+		Joins("JOIN analyst_sport ON analyst_sport.analyst_id = prediction_analysts.id").
 		Joins("JOIN sport_type ON analyst_sport.sport_id = sport_type.id").
 		Where("fb_sport_id = ?", fbSportId)
 	}
