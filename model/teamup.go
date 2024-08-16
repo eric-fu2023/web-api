@@ -24,6 +24,9 @@ type TeamupCustomRes []struct {
 	IsParlay            bool    `json:"is_parlay"`
 	BetType             string  `json:"bet_type"`
 	TotalFakeProgress   int64   `json:"total_fake_progress"`
+	LeagueIcon          string  `json:"league_icon"`
+	HomeIcon            string  `json:"home_icon"`
+	AwayIcon            string  `json:"away_icon"`
 	Status              int64   `json:"status"`
 }
 
@@ -42,6 +45,9 @@ type OutgoingTeamupCustomRes []struct {
 	BetType             string      `json:"bet_type"`
 	Bet                 OutgoingBet `json:"bet"`
 	TotalFakeProgress   int64       `json:"total_fake_progress"`
+	LeagueIcon          string      `json:"league_icon"`
+	HomeIcon            string      `json:"home_icon"`
+	AwayIcon            string      `json:"away_icon"`
 	Status              int64       `json:"status"`
 }
 
@@ -94,7 +100,7 @@ func GetTeamUp(orderId string) (teamup ploutos.Teamup, err error) {
 
 func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64) (res TeamupCustomRes, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		tx = tx.Table("teamups").Select("teamups.status, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
+		tx = tx.Table("teamups").Select("teamups.league_icon, teamups.home_icon, teamups.away_icon, teamups.status, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
 			Joins("left join bet_report on teamups.order_id = bet_report.business_id")
 
 		tx = tx.Where("teamups.user_id = ?", userId)
@@ -116,7 +122,7 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 
 func GetCustomTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		tx = tx.Table("teamups").Select("teamups.total_fake_progress, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
+		tx = tx.Table("teamups").Select("teamups.league_icon, teamups.home_icon, teamups.away_icon, teamups.total_fake_progress, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
 			Joins("left join bet_report on teamups.order_id = bet_report.business_id")
 
 		tx = tx.Where("teamups.id = ?", teamupId)

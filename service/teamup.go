@@ -2,8 +2,10 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 	"web-api/model"
@@ -14,6 +16,9 @@ import (
 	"github.com/jinzhu/copier"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	// fbService "blgit.rfdev.tech/taya/game-service/fb2/client/"
+	fbService "blgit.rfdev.tech/taya/game-service/fb2/client"
+	fbServiceApi "blgit.rfdev.tech/taya/game-service/fb2/client/api"
 
 	"github.com/gin-gonic/gin"
 )
@@ -128,22 +133,49 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 	var teamup ploutos.Teamup
 	teamup, err = model.GetTeamUp(s.OrderId)
-
-	// tayaUrl, _ := model.GetAppConfigWithCache("taya_url", "apiServerAddress")
-	// commonNoAuth, err := fbService.NewOpenAccessService(tayaUrl)
-
-	// if err != nil {
-	// 	return
-	// }
-
-	// res, err :=
+	if err != nil {
+		r = serializer.DBErr(c, "", i18n.T("teamup_error"), err)
+		return
+	}
 
 	if teamup.ID == 0 {
+
+		tayaUrl, _ := model.GetAppConfigWithCache("taya_url", "apiServerAddress")
+		commonNoAuth, openAccessServiceErr := fbService.NewOpenAccessService(tayaUrl)
+
+		if openAccessServiceErr != nil {
+			return
+		}
+
+		var leagueIcon, homeIcon, awayIcon string
+
+		if len(br.Bets) > 0 {
+			_, ok := br.Bets[0].(ploutos.BetFb)
+			matchId, _ := strconv.Atoi(br.Bets[0].(ploutos.BetFb).GetMatchId())
+			if ok {
+				matchDetail, err := commonNoAuth.GetMatchDetail(int64(matchId), fbServiceApi.LanguageCHINESE)
+
+				if err == nil {
+					fmt.Print(matchDetail)
+					leagueIcon = matchDetail.Data.League.LeagueIconUrl
+
+					if len(matchDetail.Data.Teams) > 1 {
+						homeIcon = matchDetail.Data.Teams[0].LogoUrl
+						awayIcon = matchDetail.Data.Teams[1].LogoUrl
+					}
+				}
+			}
+		}
+
 		teamup.UserId = user.ID
 		teamup.OrderId = s.OrderId
-		teamup.TotalTeamUpTarget = 10 * 100
+		teamup.TotalTeamUpTarget = br.Bet
 		teamup.TeamupEndTime = matchTime
 		teamup.TeamupCompletedTime = matchTime
+
+		teamup.LeagueIcon = leagueIcon
+		teamup.HomeIcon = homeIcon
+		teamup.AwayIcon = awayIcon
 
 		err = model.SaveTeamup(teamup)
 	}
@@ -272,10 +304,11 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 						outgoingBet.HomeName = teams[0]
 						outgoingBet.AwayName = teams[1]
 					}
-					outgoingBet.LeagueIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
+					outgoingBet.LeagueIcon = res[i].LeagueIcon
+					outgoingBet.HomeIcon = res[i].HomeIcon
+					outgoingBet.AwayIcon = res[i].AwayIcon
+
 					outgoingBet.LeagueName = "欧美中联赛"
-					outgoingBet.HomeIcon = "https://upload.wikimedia.org/wikipedia/commons/6/66/Flag_of_Malaysia.svg"
-					outgoingBet.AwayIcon = "https://icons.iconarchive.com/icons/giannis-zographos/spanish-football-club/256/Real-Madrid-icon.png"
 
 					if res[i].IsParlay {
 						outgoingBet.MatchName = res[i].BetType
