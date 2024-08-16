@@ -21,6 +21,7 @@ type Analyst struct {
 	Predictions      []Prediction `json:"predictions"`
 	RecentTotal      int          `json:"recent_total"`
 	RecentWins       int          `json:"recent_wins"`
+	SortOrder        int          `json:"sort_order"`
 }
 
 type Source struct {
@@ -50,11 +51,11 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	for i, pred := range analyst.Predictions {
 		predictions[i] = BuildPrediction(pred, true, false)
 		_pred := model.GetPredictionFromPrediction(pred)
-		outcome, err := fbService.ComputePredictionOutcomesByOrderReport(_pred) 
+		outcome, err := fbService.ComputePredictionOutcomesByOrderReport(_pred)
 		if err != nil {
 			log.Printf("error computing outcome of prediction[ID:%d]", pred.ID)
 		}
-		statuses[i] = outcome 
+		statuses[i] = outcome
 	}
 
 	statusInBool, winCount := GetBoolOutcomes(statuses)
@@ -68,17 +69,18 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 
 	resp = Analyst{
 		AnalystId:        analyst.ID,
-		AnalystName:      analyst.Name,
-		AnalystSource:    Source{Name: analyst.PredictionSource.SourceName, Icon: analyst.PredictionSource.IconUrl},
-		AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
-		AnalystDesc:      analyst.Desc,
+		AnalystName:      analyst.AnalystName,
+		AnalystSource:    Source{Name: analyst.PredictionAnalystSource.SourceName, Icon: analyst.PredictionAnalystSource.IconUrl},
+		AnalystImage:     analyst.AvatarUrl,
+		AnalystDesc:      analyst.AnalystDesc,
 		Predictions:      predictions,
-		NumFollowers:     len(analyst.Followers),
+		NumFollowers:     len(analyst.PredictionAnalystFollowers),
 		TotalPredictions: len(analyst.Predictions),
 		WinningStreak:    winStreak,
 		Accuracy:         accuracy,
 		RecentTotal:      nearX,
 		RecentWins:       winX,
+		SortOrder:        analyst.Sort,
 	}
 	return
 }

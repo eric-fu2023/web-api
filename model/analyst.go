@@ -10,15 +10,14 @@ import (
 )
 
 type Analyst struct {
-	ploutos.TipsAnalyst
+	ploutos.PredictionAnalyst
 
-	Predictions []Prediction                   `gorm:"foreignKey:AnalystId;references:ID"`
-	Followers   []ploutos.UserAnalystFollowing `gorm:"foreignKey:AnalystId;references:ID"`
-	AnalystSport 		AnalystSport 					`gorm:"foreignKey:ID;references:AnalystId"`
+	Predictions  []Prediction `gorm:"foreignKey:AnalystId;references:ID"`
+	AnalystSport AnalystSport `gorm:"foreignKey:ID;references:AnalystId"`
 }
 
 type AnalystSport struct {
-	ploutos.AnalystSport 
+	ploutos.AnalystSport
 
 	Sport []ploutos.SportType `gorm:"foreignKey:ID;references:SportId"`
 }
@@ -27,21 +26,21 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 	db := DB.Scopes(Paginate(page, limit))
 
 	db = db.
-		Preload("PredictionSource").
-		Preload("Followers").
-		Preload("Predictions").
+		Preload("PredictionAnalystSource").
+		Preload("PredictionAnalystFollowers").
+		Preload("Predictions", "is_published = ?", true).
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
+		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Where("is_active", true).
-		Order("created_at DESC").
-		Order("id DESC")
-
+		Order("sort DESC")
+		
 	if fbSportId != 0 {
 		db = db.
-		Joins("JOIN analyst_sport ON analyst_sport.analyst_id = tips_analysts.id").
-		Joins("JOIN sport_type ON analyst_sport.sport_id = sport_type.id").
-		Where("fb_sport_id = ?", fbSportId)
+			Joins("JOIN analyst_sport ON analyst_sport.analyst_id = prediction_analysts.id").
+			Joins("JOIN sport_type ON analyst_sport.sport_id = sport_type.id").
+			Where("fb_sport_id = ?", fbSportId)
 	}
 
 	err = db.
@@ -54,12 +53,13 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 func (Analyst) GetDetail(id int) (target Analyst, err error) {
 	db := DB.Where("id", id)
 	err = db.
-		Preload("PredictionSource").
-		Preload("Predictions").
+		Preload("PredictionAnalystSource").
+		Preload("Predictions", "is_published = ?", true).
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
-		Preload("Followers").
+		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
+		Preload("PredictionAnalystFollowers").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
@@ -72,16 +72,19 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 	err = DB.
 		Scopes(Paginate(page, limit)).
 		Preload("Analyst").
-		Preload("Analyst.Followers").
-		Preload("Analyst.Predictions").
+		Preload("Analyst.PredictionAnalystSource").
+		Preload("Analyst.PredictionAnalystFollowers").
+		Preload("Analyst.Predictions", "is_published = ?", true).
+		Joins("JOIN prediction_analysts on prediction_analyst_followers.analyst_id = prediction_analysts.id").
 		WithContext(c).
-		Where("user_id = ?", userId).Where("is_deleted = ?", false).
+		Where("user_id = ?", userId).
+		Where("prediction_analysts.is_active = ?", true).
 		Find(&followings).Error
 	return
 }
 
 func GetFollowingAnalystStatus(c context.Context, userId, analystId int64) (following UserAnalystFollowing, err error) {
-	err = DB.WithContext(c).Where("user_id = ?", userId).Where("analyst_id = ?", analystId).Limit(1).Find(&following).Error
+	err = DB.Unscoped().WithContext(c).Where("user_id = ?", userId).Where("analyst_id = ?", analystId).Limit(1).Find(&following).Error
 	return
 }
 
@@ -91,6 +94,20 @@ func UpdateUserFollowAnalystStatus(following UserAnalystFollowing) (err error) {
 		return
 	})
 
+	return
+}
+
+func SoftDeleteUserFollowAnalyst(following UserAnalystFollowing) (err error) {
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		return tx.Delete(&following).Error
+	})
+	return
+}
+
+func RestoreUserFollowAnalyst(following UserAnalystFollowing) (err error) {
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		return tx.Unscoped().Model(&following).Update("DeletedAt", nil).Error
+	})
 	return
 }
 
