@@ -27,7 +27,6 @@ type ListPredictionCond struct {
 
 func preloadPredictions() *gorm.DB {
 	return DB.
-		Debug().
 		Preload("PredictionSelections").
 		Preload("PredictionSelections.FbOdds").
 		Preload("PredictionSelections.FbOdds.RelatedOdds").
