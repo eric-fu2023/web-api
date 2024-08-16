@@ -75,8 +75,10 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 		Preload("Analyst").
 		Preload("Analyst.PredictionAnalystFollowers").
 		Preload("Analyst.Predictions", "is_published = ?", true).
+		Joins("JOIN prediction_analysts on user_analyst_following.analyst_id = prediction_analysts.id").
 		WithContext(c).
 		Where("user_id = ?", userId).Where("is_deleted = ?", false).
+		Where("prediction_analysts.is_active = ?", true).
 		Find(&followings).Error
 	return
 }
