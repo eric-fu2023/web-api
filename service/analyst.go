@@ -11,6 +11,7 @@ import (
 	"web-api/service/common"
 
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 )
@@ -93,8 +94,13 @@ func (service FollowToggle) FollowAnalystToggle(c *gin.Context) (r serializer.Re
 		return
 	}
 
-	following.IsDeleted = !following.IsDeleted
-	err = model.UpdateUserFollowAnalystStatus(following)
+	if (following.DeletedAt == gorm.DeletedAt{}) {
+		model.SoftDeleteUserFollowAnalyst(following)
+	} else {
+		model.RestoreUserFollowAnalyst(following)
+	}
+
+	// err = model.UpdateUserFollowAnalystStatus(following)
 	if err != nil {
 		r = serializer.Err(c, "analyst", serializer.CodeGeneralError, "", err)
 		return

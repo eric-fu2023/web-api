@@ -5,8 +5,7 @@ import (
 )
 
 type UserAnalystFollowing struct {
-	//TODO need to update to ploutos.PredictionAnalystFollower... 
-	ploutos.UserAnalystFollowing
+	ploutos.PredictionAnalystFollower
 
 	Analyst Analyst `gorm:"foreignKey:AnalystId;references:ID"`
 }

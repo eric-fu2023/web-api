@@ -76,16 +76,16 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 		Preload("Analyst.PredictionAnalystSource").
 		Preload("Analyst.PredictionAnalystFollowers").
 		Preload("Analyst.Predictions", "is_published = ?", true).
-		Joins("JOIN prediction_analysts on user_analyst_following.analyst_id = prediction_analysts.id").
+		Joins("JOIN prediction_analysts on prediction_analyst_followers.analyst_id = prediction_analysts.id").
 		WithContext(c).
-		Where("user_id = ?", userId).Where("is_deleted = ?", false).
+		Where("user_id = ?", userId).
 		Where("prediction_analysts.is_active = ?", true).
 		Find(&followings).Error
 	return
 }
 
 func GetFollowingAnalystStatus(c context.Context, userId, analystId int64) (following UserAnalystFollowing, err error) {
-	err = DB.WithContext(c).Where("user_id = ?", userId).Where("analyst_id = ?", analystId).Limit(1).Find(&following).Error
+	err = DB.Unscoped().WithContext(c).Where("user_id = ?", userId).Where("analyst_id = ?", analystId).Limit(1).Find(&following).Error
 	return
 }
 
@@ -95,6 +95,20 @@ func UpdateUserFollowAnalystStatus(following UserAnalystFollowing) (err error) {
 		return
 	})
 
+	return
+}
+
+func SoftDeleteUserFollowAnalyst(following UserAnalystFollowing) (err error) {
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		return tx.Delete(&following).Error
+	})
+	return
+}
+
+func RestoreUserFollowAnalyst(following UserAnalystFollowing) (err error) {
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		return tx.Unscoped().Model(&following).Update("DeletedAt", nil).Error
+	})
 	return
 }
 
