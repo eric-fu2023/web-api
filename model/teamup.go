@@ -23,6 +23,8 @@ type TeamupCustomRes []struct {
 	GameType            int64   `json:"game_type"`
 	IsParlay            bool    `json:"is_parlay"`
 	BetType             string  `json:"bet_type"`
+	TotalFakeProgress   int64   `json:"total_fake_progress"`
+	Status              int64   `json:"status"`
 }
 
 type OutgoingTeamupCustomRes []struct {
@@ -39,6 +41,8 @@ type OutgoingTeamupCustomRes []struct {
 	IsParlay            bool        `json:"is_parlay"`
 	BetType             string      `json:"bet_type"`
 	Bet                 OutgoingBet `json:"bet"`
+	TotalFakeProgress   int64       `json:"total_fake_progress"`
+	Status              int64       `json:"status"`
 }
 
 type OutgoingBet struct {
@@ -90,7 +94,7 @@ func GetTeamUp(orderId string) (teamup ploutos.Teamup, err error) {
 
 func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64) (res TeamupCustomRes, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		tx = tx.Table("teamups").Select("teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
+		tx = tx.Table("teamups").Select("teamups.status, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
 			Joins("left join bet_report on teamups.order_id = bet_report.business_id")
 
 		tx = tx.Where("teamups.user_id = ?", userId)
@@ -112,7 +116,7 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 
 func GetCustomTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		tx = tx.Table("teamups").Select("teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
+		tx = tx.Table("teamups").Select("teamups.total_fake_progress, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
 			Joins("left join bet_report on teamups.order_id = bet_report.business_id")
 
 		tx = tx.Where("teamups.id = ?", teamupId)

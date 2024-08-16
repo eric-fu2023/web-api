@@ -63,8 +63,8 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 
 	teamup, _ := GetTeamUpByTeamUpId(teamupId)
 
-	if teamup.UserId == userId {
-		return false, fmt.Errorf("unable to slash own bet")
+	if teamup.UserId == userId || teamup.TeamupEndTime > time.Now().UTC().Unix() {
+		return false, fmt.Errorf("unable to slash bet")
 	}
 
 	teamupEntries, err := FindTeamupEntryByTeamupId(teamupId)

@@ -55,12 +55,17 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	teamupStatus := make([]int, 3)
 
 	switch s.Status {
+
+	// 进行中
 	case 1:
 		teamupStatus = []int{0}
+
+	// 结束（成功，失败）
 	case 2:
 		teamupStatus = []int{1, 2}
+
+	// 全部
 	case 0:
-	default:
 		teamupStatus = []int{0, 1, 2}
 	}
 
@@ -123,6 +128,15 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 	var teamup ploutos.Teamup
 	teamup, err = model.GetTeamUp(s.OrderId)
+
+	// tayaUrl, _ := model.GetAppConfigWithCache("taya_url", "apiServerAddress")
+	// commonNoAuth, err := fbService.NewOpenAccessService(tayaUrl)
+
+	// if err != nil {
+	// 	return
+	// }
+
+	// res, err :=
 
 	if teamup.ID == 0 {
 		teamup.UserId = user.ID
