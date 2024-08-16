@@ -68,12 +68,12 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 
 	resp = Analyst{
 		AnalystId:        analyst.ID,
-		AnalystName:      analyst.Name,
-		AnalystSource:    Source{Name: analyst.PredictionSource.SourceName, Icon: analyst.PredictionSource.IconUrl},
-		AnalystImage:     "https://cdn.tayalive.com/aha-img/user/default_user_image/102.jpg",
-		AnalystDesc:      analyst.Desc,
+		AnalystName:      analyst.AnalystName,
+		AnalystSource:    Source{Name: analyst.PredictionAnalystSource.SourceName, Icon: analyst.PredictionAnalystSource.IconUrl},
+		AnalystImage:     analyst.AvatarUrl,
+		AnalystDesc:      analyst.AnalystDesc,
 		Predictions:      predictions,
-		NumFollowers:     len(analyst.Followers),
+		NumFollowers:     len(analyst.PredictionAnalystFollowers),
 		TotalPredictions: len(analyst.Predictions),
 		WinningStreak:    winStreak,
 		Accuracy:         accuracy,
@@ -84,8 +84,10 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 }
 
 func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst) {
+	// FIXME : preload will return default if analyst not exist.. for now, filter away id = 0
 	resp = []Analyst{}
 	for _, a := range followings {
+		if (a.ID == 0) {continue}
 		resp = append(resp, BuildAnalystDetail(a.Analyst))
 	}
 	return

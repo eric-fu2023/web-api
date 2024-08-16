@@ -4,7 +4,7 @@ go 1.21
 
 toolchain go1.21.1
 
-// replace blgit.rfdev.tech/taya/ploutos-object => /Users/wllee/desktop/project-blgit/ploutos-object
+// replace blgit.rfdev.tech/taya/ploutos-object => /Users/carl/Projects/taya/ploutos-object
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5

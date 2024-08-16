@@ -14,6 +14,7 @@ type FbOdds struct {
 
 	RelatedOdds []ploutosFB.FbOdds `gorm:"foreignKey:SportsID,MatchID,MarketGroupType,MarketGroupPeriod,MarketlineValue;references:SportsID,MatchID,MarketGroupType,MarketGroupPeriod,MarketlineValue"`
 	FbOddsOrderRequestList []FbOddsOrderRequest `gorm:"foreignKey:SportsID,MatchID,MarketGroupType,MarketGroupPeriod,MarketlineValue;references:SportsID,MatchID,MarketGroupType,MarketGroupPeriod,MarketlineValue"`
+	MarketGroupInfo ploutosFB.FbMarketGroup `gorm:"foreignKey:SportsID,MatchID,MarketGroupType,MarketGroupPeriod;references:SportsID,MatchID,Type,Period"`
 }
 
 type FbOddsOrderRequest struct {

@@ -10,10 +10,9 @@ import (
 )
 
 type Analyst struct {
-	ploutos.TipsAnalyst
+	ploutos.PredictionAnalyst
 
 	Predictions []Prediction                   `gorm:"foreignKey:AnalystId;references:ID"`
-	Followers   []ploutos.UserAnalystFollowing `gorm:"foreignKey:AnalystId;references:ID"`
 	AnalystSport 		AnalystSport 					`gorm:"foreignKey:ID;references:AnalystId"`
 }
 
@@ -27,19 +26,20 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 	db := DB.Scopes(Paginate(page, limit))
 
 	db = db.
-		Preload("PredictionSource").
-		Preload("Followers").
-		Preload("Predictions").
+		Preload("PredictionAnalystSource").
+		Preload("PredictionAnalystFollowers").
+		Preload("Predictions", "is_published = ?", true).
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
+		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Where("is_active", true).
 		Order("created_at DESC").
 		Order("id DESC")
 
 	if fbSportId != 0 {
 		db = db.
-		Joins("JOIN analyst_sport ON analyst_sport.analyst_id = tips_analysts.id").
+		Joins("JOIN analyst_sport ON analyst_sport.analyst_id = prediction_analysts.id").
 		Joins("JOIN sport_type ON analyst_sport.sport_id = sport_type.id").
 		Where("fb_sport_id = ?", fbSportId)
 	}
@@ -54,12 +54,13 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 func (Analyst) GetDetail(id int) (target Analyst, err error) {
 	db := DB.Where("id", id)
 	err = db.
-		Preload("PredictionSource").
-		Preload("Predictions").
+		Preload("PredictionAnalystSource").
+		Preload("Predictions", "is_published = ?", true).
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
-		Preload("Followers").
+		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
+		Preload("PredictionAnalystFollowers").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
@@ -72,8 +73,8 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 	err = DB.
 		Scopes(Paginate(page, limit)).
 		Preload("Analyst").
-		Preload("Analyst.Followers").
-		Preload("Analyst.Predictions").
+		Preload("Analyst.PredictionAnalystFollowers").
+		Preload("Analyst.Predictions", "is_published = ?", true).
 		WithContext(c).
 		Where("user_id = ?", userId).Where("is_deleted = ?", false).
 		Find(&followings).Error
