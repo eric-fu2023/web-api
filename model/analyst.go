@@ -13,7 +13,6 @@ type Analyst struct {
 	ploutos.PredictionAnalyst
 
 	Predictions []Prediction                   `gorm:"foreignKey:AnalystId;references:ID"`
-	Followers   []ploutos.PredictionAnalystFollower `gorm:"foreignKey:AnalystId;references:ID"`
 	AnalystSport 		AnalystSport 					`gorm:"foreignKey:ID;references:AnalystId"`
 }
 
@@ -28,7 +27,7 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 
 	db = db.
 		Preload("PredictionAnalystSource").
-		Preload("Followers").
+		Preload("PredictionAnalystFollowers").
 		Preload("Predictions").
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").
@@ -59,7 +58,7 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
-		Preload("Followers").
+		Preload("PredictionAnalystFollowers").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
@@ -72,7 +71,7 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 	err = DB.
 		Scopes(Paginate(page, limit)).
 		Preload("Analyst").
-		Preload("Analyst.Followers").
+		Preload("Analyst.PredictionAnalystFollowers").
 		Preload("Analyst.Predictions").
 		WithContext(c).
 		Where("user_id = ?", userId).Where("is_deleted = ?", false).
