@@ -50,7 +50,8 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 		Where("prediction_articles.is_published", true).
 		Joins("left join prediction_article_bets on prediction_article_bets.article_id = prediction_articles.id").
 		Joins("left join fb_matches on prediction_article_bets.fb_match_id = fb_matches.match_id").
-		Group("prediction_articles.id")
+		Group("prediction_articles.id").
+		Order("prediction_articles.created_at DESC")
 
 	if cond.AnalystId != 0 {
 		db = db.Where("prediction_articles.analyst_id", cond.AnalystId)
