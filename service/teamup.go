@@ -102,6 +102,11 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	br, err := model.GetTeamUpBetReport(s.OrderId)
 	br.ParseInfo()
 
+	if err != nil {
+		r = serializer.DBErr(c, "", i18n.T("teamup_match_started"), err)
+		return
+	}
+
 	var matchTime int64
 	for _, bet := range br.Bets {
 		if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
@@ -112,7 +117,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	nowTs := time.Now().UTC().Unix()
 
 	if err != nil || nowTs >= matchTime {
-		r = serializer.DBErr(c, "", i18n.T("teamup_error"), err)
+		r = serializer.DBErr(c, "", i18n.T("teamup_match_started"), err)
 		return
 	}
 

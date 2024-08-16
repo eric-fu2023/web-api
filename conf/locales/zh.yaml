@@ -639,3 +639,5 @@ custom_promotion_entry_field_error: "输入错误"
 custom_promotion_entry_field_incomplete_error: "参加活动失败 - 未填完"
 
 teamup_error: "无法发起砍单"
+teamup_match_started: "砍单时间已经过了"
+teamup_br_not_exist: "下注单号不存在"

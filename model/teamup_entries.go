@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"web-api/util"
@@ -60,6 +61,12 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 
 	// NO SLASH if user slashed before
 
+	teamup, _ := GetTeamUpByTeamUpId(teamupId)
+
+	if teamup.UserId == userId {
+		return false, fmt.Errorf("unable to slash own bet")
+	}
+
 	teamupEntries, err := FindTeamupEntryByTeamupId(teamupId)
 	if err != nil {
 		return
@@ -96,7 +103,6 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 
 	currentSlashProgress = 0
 
-	teamup, _ := GetTeamUpByTeamUpId(teamupId)
 	isSuccessTeamup := false
 
 	slashEntry.TeamupEndTime = teamup.TeamupEndTime
