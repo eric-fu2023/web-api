@@ -38,7 +38,7 @@ type IncomingPromotionMatchListItem struct {
 	RedirectType string                               `json:"redirect_type"`
 	Img          string                               `json:"img"`
 	Name         string                               `json:"name"`
-	Time         time.Time                            `json:"time"`
+	Time         time.Time                            `json:"open_time"`
 }
 
 type IncomingPromotionMatchListItemTeam struct {

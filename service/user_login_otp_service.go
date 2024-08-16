@@ -22,6 +22,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var nicks []map[string]interface{}
+
 type UserOtpVerificationService struct {
 	Otp         string `form:"otp" json:"otp" binding:"required"`
 	CountryCode string `form:"country_code" json:"country_code"`
@@ -278,12 +280,29 @@ func LogFailedLogin(c *gin.Context, user model.User, loginMethod int, inputtedEm
 }
 
 func genNickname(user *model.User) {
-	var nicks []map[string]interface{}
-	model.DB.Table(`nicknames`).Find(&nicks)
+	user.Nickname = GetRandNickname()
+}
+
+func GetRandNickname() (nickname string) {
+
+	nicks := queryNicknames()
+
 	if len(nicks) > 0 {
 		rand.Seed(time.Now().UnixNano())
 		r1 := rand.Intn(len(nicks))
 		r2 := rand.Intn(len(nicks))
-		user.Nickname = nicks[r1]["first_name"].(string) + nicks[r2]["last_name"].(string)
+
+		return nicks[r1]["first_name"].(string) + nicks[r2]["last_name"].(string)
 	}
+
+	return ""
+}
+
+func queryNicknames() []map[string]interface{} {
+
+	if len(nicks) == 0 {
+		model.DB.Table(`nicknames`).Find(&nicks)
+	}
+
+	return nicks
 }

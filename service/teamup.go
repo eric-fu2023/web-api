@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"math"
+	"math/rand"
 	"strings"
 	"time"
 	"web-api/model"
@@ -28,6 +29,9 @@ type GetTeamupService struct {
 	OrderId  string `form:"order_id" json:"order_id"`
 	TeamupId int64  `form:"teamup_id" json:"teamup_id"`
 	common.PageNoBinding
+}
+
+type DummyTeamupsService struct {
 }
 
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
@@ -62,6 +66,18 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 
 	teamupRes, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit, start, end)
 	r.Data = parseBetReport(teamupRes)
+
+	return
+}
+
+func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Response, err error) {
+	// Generate a random number between 1 and 8
+	nicknameSlice := make([]string, rand.Intn(8)+1)
+	for i := 0; i < len(nicknameSlice); i++ {
+		nicknameSlice[i] = GetRandNickname()
+	}
+
+	r.Data = serializer.GenerateOtherTeamups(nicknameSlice)
 
 	return
 }

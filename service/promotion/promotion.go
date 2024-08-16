@@ -3,6 +3,7 @@ package promotion
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 	"web-api/model"
 	"web-api/serializer"
@@ -45,8 +46,21 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 	parentIdToPromotionMap := make(map[int64][]serializer.PromotionCover)
 	promotionCoverList := []serializer.PromotionCover{}
 	for _, promotion := range list {
+
+		// Skip if not allow device.platform
+		if len(promotion.DisplayDevices) != 0 {
+			s := string(promotion.DisplayDevices)
+			if !strings.Contains(s, string(models.PromotionDevice[deviceInfo.Platform])) {
+				continue
+			}
+		}
+
 		promotionCover := serializer.BuildPromotionCover(promotion, deviceInfo.Platform)
 		if promotionCover.ParentId != 0 {
+			content := serializer.IncomingPromotionMatchList{}
+			_ = json.Unmarshal(promotionCover.SubpageContent, &content)
+			promotionCover.Name = content.Title
+			promotionCover.Title = content.Title
 			parentIdToPromotionMap[promotion.ParentId] = append(parentIdToPromotionMap[promotion.ParentId], promotionCover)
 		} else {
 			if promotion.LoginStatus == int32(models.CustomPromotionLoginStatusAny) || (promotion.LoginStatus == int32(models.CustomPromotionLoginStatusLogin) && user.ID != 0) {
@@ -212,8 +226,8 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		}
 
 		promotionPage := serializer.CustomPromotionPage{
-			Title:       childPromotion.Name,
-			PromotionId: childPromotion.ID,
+			Title:       parentPromotion.Name,
+			PromotionId: parentPromotion.ID,
 		}
 
 		switch content.ListType {
@@ -239,6 +253,13 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		err = json.Unmarshal(childPromotion.Action, &incomingRequestAction)
 		if err != nil {
 			fmt.Println(err)
+		}
+
+		if len(incomingRequestAction.Fields) == 0 {
+			err = json.Unmarshal(parentPromotion.Action, &incomingRequestAction)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 
 		outgoingRequestAction := serializer.BuildPromotionAction(c, incomingRequestAction, childPromotion.ID, user.ID)

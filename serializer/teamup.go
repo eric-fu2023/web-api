@@ -1,8 +1,11 @@
 package serializer
 
 import (
+	"math/rand"
+	"sort"
 	"time"
 	"web-api/model"
+	"web-api/model/avatar"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/jinzhu/copier"
@@ -46,6 +49,13 @@ type TeamupEntry struct {
 	TeamupCompletedTime      time.Time `json:"teamup_completed_time"`
 }
 
+type OtherTeamupContribution struct {
+	Nickname string `json:"nickname"`
+	Time     int64  `json:"time"`
+	Amount   int64  `json:"amount"`
+	Avatar   string `json:"avatar"`
+}
+
 func BuildTeamup(a models.Teamup) (res Teamup) {
 
 	res = Teamup{
@@ -76,6 +86,25 @@ func BuildCustomTeamupHash(a models.Teamup, u model.User, br models.BetReport) (
 	res.Nickname = u.Nickname
 	res.Avatar = u.Avatar
 	res.IsParlay = br.IsParlay
+
+	return
+}
+
+func GenerateOtherTeamups(nicknames []string) (res []OtherTeamupContribution) {
+
+	for i := 0; i < len(nicknames); i++ {
+		item := OtherTeamupContribution{
+			Nickname: nicknames[i],
+			Time:     time.Now().UTC().Unix() - (int64(rand.Intn(1799)) + 1),
+			Amount:   int64(rand.Intn(499) + 1),
+			Avatar:   avatar.GetRandomAvatarUrl(),
+		}
+		res = append(res, item)
+	}
+
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].Time > res[j].Time
+	})
 
 	return
 }

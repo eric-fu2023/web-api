@@ -11,6 +11,7 @@ import (
 type PromotionCover struct {
 	ID                     int64           `json:"id"`
 	Name                   string          `json:"name"`
+	Title                  string          `json:"title"`
 	Description            json.RawMessage `json:"description"`
 	Image                  string          `json:"image"`
 	StartAt                int64           `json:"start_at"`
@@ -24,6 +25,7 @@ type PromotionCover struct {
 	DisplayOnly            bool            `json:"display_only"`
 	ParentId               int64           `json:"parent_id"`
 	IsCustom               bool            `json:"is_custom"`
+	SubpageContent         json.RawMessage `json:"subpage_content"`
 
 	ChildrenPromotions []PromotionCover `json:"children_promotions"`
 }
@@ -110,6 +112,8 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 		IsVipAssociated:        p.VipAssociated,
 		DisplayOnly:            p.DisplayOnly,
 		ParentId:               p.ParentId,
+
+		SubpageContent: p.SubpageContent,
 	}
 }
 
