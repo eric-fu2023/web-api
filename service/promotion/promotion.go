@@ -60,6 +60,7 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 			content := serializer.IncomingPromotionMatchList{}
 			_ = json.Unmarshal(promotionCover.SubpageContent, &content)
 			promotionCover.Name = content.Title
+			promotionCover.Title = content.Title
 			parentIdToPromotionMap[promotion.ParentId] = append(parentIdToPromotionMap[promotion.ParentId], promotionCover)
 		} else {
 			if promotion.LoginStatus == int32(models.CustomPromotionLoginStatusAny) || (promotion.LoginStatus == int32(models.CustomPromotionLoginStatusLogin) && user.ID != 0) {

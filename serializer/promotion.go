@@ -11,6 +11,7 @@ import (
 type PromotionCover struct {
 	ID                     int64           `json:"id"`
 	Name                   string          `json:"name"`
+	Title                  string          `json:"title"`
 	Description            json.RawMessage `json:"description"`
 	Image                  string          `json:"image"`
 	StartAt                int64           `json:"start_at"`
