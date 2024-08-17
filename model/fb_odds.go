@@ -43,7 +43,9 @@ type FbOddsOrderRequest struct {
 // 	return gameApi.Outcome(reportInfo.SettleResult), nil
 // }
 
-type TayaBetReport ploutos.TayaBetReport
+type TayaBetReport struct {
+	ploutos.TayaBetReport
+}
 
 func (r TayaBetReport) SettledStatus() (gameApi.SettledStatus, error) {
 	reportInfo, uErr := ploutos.UnmarshalTayaBetRawS(r.InfoJson)
