@@ -3,6 +3,8 @@ package cashin
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"strconv"
 	"web-api/model"
 	"web-api/serializer"
@@ -165,7 +167,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
 
 	// 查看是否有砍单记录，添加进度到砍单任务
-	// err = calculateTeamupSlashProgress(cashOrder, user.ID)
+	// go calculateTeamupSlashProgress(cashOrder, user.ID)
 
 	return
 }
@@ -215,33 +217,46 @@ func processCashInMethod(m model.CashMethod) (err error) {
 	return nil
 }
 
-func calculateTeamupSlashProgress(cashOrder model.CashOrder, userId int64) (err error) {
-	slashMultiplierString, _ := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
-	slashMultiplier, _ := strconv.Atoi(slashMultiplierString)
+func calculateTeamupSlashProgress(cashOrder model.CashOrder, userId int64) {
+	slashMultiplierString, err := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
+	if err != nil {
+		log.Printf("Get Slash Multiplier err - %v \n", err)
+		return
+	}
+	slashMultiplier, err := strconv.Atoi(slashMultiplierString)
+	if err != nil {
+		log.Printf("Get Slash Multiplier err - %v \n", err)
+		return
+	}
 
 	// Convert cash amount into slash progress by dividing multiplier
 	contributedSlashProgress := cashOrder.AppliedCashInAmount / int64(slashMultiplier)
 	err = updateTeamupProgress(userId, cashOrder.AppliedCashInAmount, contributedSlashProgress)
-
-	return
+	if err != nil {
+		log.Print(err.Error())
+		return
+	}
 }
 
 func updateTeamupProgress(userId, amount, slashProgress int64) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		teamupEntry, err := model.FindOngoingTeamupEntriesByUserId(userId)
 		if err != nil {
+			err = fmt.Errorf("fail to get teamup err - %v", err)
 			return
 		}
 
-		err = model.UpdateFirstTeamupEntryProgress(teamupEntry.ID, amount, slashProgress)
+		err = model.UpdateFirstTeamupEntryProgress(tx, teamupEntry.ID, amount, slashProgress)
 
 		if err != nil {
+			err = fmt.Errorf("fail to update teamup entry err - %v", err)
 			return
 		}
 
-		err = model.UpdateTeamupProgress(teamupEntry.TeamupId, amount, slashProgress)
+		err = model.UpdateTeamupProgress(tx, teamupEntry.TeamupId, amount, slashProgress)
 
 		if err != nil {
+			err = fmt.Errorf("fail to update teamup err - %v", err)
 			return
 		}
 		return

@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"web-api/util"
@@ -64,7 +65,8 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 	teamup, _ := GetTeamUpByTeamUpId(teamupId)
 
 	if teamup.UserId == userId || teamup.TeamupEndTime < time.Now().UTC().Unix() {
-		return false, fmt.Errorf("unable to slash bet")
+		err = fmt.Errorf("teamup_slash_error")
+		return
 	}
 
 	teamupEntries, err := FindTeamupEntryByTeamupId(teamupId)
@@ -74,74 +76,35 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 
 	for _, entry := range teamupEntries {
 		if entry.UserId == userId {
+			err = fmt.Errorf("teamup_slashed_before_error")
 			return
 		}
 	}
 
 	// 10000 = 100%
 	maxPercentage := int64(10000)
-	ceilingPercentage := int64(9999)
-	totalProgress := util.Sum(teamupEntries, func(entry ploutos.TeamupEntry) int64 {
+	currentTotalProgress := util.Sum(teamupEntries, func(entry ploutos.TeamupEntry) int64 {
 		return entry.FakePercentageProgress
 	})
 
-	var rNum int64
-	var currentSlashProgress int64
+	beforeProgress, afterProgress := GenerateFakeProgress(currentTotalProgress)
 
-	if totalProgress == 0 {
-		rNum = util.RandomNumFromRange(int64(8500), int64(9200))
-	} else {
-		rNum = util.RandomNumFromRange(int64(1), int64(100))
+	// Update status to SUCCESS if teamup deposit exceeded target
+	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
+		teamup.Status = int(ploutos.TeamupStatusSuccess)
+		teamup.TeamupCompletedTime = time.Now().UTC().Unix()
+		teamup.TotalFakeProgress = maxPercentage
+		afterProgress = maxPercentage
 	}
-
-	totalProgress += int64(rNum)
 
 	slashEntry := ploutos.TeamupEntry{
 		TeamupId: teamupId,
 		UserId:   userId,
 	}
 
-	currentSlashProgress = 0
-
-	isSuccessTeamup := false
-
 	slashEntry.TeamupEndTime = teamup.TeamupEndTime
 	slashEntry.TeamupCompletedTime = teamup.TeamupCompletedTime
-
-	// Update status to SUCCESS if teamup deposit exceeded target
-	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
-		isSuccessTeamup = true
-		teamup.Status = int(ploutos.TeamupStatusSuccess)
-		teamup.TeamupCompletedTime = time.Now().UTC().Unix()
-		err = DB.Transaction(func(tx *gorm.DB) (err error) {
-			err = tx.Save(&teamup).Error
-			return
-		})
-
-		if err != nil {
-			return
-		}
-	}
-
-	if isSuccessTeamup {
-		// If already success, add the progress until 100%
-		currentSlashProgress = maxPercentage - totalProgress
-		teamup.TotalFakeProgress = maxPercentage
-	} else if totalProgress >= maxPercentage-1 {
-		// If not success, and totalProgress more than or equals to 99.99%
-		if totalProgress-rNum >= ceilingPercentage {
-			// If not success, and totalProgress is 99.99%, current slash = 0.00%
-			currentSlashProgress = 0
-		} else {
-			// If not success, and totalProgress less than 99.99%, current slash = 99.99% - currentProgress = make it 99.99%
-			currentSlashProgress = ceilingPercentage - totalProgress
-		}
-		teamup.TotalFakeProgress = 9999
-	} else {
-		// If not success, normal random %
-		currentSlashProgress = rNum
-		teamup.TotalFakeProgress = totalProgress + rNum
-	}
+	slashEntry.FakePercentageProgress = afterProgress - beforeProgress
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&teamup).Error
@@ -150,8 +113,6 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 	if err != nil {
 		return
 	}
-
-	slashEntry.FakePercentageProgress = currentSlashProgress
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&slashEntry).Error
@@ -183,15 +144,15 @@ func FindOngoingTeamupEntriesByUserId(userId int64) (res ploutos.TeamupEntry, er
 	return
 }
 
-func UpdateFirstTeamupEntryProgress(teamupEntryId, amount, slashAmount int64) error {
-	return DB.Transaction(func(tx *gorm.DB) error {
+func UpdateFirstTeamupEntryProgress(tx *gorm.DB, teamupEntryId, amount, slashAmount int64) error {
+	return tx.Transaction(func(tx2 *gorm.DB) error {
 
 		updates := map[string]interface{}{
 			"total_deposit":              gorm.Expr("total_deposit + ?", amount),
 			"contributed_teamup_deposit": gorm.Expr("contributed_teamup_deposit + ?", slashAmount),
 		}
 
-		if err := tx.Table("teamup_entries").
+		if err := tx2.Table("teamup_entries").
 			Where("id = ?", teamupEntryId).
 			Limit(1).
 			Updates(updates).Error; err != nil {
@@ -199,4 +160,27 @@ func UpdateFirstTeamupEntryProgress(teamupEntryId, amount, slashAmount int64) er
 		}
 		return nil
 	})
+}
+
+func GenerateFakeProgress(currentProgress int64) (beforeProgress, afterProgress int64) {
+	ceilingProgress := int64(9999)
+	beforeProgress = currentProgress
+
+	if currentProgress >= ceilingProgress {
+		beforeProgress = ceilingProgress
+		afterProgress = ceilingProgress
+		return
+	}
+
+	maximumAllowedProgress := ceilingProgress - currentProgress
+
+	if currentProgress == 0 {
+		afterProgress = util.RandomNumFromRange(int64(8500), int64(9200))
+		return
+	}
+
+	progress := int64(math.Min(float64(maximumAllowedProgress), float64(util.RandomNumFromRange(int64(1), int64(100)))))
+	afterProgress = progress + currentProgress
+
+	return
 }

@@ -641,3 +641,6 @@ custom_promotion_entry_field_incomplete_error: "参加活动失败 - 未填完"
 teamup_error: "无法发起砍单"
 teamup_match_started: "砍单时间已经过了"
 teamup_br_not_exist: "下注单号不存在"
+
+teamup_slash_error: "无法砍单"
+teamup_slashed_before_error: "该用户已砍过这单"

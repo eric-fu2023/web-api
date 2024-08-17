@@ -641,3 +641,6 @@ custom_promotion_entry_field_incomplete_error: "Please Fill In All The Fields."
 teamup_error: "Unable To Start Teamup."
 teamup_match_started: "Match Already Started."
 teamup_br_not_exist: "Bet Doesn't Exist."
+
+teamup_slash_error: "Unable to Slash"
+teamup_slashed_before_error: "User Has Slashed This Bet"
