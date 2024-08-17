@@ -38,6 +38,10 @@ const (
 	CodeCaptchaInvalid   = 40004
 	CodeOtpInvalid       = 40005
 	CodeNoStream         = 100
+
+	CustomTeamUpError                      = 50010
+	CustomTeamUpBetReportDoesNotExistError = 50011
+	CustomTeamUpMatchStartedError          = 50012
 )
 
 func Err(c *gin.Context, service any, errCode int, msg string, err error) Response {

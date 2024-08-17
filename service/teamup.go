@@ -116,24 +116,31 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	user := u.(model.User)
 
 	br, err := model.GetTeamUpBetReport(s.OrderId)
-	br.ParseInfo()
 
 	if err != nil {
-		r = serializer.DBErr(c, "", i18n.T("teamup_match_started"), err)
+		r = serializer.Err(c, "", serializer.CustomTeamUpBetReportDoesNotExistError, i18n.T("teamup_br_not_exist"), err)
+		return
+	}
+	br.ParseInfo()
+
+	if br.UserId != user.ID {
+		r = serializer.Err(c, "", serializer.CustomTeamUpError, i18n.T("teamup_error"), err)
 		return
 	}
 
 	var matchTime int64
 	for _, bet := range br.Bets {
 		if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
-			matchTime = *bet.GetMatchTime() - (600) // 600 = 10 mins for timestamp
+			expiredBefore, _ := model.GetAppConfigWithCache("teamup", "teamup_event_expired_before_minutes")
+			expiredBeforeMinutes, _ := strconv.Atoi(expiredBefore)
+			matchTime = *bet.GetMatchTime() - (60 * int64(expiredBeforeMinutes)) // 60 seconds * num minutes
 		}
 	}
 
 	nowTs := time.Now().UTC().Unix()
 
 	if err != nil || nowTs >= matchTime {
-		r = serializer.DBErr(c, "", i18n.T("teamup_match_started"), err)
+		r = serializer.Err(c, "", serializer.CustomTeamUpMatchStartedError, i18n.T("teamup_match_started"), err)
 		return
 	}
 
@@ -188,6 +195,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 	shareService, err := buildTeamupShareParamsService(serializer.BuildCustomTeamupHash(t, user, br))
 	if err != nil {
+		r = serializer.Err(c, "", serializer.CustomTeamUpError, i18n.T("teamup_error"), err)
 		return
 	}
 
@@ -199,53 +207,22 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 func (s GetTeamupService) ContributedUserList(c *gin.Context) (r serializer.Response, err error) {
 	entries, err := model.GetAllTeamUpEntries(s.TeamupId, s.Page, s.Limit)
 
-	for i, _ := range entries {
+	for i := range entries {
 		entries[i].ContributedAmount = entries[i].ContributedAmount / float64(100)
 	}
 
 	r.Data = entries
-
-	// now := time.Now()
-	// brand := c.MustGet(`_brand`).(int)
-	// deviceInfo, _ := util.GetDeviceInfo(c)
-
-	// analysts, err = model.AnalystList(c, p.Page, p.Limit)
-	// if err != nil {
-	// 	r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
-	// 	return
-	// }
-	// r.Data = serializer.BuildAnalystList(analysts)
-
-	// analystRepo := repo.NewMockAnalystRepo()
-	// r, err = analystRepo.GetList(c)
 
 	return
 }
 
 func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err error) {
 
-	// now := time.Now()
-	// brand := c.MustGet(`_brand`).(int)
-	// deviceInfo, _ := util.GetDeviceInfo(c)
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	// analysts, err = model.AnalystList(c, p.Page, p.Limit)
-	// if err != nil {
-	// 	r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
-	// 	return
-	// }
-	// r.Data = serializer.BuildAnalystList(analysts)
-
-	// analystRepo := repo.NewMockAnalystRepo()
-	// r, err = analystRepo.GetList(c)
-
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
 	isSuccess, err := model.CreateSlashBetRecord(s.TeamupId, user.ID)
-
-	// Find user current slashed, find first not completed / expired
-
-	// topup will add to the very first
 
 	r.Data = isSuccess
 

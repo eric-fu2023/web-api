@@ -165,7 +165,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
 
 	// 查看是否有砍单记录，添加进度到砍单任务
-	err = calculateTeamupSlashProgress(cashOrder, user.ID)
+	// err = calculateTeamupSlashProgress(cashOrder, user.ID)
 
 	return
 }
