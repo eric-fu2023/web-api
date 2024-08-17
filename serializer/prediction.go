@@ -54,12 +54,12 @@ type OddDetail struct {
 }
 
 type OddsInfo struct {
-	Op     []OddDetail `json:"op"`
-	ID     int         `json:"-"`
-	Ss     int         `json:"-"`
-	Au     int         `json:"-"`
-	Mbl    int         `json:"-"`
-	Li     string      `json:"-"`
+	Op  []OddDetail `json:"op"`
+	ID  int         `json:"-"`
+	Ss  int         `json:"-"`
+	Au  int         `json:"-"`
+	Mbl int         `json:"-"`
+	Li  string      `json:"-"`
 }
 
 type MarketGroupInfo struct {
@@ -68,7 +68,7 @@ type MarketGroupInfo struct {
 	MarketGroupName    string     `json:"nm"`
 	Mks                []OddsInfo `json:"mks"`
 	InternalIdentifier string     `json:"-"`
-	Status int       `json:"status"`
+	Status             int        `json:"status"`
 }
 
 type LeagueInfo struct {
@@ -107,10 +107,10 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
 	selectionList := []FbSelectionInfo{}
-
-	allMarketGroups := []fbService.MarketGroup{}
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
+	// the unknown/black/red status of of the entire PredictionArticle
+	predictionStatus := fbService.PredictionOutcomeOutcomeRed
 	for i, selection := range prediction.PredictionSelections {
 		allSelectedOddsId[i] = selection.FbOdds.ID
 	}
@@ -134,7 +134,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		// for all odds related to the selection
 		for oddIdx, odd := range selection.FbOdds.RelatedOdds {
 			orders := model.GetOrderByOddFromSelection(selection, odd.ID)
-			oddStatus, err := fbService.ComputeOutcomeByOrderReportI(orders);
+			oddStatus, err := fbService.ComputeOutcomeByOrderReportI(orders)
 
 			if err != nil {
 				log.Printf("error computing outcome for Odds [ID:%d]\n", odd.ID)
@@ -149,7 +149,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Odt:      int(odd.OddsFormat),
 				Li:       odd.OldNameCN,
 				Selected: slices.Contains(allSelectedOddsId, odd.ID),
-				Status:   int(oddStatus), 
+				Status:   int(oddStatus),
 			}
 		}
 
@@ -165,8 +165,16 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			// market group doesn't exist. add into list for the first time.
 			marketGroup := model.GetMarketGroupOrdersByKeyFromPrediction(prediction, marketGroupKey)
 			marketgroupStatus, err := fbService.ComputeMarketGroupOutcomesByOrderReport(marketGroup)
+			// handle PredictionArticle status
+			if marketgroupStatus == fbService.MarketGroupOutComeOutcomeUnknown {
+				// if any marketgroupStatus is unknown, entire PredictionArticle is unknown
+				predictionStatus = fbService.PredictionOutcomeOutcomeUnknown
+			} else if marketgroupStatus == fbService.MarketGroupOutComeOutcomeBlack && predictionStatus != fbService.PredictionOutcomeOutcomeUnknown {
+				// if any marketgroupStatus is black, and PredictionArticle is not unknown, PredictionArticle is black
+				predictionStatus = fbService.PredictionOutcomeOutcomeBlack
+			}
 			if err != nil {
-				log.Printf("error computing marketgroup status")
+				log.Printf("error computing marketgroup status: %s\n", err)
 			}
 
 			mgList = append(mgList, MarketGroupInfo{
@@ -175,7 +183,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				MarketGroupName:    selection.FbOdds.MarketGroupInfo.FullNameCn,
 				Mks:                mks,
 				InternalIdentifier: marketGroupKey,
-				Status: int(marketgroupStatus),
+				Status:             int(marketgroupStatus),
 			})
 		}
 
@@ -214,11 +222,11 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 	}
 
-	predictionStatus, err := fbService.ComputePredictionOutcomesByOrderReport(fbService.Prediction{MarketGroups: allMarketGroups}) 
+	// predictionStatus, err := fbService.ComputePredictionOutcomesByOrderReport(fbService.Prediction{MarketGroups: allMarketGroups})
 
-	if err != nil {
-		log.Println("error computing prediction outcome")
-	}
+	// if err != nil {
+	// 	log.Printf("error computing prediction outcome: %s\n", err)
+	// }
 
 	if omitAnalyst {
 		pred = Prediction{
