@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"net/http"
@@ -320,6 +321,9 @@ func (s TestDepositService) TestDeposit(c *gin.Context) (r serializer.Response, 
 	contributedSlashProgress := s.DepositAmount / int64(slashMultiplier)
 
 	err = updateTeamupProgress(s.UserId, s.DepositAmount, contributedSlashProgress)
+	if err != nil {
+		log.Print(err.Error())
+	}
 
 	return
 }
@@ -328,18 +332,21 @@ func updateTeamupProgress(userId, amount, slashProgress int64) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		teamupEntry, err := model.FindOngoingTeamupEntriesByUserId(userId)
 		if err != nil {
+			err = fmt.Errorf("fail to get teamup err - %v", err)
 			return
 		}
 
-		err = model.UpdateFirstTeamupEntryProgress(teamupEntry.ID, amount, slashProgress)
+		err = model.UpdateFirstTeamupEntryProgress(tx, teamupEntry.ID, amount, slashProgress)
 
 		if err != nil {
+			err = fmt.Errorf("fail to update teamup entry err - %v", err)
 			return
 		}
 
-		err = model.UpdateTeamupProgress(teamupEntry.TeamupId, amount, slashProgress)
+		err = model.UpdateTeamupProgress(tx, teamupEntry.TeamupId, amount, slashProgress)
 
 		if err != nil {
+			err = fmt.Errorf("fail to update teamup err - %v", err)
 			return
 		}
 		return
