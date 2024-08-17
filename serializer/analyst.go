@@ -39,7 +39,10 @@ type Achievement struct {
 func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
 	resp = []Analyst{}
 	for _, a := range analysts {
-		resp = append(resp, BuildAnalystDetail(a))
+		// only display analysts with published PredictionArticles
+		if len(a.Predictions) > 0 {
+			resp = append(resp, BuildAnalystDetail(a))
+		}
 	}
 	return
 }
