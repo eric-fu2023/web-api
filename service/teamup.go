@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -217,12 +218,19 @@ func (s GetTeamupService) ContributedUserList(c *gin.Context) (r serializer.Resp
 }
 
 func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err error) {
-
+	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
 	isSuccess, err := model.CreateSlashBetRecord(s.TeamupId, user.ID)
+
+	if err != nil {
+		return serializer.Response{
+			Code:  http.StatusBadRequest,
+			Error: i18n.T(err.Error()),
+		}, nil
+	}
 
 	r.Data = isSuccess
 
