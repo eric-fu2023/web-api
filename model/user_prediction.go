@@ -10,7 +10,6 @@ import (
 
 type UserPrediction struct {
 	ploutos.UserPrediction
-	Prediction *ploutos.TipsAnalystPrediction `gorm:"foreignKey:PredictionId;references:ID"`
 }
 
 type GetUserPredictionCond struct {
@@ -97,7 +96,7 @@ func GetUserPredictionCount(deviceId string) (count int64, err error) {
 
 	now, err := util.NowGMT8()
 	if err != nil {
-		return 
+		return
 	}
 	start := util.RoundDownTimeDay(now)
 	end := util.RoundUpTimeDay(now)
@@ -108,7 +107,7 @@ func GetUserPredictionCount(deviceId string) (count int64, err error) {
 
 	err = db.Count(&count).Error
 
-	return 
+	return
 }
 
 func todayHasId(predictionId int64, deviceId string) (exist bool, err error) {
@@ -116,7 +115,7 @@ func todayHasId(predictionId int64, deviceId string) (exist bool, err error) {
 
 	now, err := util.NowGMT8()
 	if err != nil {
-		return 
+		return
 	}
 	start := util.RoundDownTimeDay(now)
 	end := util.RoundUpTimeDay(now)
@@ -129,13 +128,13 @@ func todayHasId(predictionId int64, deviceId string) (exist bool, err error) {
 	db.Where("device_id = ?", deviceId)
 
 	err = db.First(&ploutos.UserPrediction{}).Error
-	
+
 	if err != nil {
 		exist = false
-		return exist, nil 
+		return exist, nil
 	}
-	exist = true 
+	exist = true
 
-	return 
+	return
 
 }

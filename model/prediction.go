@@ -30,6 +30,8 @@ func preloadPredictions() *gorm.DB {
 		Preload("PredictionSelections").
 		Preload("PredictionSelections.FbOdds").
 		Preload("PredictionSelections.FbOdds.RelatedOdds").
+		Preload("PredictionSelections.FbOdds.FbOddsOrderRequestList").
+		Preload("PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
 		Preload("PredictionSelections.FbOdds.MarketGroupInfo").
 		Preload("PredictionSelections.FbMatch").
 		Preload("PredictionSelections.FbMatch.LeagueInfo").
@@ -93,7 +95,7 @@ func PredictionExist(predictionId int64) (exist bool, err error) {
 func GetOrderByOddFromSelection(selection PredictionSelection, oddId int64) (reports []fbService.SelectionOrder) {
 	if selection.FbOdds.ID == oddId {
 		for _, order := range selection.FbOdds.FbOddsOrderRequestList {
-			reports = append(reports, order.FbBetReport)
+			reports = append(reports, order.TayaBetReport)
 		}
 	}
 	return
@@ -113,7 +115,7 @@ func GetMarketGroupOrdersByKeyFromPrediction(prediction Prediction, key string) 
 		mg.GroupType = selection.FbOdds.MarketGroupType
 		orders := []fbService.SelectionOrder{}
 		for _, order := range selection.FbOdds.FbOddsOrderRequestList {
-			orders = append(orders, order.FbBetReport)
+			orders = append(orders, order.TayaBetReport)
 		}
 		mg.Selections = append(mg.Selections, fbService.Selection{Orders: orders})
 	}
@@ -134,7 +136,7 @@ func GetPredictionFromPrediction(prediction Prediction) (outPred fbService.Predi
 
 func IncreasePredictionViewCountBy1(prediction Prediction) error {
 	err := DB.Transaction(func(tx *gorm.DB) error {
-		return tx.Model(&prediction.PredictionArticle).Update("Views", prediction.Views + 1).Error
+		return tx.Model(&prediction.PredictionArticle).Update("Views", prediction.Views+1).Error
 	})
 	return err
 }
