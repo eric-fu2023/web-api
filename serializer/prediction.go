@@ -107,8 +107,6 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
 	selectionList := []FbSelectionInfo{}
-
-	allMarketGroups := []fbService.MarketGroup{}
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
 	// the unknown/black/red status of of the entire PredictionArticle
