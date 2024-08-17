@@ -61,7 +61,7 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 	}
 
 	if cond.FbMatchId != 0 {
-		db = db.Where("prediction_article_bets.fb_match_id = ?", cond.FbMatchId)
+		db = db.Where("prediction_articles.fb_match_id = ?", cond.FbMatchId)
 	}
 
 	if cond.SportId != 0 {
