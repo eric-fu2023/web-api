@@ -15,7 +15,7 @@ type Analyst struct {
 	AnalystSource    Source       `json:"analyst_source"`
 	AnalystImage     string       `json:"analyst_image"`
 	WinningStreak    int          `json:"winning_streak"`
-	Accuracy         float64      `json:"accuracy"`
+	Accuracy         int          `json:"accuracy"`
 	NumFollowers     int          `json:"num_followers"`
 	TotalPredictions int          `json:"total_predictions"`
 	Predictions      []Prediction `json:"predictions"`
@@ -65,9 +65,9 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	nearX, winX := util.NearXWinX(statusInBool)
 
 	winStreak := util.ConsecutiveWins(statusInBool)
-	accuracy := 0.0
+	accuracy := 0
 	if len(statusInBool) > 0 {
-		accuracy = float64(winCount) / float64(len(statusInBool))
+		accuracy = int(float64(winCount) / float64(len(statusInBool)) * 100)
 	}
 
 	resp = Analyst{
