@@ -38,3 +38,16 @@ func DollarJackpotWinners(c *gin.Context) {
 		c.JSON(400, api.ErrorResponse(c, service, err))
 	}
 }
+
+func DollarJackpotBetReport(c *gin.Context) {
+	var service dollar_jackpot.DollarJackpotBetReportService
+	if err := c.ShouldBind(&service); err == nil {
+		res, e := service.List(c)
+		c.JSON(200, res)
+		if e != nil {
+			c.Abort()
+		}
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
