@@ -286,19 +286,38 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 func SortPredictionList(predictions []Prediction) []Prediction {
 	// sort by status.. unsettled then settled
 	// then in each grp, sort by （命中率 50%，近X中X 50%）
-	sorted := slices.Clone(predictions)
+	unsettled := []Prediction{}
+	settled := []Prediction{}
 
-	slices.SortFunc(sorted, func(a, b Prediction) int {
-		if a.Status == 0 && b.Status != 0 {
+	for _, pred := range predictions {
+		if pred.Status == 0 {
+			unsettled = append(unsettled, pred)
+		} else {
+			settled = append(settled, pred)
+		}
+	}
+
+	slices.SortFunc(unsettled, func(a, b Prediction) int {
+		wa, wb := weightage(a), weightage(b)
+		if wa < wb {
+			return 1
+		} else if wa > wb {
 			return -1
 		}
-		if a.Status != 0 && b.Status == 0 {
-			return 1
-		}
-
-		return int(weightage(b) - weightage(a))
+		return 0
 	})
-	return sorted
+	slices.SortFunc(settled, func(a, b Prediction) int {
+		wa, wb := weightage(a), weightage(b)
+		if wa < wb {
+			return 1
+		} else if wa > wb {
+			return -1
+		}
+		return 0	
+	})
+
+
+	return append(unsettled, settled...)
 }
 
 func weightage(prediction Prediction) float64 {
