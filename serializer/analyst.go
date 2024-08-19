@@ -31,7 +31,7 @@ type Source struct {
 
 type Achievement struct {
 	TotalPredictions int     `json:"total_predictions"`
-	Accuracy         float64 `json:"accuracy"`
+	Accuracy         int	 `json:"accuracy"`
 	WinningStreak    int     `json:"winning_streak"`
 	RecentResult     []int   `json:"recent_result"`
 }
@@ -62,14 +62,16 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	}
 
 	statusInBool, winCount := GetBoolOutcomes(statuses)
+	// FIXME : need see whether recent or all 
 	nearX, winX := util.NearXWinX(statusInBool)
 
 	winStreak := util.ConsecutiveWins(statusInBool)
 	accuracy := 0
 	if len(statusInBool) > 0 {
-		accuracy = int(float64(winCount) / float64(len(statusInBool)) * 100)
+		accuracy = int(float64(winCount) / float64(len(statusInBool)) * 100) //TODO use math.Ceil 
 	}
-
+	// fixme end 
+	
 	resp = Analyst{
 		AnalystId:        analyst.ID,
 		AnalystName:      analyst.AnalystName,
@@ -119,9 +121,9 @@ func BuildAnalystAchievement(results []fbService.PredictionOutcome) (resp Achiev
 	streak := util.ConsecutiveWins(resultInBool)
 
 	// accuracy
-	accuracy := 0.0
+	accuracy := 0
 	if len(resultInBool) != 0 {
-		accuracy = float64(winCount) / float64(len(resultInBool))
+		accuracy = int(float64(winCount) / float64(len(resultInBool))) * 100 //TODO use math.Ceil 
 	}
 
 	resp = Achievement{
