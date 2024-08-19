@@ -101,7 +101,10 @@ func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Respo
 
 func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error) {
 	u, _ := c.Get("user")
-	user := u.(model.User)
+	var user model.User
+	if u != nil {
+		user = u.(model.User)
+	}
 
 	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
