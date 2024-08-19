@@ -29,7 +29,20 @@ func preloadPredictions() *gorm.DB {
 	return DB.
 		Preload("PredictionSelections").
 		Preload("PredictionSelections.FbOdds").
-		Preload("PredictionSelections.FbOdds.RelatedOdds").
+		Preload("PredictionSelections.FbOdds.RelatedOdds", func (db *gorm.DB) *gorm.DB  {
+			/*
+				order by
+				CASE short_name_cn
+					WHEN '和' THEN 2
+					WHEN '主' THEN 1
+					WHEN '客' THEN 3
+					ELSE 0
+				END,
+				selection_type	
+			*/
+			db  = db.Order("CASE short_name_cn WHEN '和' THEN 2 WHEN '主' THEN 1 WHEN '客' THEN 3 ELSE 0 END, selection_type") 
+			return db
+		}).
 		Preload("PredictionSelections.FbOdds.FbOddsOrderRequestList").
 		Preload("PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
 		Preload("PredictionSelections.FbOdds.MarketGroupInfo").
