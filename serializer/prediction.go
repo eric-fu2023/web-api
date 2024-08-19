@@ -7,6 +7,7 @@ import (
 	"web-api/model"
 
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
+	models "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type Prediction struct {
@@ -134,11 +135,18 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		opList := make([]OddDetail, len(selection.FbOdds.RelatedOdds))
 		// for all odds related to the selection
 		for oddIdx, odd := range selection.FbOdds.RelatedOdds {
-			orders := model.GetOrderByOddFromSelection(selection, odd.ID)
-			oddStatus, err := fbService.ComputeOutcomeByOrderReportI(orders)
-
-			if err != nil {
-				log.Printf("error computing outcome for Odds [ID:%d]: %s\n", odd.ID, err)
+			// get prediction bet result first
+			// if it's red/black already, use directly
+			// otherwise compute from taya_bet_report
+			betResult := 0
+			if selection.BetResult == models.BetResultUnknown {
+				if oddStatus, err := fbService.ComputeOutcomeByOrderReportI(model.GetOrderByOddFromSelection(selection, odd.ID)); err != nil {
+					log.Printf("error computing outcome for Odds [ID:%d]: %s\n", odd.ID, err)
+				} else {
+					betResult = int(oddStatus)
+				}
+			} else {
+				betResult = int(selection.BetResult)
 			}
 
 			opList[oddIdx] = OddDetail{
@@ -150,7 +158,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Odt:      int(odd.OddsFormat),
 				Li:       odd.OldNameCN,
 				Selected: slices.Contains(allSelectedOddsId, odd.ID),
-				Status:   int(oddStatus),
+				Status:   betResult,
 			}
 		}
 
@@ -267,15 +275,19 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 	return
 }
 
-func SortPredictionList(predictions []Prediction) []Prediction{
-	// sort by status.. unsettled then settled 
+func SortPredictionList(predictions []Prediction) []Prediction {
+	// sort by status.. unsettled then settled
 	// then in each grp, sort by （命中率 50%，近X中X 50%）
 	sorted := slices.Clone(predictions)
 
 	slices.SortFunc(sorted, func(a, b Prediction) int {
-		if n:= a.Status - b.Status; n != 0 {
-			return int(n)
-		} 
+		if a.Status == 0 && b.Status != 0 {
+			return -1
+		}
+		if a.Status != 0 && b.Status == 0 {
+			return 1
+		}
+
 		return int(weightage(b) - weightage(a))
 	})
 	return sorted
@@ -283,9 +295,9 @@ func SortPredictionList(predictions []Prediction) []Prediction{
 
 func weightage(prediction Prediction) float64 {
 	if prediction.AnalystDetail != nil {
-		return float64(prediction.AnalystDetail.Accuracy) * 0.5 + (float64(prediction.AnalystDetail.RecentWins)/float64(prediction.AnalystDetail.RecentTotal)*100 * 0.5)
+		return float64(prediction.AnalystDetail.Accuracy)*0.5 + (float64(prediction.AnalystDetail.RecentWins) / float64(prediction.AnalystDetail.RecentTotal) * 100 * 0.5)
 	}
-	return 0.0 
+	return 0.0
 }
 
 func GetPredictionSportId(p model.Prediction) int64 {

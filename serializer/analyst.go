@@ -1,7 +1,7 @@
 package serializer
 
 import (
-	"log"
+	"slices"
 	"web-api/model"
 	"web-api/util"
 
@@ -49,16 +49,18 @@ func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
 
 func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	predictions := make([]Prediction, len(analyst.Predictions))
-	statuses := make([]fbService.PredictionOutcome, len(analyst.Predictions))
 
 	for i, pred := range analyst.Predictions {
 		predictions[i] = BuildPrediction(pred, true, false)
-		_pred := model.GetPredictionFromPrediction(pred)
-		outcome, err := fbService.ComputePredictionOutcomesByOrderReport(_pred)
-		if err != nil {
-			log.Printf("error computing outcome of prediction[ID:%d]: %s\n", pred.ID, err)
-		}
-		statuses[i] = outcome
+	}
+
+	sortedPredictions := slices.Clone(predictions)
+	slices.SortFunc(sortedPredictions, func(a, b Prediction) int {
+		return b.CreatedAt.Compare(a.CreatedAt) // newest to oldest 
+	})
+	var statuses []fbService.PredictionOutcome
+	for _, p := range sortedPredictions  {
+		statuses = append(statuses, fbService.PredictionOutcome(p.Status))
 	}
 
 	statusInBool, _ := GetBoolOutcomes(statuses) // this function removes unknown statuses
@@ -132,7 +134,7 @@ func BuildAnalystAchievement(original []fbService.PredictionOutcome) (resp Achie
 	// accuracy
 	accuracy := 0
 	if len(resultInBool) != 0 {
-		accuracy = int(float64(winCount)/float64(len(resultInBool))) * 100 //TODO use math.Ceil
+		accuracy = int(float64(winCount) / float64(len(resultInBool)) * 100)  //TODO use math.Ceil 
 	}
 
 	resp = Achievement{
