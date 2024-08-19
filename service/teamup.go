@@ -158,6 +158,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	teamup, err = model.GetTeamUp(s.OrderId)
 
 	var t ploutos.Teamup
+	t = teamup
 
 	if teamup.ID == 0 {
 
