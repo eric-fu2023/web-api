@@ -30,10 +30,10 @@ type Source struct {
 }
 
 type Achievement struct {
-	TotalPredictions int     `json:"total_predictions"`
-	Accuracy         int	 `json:"accuracy"`
-	WinningStreak    int     `json:"winning_streak"`
-	RecentResult     []int   `json:"recent_result"`
+	TotalPredictions int   `json:"total_predictions"`
+	Accuracy         int   `json:"accuracy"`
+	WinningStreak    int   `json:"winning_streak"`
+	RecentResult     []int `json:"recent_result"`
 }
 
 func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
@@ -56,20 +56,20 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		_pred := model.GetPredictionFromPrediction(pred)
 		outcome, err := fbService.ComputePredictionOutcomesByOrderReport(_pred)
 		if err != nil {
-			log.Printf("error computing outcome of prediction[ID:%d]", pred.ID)
+			log.Printf("error computing outcome of prediction[ID:%d]: %s\n", pred.ID, err)
 		}
 		statuses[i] = outcome
 	}
 
-	statusInBool, _ := GetBoolOutcomes(statuses)
+	statusInBool, _ := GetBoolOutcomes(statuses) // this function removes unknown statuses
 	nearX, winX := util.NearXWinX(statusInBool)
 
 	winStreak := util.RecentConsecutiveWins(statusInBool)
 
-	// accuracty based on latest 10 
+	// accuracty based on latest 10
 	accuracy := 0
 	if len(statusInBool) > 0 {
-		accuracy = util.Accuracy(statusInBool) 
+		accuracy = util.Accuracy(statusInBool)
 	}
 
 	resp = Analyst{
@@ -100,8 +100,8 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 
 func BuildAnalystAchievement(original []fbService.PredictionOutcome) (resp Achievement) {
 	results := []fbService.PredictionOutcome{}
-	// filter unknown 
-	for _, outcome := range original{
+	// filter unknown
+	for _, outcome := range original {
 		if outcome == fbService.PredictionOutcomeOutcomeUnknown {
 			continue
 		} else {
@@ -132,14 +132,14 @@ func BuildAnalystAchievement(original []fbService.PredictionOutcome) (resp Achie
 	// accuracy
 	accuracy := 0
 	if len(resultInBool) != 0 {
-		accuracy = int(float64(winCount) / float64(len(resultInBool))) * 100 //TODO use math.Ceil 
+		accuracy = int(float64(winCount)/float64(len(resultInBool))) * 100 //TODO use math.Ceil
 	}
 
 	resp = Achievement{
 		TotalPredictions: len(original), // no filter out unknown
-		Accuracy:         accuracy, // filter unknown
-		WinningStreak:    streak, // filter unknown
-		RecentResult:     recentResult, // filter unknown
+		Accuracy:         accuracy,      // filter unknown
+		WinningStreak:    streak,        // filter unknown
+		RecentResult:     recentResult,  // filter unknown
 	}
 	return
 }
