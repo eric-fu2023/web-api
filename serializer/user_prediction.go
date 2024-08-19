@@ -8,7 +8,7 @@ type UserPrediction struct {
 	PredictionId int64 `json:"prediction_id"`
 }
 
-func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.UserPrediction) []Prediction {
+func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.UserPrediction, page, limit int) []Prediction {
 	// Create a map to quickly check if a PredictionId is in userPreds
 	userPredMap := make(map[uint]bool, len(userPreds))
 	for _, up := range userPreds {
@@ -23,6 +23,14 @@ func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.Us
 		ls[i] = BuildPrediction(pred, false, !exist)
 	}
 
+	start := limit * (page - 1) 
+	if start > len(preds) {
+		return []Prediction{}
+	}
+	end := limit * page
+	if (end > len(preds)) {
+		end = len(preds)
+	}
 	// return ls
-	return SortPredictionList(ls)
+	return SortPredictionList(ls)[start:end]
 }
