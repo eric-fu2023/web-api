@@ -71,7 +71,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		accuracy = int(float64(winCount) / float64(len(statusInBool)) * 100) //TODO use math.Ceil 
 	}
 	// fixme end 
-	
+
 	resp = Analyst{
 		AnalystId:        analyst.ID,
 		AnalystName:      analyst.AnalystName,
@@ -118,7 +118,7 @@ func BuildAnalystAchievement(results []fbService.PredictionOutcome) (resp Achiev
 	resultInBool, winCount := GetBoolOutcomes(results)
 
 	// winning streak
-	streak := util.ConsecutiveWins(resultInBool)
+	streak := util.ConsecutiveWins(resultInBool) // highest consecutive 最高连红
 
 	// accuracy
 	accuracy := 0

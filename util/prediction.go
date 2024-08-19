@@ -24,6 +24,19 @@ func ConsecutiveWins(arr []bool) int {
 	}
 }
 
+func RecentConsecutiveWins(arr []bool) int {
+	score := 0 
+
+	for _, val := range arr {
+		if val {
+			score += 1 
+		} else {
+			break
+		}
+	}
+	return score
+}
+
 func consecutive(segment []bool) int {
 	maxLen := 0
 	currentLen := 0 
