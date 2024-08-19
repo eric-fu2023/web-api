@@ -145,3 +145,11 @@ func IncreasePredictionViewCountBy1(prediction Prediction) error {
 	})
 	return err
 }
+
+func GetPredictionSportId(p Prediction) int64 {
+	if len(p.PredictionSelections) == 0 {
+		return 0
+	} else {
+		return int64(p.PredictionSelections[0].FbMatch.SportsID)
+	}
+}
