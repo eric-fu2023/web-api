@@ -95,3 +95,20 @@ func numWins(arr []bool) (wins int) {
 	return
 }
 
+func Accuracy(original []bool) (accuracy int) {
+	// truncate to latest 10 
+	var arr []bool
+	if (len(original) > 10) {
+		arr = original[:10]
+	} else {
+		arr = original
+	}
+
+	wins := 0 
+	for _, val := range arr {
+		if (val) {
+			wins += 1
+		}
+	}
+	return int(float64(wins)/float64(len(arr)) * 100)
+}
