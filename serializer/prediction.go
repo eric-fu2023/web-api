@@ -161,8 +161,8 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Na:       odd.OddsNameCN,
 				Nm:       odd.ShortNameCN, // odd.ShortNameCN,
 				Ty:       int(odd.SelectionType),
-				Od:       odd.Rate, // not sure
-				Bod:      odd.Rate, // not sure
+				Od:       -999, //odd.Rate, // not sure
+				Bod:      -999, //odd.Rate, // not sure
 				Odt:      int(odd.OddsFormat),
 				Li:       odd.OldNameCN,
 				Selected: slices.Contains(allSelectedOddsId, odd.ID),
@@ -326,7 +326,7 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 	// })
 	// FIXME : need to fix weightage
 	slices.SortFunc(settled, func(a, b Prediction) int {
-		if a.AnalystDetail.Accuracy < b.AnalystDetail.Accuracy {
+		if weightage(a) < weightage(b) {
 			return 1
 		} else if a.AnalystDetail.Accuracy > b.AnalystDetail.Accuracy {
 			return -1
@@ -335,8 +335,8 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 		}
 	})
 
-	slices.SortFunc(unsettled, func(a, b Prediction) int {
-		if a.AnalystDetail.Accuracy < b.AnalystDetail.Accuracy {
+	slices.SortFunc(unsettled, func (a, b Prediction) int {
+		if weightage(a) < weightage(b) {
 			return 1
 		} else if a.AnalystDetail.Accuracy > b.AnalystDetail.Accuracy {
 			return -1
@@ -349,10 +349,12 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 }
 
 func weightage(prediction Prediction) float64 {
-	if prediction.AnalystDetail != nil {
-		return float64(prediction.AnalystDetail.Accuracy)*0.5 + (float64(prediction.AnalystDetail.RecentWins) / float64(prediction.AnalystDetail.RecentTotal) * 100 * 0.5)
+	if (prediction.AnalystDetail == nil) {
+		return 0.00
 	}
-	return 0.0
+	accuracyWeight := float64(prediction.AnalystDetail.Accuracy) * 0.5
+	nearXweight := ((float64(prediction.AnalystDetail.RecentWins) / float64(prediction.AnalystDetail.RecentTotal)) * 100 * 0.5)
+	return  accuracyWeight + nearXweight
 }
 
 func CustomizeOddsName(oddsName string) string {
