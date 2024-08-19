@@ -102,7 +102,8 @@ func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
 	for i, p := range predictions {
 		finalList[i] = BuildPrediction(p, false, false)
 	}
-	return finalList
+	// return finalList
+	return SortPredictionList(finalList)
 }
 
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
@@ -259,6 +260,27 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 	}
 	return
+}
+
+func SortPredictionList(predictions []Prediction) []Prediction{
+	// sort by status.. unsettled then settled 
+	// then in each grp, sort by （命中率 50%，近X中X 50%）
+	sorted := slices.Clone(predictions)
+
+	slices.SortFunc(sorted, func(a, b Prediction) int {
+		if n:= a.Status - b.Status; n != 0 {
+			return int(n)
+		} 
+		return int(weightage(b) - weightage(a))
+	})
+	return sorted
+}
+
+func weightage(prediction Prediction) float64 {
+	if prediction.AnalystDetail != nil {
+		return float64(prediction.AnalystDetail.Accuracy) * 0.5 + (float64(prediction.AnalystDetail.RecentWins)/float64(prediction.AnalystDetail.RecentTotal)*100 * 0.5)
+	}
+	return 0.0 
 }
 
 func GetPredictionSportId(p model.Prediction) int64 {
