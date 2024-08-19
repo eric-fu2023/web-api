@@ -288,8 +288,17 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 	// then in each grp, sort by （命中率 50%，近X中X 50%）
 	unsettled := []Prediction{}
 	settled := []Prediction{}
-
+	
+	filteredPredictions := []Prediction{}
+	_y, _m, _d := time.Now().AddDate(0, 0, -7).Date()
+	weekAgo := time.Date(_y, _m, _d, 0, 0, 0, 0, time.Now().Location())
 	for _, pred := range predictions {
+		if pred.CreatedAt.After(weekAgo) {
+			filteredPredictions = append(filteredPredictions, pred)
+		}
+	}
+
+	for _, pred := range filteredPredictions {
 		if pred.Status == 0 {
 			unsettled = append(unsettled, pred)
 		} else {
