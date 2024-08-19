@@ -326,6 +326,16 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 		}
 	})
 
+	slices.SortFunc(unsettled, func (a, b Prediction) int {
+		if a.AnalystDetail.Accuracy < b.AnalystDetail.Accuracy {
+			return 1
+		} else if a.AnalystDetail.Accuracy > b.AnalystDetail.Accuracy {
+			return -1
+		} else {
+			return 0 
+		}
+	})
+
 	return append(unsettled, settled...)
 }
 
