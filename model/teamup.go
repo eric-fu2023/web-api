@@ -117,6 +117,8 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 			tx = tx.Where(`teamup_end_time >= ?`, start).Where(`teamup_end_time <= ?`, end)
 		}
 
+		tx = tx.Order(`teamup_end_time ASC`)
+
 		err = tx.Scopes(Paginate(page, limit)).Scan(&res).Error
 		return
 	})
