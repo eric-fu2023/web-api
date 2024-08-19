@@ -54,7 +54,7 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 
 	db := preloadPredictions()
 	db = db.
-		Scopes(Paginate(cond.Page, cond.Limit)).
+		// Scopes(Paginate(cond.Page, cond.Limit)). // TODO : temp remove pagination
 		Where("prediction_articles.is_published", true).
 		Joins("left join prediction_article_bets on prediction_article_bets.article_id = prediction_articles.id").
 		Joins("left join fb_matches on prediction_article_bets.fb_match_id = fb_matches.match_id").
