@@ -98,7 +98,16 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 	return
 }
 
-func BuildAnalystAchievement(results []fbService.PredictionOutcome) (resp Achievement) {
+func BuildAnalystAchievement(original []fbService.PredictionOutcome) (resp Achievement) {
+	results := []fbService.PredictionOutcome{}
+	// filter unknown 
+	for _, outcome := range original{
+		if outcome == fbService.PredictionOutcomeOutcomeUnknown {
+			continue
+		} else {
+			results = append(results, outcome)
+		}
+	}
 	// total predictions
 	numResults := len(results)
 
@@ -127,10 +136,10 @@ func BuildAnalystAchievement(results []fbService.PredictionOutcome) (resp Achiev
 	}
 
 	resp = Achievement{
-		TotalPredictions: len(results),
-		Accuracy:         accuracy,
-		WinningStreak:    streak,
-		RecentResult:     recentResult,
+		TotalPredictions: len(original), // no filter out unknown
+		Accuracy:         accuracy, // filter unknown
+		WinningStreak:    streak, // filter unknown
+		RecentResult:     recentResult, // filter unknown
 	}
 	return
 }
