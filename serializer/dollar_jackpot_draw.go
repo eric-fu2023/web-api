@@ -1,13 +1,15 @@
 package serializer
 
 import (
-	"github.com/gin-gonic/gin"
 	"web-api/model"
 	"web-api/util"
+
+	"github.com/gin-gonic/gin"
 )
 
 type DollarJackpotDraw struct {
 	Id                int64          `json:"id"`
+	Status            int64          `json:"status"`
 	Name              string         `json:"name"`
 	Total             *float64       `json:"total,omitempty"`
 	Contribution      *float64       `json:"contribution,omitempty"`
@@ -25,6 +27,7 @@ func BuildDollarJackpotDraw(c *gin.Context, a model.DollarJackpotDraw, contribut
 		Name:        a.Name,
 		StartTimeTs: a.StartTime.Unix(),
 		EndTimeTs:   a.EndTime.Unix(),
+		Status:      a.DollarJackpotDraw.Status,
 	}
 	if a.Total != nil {
 		t := util.MoneyFloat(*a.Total)
