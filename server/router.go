@@ -245,7 +245,7 @@ func NewRouter() *gin.Engine {
 		{
 			dj.GET("", middleware.CheckAuth(), dollar_jackpot_api.DollarJackpotGet) // can't have cache due to "total" value; cache at the query
 			dj.GET("/winners", dollar_jackpot_api.DollarJackpotWinners)
-			dj.GET("/history", middleware.AuthRequired(true,true), dollar_jackpot_api.DollarJackpotBetReport)
+			dj.GET("/history", middleware.AuthRequired(true, true), dollar_jackpot_api.DollarJackpotBetReport)
 		}
 
 		referralAlliance := v1.Group("/referral/alliance")
@@ -421,7 +421,7 @@ func NewRouter() *gin.Engine {
 			teamup.GET("/detail", teamup_api.GetTeamUpItem)
 			teamup.GET("/start", middleware.AuthRequired(true, false), teamup_api.StartTeamUp)
 			teamup.GET("/list", middleware.AuthRequired(true, false), teamup_api.ListAllTeamUp)
-			teamup.GET("/others", teamup_api.OtherTeamups)
+			teamup.GET("/others", middleware.Cache(5*time.Minute, false), teamup_api.OtherTeamups)
 			teamup.GET("/contribute/list", teamup_api.ContributedList)
 			teamup.POST("/slash", middleware.AuthRequired(true, false), teamup_api.SlashBet)
 

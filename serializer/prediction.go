@@ -235,7 +235,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			AnalystId:       prediction.AnalystId,
 			PredictionTitle: prediction.Title,
 			PredictionDesc:  prediction.Content,
-			CreatedAt:       prediction.CreatedAt,
+			CreatedAt:       prediction.PublishedAt,
 			ViewCount:       int64(prediction.Views),
 			IsLocked:        isLocked,
 			SelectionList:   selectionList,
