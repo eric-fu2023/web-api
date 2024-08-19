@@ -119,8 +119,9 @@ var (
 	}
 	ChatSystemId  int64 = -999999
 	AuthEventType       = map[string]int{
-		"login":  1,
-		"logout": 2,
+		"login":         1,
+		"logout":        2,
+		"forced_logout": 3,
 	}
 
 	AuthEventStatus = map[string]int{

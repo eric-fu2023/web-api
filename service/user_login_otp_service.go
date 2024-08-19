@@ -195,6 +195,8 @@ func ProcessUserLogin(c *gin.Context, user model.User, loginMethod int, inputted
 	if err != nil {
 		return "", ErrTokenGeneration
 	}
+
+	loginTime := time.Now()
 	if timeout, e := strconv.Atoi(os.Getenv("SESSION_TIMEOUT")); e == nil {
 		val := map[string]interface{}{
 			"token":    tokenString,
@@ -204,7 +206,6 @@ func ProcessUserLogin(c *gin.Context, user model.User, loginMethod int, inputted
 		cache.RedisSessionClient.Expire(context.TODO(), user.GetRedisSessionKey(), time.Duration(timeout)*time.Minute)
 	}
 
-	loginTime := time.Now()
 	err = user.UpdateLoginInfo(c, loginTime)
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("UpdateLoginInfo error: %s", err.Error())
@@ -220,6 +221,19 @@ func LogSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time, lo
 	if err != nil {
 		// Just log error if failed
 		util.GetLoggerEntry(c).Errorf("Get device info error: %s", err.Error())
+	}
+
+	lastAuthEvent, _ := model.GetLatestAuthEvents(user.ID, 1)
+	if len(lastAuthEvent) > 0 {
+		util.GetLoggerEntry(c).Errorf("Log auth event error: %s", lastAuthEvent)
+		// if lastAuthEvent[0].Type == consts.AuthEventType["login"] && lastAuthEvent[0].Status == consts.AuthEventStatus["successful"] {
+		// 	lastAuthEvent[0].Type = consts.AuthEventType["forced_logout"]
+		// 	lastAuthEvent[0].DateTime = loginTime.Format(time.DateTime)
+
+		// 	if err = model.LogAuthEvent(lastAuthEvent[0]); err != nil {
+		// 		util.GetLoggerEntry(c).Errorf("Log auth event error: %s", err.Error())
+		// 	}
+		// }
 	}
 
 	event := model.AuthEvent{
