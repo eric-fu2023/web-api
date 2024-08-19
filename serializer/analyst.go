@@ -61,16 +61,16 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		statuses[i] = outcome
 	}
 
-	statusInBool, winCount := GetBoolOutcomes(statuses)
-	// FIXME : need see whether recent or all 
+	statusInBool, _ := GetBoolOutcomes(statuses)
 	nearX, winX := util.NearXWinX(statusInBool)
 
-	winStreak := util.ConsecutiveWins(statusInBool)
+	winStreak := util.RecentConsecutiveWins(statusInBool)
+
+	// accuracty based on latest 10 
 	accuracy := 0
 	if len(statusInBool) > 0 {
-		accuracy = int(float64(winCount) / float64(len(statusInBool)) * 100) //TODO use math.Ceil 
+		accuracy = util.Accuracy(statusInBool) 
 	}
-	// fixme end 
 
 	resp = Analyst{
 		AnalystId:        analyst.ID,
