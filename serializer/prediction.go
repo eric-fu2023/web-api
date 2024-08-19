@@ -55,9 +55,9 @@ type OddDetail struct {
 
 type OddsInfo struct {
 	Op  []OddDetail `json:"op"`
-	ID  int         `json:"-"`
-	Ss  int         `json:"-"`
-	Au  int         `json:"-"`
+	ID  int64       `json:"id"`
+	Ss  int         `json:"ss"`
+	Au  int         `json:"au"`
 	Mbl int         `json:"-"`
 	Li  string      `json:"-"`
 }
@@ -137,7 +137,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			oddStatus, err := fbService.ComputeOutcomeByOrderReportI(orders)
 
 			if err != nil {
-				log.Printf("error computing outcome for Odds [ID:%d]\n", odd.ID)
+				log.Printf("error computing outcome for Odds [ID:%d]: %s\n", odd.ID, err)
 			}
 
 			opList[oddIdx] = OddDetail{
@@ -154,7 +154,12 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 
 		mks := []OddsInfo{
-			{Op: opList},
+			{
+				Op: opList,
+				ID: selection.FbOdds.RecentMarketlineID,
+				Ss: 1,
+				Au: 1,
+			},
 		}
 
 		mgListIdx := slices.IndexFunc(mgList, func(s MarketGroupInfo) bool {
