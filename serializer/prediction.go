@@ -110,7 +110,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
 	// the unknown/black/red status of of the entire PredictionArticle
-	predictionStatus := fbService.PredictionOutcomeOutcomeRed
+	predictionStatus := fbService.PredictionOutcomeOutcomeUnknown // first is unknown
 	for i, selection := range prediction.PredictionSelections {
 		allSelectedOddsId[i] = selection.FbOdds.ID
 	}
@@ -166,6 +166,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			marketGroup := model.GetMarketGroupOrdersByKeyFromPrediction(prediction, marketGroupKey)
 			marketgroupStatus, err := fbService.ComputeMarketGroupOutcomesByOrderReport(marketGroup)
 			// handle PredictionArticle status
+			predictionStatus = fbService.PredictionOutcomeOutcomeRed // default as red first.
 			if marketgroupStatus == fbService.MarketGroupOutComeOutcomeUnknown {
 				// if any marketgroupStatus is unknown, entire PredictionArticle is unknown
 				predictionStatus = fbService.PredictionOutcomeOutcomeUnknown

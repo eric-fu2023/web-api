@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -269,8 +268,6 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
 		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
-
-		res[i].TeamupProgress = (math.Min(res[i].TotalTeamupDeposit, res[i].TotalTeamupTarget) / res[i].TotalTeamupTarget) * 100
 
 		res[i].InfoJson = nil
 

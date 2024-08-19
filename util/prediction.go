@@ -24,6 +24,19 @@ func ConsecutiveWins(arr []bool) int {
 	}
 }
 
+func RecentConsecutiveWins(arr []bool) int {
+	score := 0 
+
+	for _, val := range arr {
+		if val {
+			score += 1 
+		} else {
+			break
+		}
+	}
+	return score
+}
+
 func consecutive(segment []bool) int {
 	maxLen := 0
 	currentLen := 0 
@@ -42,7 +55,15 @@ func consecutive(segment []bool) int {
 }
 
 
-func NearXWinX(arr []bool) (near int, win int) {
+func NearXWinX(original []bool) (near int, win int) {
+	// truncate to at most 15 
+	var arr []bool
+	if len(original) >= 15 {
+		arr = original[:15]
+	} else {
+		arr = original
+	}
+
 	highestAccuracy := 0.0
 	for i := range arr {
 		if len(arr) > 5 && i >= len(arr) - 5 {
@@ -74,3 +95,20 @@ func numWins(arr []bool) (wins int) {
 	return
 }
 
+func Accuracy(original []bool) (accuracy int) {
+	// truncate to latest 10 
+	var arr []bool
+	if (len(original) > 10) {
+		arr = original[:10]
+	} else {
+		arr = original
+	}
+
+	wins := 0 
+	for _, val := range arr {
+		if (val) {
+			wins += 1
+		}
+	}
+	return int(float64(wins)/float64(len(arr)) * 100)
+}

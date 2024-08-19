@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
@@ -16,7 +18,6 @@ type TeamupCustomRes []struct {
 	OrderId             string  `json:"order_id"`
 	TotalTeamupDeposit  float64 `json:"total_teamup_deposit"`
 	TotalTeamupTarget   float64 `json:"total_teamup_target"`
-	TeamupProgress      float64 `json:"teamup_progress"`
 	TeamupEndTime       int64   `json:"teamup_end_time"`
 	TeamupCompletedTime int64   `json:"teamup_completed_time"`
 	InfoJson            []byte  `json:"info_json,omitempty"`
@@ -37,7 +38,6 @@ type OutgoingTeamupCustomRes []struct {
 	OrderId             string      `json:"order_id"`
 	TotalTeamupDeposit  float64     `json:"total_teamup_deposit"`
 	TotalTeamupTarget   float64     `json:"total_teamup_target"`
-	TeamupProgress      float64     `json:"teamup_progress"`
 	TeamupEndTime       int64       `json:"teamup_end_time"`
 	TeamupCompletedTime int64       `json:"teamup_completed_time"`
 	InfoJson            []byte      `json:"info_json,omitempty"`
@@ -120,6 +120,12 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 		return
 	})
 
+	if err != nil {
+		return
+	}
+
+	err = failTeamup(res)
+
 	return
 }
 
@@ -133,6 +139,11 @@ func GetCustomTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) 
 		err = tx.Scan(&res).Error
 		return
 	})
+	if err != nil {
+		return
+	}
+
+	err = failTeamup(res)
 
 	return
 }
@@ -162,4 +173,29 @@ func UpdateTeamupProgress(tx *gorm.DB, teamupId, amount, slashAmount int64) erro
 		}
 		return nil
 	})
+}
+
+func failTeamup(res TeamupCustomRes) (err error) {
+	tsNow := time.Now().UTC().Unix()
+	hasFailedTeamup := false
+	for i, tu := range res {
+		if tsNow > tu.TeamupEndTime {
+			res[i].Status = 2
+			if !hasFailedTeamup {
+				err = updateTeamupStatusToFail(tsNow)
+				hasFailedTeamup = true
+			}
+		}
+	}
+
+	return
+}
+
+func updateTeamupStatusToFail(tsNow int64) (err error) {
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = tx.Model(&ploutos.Teamup{}).Where("teamup_end_time < ?", tsNow).Update("status", ploutos.TeamupStatusFail).Error
+		return
+	})
+
+	return
 }

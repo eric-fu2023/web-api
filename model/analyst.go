@@ -33,7 +33,7 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
-		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
+		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).		
 		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Where("is_active", true).
 		Order("sort DESC")
@@ -59,7 +59,7 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
-		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
+		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).		
 		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Preload("PredictionAnalystFollowers").
 		Where("is_active", true).

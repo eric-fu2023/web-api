@@ -12,6 +12,14 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	InitialRandomFakeProgressLowerLimit = int64(8500)
+	InitialRandomFakeProgressUpperLimit = int64(9200)
+
+	SubsequentRandomFakeProgressLowerLimit = int64(1)
+	SubsequentRandomFakeProgressUpperLimit = int64(100)
+)
+
 type TeamupEntryCustomRes []struct {
 	ContributedAmount float64   `json:"contributed_amount"`
 	ContributedTime   time.Time `json:"contributed_time"`
@@ -93,7 +101,6 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
 		teamup.Status = int(ploutos.TeamupStatusSuccess)
 		teamup.TeamupCompletedTime = time.Now().UTC().Unix()
-		teamup.TotalFakeProgress = maxPercentage
 		afterProgress = maxPercentage
 	}
 
@@ -105,6 +112,8 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 	slashEntry.TeamupEndTime = teamup.TeamupEndTime
 	slashEntry.TeamupCompletedTime = teamup.TeamupCompletedTime
 	slashEntry.FakePercentageProgress = afterProgress - beforeProgress
+
+	teamup.TotalFakeProgress = afterProgress
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&teamup).Error
@@ -175,11 +184,11 @@ func GenerateFakeProgress(currentProgress int64) (beforeProgress, afterProgress 
 	maximumAllowedProgress := ceilingProgress - currentProgress
 
 	if currentProgress == 0 {
-		afterProgress = util.RandomNumFromRange(int64(8500), int64(9200))
+		afterProgress = util.RandomNumFromRange(InitialRandomFakeProgressLowerLimit, InitialRandomFakeProgressUpperLimit)
 		return
 	}
 
-	progress := int64(math.Min(float64(maximumAllowedProgress), float64(util.RandomNumFromRange(int64(1), int64(100)))))
+	progress := int64(math.Min(float64(maximumAllowedProgress), float64(util.RandomNumFromRange(SubsequentRandomFakeProgressLowerLimit, SubsequentRandomFakeProgressUpperLimit))))
 	afterProgress = progress + currentProgress
 
 	return

@@ -128,7 +128,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		cashinAmount := int64(float64(cashOrder.AppliedCashInAmount) * er.AdjustedExchangeRate)
 
 		// Round cashinAmount to nearest multiple 100, remove decimal
-		if er.AdjustedExchangeRate != 1 && er.AdjustedExchangeRate != 1 {
+		if er.AdjustedExchangeRate != 1 && er.ExchangeRate != 1 {
 			cashinAmount = (cashinAmount / 100) * 100
 		}
 
@@ -167,7 +167,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
 
 	// 查看是否有砍单记录，添加进度到砍单任务
-	// go calculateTeamupSlashProgress(cashOrder, user.ID)
+	go calculateTeamupSlashProgress(cashOrder, user.ID)
 
 	return
 }
