@@ -61,7 +61,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		statuses[i] = outcome
 	}
 
-	statusInBool, _ := GetBoolOutcomes(statuses)
+	statusInBool, _ := GetBoolOutcomes(statuses) // this function removes unknown statuses
 	nearX, winX := util.NearXWinX(statusInBool)
 
 	winStreak := util.RecentConsecutiveWins(statusInBool)

@@ -23,5 +23,6 @@ func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.Us
 		ls[i] = BuildPrediction(pred, false, !exist)
 	}
 
-	return ls
+	// return ls
+	return SortPredictionList(ls)
 }

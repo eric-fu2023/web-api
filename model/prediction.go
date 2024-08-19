@@ -37,6 +37,11 @@ func preloadPredictions() *gorm.DB {
 		Preload("PredictionSelections.FbMatch.LeagueInfo").
 		Preload("AnalystDetail").
 		Preload("AnalystDetail.PredictionAnalystSource").
+		Preload("AnalystDetail.Predictions").
+		Preload("AnalystDetail.Predictions.PredictionSelections").
+		Preload("AnalystDetail.Predictions.PredictionSelections.FbOdds").
+		Preload("AnalystDetail.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
+		Preload("AnalystDetail.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
 		Preload("PredictionSelections.FbMatch.HomeTeam").
 		Preload("PredictionSelections.FbMatch.AwayTeam").
 		Joins("join prediction_analysts on prediction_analysts.id = prediction_articles.analyst_id").
@@ -54,7 +59,7 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 		Joins("left join prediction_article_bets on prediction_article_bets.article_id = prediction_articles.id").
 		Joins("left join fb_matches on prediction_article_bets.fb_match_id = fb_matches.match_id").
 		Group("prediction_articles.id").
-		Order("prediction_articles.created_at DESC")
+		Order("prediction_articles.published_at DESC")
 
 	if cond.AnalystId != 0 {
 		db = db.Where("prediction_articles.analyst_id", cond.AnalystId)
