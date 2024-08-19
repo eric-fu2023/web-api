@@ -261,7 +261,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			ViewCount:       int64(prediction.Views),
 			IsLocked:        isLocked,
 			SelectionList:   selectionList,
-			SportId:         GetPredictionSportId(prediction),
+			SportId:         model.GetPredictionSportId(prediction),
 			Status:          int64(predictionStatus),
 		}
 	} else {
@@ -276,7 +276,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			IsLocked:        isLocked,
 			SelectionList:   selectionList,
 			AnalystDetail:   &analyst,
-			SportId:         GetPredictionSportId(prediction),
+			SportId:         model.GetPredictionSportId(prediction),
 			Status:          int64(predictionStatus),
 		}
 	}
@@ -297,23 +297,33 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 		}
 	}
 
-	slices.SortFunc(unsettled, func(a, b Prediction) int {
-		wa, wb := weightage(a), weightage(b)
-		if wa < wb {
+	// slices.SortFunc(unsettled, func(a, b Prediction) int {
+	// 	wa, wb := weightage(a), weightage(b)
+	// 	if wa < wb {
+	// 		return 1
+	// 	} else if wa > wb {
+	// 		return -1
+	// 	}
+	// 	return 0
+	// })
+	// slices.SortFunc(settled, func(a, b Prediction) int {
+	// 	wa, wb := weightage(a), weightage(b)
+	// 	if wa < wb {
+	// 		return 1
+	// 	} else if wa > wb {
+	// 		return -1
+	// 	}
+	// 	return 0	
+	// })
+	// FIXME : need to fix weightage 
+	slices.SortFunc(settled, func (a, b Prediction) int {
+		if a.AnalystDetail.Accuracy < b.AnalystDetail.Accuracy {
 			return 1
-		} else if wa > wb {
+		} else if a.AnalystDetail.Accuracy > b.AnalystDetail.Accuracy {
 			return -1
+		} else {
+			return 0 
 		}
-		return 0
-	})
-	slices.SortFunc(settled, func(a, b Prediction) int {
-		wa, wb := weightage(a), weightage(b)
-		if wa < wb {
-			return 1
-		} else if wa > wb {
-			return -1
-		}
-		return 0	
 	})
 
 
@@ -327,10 +337,3 @@ func weightage(prediction Prediction) float64 {
 	return 0.0
 }
 
-func GetPredictionSportId(p model.Prediction) int64 {
-	if len(p.PredictionSelections) == 0 {
-		return 0
-	} else {
-		return int64(p.PredictionSelections[0].FbMatch.SportsID)
-	}
-}

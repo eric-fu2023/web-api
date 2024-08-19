@@ -1,7 +1,6 @@
 package serializer
 
 import (
-	"slices"
 	"web-api/model"
 	"web-api/util"
 
@@ -54,14 +53,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		predictions[i] = BuildPrediction(pred, true, false)
 	}
 
-	sortedPredictions := slices.Clone(predictions)
-	slices.SortFunc(sortedPredictions, func(a, b Prediction) int {
-		return b.CreatedAt.Compare(a.CreatedAt) // newest to oldest 
-	})
-	var statuses []fbService.PredictionOutcome
-	for _, p := range sortedPredictions  {
-		statuses = append(statuses, fbService.PredictionOutcome(p.Status))
-	}
+	statuses := model.GetOutcomesFromPredictions(model.GetPredictionsFromAnalyst(analyst, 0))
 
 	statusInBool, _ := GetBoolOutcomes(statuses) // this function removes unknown statuses
 	nearX, winX := util.NearXWinX(statusInBool)

@@ -3,8 +3,12 @@ package model
 import (
 	"context"
 	"errors"
+	"log"
+	"slices"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 
 	"gorm.io/gorm"
 )
@@ -128,4 +132,34 @@ func AnalystPredictionFilter (db *gorm.DB) *gorm.DB {
 	db = db.Where("is_published", true).
 			Order("published_at desc")
 	return db 
+}
+
+func GetPredictionsFromAnalyst(analyst Analyst, sportId int) []Prediction {
+	sortedPredictions := slices.Clone(analyst.Predictions)
+	filteredSorted := []Prediction{}
+	for _, p := range sortedPredictions {
+		if (int64(sportId) == 0 || GetPredictionSportId(p) == int64(sportId)) {
+			filteredSorted = append(filteredSorted, p)
+		}
+	}
+
+	slices.SortFunc(filteredSorted, func(a, b Prediction) int {
+		return b.PublishedAt.Compare(a.PublishedAt) // newest to oldest 
+	})
+	return sortedPredictions
+}
+
+func GetOutcomesFromPredictions(predictions []Prediction) []fbService.PredictionOutcome {
+	outcomes := []fbService.PredictionOutcome{}
+	for _, pred := range predictions {
+		predDao := GetPredictionFromPrediction(pred)
+		res, err := fbService.ComputePredictionOutcomesByOrderReport(predDao)
+
+		if err != nil {
+			log.Printf("Error computing prediction, %s\n", err.Error())
+		}
+		
+		outcomes = append(outcomes, res)
+	}
+	return outcomes
 }

@@ -3,14 +3,11 @@ package service
 import (
 	"context"
 	"errors"
-	"log"
-	"sort"
 
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 
-	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
@@ -171,22 +168,10 @@ type AnalystAchievementService struct {
 }
 
 func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer.Response, err error) {
-	predictions, err := model.ListPredictions(model.ListPredictionCond{Page: 1, Limit: 99999, AnalystId: service.AnalystId, SportId: service.SportId})
+	// predictions, err := model.ListPredictions(model.ListPredictionCond{Page: 1, Limit: 99999, AnalystId: service.AnalystId, SportId: service.SportId})
+	analyst, err := model.Analyst{}.GetDetail(int(service.AnalystId))
 
-	// make sure the predictions is sorted (latest first, earliest last)
-	sort.Slice(predictions, func(i, j int) bool {
-		return predictions[i].CreatedAt.After(predictions[j].CreatedAt)
-	})
-
-	predictionResults := make([]fbService.PredictionOutcome, len(predictions))
-	for i, pred := range predictions {
-		_pred := model.GetPredictionFromPrediction(pred)
-		outcome, err := fbService.ComputePredictionOutcomesByOrderReport(_pred)
-		if err != nil {
-			log.Printf("error computing outcome of prediction[ID:%d]: %s\n", pred.ID, err)
-		}
-		predictionResults[i] = outcome
-	}
+	predictionResults := model.GetOutcomesFromPredictions(model.GetPredictionsFromAnalyst(analyst, int(service.SportId)))
 
 	r.Data = serializer.BuildAnalystAchievement(predictionResults)
 	return
