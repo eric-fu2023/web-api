@@ -1,7 +1,6 @@
 package test
 
 import (
-	"fmt"
 	"testing"
 	"web-api/model"
 
@@ -19,8 +18,9 @@ var fakeProgressCases = []fakeProgressCase{
 	{"0 Progress (Initial)", 0, []int64{0, 93}},
 	{"Test Fake Progress 1", 9999, []int64{9999, 9999}},
 	{"Test Fake Progress 2", 9989, []int64{9989, 9999}},
-	{"Test Fake Progress 3", 8954, []int64{8954, 8955}},
-	{"Test Fake Progress 3", 8954, []int64{8954, 9054}},
+	{"Test Fake Progress 3", 9989, []int64{9989, 9990}},
+	{"Test Fake Progress 4", 8954, []int64{8954, 8955}},
+	{"Test Fake Progress 5", 8954, []int64{8954, 9054}},
 }
 
 func TestGenerateFakeProgress(t *testing.T) {
@@ -35,21 +35,22 @@ func TestGenerateFakeProgress(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			beforeProgress, afterProgress := model.GenerateFakeProgress(tc.currentProgress)
+			actual := afterProgress
 
-			fmt.Printf("Before Progress - %v \n", beforeProgress)
-			fmt.Printf("After Progress - %v \n", afterProgress)
+			t.Logf("Before Progress - %v \n", beforeProgress)
+			t.Logf("After Progress - %v \n", afterProgress)
 
 			require.NoError(t, nil)
 			assert.Equal(t, beforeProgress, tc.expected[0])
 
 			if tc.currentProgress == 0 {
-				assert.GreaterOrEqual(t, afterProgress, initialLowerLimit, "afterProgress is greater than the initial lower limit")
-				assert.LessOrEqual(t, afterProgress, initialUpperLimit, "afterProgress is lesser than the initial upper limit")
+				assert.LessOrEqual(t, initialLowerLimit, actual, "afterProgress is greater than the initial lower limit")
+				assert.GreaterOrEqual(t, initialUpperLimit, actual, "afterProgress is lesser than the initial upper limit")
 			} else if tc.currentProgress == 9999 {
-				assert.Equal(t, afterProgress, tc.expected[0])
+				assert.Equal(t, tc.expected[0], actual)
 			} else {
-				assert.GreaterOrEqual(t, afterProgress, beforeProgress+subsequentLowerLimit, "afterProgress is greater than the subsequent lower limit")
-				assert.LessOrEqual(t, afterProgress, beforeProgress+subsequentUpperLimit, "afterProgress is lesser than the subsequent upper limit")
+				assert.LessOrEqual(t, beforeProgress+subsequentLowerLimit, actual, "afterProgress is greater than the subsequent lower limit")
+				assert.GreaterOrEqual(t, beforeProgress+subsequentUpperLimit, actual, "afterProgress is lesser than the subsequent upper limit")
 			}
 		})
 	}
