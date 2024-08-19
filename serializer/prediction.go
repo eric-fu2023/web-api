@@ -273,9 +273,13 @@ func SortPredictionList(predictions []Prediction) []Prediction{
 	sorted := slices.Clone(predictions)
 
 	slices.SortFunc(sorted, func(a, b Prediction) int {
-		if n:= a.Status - b.Status; n != 0 {
-			return int(n)
-		} 
+		if a.Status == 0 && b.Status != 0 {
+			return -1 
+		}
+		if a.Status != 0 && b.Status == 0 {
+			return 1
+		}
+
 		return int(weightage(b) - weightage(a))
 	})
 	return sorted
