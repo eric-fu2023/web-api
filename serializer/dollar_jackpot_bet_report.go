@@ -26,7 +26,7 @@ func BuildDollarJackpotBetReportResponse(c *gin.Context, a model.DollarJackpotBe
 		EndTimeTs:   a.JackpotDraws.EndTime.Unix(),
 		Status:      a.JackpotDraws.Status,
 		IsWin:       a.Win > 0,
-		Win:         -a.ProfitLoss,
+		Win:         a.Win - a.Bet,
 	}
 	if a.JackpotDraws.DollarJackpot != nil {
 		t := util.MoneyFloat(a.JackpotDraws.DollarJackpot.Prize)
