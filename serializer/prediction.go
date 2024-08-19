@@ -159,7 +159,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 
 			opList[oddIdx] = OddDetail{
 				Na:       odd.OddsNameCN,
-				Nm:       CustomizeOddsName(odd.ShortNameCN), // odd.ShortNameCN,
+				Nm:       odd.ShortNameCN, // odd.ShortNameCN,
 				Ty:       int(odd.SelectionType),
 				Od:       odd.Rate, // not sure
 				Bod:      odd.Rate, // not sure
@@ -203,7 +203,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			mgList = append(mgList, MarketGroupInfo{
 				MarketGroupType:    int(selection.FbOdds.MarketGroupType),
 				MarketGroupPeriod:  int(selection.FbOdds.MarketGroupPeriod),
-				MarketGroupName:    selection.FbOdds.MarketGroupInfo.FullNameCn,
+				MarketGroupName:    CustomizeOddsName(selection.FbOdds.MarketGroupInfo.FullNameCn),
 				Mks:                mks,
 				InternalIdentifier: marketGroupKey,
 				Status:             int(marketgroupStatus),
@@ -288,7 +288,7 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 	// then in each grp, sort by （命中率 50%，近X中X 50%）
 	unsettled := []Prediction{}
 	settled := []Prediction{}
-	
+
 	filteredPredictions := []Prediction{}
 	_y, _m, _d := time.Now().AddDate(0, 0, -7).Date()
 	weekAgo := time.Date(_y, _m, _d, 0, 0, 0, 0, time.Now().Location())
@@ -335,13 +335,13 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 		}
 	})
 
-	slices.SortFunc(unsettled, func (a, b Prediction) int {
+	slices.SortFunc(unsettled, func(a, b Prediction) int {
 		if a.AnalystDetail.Accuracy < b.AnalystDetail.Accuracy {
 			return 1
 		} else if a.AnalystDetail.Accuracy > b.AnalystDetail.Accuracy {
 			return -1
 		} else {
-			return 0 
+			return 0
 		}
 	})
 
