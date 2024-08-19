@@ -51,6 +51,7 @@ type OutgoingTeamupCustomRes []struct {
 	HomeIcon            string      `json:"home_icon"`
 	AwayIcon            string      `json:"away_icon"`
 	Status              int64       `json:"status"`
+	HasJoined           bool        `json:"has_joined"`
 }
 
 type OutgoingBet struct {

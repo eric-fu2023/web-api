@@ -100,11 +100,20 @@ func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Respo
 }
 
 func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error) {
+	u, _ := c.Get("user")
+	user := u.(model.User)
 
 	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
 	outgoingRes := parseBetReport(teamupRes)
 	if len(outgoingRes) > 0 {
+		teamupId, _ := strconv.Atoi(outgoingRes[0].TeamupId)
+		if outgoingRes[0].UserId != fmt.Sprint(user.ID) {
+			res, _ := model.GetTeamupEntryByTeamupIdAndUserId(int64(teamupId), user.ID)
+			if res.ID != 0 {
+				outgoingRes[0].HasJoined = true
+			}
+		}
 		r.Data = outgoingRes[0]
 	}
 

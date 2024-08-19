@@ -193,3 +193,21 @@ func GenerateFakeProgress(currentProgress int64) (beforeProgress, afterProgress 
 
 	return
 }
+
+func GetTeamupEntryByTeamupIdAndUserId(teamupId, userId int64) (res ploutos.TeamupEntry, err error) {
+
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		tx = tx.Table("teamup_entries").
+			Where("teamup_entries.teamup_id = ?", teamupId).
+			Where("teamup_entries.user_id = ?", userId).
+			First(&res)
+
+		if err := tx.Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return
+}
