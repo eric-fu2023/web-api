@@ -7,26 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// func ListStrategy(c *gin.Context) {
-// 	/*
-// 		get user from context
-// 		get deviceId from context
-
-// 		if deviceId = nil
-// 			return error
-
-// 		paid = getUserPaidToday
-
-// 		if (not logged in )
-// 			query with device id
-// 		else if login && not paid
-// 			query with userId and deviceId
-// 		else
-// 			query all
-
-// 	*/
-// }
-
 func ListPredictions(c *gin.Context) {
 	var service service.PredictionListService
 	if err := c.ShouldBind(&service); err == nil {

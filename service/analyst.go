@@ -181,11 +181,11 @@ func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer
 	predictionResults := make([]fbService.PredictionOutcome, len(predictions))
 	for i, pred := range predictions {
 		_pred := model.GetPredictionFromPrediction(pred)
-		outcome, err := fbService.ComputePredictionOutcomesByOrderReport(_pred) 
+		outcome, err := fbService.ComputePredictionOutcomesByOrderReport(_pred)
 		if err != nil {
-			log.Printf("error computing outcome of prediction[ID:%d]", pred.ID)
+			log.Printf("error computing outcome of prediction[ID:%d]: %s\n", pred.ID, err)
 		}
-		predictionResults[i] =  outcome
+		predictionResults[i] = outcome
 	}
 
 	r.Data = serializer.BuildAnalystAchievement(predictionResults)
