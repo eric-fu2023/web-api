@@ -29,7 +29,7 @@ func BuildDollarJackpotBetReportResponse(c *gin.Context, a model.DollarJackpotBe
 		Win:         -a.ProfitLoss,
 	}
 	if a.JackpotDraws.DollarJackpot != nil {
-		t := util.MoneyFloat(a.JackpotDraws.DollarJackpot.Prize)/100
+		t := util.MoneyFloat(a.JackpotDraws.DollarJackpot.Prize)
 		b.Total = &t
 	}
 	return
