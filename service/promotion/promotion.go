@@ -50,7 +50,7 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 		// Skip if not allow device.platform
 		if len(promotion.DisplayDevices) != 0 {
 			s := string(promotion.DisplayDevices)
-			if !strings.Contains(s, string(models.PromotionDevice[deviceInfo.Platform])) {
+			if !strings.Contains(s, fmt.Sprint(models.PromotionDevice[deviceInfo.Platform])) {
 				continue
 			}
 		}

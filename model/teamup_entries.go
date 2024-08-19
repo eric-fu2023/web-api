@@ -93,7 +93,6 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
 		teamup.Status = int(ploutos.TeamupStatusSuccess)
 		teamup.TeamupCompletedTime = time.Now().UTC().Unix()
-		teamup.TotalFakeProgress = maxPercentage
 		afterProgress = maxPercentage
 	}
 
@@ -105,6 +104,8 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 	slashEntry.TeamupEndTime = teamup.TeamupEndTime
 	slashEntry.TeamupCompletedTime = teamup.TeamupCompletedTime
 	slashEntry.FakePercentageProgress = afterProgress - beforeProgress
+
+	teamup.TotalFakeProgress = afterProgress
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&teamup).Error

@@ -18,7 +18,6 @@ type TeamupCustomRes []struct {
 	OrderId             string  `json:"order_id"`
 	TotalTeamupDeposit  float64 `json:"total_teamup_deposit"`
 	TotalTeamupTarget   float64 `json:"total_teamup_target"`
-	TeamupProgress      float64 `json:"teamup_progress"`
 	TeamupEndTime       int64   `json:"teamup_end_time"`
 	TeamupCompletedTime int64   `json:"teamup_completed_time"`
 	InfoJson            []byte  `json:"info_json,omitempty"`
@@ -39,7 +38,6 @@ type OutgoingTeamupCustomRes []struct {
 	OrderId             string      `json:"order_id"`
 	TotalTeamupDeposit  float64     `json:"total_teamup_deposit"`
 	TotalTeamupTarget   float64     `json:"total_teamup_target"`
-	TeamupProgress      float64     `json:"teamup_progress"`
 	TeamupEndTime       int64       `json:"teamup_end_time"`
 	TeamupCompletedTime int64       `json:"teamup_completed_time"`
 	InfoJson            []byte      `json:"info_json,omitempty"`
@@ -195,7 +193,7 @@ func failTeamup(res TeamupCustomRes) (err error) {
 
 func updateTeamupStatusToFail(tsNow int64) (err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Model(&ploutos.Teamup{}).Where("teamup_end_time < ?", tsNow).Update("status", 2).Error
+		err = tx.Model(&ploutos.Teamup{}).Where("teamup_end_time < ?", tsNow).Update("status", ploutos.TeamupStatusFail).Error
 		return
 	})
 
