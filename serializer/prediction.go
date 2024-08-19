@@ -161,8 +161,8 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Na:       odd.OddsNameCN,
 				Nm:       odd.ShortNameCN, // odd.ShortNameCN,
 				Ty:       int(odd.SelectionType),
-				Od:       odd.Rate, // not sure
-				Bod:      odd.Rate, // not sure
+				Od:       -999, //odd.Rate, // not sure
+				Bod:      -999, //odd.Rate, // not sure
 				Odt:      int(odd.OddsFormat),
 				Li:       odd.OldNameCN,
 				Selected: slices.Contains(allSelectedOddsId, odd.ID),
