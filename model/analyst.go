@@ -33,20 +33,7 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
-		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", func (db *gorm.DB) *gorm.DB  {
-			/*
-				order by
-				CASE short_name_cn
-					WHEN '和' THEN 2
-					WHEN '主' THEN 1
-					WHEN '客' THEN 3
-					ELSE 0
-				END,
-				selection_type	
-			*/
-			db  = db.Order("CASE short_name_cn WHEN '和' THEN 2 WHEN '主' THEN 1 WHEN '客' THEN 3 ELSE 0 END, selection_type") 
-			return db
-		}).		
+		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).		
 		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Where("is_active", true).
 		Order("sort DESC")
@@ -72,7 +59,7 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
-		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds").
+		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).		
 		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Preload("PredictionAnalystFollowers").
 		Where("is_active", true).
