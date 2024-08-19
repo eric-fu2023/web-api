@@ -28,7 +28,7 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 	db = db.
 		Preload("PredictionAnalystSource").
 		Preload("PredictionAnalystFollowers").
-		Preload("Predictions", "is_published = ?", true).
+		Preload("Predictions", AnalystPredictionFilter).
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
@@ -54,7 +54,7 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 	db := DB.Where("id", id)
 	err = db.
 		Preload("PredictionAnalystSource").
-		Preload("Predictions", "is_published = ?", true).
+		Preload("Predictions", AnalystPredictionFilter).
 		Preload("Predictions.PredictionSelections").
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
@@ -122,4 +122,10 @@ func AnalystExist(analystId int64) (exist bool, err error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func AnalystPredictionFilter (db *gorm.DB) *gorm.DB {
+	db = db.Where("is_published", true).
+			Order("published_at desc")
+	return db 
 }
