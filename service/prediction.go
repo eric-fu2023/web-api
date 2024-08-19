@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"slices"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -54,7 +55,11 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 			return
 		}
 
-		if hasPaymentToday {
+		whitelist := []int64{2055, 3366, 2064, 2051, 2058, 2288, 16004, 2287, 2302}
+		// TEMP, to be removed
+		isWhitelisted := slices.Contains(whitelist, user.ID)
+
+		if hasPaymentToday || isWhitelisted {
 			// logged in, has payment - show all
 			predictions, err = model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId, FbMatchId: service.FbMatchId, SportId: service.SportId})
 			if err != nil {
