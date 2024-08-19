@@ -61,17 +61,17 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		statuses[i] = outcome
 	}
 
-	statusInBool, winCount := GetBoolOutcomes(statuses)
-	// FIXME : need see whether recent or all 
+	statusInBool, _ := GetBoolOutcomes(statuses)
 	nearX, winX := util.NearXWinX(statusInBool)
 
-	winStreak := util.ConsecutiveWins(statusInBool)
+	winStreak := util.RecentConsecutiveWins(statusInBool)
+
+	// accuracty based on latest 10 
 	accuracy := 0
 	if len(statusInBool) > 0 {
-		accuracy = int(float64(winCount) / float64(len(statusInBool)) * 100) //TODO use math.Ceil 
+		accuracy = util.Accuracy(statusInBool) 
 	}
-	// fixme end 
-	
+
 	resp = Analyst{
 		AnalystId:        analyst.ID,
 		AnalystName:      analyst.AnalystName,
@@ -98,7 +98,16 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 	return
 }
 
-func BuildAnalystAchievement(results []fbService.PredictionOutcome) (resp Achievement) {
+func BuildAnalystAchievement(original []fbService.PredictionOutcome) (resp Achievement) {
+	results := []fbService.PredictionOutcome{}
+	// filter unknown 
+	for _, outcome := range original{
+		if outcome == fbService.PredictionOutcomeOutcomeUnknown {
+			continue
+		} else {
+			results = append(results, outcome)
+		}
+	}
 	// total predictions
 	numResults := len(results)
 
@@ -118,7 +127,7 @@ func BuildAnalystAchievement(results []fbService.PredictionOutcome) (resp Achiev
 	resultInBool, winCount := GetBoolOutcomes(results)
 
 	// winning streak
-	streak := util.ConsecutiveWins(resultInBool)
+	streak := util.ConsecutiveWins(resultInBool) // highest consecutive 最高连红
 
 	// accuracy
 	accuracy := 0
@@ -127,10 +136,10 @@ func BuildAnalystAchievement(results []fbService.PredictionOutcome) (resp Achiev
 	}
 
 	resp = Achievement{
-		TotalPredictions: len(results),
-		Accuracy:         accuracy,
-		WinningStreak:    streak,
-		RecentResult:     recentResult,
+		TotalPredictions: len(original), // no filter out unknown
+		Accuracy:         accuracy, // filter unknown
+		WinningStreak:    streak, // filter unknown
+		RecentResult:     recentResult, // filter unknown
 	}
 	return
 }

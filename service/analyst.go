@@ -173,9 +173,9 @@ type AnalystAchievementService struct {
 func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer.Response, err error) {
 	predictions, err := model.ListPredictions(model.ListPredictionCond{Page: 1, Limit: 99999, AnalystId: service.AnalystId, SportId: service.SportId})
 
-	// make sure the predictions is sorted (earliest first, latest last)
+	// make sure the predictions is sorted (latest first, earliest last)
 	sort.Slice(predictions, func(i, j int) bool {
-		return predictions[i].CreatedAt.Before(predictions[j].CreatedAt)
+		return predictions[i].CreatedAt.After(predictions[j].CreatedAt)
 	})
 
 	predictionResults := make([]fbService.PredictionOutcome, len(predictions))
