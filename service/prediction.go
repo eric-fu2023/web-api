@@ -68,7 +68,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 			}
 
 			r.Msg = i18n.T("success")
-			r.Data = serializer.BuildPredictionsList(predictions)
+			r.Data = serializer.BuildPredictionsList(predictions, service.Page.Page, service.Limit)
 			return
 
 		} else {
@@ -85,7 +85,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 			}
 
 			r.Msg = i18n.T("success")
-			r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions)
+			r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions, service.Page.Page, service.Limit)
 			return
 		}
 
@@ -103,7 +103,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 		}
 
 		r.Msg = i18n.T("success")
-		r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions[:1])
+		r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions[:1],service.Page.Page, service.Limit)
 		return
 	}
 

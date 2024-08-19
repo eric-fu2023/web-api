@@ -98,13 +98,21 @@ type FbSelectionInfo struct {
 	Bt int64             `json:"bt"`
 }
 
-func BuildPredictionsList(predictions []model.Prediction) (preds []Prediction) {
+func BuildPredictionsList(predictions []model.Prediction, page, limit int) (preds []Prediction) {
 	finalList := make([]Prediction, len(predictions))
 	for i, p := range predictions {
 		finalList[i] = BuildPrediction(p, false, false)
 	}
 	// return finalList
-	return SortPredictionList(finalList)
+	start := limit * (page - 1) 
+	if (start > len(finalList)) {
+		return []Prediction{}
+	}
+	end := limit * page
+	if (end > len(finalList)) {
+		end = len(finalList)
+	}
+	return SortPredictionList(finalList)[start:end]
 }
 
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
