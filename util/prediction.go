@@ -55,7 +55,15 @@ func consecutive(segment []bool) int {
 }
 
 
-func NearXWinX(arr []bool) (near int, win int) {
+func NearXWinX(original []bool) (near int, win int) {
+	// truncate to at most 15 
+	var arr []bool
+	if len(original) >= 15 {
+		arr = original[:15]
+	} else {
+		arr = original
+	}
+
 	highestAccuracy := 0.0
 	for i := range arr {
 		if len(arr) > 5 && i >= len(arr) - 5 {
