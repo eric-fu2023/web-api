@@ -1,13 +1,15 @@
 package serializer
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
 	"web-api/util"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 type DollarJackpot struct {
+	ID             int64    `json:"id"`
 	Name           string   `json:"name"`
 	Prize          float64  `json:"prize"`
 	DescriptionWeb string   `json:"description_web"`
@@ -17,6 +19,7 @@ type DollarJackpot struct {
 
 func BuildDollarJackpot(c *gin.Context, a ploutos.DollarJackpot) (b DollarJackpot) {
 	b = DollarJackpot{
+		ID:             a.ID,
 		Name:           a.Name,
 		Prize:          util.MoneyFloat(a.Prize),
 		DescriptionWeb: Url(a.DescriptionWeb),
