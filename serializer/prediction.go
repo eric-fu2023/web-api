@@ -104,12 +104,12 @@ func BuildPredictionsList(predictions []model.Prediction, page, limit int) (pred
 		finalList[i] = BuildPrediction(p, false, false)
 	}
 	// return finalList
-	start := limit * (page - 1) 
-	if (start > len(finalList)) {
+	start := limit * (page - 1)
+	if start > len(finalList) {
 		return []Prediction{}
 	}
 	end := limit * page
-	if (end > len(finalList)) {
+	if end > len(finalList) {
 		end = len(finalList)
 	}
 	return SortPredictionList(finalList)[start:end]
@@ -159,7 +159,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 
 			opList[oddIdx] = OddDetail{
 				Na:       odd.OddsNameCN,
-				Nm:       odd.ShortNameCN,
+				Nm:       CustomizeOddsName(odd.ShortNameCN), // odd.ShortNameCN,
 				Ty:       int(odd.SelectionType),
 				Od:       odd.Rate, // not sure
 				Bod:      odd.Rate, // not sure
@@ -288,8 +288,17 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 	// then in each grp, sort by （命中率 50%，近X中X 50%）
 	unsettled := []Prediction{}
 	settled := []Prediction{}
-
+	
+	filteredPredictions := []Prediction{}
+	_y, _m, _d := time.Now().AddDate(0, 0, -7).Date()
+	weekAgo := time.Date(_y, _m, _d, 0, 0, 0, 0, time.Now().Location())
 	for _, pred := range predictions {
+		if pred.CreatedAt.After(weekAgo) {
+			filteredPredictions = append(filteredPredictions, pred)
+		}
+	}
+
+	for _, pred := range filteredPredictions {
 		if pred.Status == 0 {
 			unsettled = append(unsettled, pred)
 		} else {
@@ -313,10 +322,20 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 	// 	} else if wa > wb {
 	// 		return -1
 	// 	}
-	// 	return 0	
+	// 	return 0
 	// })
-	// FIXME : need to fix weightage 
-	slices.SortFunc(settled, func (a, b Prediction) int {
+	// FIXME : need to fix weightage
+	slices.SortFunc(settled, func(a, b Prediction) int {
+		if a.AnalystDetail.Accuracy < b.AnalystDetail.Accuracy {
+			return 1
+		} else if a.AnalystDetail.Accuracy > b.AnalystDetail.Accuracy {
+			return -1
+		} else {
+			return 0
+		}
+	})
+
+	slices.SortFunc(unsettled, func (a, b Prediction) int {
 		if a.AnalystDetail.Accuracy < b.AnalystDetail.Accuracy {
 			return 1
 		} else if a.AnalystDetail.Accuracy > b.AnalystDetail.Accuracy {
@@ -325,7 +344,6 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 			return 0 
 		}
 	})
-
 
 	return append(unsettled, settled...)
 }
@@ -337,3 +355,11 @@ func weightage(prediction Prediction) float64 {
 	return 0.0
 }
 
+func CustomizeOddsName(oddsName string) string {
+	customizedOddsNames := map[string]string{"独赢": "胜平负"}
+	if customizedOddsName, exists := customizedOddsNames[oddsName]; exists {
+		return customizedOddsName
+	} else {
+		return oddsName
+	}
+}
