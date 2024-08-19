@@ -297,23 +297,33 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 		}
 	}
 
-	slices.SortFunc(unsettled, func(a, b Prediction) int {
-		wa, wb := weightage(a), weightage(b)
-		if wa < wb {
+	// slices.SortFunc(unsettled, func(a, b Prediction) int {
+	// 	wa, wb := weightage(a), weightage(b)
+	// 	if wa < wb {
+	// 		return 1
+	// 	} else if wa > wb {
+	// 		return -1
+	// 	}
+	// 	return 0
+	// })
+	// slices.SortFunc(settled, func(a, b Prediction) int {
+	// 	wa, wb := weightage(a), weightage(b)
+	// 	if wa < wb {
+	// 		return 1
+	// 	} else if wa > wb {
+	// 		return -1
+	// 	}
+	// 	return 0	
+	// })
+	// FIXME : need to fix weightage 
+	slices.SortFunc(settled, func (a, b Prediction) int {
+		if a.AnalystDetail.Accuracy < b.AnalystDetail.Accuracy {
 			return 1
-		} else if wa > wb {
+		} else if a.AnalystDetail.Accuracy > b.AnalystDetail.Accuracy {
 			return -1
+		} else {
+			return 0 
 		}
-		return 0
-	})
-	slices.SortFunc(settled, func(a, b Prediction) int {
-		wa, wb := weightage(a), weightage(b)
-		if wa < wb {
-			return 1
-		} else if wa > wb {
-			return -1
-		}
-		return 0	
 	})
 
 
