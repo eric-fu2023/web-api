@@ -421,7 +421,7 @@ func NewRouter() *gin.Engine {
 			teamup.GET("/detail", teamup_api.GetTeamUpItem)
 			teamup.GET("/start", middleware.AuthRequired(true, false), teamup_api.StartTeamUp)
 			teamup.GET("/list", middleware.AuthRequired(true, false), teamup_api.ListAllTeamUp)
-			teamup.GET("/others", middleware.Cache(5*time.Minute, false), teamup_api.OtherTeamups)
+			teamup.GET("/others", teamup_api.OtherTeamups)
 			teamup.GET("/contribute/list", teamup_api.ContributedList)
 			teamup.POST("/slash", middleware.AuthRequired(true, false), teamup_api.SlashBet)
 

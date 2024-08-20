@@ -82,11 +82,18 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 		Preload("Analyst").
 		Preload("Analyst.PredictionAnalystSource").
 		Preload("Analyst.PredictionAnalystFollowers").
-		Preload("Analyst.Predictions", "is_published = ?", true).
+		Preload("Analyst.Predictions", AnalystPredictionFilter).
+		Preload("Analyst.Predictions.PredictionSelections").
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds").
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).		
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Joins("JOIN prediction_analysts on prediction_analyst_followers.analyst_id = prediction_analysts.id").
 		WithContext(c).
 		Where("user_id = ?", userId).
 		Where("prediction_analysts.is_active = ?", true).
+		Order("updated_at desc").
 		Find(&followings).Error
 	return
 }

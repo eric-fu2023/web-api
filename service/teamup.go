@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -9,11 +10,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util/i18n"
 
+	"github.com/chenyahui/gin-cache/persist"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 
@@ -94,7 +97,14 @@ func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Respo
 		nicknameSlice[i] = GetRandNickname()
 	}
 
-	r.Data = serializer.GenerateOtherTeamups(nicknameSlice)
+	var otherTeamups []serializer.OtherTeamupContribution
+
+	err = cache.RedisStore.Get("otherteamuplist", &otherTeamups)
+	if err != nil && errors.Is(err, persist.ErrCacheMiss) {
+		otherTeamups = serializer.GenerateOtherTeamups(nicknameSlice)
+		err = cache.RedisStore.Set("otherteamuplist", otherTeamups, 5*time.Minute)
+	}
+	r.Data = otherTeamups
 
 	return
 }
