@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -24,7 +25,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	// fbService "blgit.rfdev.tech/taya/game-service/fb2/client/"
@@ -91,6 +91,18 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	}
 
 	teamupRes, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit, start, end)
+
+	sort.SliceStable(teamupRes, func(i, j int) bool {
+		// Move status 0, 1, and 2 to the front
+		if teamupRes[i].Status == 0 || teamupRes[i].Status == 1 || teamupRes[i].Status == 2 {
+			if teamupRes[j].Status == 0 || teamupRes[j].Status == 1 || teamupRes[j].Status == 2 {
+				return teamupRes[i].Status < teamupRes[j].Status
+			}
+			return true
+		}
+		return false
+	})
+
 	r.Data = parseBetReport(teamupRes)
 
 	return
@@ -260,19 +272,19 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 			amount := teamup.TotalTeamUpTarget
-			sum, err := model.UserSum{}.UpdateUserSumWithDB(tx, teamup.UserId, amount, amount, 0, models.TransactionTypeTeamupPromotion, "")
+			sum, err := model.UserSum{}.UpdateUserSumWithDB(tx, teamup.UserId, amount, amount, 0, ploutos.TransactionTypeTeamupPromotion, "")
 			if err != nil {
 				return err
 			}
 			notes := fmt.Sprintf("Teamup ID - %v", teamup.ID)
 
 			coId := uuid.NewString()
-			teamupCashOrder := models.CashOrder{
+			teamupCashOrder := ploutos.CashOrder{
 				ID:                    coId,
 				UserId:                teamup.UserId,
-				OrderType:             models.CashOrderTypeTeamupPromotion,
-				Status:                models.CashOrderStatusSuccess,
-				Notes:                 models.EncryptedStr(notes),
+				OrderType:             ploutos.CashOrderTypeTeamupPromotion,
+				Status:                ploutos.CashOrderStatusSuccess,
+				Notes:                 ploutos.EncryptedStr(notes),
 				AppliedCashInAmount:   amount,
 				ActualCashInAmount:    amount,
 				EffectiveCashInAmount: amount,
