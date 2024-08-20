@@ -5,7 +5,10 @@ import (
 	"math"
 	"time"
 
+	"web-api/conf/consts"
+	"web-api/service/common"
 	"web-api/util"
+	"web-api/util/i18n"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
@@ -60,7 +63,7 @@ func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustom
 	return
 }
 
-func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
+func CreateSlashBetRecord(teamupId, userId int64, i18n i18n.I18n) (isSuccess bool, err error) {
 
 	// First entry - 85% ~ 92%
 	// Second entry onwards until N - 1 - 0.01% ~ 1%
@@ -102,6 +105,9 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 		teamup.Status = int(ploutos.TeamupStatusSuccess)
 		teamup.TeamupCompletedTime = time.Now().UTC().Unix()
 		afterProgress = maxPercentage
+
+		notificationMsg := fmt.Sprintf(i18n.T("notification_slashed_teamup_success"), teamup.OrderId, teamup.TotalTeamUpTarget)
+		go common.SendNotification(teamup.UserID, consts.Notification_Type_Cash_Transaction, i18n.T("notification_teamup_title"), notificationMsg)
 	}
 
 	slashEntry := ploutos.TeamupEntry{

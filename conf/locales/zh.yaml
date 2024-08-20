@@ -644,3 +644,11 @@ teamup_br_not_exist: "下注单号不存在"
 
 teamup_slash_error: "无法砍单"
 teamup_slashed_before_error: "该用户已砍过这单"
+
+notification_teamup_title: "砍单返利"
+notification_teamup_content: "恭喜您砍单成功！您的砍单返利已成功派发，请前往交易记录查询。"
+
+notification_slashed_teamup_success_title: "砍单成功"
+notification_slashed_teamup_fail_title: "砍单失败"
+notification_slashed_teamup_success: "恭喜！您的# %s 订单已成功砍单，$%s奖励已转到您的钱包，快来查看并使用您的奖励吧！."
+notification_slashed_teamup_fail: "很遗憾，您的# %s 订单砍单失败了。请再试一次或呼唤更多好友来帮忙，祝您下次成功！"
