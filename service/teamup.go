@@ -15,13 +15,18 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/util"
 	"web-api/util/i18n"
 
 	"github.com/chenyahui/gin-cache/persist"
+	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	// fbService "blgit.rfdev.tech/taya/game-service/fb2/client/"
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/client"
 	fbServiceApi "blgit.rfdev.tech/taya/game-service/fb2/client/api"
@@ -250,7 +255,45 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	teamup, isTeamupSuccess, isSuccess, err := model.CreateSlashBetRecord(s.TeamupId, user.ID, i18n)
 
 	if isTeamupSuccess {
-		notificationMsg := fmt.Sprintf(i18n.T("notification_slashed_teamup_success"), teamup.OrderId, teamup.TotalTeamUpTarget)
+
+		// SUCCESS -> UPDATE USER SUM
+
+		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
+			amount := teamup.TotalTeamUpTarget
+			sum, err := model.UserSum{}.UpdateUserSumWithDB(tx, teamup.UserId, amount, amount, 0, models.TransactionTypeTeamupPromotion, "")
+			if err != nil {
+				return err
+			}
+			notes := fmt.Sprintf("Teamup ID - %v", teamup.ID)
+
+			coId := uuid.NewString()
+			teamupCashOrder := models.CashOrder{
+				ID:                    coId,
+				UserId:                teamup.UserId,
+				OrderType:             models.CashOrderTypeTeamupPromotion,
+				Status:                models.CashOrderStatusSuccess,
+				Notes:                 models.EncryptedStr(notes),
+				AppliedCashInAmount:   amount,
+				ActualCashInAmount:    amount,
+				EffectiveCashInAmount: amount,
+				BalanceBefore:         sum.Balance - amount,
+				WagerChange:           amount,
+			}
+			err = tx.Create(&teamupCashOrder).Error
+			if err != nil {
+				return err
+			}
+			util.GetLoggerEntry(c).Info("Team Up Cash Order", coId, teamup.ID)
+			common.SendUserSumSocketMsg(teamup.UserId, sum.UserSum, "teamup_success", float64(amount)/100)
+
+			return
+		})
+		if err != nil {
+			util.GetLoggerEntry(c).Error("Team Up Cash Order ERROR - ", err, teamup.ID)
+			return
+		}
+
+		notificationMsg := fmt.Sprintf(i18n.T("notification_slashed_teamup_success"), teamup.OrderId, teamup.TotalTeamUpTarget/100)
 		go common.SendNotification(teamup.UserId, consts.Notification_Type_Cash_Transaction, i18n.T("notification_teamup_title"), notificationMsg)
 	}
 
