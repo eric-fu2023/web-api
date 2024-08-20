@@ -1,12 +1,10 @@
 package serializer
 
 import (
-	"log"
 	"slices"
 	"time"
 	"web-api/model"
 
-	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 	models "blgit.rfdev.tech/taya/ploutos-object"
 )
 
@@ -120,7 +118,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
 	// the unknown/black/red status of of the entire PredictionArticle
-	predictionStatus := fbService.PredictionOutcomeOutcomeUnknown // first is unknown
+	// predictionStatus := fbService.PredictionOutcomeOutcomeUnknown // first is unknown
 	for i, selection := range prediction.PredictionSelections {
 		allSelectedOddsId[i] = selection.FbOdds.ID
 	}
@@ -277,10 +275,10 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			PredictionDesc:  prediction.Content,
 			CreatedAt:       prediction.PublishedAt,
 			ViewCount:       int64(prediction.Views),
-			IsLocked:        predictionStatus == fbService.PredictionOutcomeOutcomeUnknown && isLocked,
+			IsLocked:        prediction.PredictionResult == models.PredictionResultUnknown && isLocked,
 			SelectionList:   selectionList,
 			SportId:         int64(prediction.FbSportId),
-			Status:          int64(predictionStatus),
+			Status:          int64(prediction.PredictionResult),
 		}
 	} else {
 		analyst := BuildAnalystDetail(prediction.AnalystDetail)
@@ -291,11 +289,11 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			PredictionDesc:  prediction.Content,
 			CreatedAt:       prediction.CreatedAt,
 			ViewCount:       int64(prediction.Views),
-			IsLocked:        predictionStatus == fbService.PredictionOutcomeOutcomeUnknown && isLocked,
+			IsLocked:        prediction.PredictionResult == models.PredictionResultUnknown && isLocked,
 			SelectionList:   selectionList,
 			AnalystDetail:   &analyst,
 			SportId:         int64(prediction.FbSportId),
-			Status:          int64(predictionStatus),
+			Status:          int64(prediction.PredictionResult),
 		}
 	}
 	return
