@@ -104,12 +104,12 @@ func BuildPredictionsList(predictions []model.Prediction, page, limit int) (pred
 		finalList[i] = BuildPrediction(p, false, false)
 	}
 	// return finalList
-	start := limit * (page - 1) 
-	if (start > len(finalList)) {
+	start := limit * (page - 1)
+	if start > len(finalList) {
 		return []Prediction{}
 	}
 	end := limit * page
-	if (end > len(finalList)) {
+	if end > len(finalList) {
 		end = len(finalList)
 	}
 	return SortPredictionList(finalList)[start:end]
@@ -159,10 +159,10 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 
 			opList[oddIdx] = OddDetail{
 				Na:       odd.OddsNameCN,
-				Nm:       odd.ShortNameCN,
+				Nm:       odd.ShortNameCN, // odd.ShortNameCN,
 				Ty:       int(odd.SelectionType),
-				Od:       odd.Rate, // not sure
-				Bod:      odd.Rate, // not sure
+				Od:       -999, //odd.Rate, // not sure
+				Bod:      -999, //odd.Rate, // not sure
 				Odt:      int(odd.OddsFormat),
 				Li:       odd.OldNameCN,
 				Selected: slices.Contains(allSelectedOddsId, odd.ID),
@@ -203,7 +203,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			mgList = append(mgList, MarketGroupInfo{
 				MarketGroupType:    int(selection.FbOdds.MarketGroupType),
 				MarketGroupPeriod:  int(selection.FbOdds.MarketGroupPeriod),
-				MarketGroupName:    selection.FbOdds.MarketGroupInfo.FullNameCn,
+				MarketGroupName:    CustomizeOddsName(selection.FbOdds.MarketGroupInfo.FullNameCn),
 				Mks:                mks,
 				InternalIdentifier: marketGroupKey,
 				Status:             int(marketgroupStatus),
@@ -259,9 +259,9 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			PredictionDesc:  prediction.Content,
 			CreatedAt:       prediction.PublishedAt,
 			ViewCount:       int64(prediction.Views),
-			IsLocked:        isLocked,
+			IsLocked:        predictionStatus == fbService.PredictionOutcomeOutcomeUnknown && isLocked,
 			SelectionList:   selectionList,
-			SportId:         GetPredictionSportId(prediction),
+			SportId:         int64(prediction.FbSportId),
 			Status:          int64(predictionStatus),
 		}
 	} else {
@@ -273,10 +273,10 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			PredictionDesc:  prediction.Content,
 			CreatedAt:       prediction.CreatedAt,
 			ViewCount:       int64(prediction.Views),
-			IsLocked:        isLocked,
+			IsLocked:        predictionStatus == fbService.PredictionOutcomeOutcomeUnknown && isLocked,
 			SelectionList:   selectionList,
 			AnalystDetail:   &analyst,
-			SportId:         GetPredictionSportId(prediction),
+			SportId:         int64(prediction.FbSportId),
 			Status:          int64(predictionStatus),
 		}
 	}
@@ -286,32 +286,82 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 func SortPredictionList(predictions []Prediction) []Prediction {
 	// sort by status.. unsettled then settled
 	// then in each grp, sort by （命中率 50%，近X中X 50%）
-	sorted := slices.Clone(predictions)
+	unsettled := []Prediction{}
+	settled := []Prediction{}
 
-	slices.SortFunc(sorted, func(a, b Prediction) int {
-		if a.Status == 0 && b.Status != 0 {
-			return -1
+	filteredPredictions := []Prediction{}
+	_y, _m, _d := time.Now().AddDate(0, 0, -7).Date()
+	weekAgo := time.Date(_y, _m, _d, 0, 0, 0, 0, time.Now().Location())
+	for _, pred := range predictions {
+		if pred.CreatedAt.After(weekAgo) {
+			filteredPredictions = append(filteredPredictions, pred)
 		}
-		if a.Status != 0 && b.Status == 0 {
+	}
+
+	for _, pred := range filteredPredictions {
+		if pred.Status == 0 {
+			unsettled = append(unsettled, pred)
+		} else {
+			settled = append(settled, pred)
+		}
+	}
+
+	// slices.SortFunc(unsettled, func(a, b Prediction) int {
+	// 	wa, wb := weightage(a), weightage(b)
+	// 	if wa < wb {
+	// 		return 1
+	// 	} else if wa > wb {
+	// 		return -1
+	// 	}
+	// 	return 0
+	// })
+	// slices.SortFunc(settled, func(a, b Prediction) int {
+	// 	wa, wb := weightage(a), weightage(b)
+	// 	if wa < wb {
+	// 		return 1
+	// 	} else if wa > wb {
+	// 		return -1
+	// 	}
+	// 	return 0
+	// })
+	// FIXME : need to fix weightage
+	slices.SortFunc(settled, func(a, b Prediction) int {
+		if weightage(a) < weightage(b) {
 			return 1
+		} else if weightage(a) > weightage(b) {
+			return -1
+		} else {
+			return 0
 		}
-
-		return int(weightage(b) - weightage(a))
 	})
-	return sorted
+
+	slices.SortFunc(unsettled, func (a, b Prediction) int {
+		if weightage(a) < weightage(b) {
+			return 1
+		} else if weightage(a) > weightage(b) {
+			return -1
+		} else {
+			return 0
+		}
+	})
+
+	return append(unsettled, settled...)
 }
 
 func weightage(prediction Prediction) float64 {
-	if prediction.AnalystDetail != nil {
-		return float64(prediction.AnalystDetail.Accuracy)*0.5 + (float64(prediction.AnalystDetail.RecentWins) / float64(prediction.AnalystDetail.RecentTotal) * 100 * 0.5)
+	if (prediction.AnalystDetail == nil) {
+		return 0.00
 	}
-	return 0.0
+	accuracyWeight := float64(prediction.AnalystDetail.Accuracy) * 0.5
+	nearXweight := ((float64(prediction.AnalystDetail.RecentWins) / float64(prediction.AnalystDetail.RecentTotal)) * 100 * 0.5)
+	return  accuracyWeight + nearXweight
 }
 
-func GetPredictionSportId(p model.Prediction) int64 {
-	if len(p.PredictionSelections) == 0 {
-		return 0
+func CustomizeOddsName(oddsName string) string {
+	customizedOddsNames := map[string]string{"独赢": "胜平负"}
+	if customizedOddsName, exists := customizedOddsNames[oddsName]; exists {
+		return customizedOddsName
 	} else {
-		return int64(p.PredictionSelections[0].FbMatch.SportsID)
+		return oddsName
 	}
 }

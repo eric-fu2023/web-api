@@ -3,8 +3,12 @@ package model
 import (
 	"context"
 	"errors"
+	"log"
+	"slices"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 
 	"gorm.io/gorm"
 )
@@ -40,7 +44,9 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 
 	if fbSportId != 0 {
 		db = db.
-			Where("? = ANY(prediction_analysts.fb_sport_ids)", fbSportId)
+			Joins("join prediction_articles on prediction_articles.analyst_id = prediction_analysts.id").
+			Group("prediction_analysts.id").
+			Where("prediction_articles.fb_sport_id", fbSportId)
 	}
 
 	err = db.
@@ -76,11 +82,18 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 		Preload("Analyst").
 		Preload("Analyst.PredictionAnalystSource").
 		Preload("Analyst.PredictionAnalystFollowers").
-		Preload("Analyst.Predictions", "is_published = ?", true).
+		Preload("Analyst.Predictions", AnalystPredictionFilter).
+		Preload("Analyst.Predictions.PredictionSelections").
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds").
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).		
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Joins("JOIN prediction_analysts on prediction_analyst_followers.analyst_id = prediction_analysts.id").
 		WithContext(c).
 		Where("user_id = ?", userId).
 		Where("prediction_analysts.is_active = ?", true).
+		Order("updated_at desc").
 		Find(&followings).Error
 	return
 }
@@ -128,4 +141,34 @@ func AnalystPredictionFilter (db *gorm.DB) *gorm.DB {
 	db = db.Where("is_published", true).
 			Order("published_at desc")
 	return db 
+}
+
+func GetPredictionsFromAnalyst(analyst Analyst, sportId int) []Prediction {
+	sortedPredictions := slices.Clone(analyst.Predictions)
+	filteredSorted := []Prediction{}
+	for _, p := range sortedPredictions {
+		if (int64(sportId) == 0 || p.FbSportId == sportId) {
+			filteredSorted = append(filteredSorted, p)
+		}
+	}
+
+	slices.SortFunc(filteredSorted, func(a, b Prediction) int {
+		return b.PublishedAt.Compare(a.PublishedAt) // newest to oldest 
+	})
+	return filteredSorted
+}
+
+func GetOutcomesFromPredictions(predictions []Prediction) []fbService.PredictionOutcome {
+	outcomes := []fbService.PredictionOutcome{}
+	for _, pred := range predictions {
+		predDao := GetPredictionFromPrediction(pred)
+		res, err := fbService.ComputePredictionOutcomesByOrderReport(predDao)
+
+		if err != nil {
+			log.Printf("Error computing prediction, %s\n", err.Error())
+		}
+		
+		outcomes = append(outcomes, res)
+	}
+	return outcomes
 }

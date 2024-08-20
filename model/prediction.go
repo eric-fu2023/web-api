@@ -70,7 +70,7 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 	}
 
 	if cond.SportId != 0 {
-		db = db.Where("fb_matches.sports_id = ?", cond.SportId)
+		db = db.Where("prediction_articles.fb_sport_id = ?", cond.SportId)
 	}
 
 	err = db.Find(&preds).Error
@@ -144,4 +144,12 @@ func IncreasePredictionViewCountBy1(prediction Prediction) error {
 		return tx.Model(&prediction.PredictionArticle).Update("Views", prediction.Views+1).Error
 	})
 	return err
+}
+
+func GetPredictionSportId(p Prediction) int64 {
+	if len(p.PredictionSelections) == 0 {
+		return 0
+	} else {
+		return int64(p.PredictionSelections[0].FbMatch.SportsID)
+	}
 }
