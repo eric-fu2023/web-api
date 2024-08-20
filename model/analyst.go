@@ -44,7 +44,9 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 
 	if fbSportId != 0 {
 		db = db.
-			Where("? = ANY(prediction_analysts.fb_sport_ids)", fbSportId)
+			Joins("join prediction_articles on prediction_articles.analyst_id = prediction_analysts.id").
+			Group("prediction_analysts.id").
+			Where("prediction_articles.fb_sport_id", fbSportId)
 	}
 
 	err = db.
