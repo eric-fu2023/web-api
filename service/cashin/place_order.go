@@ -3,7 +3,6 @@ package cashin
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 	"web-api/model"
@@ -16,7 +15,6 @@ import (
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
 type TopUpOrderService struct {
@@ -231,36 +229,9 @@ func calculateTeamupSlashProgress(cashOrder model.CashOrder, userId int64) {
 
 	// Convert cash amount into slash progress by dividing multiplier
 	contributedSlashProgress := cashOrder.AppliedCashInAmount / int64(slashMultiplier)
-	err = updateTeamupProgress(userId, cashOrder.AppliedCashInAmount, contributedSlashProgress)
+	err = model.GetTeamupProgressToUpdate(userId, cashOrder.AppliedCashInAmount, contributedSlashProgress)
 	if err != nil {
 		log.Print(err.Error())
 		return
 	}
-}
-
-func updateTeamupProgress(userId, amount, slashProgress int64) (err error) {
-	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
-		teamupEntry, err := model.FindOngoingTeamupEntriesByUserId(userId)
-		if err != nil {
-			err = fmt.Errorf("fail to get teamup err - %v", err)
-			return
-		}
-
-		err = model.UpdateFirstTeamupEntryProgress(tx, teamupEntry.ID, amount, slashProgress)
-
-		if err != nil {
-			err = fmt.Errorf("fail to update teamup entry err - %v", err)
-			return
-		}
-
-		err = model.UpdateTeamupProgress(tx, teamupEntry.TeamupId, amount, slashProgress)
-
-		if err != nil {
-			err = fmt.Errorf("fail to update teamup err - %v", err)
-			return
-		}
-		return
-	})
-
-	return
 }
