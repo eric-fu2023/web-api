@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"web-api/cache"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
@@ -246,7 +247,12 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	user := u.(model.User)
 
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
-	isSuccess, err := model.CreateSlashBetRecord(s.TeamupId, user.ID, i18n)
+	teamup, isTeamupSuccess, isSuccess, err := model.CreateSlashBetRecord(s.TeamupId, user.ID, i18n)
+
+	if isTeamupSuccess {
+		notificationMsg := fmt.Sprintf(i18n.T("notification_slashed_teamup_success"), teamup.OrderId, teamup.TotalTeamUpTarget)
+		go common.SendNotification(teamup.UserId, consts.Notification_Type_Cash_Transaction, i18n.T("notification_teamup_title"), notificationMsg)
+	}
 
 	if err != nil {
 		return serializer.Response{
