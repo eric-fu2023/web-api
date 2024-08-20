@@ -304,7 +304,7 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 			util.GetLoggerEntry(c).Error("Team Up Cash Order ERROR - ", err, teamup.ID)
 			return
 		}
-		notificationMsg := fmt.Sprintf(i18n.T("notification_slashed_teamup_success"), teamup.OrderId, fmt.Sprint("%.2f", float64(teamup.TotalTeamUpTarget)/float64(100)))
+		notificationMsg := fmt.Sprintf(i18n.T("notification_slashed_teamup_success"), teamup.OrderId, fmt.Sprintf("%.2f", float64(teamup.TotalTeamUpTarget)/float64(100)))
 		go common.SendNotification(teamup.UserId, consts.Notification_Type_Cash_Transaction, i18n.T("notification_teamup_title"), notificationMsg)
 	}
 
