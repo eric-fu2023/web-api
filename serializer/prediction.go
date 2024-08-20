@@ -146,15 +146,22 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			// get prediction bet result first
 			// if it's red/black already, use directly
 			// otherwise compute from taya_bet_report
-			betResult := 0
-			if selection.BetResult == models.BetResultUnknown {
-				if oddStatus, err := fbService.ComputeOutcomeByOrderReportI(model.GetOrderByOddFromSelection(selection, odd.ID)); err != nil {
-					log.Printf("error computing outcome for Odds [ID:%d]: %s\n", odd.ID, err)
-				} else {
-					betResult = int(oddStatus)
-				}
-			} else {
-				betResult = int(selection.BetResult)
+
+			/* no need to compute, use DB as source of truth */
+			// betResult := 0
+			// if selection.BetResult == models.BetResultUnknown {
+			// 	if oddStatus, err := fbService.ComputeOutcomeByOrderReportI(model.GetOrderByOddFromSelection(selection, odd.ID)); err != nil {
+			// 		log.Printf("error computing outcome for Odds [ID:%d]: %s\n", odd.ID, err)
+			// 	} else {
+			// 		betResult = int(oddStatus)
+			// 	}
+			// } else {
+			// 	betResult = int(selection.BetResult)
+			// }
+			
+			betResult := models.BetResultUnknown
+			if odd.ID == selection.FbOdds.ID {
+				betResult = selection.BetResult
 			}
 
 			opList[oddIdx] = OddDetail{
@@ -166,7 +173,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Odt:      int(odd.OddsFormat),
 				Li:       odd.OldNameCN,
 				Selected: slices.Contains(allSelectedOddsId, odd.ID),
-				Status:   betResult,
+				Status:   int(betResult),
 			}
 		}
 
