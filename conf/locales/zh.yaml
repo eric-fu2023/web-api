@@ -566,6 +566,7 @@ vip_weekly:  "VIP每周红包"
 vip_rebate:  "VIP场馆返水"
 vip_referral: "VIP共赢奖励"
 cash_method_promotion: "支付渠道奖励"
+teamup_rebate:  "砍单返利"
 
 system_adjust: "系统调整"
 game_adjust: "游戏调整"
@@ -650,5 +651,5 @@ notification_teamup_content: "恭喜您砍单成功！您的砍单返利已成�
 
 notification_slashed_teamup_success_title: "砍单成功"
 notification_slashed_teamup_fail_title: "砍单失败"
-notification_slashed_teamup_success: "恭喜！您的# %s 订单已成功砍单，$%s奖励已转到您的钱包，快来查看并使用您的奖励吧！."
+notification_slashed_teamup_success: "恭喜！您的 #%s 订单已成功砍单，%s USD奖励已转到您的钱包，快来查看并使用您的奖励吧！"
 notification_slashed_teamup_fail: "很遗憾，您的# %s 订单砍单失败了。请再试一次或呼唤更多好友来帮忙，祝您下次成功！"

@@ -31,6 +31,7 @@ var promotionOrderTypeMapping = map[int64]int64{
 	models.PromotionTypeVipWeeklyB:     models.CashOrderTypeVipWeekly,
 	models.PromotionTypeVipReferral:    models.CashOrderTypeVipReferral,
 	models.PromotionTypeCustomTemplate: models.CashOrderTypeCustomPromotion,
+	models.PromotionTypeTeamup:         models.CashOrderTypeTeamupPromotion,
 }
 
 var promotionTxTypeMapping = map[int64]int64{
