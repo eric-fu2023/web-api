@@ -138,7 +138,7 @@ func GetPredictionsFromAnalyst(analyst Analyst, sportId int) []Prediction {
 	sortedPredictions := slices.Clone(analyst.Predictions)
 	filteredSorted := []Prediction{}
 	for _, p := range sortedPredictions {
-		if (int64(sportId) == 0 || GetPredictionSportId(p) == int64(sportId)) {
+		if (int64(sportId) == 0 || p.FbSportId == sportId) {
 			filteredSorted = append(filteredSorted, p)
 		}
 	}
@@ -146,7 +146,7 @@ func GetPredictionsFromAnalyst(analyst Analyst, sportId int) []Prediction {
 	slices.SortFunc(filteredSorted, func(a, b Prediction) int {
 		return b.PublishedAt.Compare(a.PublishedAt) // newest to oldest 
 	})
-	return sortedPredictions
+	return filteredSorted
 }
 
 func GetOutcomesFromPredictions(predictions []Prediction) []fbService.PredictionOutcome {

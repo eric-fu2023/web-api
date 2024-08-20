@@ -261,7 +261,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			ViewCount:       int64(prediction.Views),
 			IsLocked:        isLocked,
 			SelectionList:   selectionList,
-			SportId:         model.GetPredictionSportId(prediction),
+			SportId:         int64(prediction.FbSportId),
 			Status:          int64(predictionStatus),
 		}
 	} else {
@@ -276,7 +276,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			IsLocked:        isLocked,
 			SelectionList:   selectionList,
 			AnalystDetail:   &analyst,
-			SportId:         model.GetPredictionSportId(prediction),
+			SportId:         int64(prediction.FbSportId),
 			Status:          int64(predictionStatus),
 		}
 	}
