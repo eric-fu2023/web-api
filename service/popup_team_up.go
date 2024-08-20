@@ -51,8 +51,8 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 	user := u.(model.User)
 
 	var team_up ploutos.Teamup
-	// status = 2 is success,    status = 0 is onging
-	err = model.DB.Model(ploutos.Teamup{}).Where("user_id = ? AND updated_at < ? AND updated_at > ? AND status in (2,0)", user.ID, TodayStart, yesterdayStart).Order("status DESC, total_teamup_deposit DESC").First(&team_up).Error
+	// status = 1 is success,    status = 0 is onging
+	err = model.DB.Model(ploutos.Teamup{}).Where("user_id = ? AND updated_at < ? AND updated_at > ? AND status in (1,0) AND total_teamup_deposit !=0", user.ID, TodayStart, yesterdayStart).Order("status DESC, total_teamup_deposit DESC").First(&team_up).Error
 	if errors.Is(err, logger.ErrRecordNotFound) {
 		err = nil
 		// if no team up record, we return nil
@@ -64,13 +64,16 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 	}
 
 	var teamup_type int
+	members := make([]TeamUpPopupMemberInfo,0)
 	if team_up.Status == 0 {
 		// ongoing
 		teamup_type = 3
 	} else {
 		// success
 		teamup_type = 2
+		members = GenerateMembersForTeamUpSuccess(user, team_up.TotalTeamUpTarget/100)
 	}
+
 	data = TeamUpPopupResponse{
 		Id:                 team_up.ID,
 		OrderId:            team_up.OrderId,
@@ -81,7 +84,7 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 		Start:              yesterdayStart.Unix(),
 		End:                yesterdayEnd.Unix(),
 		Type:               teamup_type,
-		Members:            GenerateMembersForTeamUpSuccess(user, team_up.TotalTeamUpTarget/100),
+		Members:            members,
 	}
 	service.Shown(c)
 	return data, nil
