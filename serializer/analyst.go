@@ -20,7 +20,10 @@ type Analyst struct {
 	Predictions      []Prediction `json:"predictions"`
 	RecentTotal      int          `json:"recent_total"`
 	RecentWins       int          `json:"recent_wins"`
-	SortOrder        int          `json:"sort_order"`
+
+	IsShowStreak     bool `json:"is_show_streak"`
+	IsShowAccuracy   bool `json:"is_show_accuracy"`
+	IsShowRecentWins bool `json:"is_show_recent_wins"`
 }
 
 type Source struct {
@@ -33,6 +36,11 @@ type Achievement struct {
 	Accuracy         int   `json:"accuracy"`
 	WinningStreak    int   `json:"winning_streak"`
 	RecentResult     []int `json:"recent_result"`
+
+	IsShowTotal      bool `json:"is_show_total"`
+	IsShowAccuracy   bool `json:"is_show_accuracy"`
+	IsShowStreak     bool `json:"is_show_streak"`
+	IsShowRecentResult bool `json:"is_show_recent_result"`
 }
 
 func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
@@ -79,7 +87,10 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		Accuracy:         accuracy,
 		RecentTotal:      nearX,
 		RecentWins:       winX,
-		SortOrder:        analyst.Sort,
+
+		IsShowStreak:     winStreak >= 3,
+		IsShowAccuracy:   accuracy > 10.0,
+		IsShowRecentWins: (float64(winX)/float64(nearX) * 100) > 50.0,
 	}
 	return
 }
@@ -126,7 +137,7 @@ func BuildAnalystAchievement(original []fbService.PredictionOutcome) (resp Achie
 	// accuracy
 	accuracy := 0
 	if len(resultInBool) != 0 {
-		accuracy = int(float64(winCount) / float64(len(resultInBool)) * 100)  //TODO use math.Ceil 
+		accuracy = int(float64(winCount) / float64(len(resultInBool)) * 100) //TODO use math.Ceil
 	}
 
 	resp = Achievement{
@@ -134,6 +145,11 @@ func BuildAnalystAchievement(original []fbService.PredictionOutcome) (resp Achie
 		Accuracy:         accuracy,      // filter unknown
 		WinningStreak:    streak,        // filter unknown
 		RecentResult:     recentResult,  // filter unknown
+
+		IsShowTotal: true,
+		IsShowAccuracy: accuracy > 10.0,
+		IsShowStreak: streak >= 3,
+		IsShowRecentResult: len(recentResult) > 0,
 	}
 	return
 }
