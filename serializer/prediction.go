@@ -259,9 +259,9 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			PredictionDesc:  prediction.Content,
 			CreatedAt:       prediction.PublishedAt,
 			ViewCount:       int64(prediction.Views),
-			IsLocked:        isLocked,
+			IsLocked:        predictionStatus == fbService.PredictionOutcomeOutcomeUnknown && isLocked,
 			SelectionList:   selectionList,
-			SportId:         model.GetPredictionSportId(prediction),
+			SportId:         int64(prediction.FbSportId),
 			Status:          int64(predictionStatus),
 		}
 	} else {
@@ -273,10 +273,10 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			PredictionDesc:  prediction.Content,
 			CreatedAt:       prediction.CreatedAt,
 			ViewCount:       int64(prediction.Views),
-			IsLocked:        isLocked,
+			IsLocked:        predictionStatus == fbService.PredictionOutcomeOutcomeUnknown && isLocked,
 			SelectionList:   selectionList,
 			AnalystDetail:   &analyst,
-			SportId:         model.GetPredictionSportId(prediction),
+			SportId:         int64(prediction.FbSportId),
 			Status:          int64(predictionStatus),
 		}
 	}
@@ -328,7 +328,7 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 	slices.SortFunc(settled, func(a, b Prediction) int {
 		if weightage(a) < weightage(b) {
 			return 1
-		} else if a.AnalystDetail.Accuracy > b.AnalystDetail.Accuracy {
+		} else if weightage(a) > weightage(b) {
 			return -1
 		} else {
 			return 0
@@ -338,7 +338,7 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 	slices.SortFunc(unsettled, func (a, b Prediction) int {
 		if weightage(a) < weightage(b) {
 			return 1
-		} else if a.AnalystDetail.Accuracy > b.AnalystDetail.Accuracy {
+		} else if weightage(a) > weightage(b) {
 			return -1
 		} else {
 			return 0
