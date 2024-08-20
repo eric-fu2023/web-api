@@ -227,6 +227,10 @@ func calculateTeamupSlashProgress(cashOrder model.CashOrder, userId int64) {
 		return
 	}
 
+	if cashOrder.AppliedCashInAmount < int64(slashMultiplier) {
+		return
+	}
+
 	// Convert cash amount into slash progress by dividing multiplier
 	contributedSlashProgress := cashOrder.AppliedCashInAmount / int64(slashMultiplier)
 	err = model.GetTeamupProgressToUpdate(userId, cashOrder.AppliedCashInAmount, contributedSlashProgress)
