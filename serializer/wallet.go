@@ -1,8 +1,9 @@
 package serializer
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"web-api/util"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type Wallet struct {
@@ -24,6 +25,9 @@ func BuildWallet(a ploutos.GameVendorUser) (b Wallet) {
 
 	if a.GameVendor.GameVendorBrand != nil {
 		b.Name = a.GameVendor.GameVendorBrand.Name
+	}
+	if a.GameVendor.WalletName != "" {
+		b.Name = a.GameVendor.WalletName
 	}
 	return
 }
