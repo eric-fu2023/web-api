@@ -93,7 +93,7 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 		WithContext(c).
 		Where("user_id = ?", userId).
 		Where("prediction_analysts.is_active = ?", true).
-		Order("updated_at desc").
+		Order("prediction_analysts.sort desc").
 		Find(&followings).Error
 	return
 }
