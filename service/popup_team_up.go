@@ -25,7 +25,7 @@ type TeamUpPopupResponse struct {
 	Id                 int64                   `json:"id"`
 	OrderId            string                  `json:"order_id"`
 	Status             int                     `json:"status"`
-	TotalTeamupDeposit int64                   `json:"total_deposit"`
+	// TotalTeamupDeposit int64                   `json:"total_deposit"`
 	TotalTeamUpTarget  int64                   `json:"total_target"`
 	Percent            int64                   `json:"percent"`
 	Start              int64                   `json:"start"`
@@ -52,7 +52,7 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 
 	var team_up ploutos.Teamup
 	// status = 1 is success,    status = 0 is onging
-	err = model.DB.Model(ploutos.Teamup{}).Where("user_id = ? AND updated_at < ? AND updated_at > ? AND status in (1,0) AND total_teamup_deposit !=0", user.ID, TodayStart, yesterdayStart).Order("status DESC, total_teamup_deposit::float / total_teamup_target DESC").First(&team_up).Error
+	err = model.DB.Model(ploutos.Teamup{}).Where("user_id = ? AND updated_at < ? AND updated_at > ? AND status in (1,0) AND total_teamup_deposit !=0", user.ID, TodayStart, yesterdayStart).Order("status DESC, total_fake_progress DESC").First(&team_up).Error
 	if errors.Is(err, logger.ErrRecordNotFound) {
 		err = nil
 		// if no team up record, we return nil
@@ -78,9 +78,9 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 		Id:                 team_up.ID,
 		OrderId:            team_up.OrderId,
 		Status:             team_up.Status,
-		TotalTeamupDeposit: team_up.TotalTeamupDeposit / 100,
+		// TotalTeamupDeposit: team_up.TotalTeamupDeposit / 100,
 		TotalTeamUpTarget:  team_up.TotalTeamUpTarget / 100,
-		Percent:            team_up.TotalTeamupDeposit * 100 / team_up.TotalTeamUpTarget,
+		Percent:            team_up.TotalFakeProgress,
 		Start:              yesterdayStart.Unix(),
 		End:                yesterdayEnd.Unix(),
 		Type:               teamup_type,
