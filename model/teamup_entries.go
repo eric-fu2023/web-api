@@ -5,8 +5,6 @@ import (
 	"math"
 	"time"
 
-	"web-api/conf/consts"
-	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
 
@@ -106,8 +104,6 @@ func CreateSlashBetRecord(teamupId, userId int64, i18n i18n.I18n) (isSuccess boo
 		teamup.TeamupCompletedTime = time.Now().UTC().Unix()
 		afterProgress = maxPercentage
 
-		notificationMsg := fmt.Sprintf(i18n.T("notification_slashed_teamup_success"), teamup.OrderId, teamup.TotalTeamUpTarget)
-		go common.SendNotification(teamup.UserID, consts.Notification_Type_Cash_Transaction, i18n.T("notification_teamup_title"), notificationMsg)
 	}
 
 	slashEntry := ploutos.TeamupEntry{
