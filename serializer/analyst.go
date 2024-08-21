@@ -5,6 +5,8 @@ import (
 	"web-api/util"
 
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/eapache/go-resiliency/breaker"
 )
 
 type Analyst struct {
@@ -103,53 +105,35 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 	return
 }
 
-func BuildAnalystAchievement(original []fbService.PredictionOutcome) (resp Achievement) {
-	results := []fbService.PredictionOutcome{}
-	// filter unknown
-	for _, outcome := range original {
-		if outcome == fbService.PredictionOutcomeOutcomeUnknown {
-			continue
-		} else {
-			results = append(results, outcome)
+func BuildAnalystAchievement(analyst model.Analyst, sportId int) (resp Achievement) {
+	summary := ploutos.PredictionAnalystSummary{}
+
+	for _, s := range analyst.Summaries{
+		if s.FbSportId == sportId {
+			summary = s 
+			break
 		}
 	}
-	// total predictions
-	numResults := len(results)
 
-	// win/lose for the last 10 predictions
-	var last10results []fbService.PredictionOutcome
-	if numResults > 10 {
-		last10results = results[numResults-10:]
-	} else {
-		last10results = results
-	}
-	recentResult := make([]int, len(last10results))
-	for i, res := range last10results {
-		recentResult[i] = int(res)
-	}
-
-	// set up for winning streak and accuracy
-	resultInBool, winCount := GetBoolOutcomes(results)
-
-	// winning streak
-	streak := util.ConsecutiveWins(resultInBool) // highest consecutive 最高连红
-
-	// accuracy
-	accuracy := 0
-	if len(resultInBool) != 0 {
-		accuracy = int(float64(winCount) / float64(len(resultInBool)) * 100) //TODO use math.Ceil
+	recentResults := []int{}
+	for _, res := range summary.RecentResults {
+		if res == int32(ploutos.PredictionResultUnknown) {
+			continue
+		} else {
+			recentResults = append(recentResults, int(res))
+		}
 	}
 
 	resp = Achievement{
-		TotalPredictions: len(original), // no filter out unknown
-		Accuracy:         accuracy,      // filter unknown
-		WinningStreak:    streak,        // filter unknown
-		RecentResult:     recentResult,  // filter unknown
+		TotalPredictions: summary.TotalArticles,
+		Accuracy: summary.Accuracy,
+		WinningStreak: summary.HighestStreak,
+		RecentResult: recentResults,
 
 		IsShowTotal: true,
-		IsShowAccuracy: accuracy > 10.0,
-		IsShowStreak: streak >= 3,
-		IsShowRecentResult: len(recentResult) > 0,
+		IsShowAccuracy: summary.Accuracy > 10,
+		IsShowStreak: summary.HighestStreak >= 3,
+		IsShowRecentResult: len(recentResults) > 0,
 	}
 	return
 }

@@ -18,6 +18,8 @@ type Analyst struct {
 
 	Predictions  []Prediction `gorm:"foreignKey:AnalystId;references:ID"`
 	AnalystSport AnalystSport `gorm:"foreignKey:ID;references:AnalystId"`
+
+	Summaries []ploutos.PredictionAnalystSummary `gorm:"foreignKey:ID;references"`
 }
 
 type AnalystSport struct {
@@ -37,8 +39,9 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
-		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).		
+		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).
 		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
+		Preload("Summaries").
 		Where("is_active", true).
 		Order("sort DESC")
 
@@ -65,9 +68,10 @@ func (Analyst) GetDetail(id int) (target Analyst, err error) {
 		Preload("Predictions.PredictionSelections.FbOdds").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
 		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
-		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).		
+		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).
 		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Preload("PredictionAnalystFollowers").
+		Preload("Summaries").
 		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
@@ -87,8 +91,9 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 		Preload("Analyst.Predictions.PredictionSelections.FbOdds").
 		Preload("Analyst.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
 		Preload("Analyst.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
-		Preload("Analyst.Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).		
+		Preload("Analyst.Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).
 		Preload("Analyst.Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
+		Preload("Analyst.Summaries").
 		Joins("JOIN prediction_analysts on prediction_analyst_followers.analyst_id = prediction_analysts.id").
 		WithContext(c).
 		Where("user_id = ?", userId).
@@ -137,23 +142,23 @@ func AnalystExist(analystId int64) (exist bool, err error) {
 	return true, nil
 }
 
-func AnalystPredictionFilter (db *gorm.DB) *gorm.DB {
+func AnalystPredictionFilter(db *gorm.DB) *gorm.DB {
 	db = db.Where("is_published", true).
-			Order("published_at desc")
-	return db 
+		Order("published_at desc")
+	return db
 }
 
 func GetPredictionsFromAnalyst(analyst Analyst, sportId int) []Prediction {
 	sortedPredictions := slices.Clone(analyst.Predictions)
 	filteredSorted := []Prediction{}
 	for _, p := range sortedPredictions {
-		if (int64(sportId) == 0 || p.FbSportId == sportId) {
+		if int64(sportId) == 0 || p.FbSportId == sportId {
 			filteredSorted = append(filteredSorted, p)
 		}
 	}
 
 	slices.SortFunc(filteredSorted, func(a, b Prediction) int {
-		return b.PublishedAt.Compare(a.PublishedAt) // newest to oldest 
+		return b.PublishedAt.Compare(a.PublishedAt) // newest to oldest
 	})
 	return filteredSorted
 }
@@ -167,7 +172,7 @@ func GetOutcomesFromPredictions(predictions []Prediction) []fbService.Prediction
 		if err != nil {
 			log.Printf("Error computing prediction, %s\n", err.Error())
 		}
-		
+
 		outcomes = append(outcomes, res)
 	}
 	return outcomes
