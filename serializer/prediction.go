@@ -1,12 +1,10 @@
 package serializer
 
 import (
-	"log"
 	"slices"
 	"time"
 	"web-api/model"
 
-	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 	models "blgit.rfdev.tech/taya/ploutos-object"
 )
 
@@ -120,7 +118,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
 	// the unknown/black/red status of of the entire PredictionArticle
-	predictionStatus := fbService.PredictionOutcomeOutcomeUnknown // first is unknown
+	// predictionStatus := fbService.PredictionOutcomeOutcomeUnknown // first is unknown
 	for i, selection := range prediction.PredictionSelections {
 		allSelectedOddsId[i] = selection.FbOdds.ID
 	}
@@ -146,15 +144,22 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			// get prediction bet result first
 			// if it's red/black already, use directly
 			// otherwise compute from taya_bet_report
-			betResult := 0
-			if selection.BetResult == models.BetResultUnknown {
-				if oddStatus, err := fbService.ComputeOutcomeByOrderReportI(model.GetOrderByOddFromSelection(selection, odd.ID)); err != nil {
-					log.Printf("error computing outcome for Odds [ID:%d]: %s\n", odd.ID, err)
-				} else {
-					betResult = int(oddStatus)
-				}
-			} else {
-				betResult = int(selection.BetResult)
+
+			/* no need to compute, use DB as source of truth */
+			// betResult := 0
+			// if selection.BetResult == models.BetResultUnknown {
+			// 	if oddStatus, err := fbService.ComputeOutcomeByOrderReportI(model.GetOrderByOddFromSelection(selection, odd.ID)); err != nil {
+			// 		log.Printf("error computing outcome for Odds [ID:%d]: %s\n", odd.ID, err)
+			// 	} else {
+			// 		betResult = int(oddStatus)
+			// 	}
+			// } else {
+			// 	betResult = int(selection.BetResult)
+			// }
+			
+			betResult := models.BetResultUnknown
+			if odd.ID == selection.FbOdds.ID {
+				betResult = selection.BetResult
 			}
 
 			opList[oddIdx] = OddDetail{
@@ -166,7 +171,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				Odt:      int(odd.OddsFormat),
 				Li:       odd.OldNameCN,
 				Selected: slices.Contains(allSelectedOddsId, odd.ID),
-				Status:   betResult,
+				Status:   int(betResult),
 			}
 		}
 
@@ -184,20 +189,31 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		})
 
 		if mgListIdx == -1 {
-			// market group doesn't exist. add into list for the first time.
-			marketGroup := model.GetMarketGroupOrdersByKeyFromPrediction(prediction, marketGroupKey)
-			marketgroupStatus, err := fbService.ComputeMarketGroupOutcomesByOrderReport(marketGroup)
-			// handle PredictionArticle status
-			predictionStatus = fbService.PredictionOutcomeOutcomeRed // default as red first.
-			if marketgroupStatus == fbService.MarketGroupOutComeOutcomeUnknown {
-				// if any marketgroupStatus is unknown, entire PredictionArticle is unknown
-				predictionStatus = fbService.PredictionOutcomeOutcomeUnknown
-			} else if marketgroupStatus == fbService.MarketGroupOutComeOutcomeBlack && predictionStatus != fbService.PredictionOutcomeOutcomeUnknown {
-				// if any marketgroupStatus is black, and PredictionArticle is not unknown, PredictionArticle is black
-				predictionStatus = fbService.PredictionOutcomeOutcomeBlack
-			}
-			if err != nil {
-				log.Printf("error computing marketgroup status: %s\n", err)
+			// // market group doesn't exist. add into list for the first time.
+			// marketGroup := model.GetMarketGroupOrdersByKeyFromPrediction(prediction, marketGroupKey)
+			// marketgroupStatus, err := fbService.ComputeMarketGroupOutcomesByOrderReport(marketGroup)
+			// // handle PredictionArticle status
+			// predictionStatus = fbService.PredictionOutcomeOutcomeRed // default as red first.
+			// if marketgroupStatus == fbService.MarketGroupOutComeOutcomeUnknown {
+			// 	// if any marketgroupStatus is unknown, entire PredictionArticle is unknown
+			// 	predictionStatus = fbService.PredictionOutcomeOutcomeUnknown
+			// } else if marketgroupStatus == fbService.MarketGroupOutComeOutcomeBlack && predictionStatus != fbService.PredictionOutcomeOutcomeUnknown {
+			// 	// if any marketgroupStatus is black, and PredictionArticle is not unknown, PredictionArticle is black
+			// 	predictionStatus = fbService.PredictionOutcomeOutcomeBlack
+			// }
+			// if err != nil {
+			// 	log.Printf("error computing marketgroup status: %s\n", err)
+			// }
+
+			mgStatus := models.BetResultUnknown
+			for _, op := range opList {
+				if op.Status == int(models.BetResultWin) {
+					// if any op win, whole mg win 
+					mgStatus = models.BetResultWin
+					break
+				}
+				// all lose 
+				mgStatus = models.BetResultLose
 			}
 
 			mgList = append(mgList, MarketGroupInfo{
@@ -206,7 +222,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 				MarketGroupName:    CustomizeOddsName(selection.FbOdds.MarketGroupInfo.FullNameCn),
 				Mks:                mks,
 				InternalIdentifier: marketGroupKey,
-				Status:             int(marketgroupStatus),
+				Status:             int(mgStatus),
 			})
 		}
 
@@ -259,10 +275,10 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			PredictionDesc:  prediction.Content,
 			CreatedAt:       prediction.PublishedAt,
 			ViewCount:       int64(prediction.Views),
-			IsLocked:        predictionStatus == fbService.PredictionOutcomeOutcomeUnknown && isLocked,
+			IsLocked:        prediction.PredictionResult == models.PredictionResultUnknown && isLocked,
 			SelectionList:   selectionList,
 			SportId:         int64(prediction.FbSportId),
-			Status:          int64(predictionStatus),
+			Status:          int64(prediction.PredictionResult),
 		}
 	} else {
 		analyst := BuildAnalystDetail(prediction.AnalystDetail)
@@ -273,11 +289,11 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			PredictionDesc:  prediction.Content,
 			CreatedAt:       prediction.CreatedAt,
 			ViewCount:       int64(prediction.Views),
-			IsLocked:        predictionStatus == fbService.PredictionOutcomeOutcomeUnknown && isLocked,
+			IsLocked:        prediction.PredictionResult == models.PredictionResultUnknown && isLocked,
 			SelectionList:   selectionList,
 			AnalystDetail:   &analyst,
 			SportId:         int64(prediction.FbSportId),
-			Status:          int64(predictionStatus),
+			Status:          int64(prediction.PredictionResult),
 		}
 	}
 	return

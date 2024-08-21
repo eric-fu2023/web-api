@@ -566,6 +566,7 @@ vip_weekly:  "VIP Weekly Bonus"
 vip_rebate:  "VIP Rebate Bonus"
 vip_referral: "VIP Referral Bonus"
 cash_method_promotion: "Cash Method Promotion"
+teamup_rebate:  "Teamup Rebate Bonus"
 
 system_adjust: "System Adjust"
 game_adjust: "Game Adjust"
@@ -644,3 +645,11 @@ teamup_br_not_exist: "Bet Doesn't Exist."
 
 teamup_slash_error: "Unable to Slash"
 teamup_slashed_before_error: "User Has Slashed This Bet"
+
+notification_teamup_title: "Teamup"
+notification_teamup_content: "Teamup Success"
+
+notification_slashed_teamup_success_title: "Teamup Successful"
+notification_slashed_teamup_fail_title: "Teamup Fail"
+notification_slashed_teamup_success: "Congratulation! Your teamup is successful."
+notification_slashed_teamup_fail: "Unfortunately, your teamup failed."

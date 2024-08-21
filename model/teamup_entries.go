@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"web-api/util"
+	"web-api/util/i18n"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
@@ -60,7 +61,7 @@ func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustom
 	return
 }
 
-func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
+func CreateSlashBetRecord(teamupId, userId int64, i18n i18n.I18n) (teamup ploutos.Teamup, isTeamupSuccess, isSuccess bool, err error) {
 
 	// First entry - 85% ~ 92%
 	// Second entry onwards until N - 1 - 0.01% ~ 1%
@@ -70,7 +71,7 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 
 	// NO SLASH if user slashed before
 
-	teamup, _ := GetTeamUpByTeamUpId(teamupId)
+	teamup, _ = GetTeamUpByTeamUpId(teamupId)
 
 	if teamup.UserId == userId || teamup.TeamupEndTime < time.Now().UTC().Unix() {
 		err = fmt.Errorf("teamup_slash_error")
@@ -99,6 +100,7 @@ func CreateSlashBetRecord(teamupId, userId int64) (isSuccess bool, err error) {
 
 	// Update status to SUCCESS if teamup deposit exceeded target
 	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
+		isTeamupSuccess = true
 		teamup.Status = int(ploutos.TeamupStatusSuccess)
 		teamup.TeamupCompletedTime = time.Now().UTC().Unix()
 		afterProgress = maxPercentage

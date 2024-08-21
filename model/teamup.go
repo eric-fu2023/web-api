@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -154,6 +155,33 @@ func GetCustomTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) 
 func GetTeamUpByTeamUpId(teamupId int64) (res ploutos.Teamup, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Where("id = ?", teamupId).First(&res).Error
+		return
+	})
+
+	return
+}
+
+func GetTeamupProgressToUpdate(userId, amount, slashProgress int64) (err error) {
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		teamupEntry, err := FindOngoingTeamupEntriesByUserId(userId)
+		if err != nil {
+			err = fmt.Errorf("fail to get teamup err - %v", err)
+			return
+		}
+
+		err = UpdateFirstTeamupEntryProgress(tx, teamupEntry.ID, amount, slashProgress)
+
+		if err != nil {
+			err = fmt.Errorf("fail to update teamup entry err - %v", err)
+			return
+		}
+
+		err = UpdateTeamupProgress(tx, teamupEntry.TeamupId, amount, slashProgress)
+
+		if err != nil {
+			err = fmt.Errorf("fail to update teamup err - %v", err)
+			return
+		}
 		return
 	})
 

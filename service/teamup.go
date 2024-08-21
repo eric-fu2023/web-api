@@ -7,20 +7,26 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"web-api/cache"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
+	"web-api/util"
 	"web-api/util/i18n"
 
 	"github.com/chenyahui/gin-cache/persist"
+	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	// fbService "blgit.rfdev.tech/taya/game-service/fb2/client/"
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/client"
 	fbServiceApi "blgit.rfdev.tech/taya/game-service/fb2/client/api"
@@ -85,6 +91,18 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	}
 
 	teamupRes, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit, start, end)
+
+	sort.SliceStable(teamupRes, func(i, j int) bool {
+		// Move status 0, 1, and 2 to the front
+		if teamupRes[i].Status == 0 || teamupRes[i].Status == 1 || teamupRes[i].Status == 2 {
+			if teamupRes[j].Status == 0 || teamupRes[j].Status == 1 || teamupRes[j].Status == 2 {
+				return teamupRes[i].Status < teamupRes[j].Status
+			}
+			return true
+		}
+		return false
+	})
+
 	r.Data = parseBetReport(teamupRes)
 
 	return
@@ -246,7 +264,49 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	user := u.(model.User)
 
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
-	isSuccess, err := model.CreateSlashBetRecord(s.TeamupId, user.ID)
+	teamup, isTeamupSuccess, isSuccess, err := model.CreateSlashBetRecord(s.TeamupId, user.ID, i18n)
+
+	if isTeamupSuccess {
+
+		// SUCCESS -> UPDATE USER SUM
+
+		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
+			amount := teamup.TotalTeamUpTarget
+			sum, err := model.UserSum{}.UpdateUserSumWithDB(tx, teamup.UserId, amount, amount, 0, ploutos.TransactionTypeTeamupPromotion, "")
+			if err != nil {
+				return err
+			}
+			notes := fmt.Sprintf("Teamup ID - %v", teamup.ID)
+
+			coId := uuid.NewString()
+			teamupCashOrder := ploutos.CashOrder{
+				ID:                    coId,
+				UserId:                teamup.UserId,
+				OrderType:             ploutos.CashOrderTypeTeamupPromotion,
+				Status:                ploutos.CashOrderStatusSuccess,
+				Notes:                 ploutos.EncryptedStr(notes),
+				AppliedCashInAmount:   amount,
+				ActualCashInAmount:    amount,
+				EffectiveCashInAmount: amount,
+				BalanceBefore:         sum.Balance - amount,
+				WagerChange:           amount,
+			}
+			err = tx.Create(&teamupCashOrder).Error
+			if err != nil {
+				return err
+			}
+			util.GetLoggerEntry(c).Info("Team Up Cash Order", coId, teamup.ID)
+			common.SendUserSumSocketMsg(teamup.UserId, sum.UserSum, "teamup_success", float64(amount)/100)
+
+			return
+		})
+		if err != nil {
+			util.GetLoggerEntry(c).Error("Team Up Cash Order ERROR - ", err, teamup.ID)
+			return
+		}
+		notificationMsg := fmt.Sprintf(i18n.T("notification_slashed_teamup_success"), teamup.OrderId, fmt.Sprintf("%.2f", float64(teamup.TotalTeamUpTarget)/float64(100)))
+		go common.SendNotification(teamup.UserId, consts.Notification_Type_Cash_Transaction, i18n.T("notification_teamup_title"), notificationMsg)
+	}
 
 	if err != nil {
 		return serializer.Response{
@@ -340,37 +400,10 @@ func (s TestDepositService) TestDeposit(c *gin.Context) (r serializer.Response, 
 	// Convert cash amount into slash progress by dividing multiplier
 	contributedSlashProgress := s.DepositAmount / int64(slashMultiplier)
 
-	err = updateTeamupProgress(s.UserId, s.DepositAmount, contributedSlashProgress)
+	err = model.GetTeamupProgressToUpdate(s.UserId, s.DepositAmount, contributedSlashProgress)
 	if err != nil {
 		log.Print(err.Error())
 	}
-
-	return
-}
-
-func updateTeamupProgress(userId, amount, slashProgress int64) (err error) {
-	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
-		teamupEntry, err := model.FindOngoingTeamupEntriesByUserId(userId)
-		if err != nil {
-			err = fmt.Errorf("fail to get teamup err - %v", err)
-			return
-		}
-
-		err = model.UpdateFirstTeamupEntryProgress(tx, teamupEntry.ID, amount, slashProgress)
-
-		if err != nil {
-			err = fmt.Errorf("fail to update teamup entry err - %v", err)
-			return
-		}
-
-		err = model.UpdateTeamupProgress(tx, teamupEntry.TeamupId, amount, slashProgress)
-
-		if err != nil {
-			err = fmt.Errorf("fail to update teamup err - %v", err)
-			return
-		}
-		return
-	})
 
 	return
 }
