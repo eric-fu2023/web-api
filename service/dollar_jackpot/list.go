@@ -50,7 +50,7 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 	var data *serializer.DollarJackpotDraw
 	if dollarJackpotDraw.ID == 0 { // if there is no ongoing draw
 		var djd model.DollarJackpotDraw
-		err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.status = 1 AND dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
+		err = model.DB.Debug().WithContext(ctx).Joins("Winner").Joins(`JOIN dollar_jackpots ON dollar_jackpots.status = 1 AND dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
 			Where(`dollar_jackpot_draws.status != 0`).Where(`dollar_jackpots.streamer_id`, service.StreamerId).Order(`start_time DESC`).Preload(`DollarJackpot`).Limit(1).Find(&djd).Error
 		if err != nil {
 			r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
