@@ -25,7 +25,7 @@ type WinLosePopupResponse struct {
 	IsWin          bool              `json:"is_win"`
 	Start          int64             `json:"start"`
 	End            int64             `json:"end"`
-	Member         []WinLosePopupGGR `json:"Member"`
+	Member         []WinLosePopupGGR `json:"members"`
 }
 type WinLosePopupGGR struct {
 	GGR     float64 `json:"win_lose"`
