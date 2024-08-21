@@ -17,16 +17,10 @@ type Analyst struct {
 	ploutos.PredictionAnalyst
 
 	Predictions  []Prediction `gorm:"foreignKey:AnalystId;references:ID"`
-	AnalystSport AnalystSport `gorm:"foreignKey:ID;references:AnalystId"`
 
 	Summaries []ploutos.PredictionAnalystSummary `gorm:"foreignKey:AnalystId;references:ID"`
 }
 
-type AnalystSport struct {
-	ploutos.AnalystSport
-
-	Sport []ploutos.SportType `gorm:"foreignKey:ID;references:SportId"`
-}
 
 func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error) {
 	db := DB.Scopes(Paginate(page, limit))
