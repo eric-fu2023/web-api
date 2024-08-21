@@ -250,6 +250,7 @@ func (s GetTeamupService) ContributedUserList(c *gin.Context) (r serializer.Resp
 	entries, err := model.GetAllTeamUpEntries(s.TeamupId, s.Page, s.Limit)
 
 	for i := range entries {
+		entries[i].Avatar = serializer.Url(entries[i].Avatar)
 		entries[i].ContributedAmount = entries[i].ContributedAmount / float64(100)
 	}
 
