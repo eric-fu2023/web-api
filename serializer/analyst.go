@@ -2,9 +2,9 @@ package serializer
 
 import (
 	"web-api/model"
-	"web-api/util"
 
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type Analyst struct {
@@ -61,17 +61,12 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		predictions[i] = BuildPrediction(pred, true, false)
 	}
 
-	statuses := model.GetOutcomesFromPredictions(model.GetPredictionsFromAnalyst(analyst, 0))
-
-	statusInBool, _ := GetBoolOutcomes(statuses) // this function removes unknown statuses
-	nearX, winX := util.NearXWinX(statusInBool)
-
-	winStreak := util.RecentConsecutiveWins(statusInBool)
-
-	// accuracty based on latest 10
-	accuracy := 0
-	if len(statusInBool) > 0 {
-		accuracy = util.Accuracy(statusInBool)
+	summary := ploutos.PredictionAnalystSummary{}
+	for _, s := range analyst.Summaries{
+		if s.FbSportId == 0 { // overall results
+			summary = s
+			break
+		}
 	}
 
 	resp = Analyst{
@@ -83,14 +78,14 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		Predictions:      predictions,
 		NumFollowers:     len(analyst.PredictionAnalystFollowers),
 		TotalPredictions: len(analyst.Predictions),
-		WinningStreak:    winStreak,
-		Accuracy:         accuracy,
-		RecentTotal:      nearX,
-		RecentWins:       winX,
+		WinningStreak:    summary.RecentStreak,
+		Accuracy:         summary.Accuracy,
+		RecentTotal:      summary.RecentTotal,
+		RecentWins:       summary.RecentWin,
 
-		IsShowStreak:     winStreak >= 3,
-		IsShowAccuracy:   accuracy > 10.0,
-		IsShowRecentWins: (float64(winX)/float64(nearX) * 100) > 50.0,
+		IsShowStreak:     summary.RecentStreak >= 3,
+		IsShowAccuracy:   summary.Accuracy > 10,
+		IsShowRecentWins: (float64(summary.RecentWin)/float64(summary.RecentTotal) * 100) > 50.0,
 	}
 	return
 }
@@ -103,53 +98,38 @@ func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst
 	return
 }
 
-func BuildAnalystAchievement(original []fbService.PredictionOutcome) (resp Achievement) {
-	results := []fbService.PredictionOutcome{}
-	// filter unknown
-	for _, outcome := range original {
-		if outcome == fbService.PredictionOutcomeOutcomeUnknown {
-			continue
-		} else {
-			results = append(results, outcome)
+func BuildAnalystAchievement(analyst model.Analyst, sportId int) (resp Achievement) {
+	summary := ploutos.PredictionAnalystSummary{}
+
+	for _, s := range analyst.Summaries{
+		if s.FbSportId == sportId {
+			summary = s 
+			break
 		}
 	}
-	// total predictions
-	numResults := len(results)
 
-	// win/lose for the last 10 predictions
-	var last10results []fbService.PredictionOutcome
-	if numResults > 10 {
-		last10results = results[numResults-10:]
-	} else {
-		last10results = results
+	recentResults := []int{}
+	for _, res := range summary.RecentResults {
+		if res == int32(ploutos.PredictionResultUnknown) {
+			continue
+		} else {
+			recentResults = append(recentResults, int(res))
+		}
 	}
-	recentResult := make([]int, len(last10results))
-	for i, res := range last10results {
-		recentResult[i] = int(res)
-	}
-
-	// set up for winning streak and accuracy
-	resultInBool, winCount := GetBoolOutcomes(results)
-
-	// winning streak
-	streak := util.ConsecutiveWins(resultInBool) // highest consecutive 最高连红
-
-	// accuracy
-	accuracy := 0
-	if len(resultInBool) != 0 {
-		accuracy = int(float64(winCount) / float64(len(resultInBool)) * 100) //TODO use math.Ceil
+	if len(recentResults) > 10 { // truncate 
+		recentResults = recentResults[:10]
 	}
 
 	resp = Achievement{
-		TotalPredictions: len(original), // no filter out unknown
-		Accuracy:         accuracy,      // filter unknown
-		WinningStreak:    streak,        // filter unknown
-		RecentResult:     recentResult,  // filter unknown
+		TotalPredictions: summary.TotalArticles,
+		Accuracy: summary.Accuracy,
+		WinningStreak: summary.HighestStreak,
+		RecentResult: recentResults,
 
 		IsShowTotal: true,
-		IsShowAccuracy: accuracy > 10.0,
-		IsShowStreak: streak >= 3,
-		IsShowRecentResult: len(recentResult) > 0,
+		IsShowAccuracy: summary.Accuracy > 10,
+		IsShowStreak: summary.HighestStreak >= 3,
+		IsShowRecentResult: len(recentResults) > 0,
 	}
 	return
 }
