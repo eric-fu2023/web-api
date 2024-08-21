@@ -21,6 +21,7 @@ var (
 		9:  OrderTypeTopup,
 		10: OrderTypeTopup,
 		11: OrderTypeTopup,
+		12: OrderTypeTopup,
 	}
 	OrderTypeDetailMap = map[int64]string{
 		-1: OrderTypeWithdraw,
