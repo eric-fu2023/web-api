@@ -26,7 +26,7 @@ type TeamUpPopupResponse struct {
 	OrderId            string                  `json:"order_id"`
 	Status             int                     `json:"status"`
 	// TotalTeamupDeposit int64                   `json:"total_deposit"`
-	TotalTeamUpTarget  int64                   `json:"total_target"`
+	TotalTeamUpTarget  float64                   `json:"total_target"`
 	Percent            int64                   `json:"percent"`
 	Start              int64                   `json:"start"`
 	End                int64                   `json:"end"`
@@ -34,7 +34,7 @@ type TeamUpPopupResponse struct {
 	Members            []TeamUpPopupMemberInfo `json:"members"`
 }
 type TeamUpPopupMemberInfo struct {
-	TotalTeamUpTarget int64  `json:"total_target"`
+	TotalTeamUpTarget float64  `json:"total_target"`
 	Ranking           int64  `json:"ranking"`
 	Name              string `json:"name"`
 	PicSrc            string `json:"pic_src"`
@@ -71,7 +71,7 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 	} else {
 		// success
 		teamup_type = 2
-		members = GenerateMembersForTeamUpSuccess(user, team_up.TotalTeamUpTarget/100)
+		members = GenerateMembersForTeamUpSuccess(user, team_up.TotalTeamUpTarget)
 	}
 
 	data = TeamUpPopupResponse{
@@ -79,7 +79,7 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 		OrderId:            team_up.OrderId,
 		Status:             team_up.Status,
 		// TotalTeamupDeposit: team_up.TotalTeamupDeposit / 100,
-		TotalTeamUpTarget:  team_up.TotalTeamUpTarget / 100,
+		TotalTeamUpTarget:  float64(team_up.TotalTeamUpTarget) / 100,
 		Percent:            team_up.TotalFakeProgress,
 		Start:              yesterdayStart.Unix(),
 		End:                yesterdayEnd.Unix(),
@@ -131,19 +131,19 @@ func GenerateMembersForTeamUpSuccess(user model.User, total_team_up_target int64
 		fmt.Println("There is a error in strconv for min team up value, TEAMUP_RANKING_PARAM_B")
 	}
 
-	estimated_ranking := team_up_ranking_param_a / (team_up_ranking_param_b * 100 * total_team_up_target)
+	estimated_ranking := team_up_ranking_param_a / (team_up_ranking_param_b * total_team_up_target)
 	if estimated_ranking < 2 {
 		estimated_ranking = 2
 	}
 	resp = append(resp, TeamUpPopupMemberInfo{
-		TotalTeamUpTarget: total_team_up_target + rand.Int63n(50),
+		TotalTeamUpTarget: float64(total_team_up_target)/100 + float64(rand.Int63n(50)),
 		Ranking:           estimated_ranking - 1,
 		Name:              ranking_higher_user_nickname,
 		PicSrc:            avatar.GetRandomAvatarUrl(),
 		IsMe:              false,
 	})
 	resp = append(resp, TeamUpPopupMemberInfo{
-		TotalTeamUpTarget: total_team_up_target,
+		TotalTeamUpTarget: float64(total_team_up_target)/100,
 		Ranking:           estimated_ranking,
 		Name:              user.Nickname,
 		PicSrc:            user.Avatar,
@@ -160,7 +160,7 @@ func GenerateMembersForTeamUpSuccess(user model.User, total_team_up_target int64
 	}
 
 	resp = append(resp, TeamUpPopupMemberInfo{
-		TotalTeamUpTarget: ranking_lower_total_target,
+		TotalTeamUpTarget: float64(ranking_lower_total_target)/100,
 		Ranking:           estimated_ranking + 1,
 		Name:              ranking_lower_user_nickname,
 		PicSrc:            avatar.GetRandomAvatarUrl(),
