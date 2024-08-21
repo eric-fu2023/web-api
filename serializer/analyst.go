@@ -2,11 +2,9 @@ package serializer
 
 import (
 	"web-api/model"
-	"web-api/util"
 
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/eapache/go-resiliency/breaker"
 )
 
 type Analyst struct {
@@ -63,17 +61,12 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		predictions[i] = BuildPrediction(pred, true, false)
 	}
 
-	statuses := model.GetOutcomesFromPredictions(model.GetPredictionsFromAnalyst(analyst, 0))
-
-	statusInBool, _ := GetBoolOutcomes(statuses) // this function removes unknown statuses
-	nearX, winX := util.NearXWinX(statusInBool)
-
-	winStreak := util.RecentConsecutiveWins(statusInBool)
-
-	// accuracty based on latest 10
-	accuracy := 0
-	if len(statusInBool) > 0 {
-		accuracy = util.Accuracy(statusInBool)
+	summary := ploutos.PredictionAnalystSummary{}
+	for _, s := range analyst.Summaries{
+		if s.FbSportId == 0 { // overall results
+			summary = s
+			break
+		}
 	}
 
 	resp = Analyst{
@@ -85,14 +78,14 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		Predictions:      predictions,
 		NumFollowers:     len(analyst.PredictionAnalystFollowers),
 		TotalPredictions: len(analyst.Predictions),
-		WinningStreak:    winStreak,
-		Accuracy:         accuracy,
-		RecentTotal:      nearX,
-		RecentWins:       winX,
+		WinningStreak:    summary.RecentStreak,
+		Accuracy:         summary.Accuracy,
+		RecentTotal:      summary.RecentTotal,
+		RecentWins:       summary.RecentWin,
 
-		IsShowStreak:     winStreak >= 3,
-		IsShowAccuracy:   accuracy > 10.0,
-		IsShowRecentWins: (float64(winX)/float64(nearX) * 100) > 50.0,
+		IsShowStreak:     summary.RecentStreak >= 3,
+		IsShowAccuracy:   summary.Accuracy > 10,
+		IsShowRecentWins: (float64(summary.RecentWin)/float64(summary.RecentTotal) * 100) > 50.0,
 	}
 	return
 }
@@ -122,6 +115,9 @@ func BuildAnalystAchievement(analyst model.Analyst, sportId int) (resp Achieveme
 		} else {
 			recentResults = append(recentResults, int(res))
 		}
+	}
+	if len(recentResults) > 10 { // truncate 
+		recentResults = recentResults[:10]
 	}
 
 	resp = Achievement{

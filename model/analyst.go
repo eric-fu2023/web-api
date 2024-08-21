@@ -19,7 +19,7 @@ type Analyst struct {
 	Predictions  []Prediction `gorm:"foreignKey:AnalystId;references:ID"`
 	AnalystSport AnalystSport `gorm:"foreignKey:ID;references:AnalystId"`
 
-	Summaries []ploutos.PredictionAnalystSummary `gorm:"foreignKey:ID;references"`
+	Summaries []ploutos.PredictionAnalystSummary `gorm:"foreignKey:AnalystId;references:ID"`
 }
 
 type AnalystSport struct {
