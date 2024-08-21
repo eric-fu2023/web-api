@@ -115,12 +115,21 @@ func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Respo
 		nicknameSlice[i] = GetRandNickname()
 	}
 
+	successTeamups, _ := model.GetRecentCompletedSuccessTeamup(30)
+
 	var otherTeamups []serializer.OtherTeamupContribution
 
 	err = cache.RedisStore.Get("otherteamuplist", &otherTeamups)
-	if err != nil && errors.Is(err, persist.ErrCacheMiss) {
-		otherTeamups = serializer.GenerateOtherTeamups(nicknameSlice)
-		err = cache.RedisStore.Set("otherteamuplist", otherTeamups, 5*time.Minute)
+	cacheRealUserCount := 0
+	for _, otherTeamup := range otherTeamups {
+		if otherTeamup.IsReal {
+			cacheRealUserCount++
+		}
+	}
+
+	if err != nil && errors.Is(err, persist.ErrCacheMiss) || len(successTeamups) != cacheRealUserCount {
+		otherTeamups = serializer.GenerateOtherTeamups(nicknameSlice, successTeamups)
+		err = cache.RedisStore.Set("otherteamuplist", otherTeamups, 30*time.Minute)
 	}
 	r.Data = otherTeamups
 
