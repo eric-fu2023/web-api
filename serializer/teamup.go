@@ -50,10 +50,11 @@ type TeamupEntry struct {
 }
 
 type OtherTeamupContribution struct {
-	Nickname string `json:"nickname"`
-	Time     int64  `json:"time"`
-	Amount   int64  `json:"amount"`
-	Avatar   string `json:"avatar"`
+	Nickname string  `json:"nickname"`
+	Time     int64   `json:"time"`
+	Amount   float64 `json:"amount"`
+	Avatar   string  `json:"avatar"`
+	IsReal   bool    `json:"is_real"`
 }
 
 func BuildTeamup(a models.Teamup) (res Teamup) {
@@ -90,15 +91,30 @@ func BuildCustomTeamupHash(a models.Teamup, u model.User, br models.BetReport) (
 	return
 }
 
-func GenerateOtherTeamups(nicknames []string) (res []OtherTeamupContribution) {
+func GenerateOtherTeamups(nicknames []string, successTeamups model.TeamupSuccess) (res []OtherTeamupContribution) {
 
 	for i := 0; i < len(nicknames); i++ {
 		item := OtherTeamupContribution{
 			Nickname: nicknames[i],
 			Time:     time.Now().UTC().Unix() - (int64(rand.Intn(1799)) + 1),
-			Amount:   int64(rand.Intn(499) + 1),
+			Amount:   float64(rand.Intn(499) + 1),
 			Avatar:   avatar.GetRandomAvatarUrl(),
+			IsReal:   false,
 		}
+		res = append(res, item)
+	}
+
+	trueCount := 0
+
+	for i := 0; i < len(successTeamups); i++ {
+		item := OtherTeamupContribution{
+			Nickname: successTeamups[i].Nickname,
+			Time:     successTeamups[i].Time,
+			Amount:   float64(successTeamups[i].Amount) / 100,
+			Avatar:   Url(successTeamups[i].Avatar),
+			IsReal:   true,
+		}
+		trueCount++
 		res = append(res, item)
 	}
 

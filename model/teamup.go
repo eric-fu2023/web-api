@@ -73,6 +73,14 @@ type OutgoingBet struct {
 	ExtraInfo    string `json:"extra_info"`
 }
 
+type TeamupSuccess []struct {
+	Nickname string `json:"nickname"`
+	Time     int64  `json:"time"`
+	Amount   int64  `json:"amount"`
+	Avatar   string `json:"avatar"`
+	IsReal   bool   `json:"is_real"`
+}
+
 func SaveTeamup(teamup ploutos.Teamup) (t ploutos.Teamup, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&teamup).Error
@@ -227,6 +235,26 @@ func updateTeamupStatusToFail(tsNow int64) (err error) {
 		err = tx.Model(&ploutos.Teamup{}).Where("teamup_end_time < ?", tsNow).Update("status", ploutos.TeamupStatusFail).Error
 		return
 	})
+
+	return
+}
+
+func GetRecentCompletedSuccessTeamup(numMinutes int64) (res TeamupSuccess, err error) {
+
+	recentMinutes := time.Duration(numMinutes) * time.Minute
+
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		tx = tx.Table("teamups").Select("users.nickname, teamups.teamup_completed_time as time, users.avatar, teamups.total_teamup_target as amount").
+			Joins("left join users on teamups.user_id = users.id")
+
+		tx = tx.Where("teamups.status = 1").Where("teamups.teamup_completed_time >= ?", time.Now().UTC().Unix()-int64(recentMinutes.Seconds()))
+
+		err = tx.Scan(&res).Error
+		return
+	})
+	if err != nil {
+		return
+	}
 
 	return
 }

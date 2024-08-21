@@ -17,8 +17,12 @@ const (
 	InitialRandomFakeProgressLowerLimit = int64(8500)
 	InitialRandomFakeProgressUpperLimit = int64(9200)
 
-	SubsequentRandomFakeProgressLowerLimit = int64(1)
-	SubsequentRandomFakeProgressUpperLimit = int64(100)
+	// Production Rate
+	// SubsequentRandomFakeProgressLowerLimit = int64(1)
+	// SubsequentRandomFakeProgressUpperLimit = int64(100)
+
+	SubsequentRandomFakeProgressLowerLimit = int64(400)
+	SubsequentRandomFakeProgressUpperLimit = int64(700)
 )
 
 type TeamupEntryCustomRes []struct {
