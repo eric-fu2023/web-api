@@ -37,11 +37,8 @@ func preloadPredictions() *gorm.DB {
 		Preload("PredictionSelections.FbMatch.LeagueInfo").
 		Preload("AnalystDetail").
 		Preload("AnalystDetail.PredictionAnalystSource").
-		Preload("AnalystDetail.Predictions").
-		Preload("AnalystDetail.Predictions.PredictionSelections").
-		Preload("AnalystDetail.Predictions.PredictionSelections.FbOdds").
-		Preload("AnalystDetail.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
-		Preload("AnalystDetail.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
+		Preload("AnalystDetail.Predictions", AnalystPredictionFilter).
+		Preload("AnalystDetail.Summaries").
 		Preload("PredictionSelections.FbMatch.HomeTeam").
 		Preload("PredictionSelections.FbMatch.AwayTeam").
 		Joins("join prediction_analysts on prediction_analysts.id = prediction_articles.analyst_id").
