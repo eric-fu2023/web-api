@@ -171,8 +171,7 @@ func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer
 	// predictions, err := model.ListPredictions(model.ListPredictionCond{Page: 1, Limit: 99999, AnalystId: service.AnalystId, SportId: service.SportId})
 	analyst, err := model.Analyst{}.GetDetail(int(service.AnalystId))
 
-	predictionResults := model.GetOutcomesFromPredictions(model.GetPredictionsFromAnalyst(analyst, int(service.SportId)))
 
-	r.Data = serializer.BuildAnalystAchievement(predictionResults)
+	r.Data = serializer.BuildAnalystAchievement(analyst, int(service.SportId))
 	return
 }
