@@ -165,6 +165,8 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
+	user.Avatar = serializer.Url(user.Avatar)
+
 	br, err := model.GetTeamUpBetReport(s.OrderId)
 
 	if err != nil {
