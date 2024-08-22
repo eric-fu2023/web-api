@@ -3,7 +3,6 @@ package promotion
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 	"web-api/model"
 	"web-api/serializer"
@@ -47,12 +46,22 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 	promotionCoverList := []serializer.PromotionCover{}
 	for _, promotion := range list {
 
+		if promotion.ID == 333 {
+			fmt.Println(promotion)
+		}
+
+		isAllowDevice := false
 		// Skip if not allow device.platform
 		if len(promotion.DisplayDevices) != 0 {
-			s := string(promotion.DisplayDevices)
-			if !strings.Contains(s, fmt.Sprint(models.PromotionDevice[deviceInfo.Platform])) {
-				continue
+			for _, displayDevice := range promotion.DisplayDevices {
+				if models.PromotionDevice[deviceInfo.Platform] == int(displayDevice) {
+					isAllowDevice = true
+				}
 			}
+		}
+
+		if !isAllowDevice {
+			continue
 		}
 
 		promotionCover := serializer.BuildPromotionCover(promotion, deviceInfo.Platform)
