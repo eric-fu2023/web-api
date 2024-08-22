@@ -200,7 +200,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 			incomingMatchList := serializer.IncomingPromotionMatchList{}
 			_ = json.Unmarshal(subPromo.SubpageContent, &incomingMatchList)
 
-			if incomingMatchList.Title == "" {
+			if len(incomingMatchList.List) == 0 {
 				continue
 			}
 			outgoingRes.ChildrenPromotions = append(outgoingRes.ChildrenPromotions, serializer.OutgoingCustomPromotionPreview{
