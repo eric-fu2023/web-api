@@ -85,7 +85,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 
 		IsShowStreak:     summary.RecentStreak >= 3,
 		IsShowAccuracy:   summary.Accuracy > 10,
-		IsShowRecentWins: (float64(summary.RecentWin)/float64(summary.RecentTotal) * 100) > 50.0,
+		IsShowRecentWins: (float64(summary.RecentWin)/float64(summary.RecentTotal) * 100) > 50.0 && summary.RecentTotal >= 3,
 	}
 	return
 }

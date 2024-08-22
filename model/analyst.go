@@ -17,15 +17,11 @@ type Analyst struct {
 	ploutos.PredictionAnalyst
 
 	Predictions  []Prediction `gorm:"foreignKey:AnalystId;references:ID"`
-
 	Summaries []ploutos.PredictionAnalystSummary `gorm:"foreignKey:AnalystId;references:ID"`
 }
 
-
-func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error) {
-	db := DB.Scopes(Paginate(page, limit))
-
-	db = db.
+func preloadAnalyst() *gorm.DB {
+	return DB.
 		Preload("PredictionAnalystSource").
 		Preload("PredictionAnalystFollowers").
 		Preload("Predictions", AnalystPredictionFilter).
@@ -36,13 +32,24 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).
 		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Preload("Summaries").
-		Where("is_active", true).
-		Order("sort DESC")
+		Where("is_active", true)
+}
+
+func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error) {
+	db := preloadAnalyst()
+	db = db.
+		Scopes(Paginate(page, limit)).
+		Select("prediction_analysts.*, MAX(prediction_articles.published_at) as latest_publish").
+		Joins("join prediction_articles on prediction_articles.analyst_id = prediction_analysts.id").
+		Where("prediction_articles.is_published", true).
+		Where("prediction_articles.deleted_at IS NULL").
+		Group("prediction_analysts.id").
+		Order("sort DESC").
+		Order("latest_publish desc")
+
 
 	if fbSportId != 0 {
 		db = db.
-			Joins("join prediction_articles on prediction_articles.analyst_id = prediction_analysts.id").
-			Group("prediction_analysts.id").
 			Where("prediction_articles.fb_sport_id", fbSportId)
 	}
 
@@ -54,19 +61,9 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 }
 
 func (Analyst) GetDetail(id int) (target Analyst, err error) {
-	db := DB.Where("id", id)
+	db := preloadAnalyst()
+	db = db.Where("id", id)
 	err = db.
-		Preload("PredictionAnalystSource").
-		Preload("Predictions", AnalystPredictionFilter).
-		Preload("Predictions.PredictionSelections").
-		Preload("Predictions.PredictionSelections.FbOdds").
-		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
-		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
-		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).
-		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
-		Preload("PredictionAnalystFollowers").
-		Preload("Summaries").
-		Where("is_active", true).
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
 		Order("id DESC").
@@ -138,6 +135,7 @@ func AnalystExist(analystId int64) (exist bool, err error) {
 
 func AnalystPredictionFilter(db *gorm.DB) *gorm.DB {
 	db = db.Where("is_published", true).
+		Where("deleted_at is null").
 		Order("published_at desc")
 	return db
 }

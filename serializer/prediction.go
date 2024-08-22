@@ -158,10 +158,11 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			// }
 			
 			betResult := models.BetResultUnknown
-			if odd.ID == selection.FbOdds.ID {
-				betResult = selection.BetResult
+			for _, sel := range prediction.PredictionSelections {
+				if odd.ID == sel.FbOdds.ID {
+					betResult = sel.BetResult
+				}
 			}
-
 			opList[oddIdx] = OddDetail{
 				Na:       odd.OddsNameCN,
 				Nm:       odd.ShortNameCN, // odd.ShortNameCN,
