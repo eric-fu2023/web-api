@@ -1,10 +1,8 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"os"
 	"strconv"
 	"web-api/cache"
@@ -13,6 +11,9 @@ import (
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 type AppConfigService struct {
@@ -22,8 +23,8 @@ type AppConfigService struct {
 
 func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err error) {
 
-	//agent := c.MustGet(`_agent`).(int)
-
+	// agent := c.MustGet(`_agent`).(int)
+	// retrieve basic AppConfigs
 	cf, err := service.getAppConfigs(c)
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("getAppConfigs err: %s", err.Error())
@@ -46,6 +47,12 @@ func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err
 	}
 	cf["ab"] = map[string]string{
 		"is_a": strconv.FormatBool(isA),
+	}
+
+	// retrieve channelCode based on origin domain
+	var domainWebConfigService DomainWebConfigService
+	cf["channel"] = map[string]string{
+		"code": domainWebConfigService.RetrieveChannelForOrigin(c),
 	}
 
 	r = serializer.Response{
