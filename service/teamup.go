@@ -191,7 +191,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 	nowTs := time.Now().UTC().Unix()
 
-	if err != nil || nowTs >= matchTime {
+	if nowTs >= matchTime {
 		r = serializer.Err(c, "", serializer.CustomTeamUpMatchStartedError, i18n.T("teamup_match_started"), err)
 		return
 	}
@@ -263,7 +263,13 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		teamup.AwayIcon = awayIcon
 		teamup.LeagueName = leagueName
 
-		t, _ = model.SaveTeamup(teamup)
+		// Recheck instead of lock
+		// FUTURE: mutex for same orderId
+		latestTeamup, _ := model.GetTeamUp(s.OrderId)
+		if latestTeamup.ID == 0 {
+			t, _ = model.SaveTeamup(teamup)
+		}
+
 	}
 
 	shareService, err := buildTeamupShareParamsService(serializer.BuildCustomTeamupHash(t, user, br))
