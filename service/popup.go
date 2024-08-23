@@ -28,7 +28,7 @@ type PopupResponse struct {
 
 type PopupFloat struct {
 	Type int64 `json:"type"`
-	Id   int `json:"id"`
+	Id   int   `json:"id"`
 }
 
 func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, err error) {
@@ -36,7 +36,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 	PopupTypes, err := model.GetPopupList(service.Condition)
 
 	u, isUser := c.Get("user")
-	if !isUser{
+	if !isUser {
 		// if not login, show spin only
 		should_spin, spin_id := SpinAvailable(PopupTypes)
 		spin_id_int, _ := strconv.Atoi(spin_id)
@@ -46,20 +46,20 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if should_spin {
 			floats = append(floats, PopupFloat{
 				Type: 5,
-				Id: spin_id_int,
+				Id:   spin_id_int,
 			})
 			spin_id_data := PopupSpinId{
 				SpinId: spin_id_int,
 			}
 			r.Data = PopupResponse{
-				Type:     5,
-				Float:    floats,
-				Data:     spin_id_data,
+				Type:  5,
+				Float: floats,
+				Data:  spin_id_data,
 			}
 			return r, err
 		}
 		r.Msg = "no popup available"
-		r.Data = PopupResponse{Type: -1,Float: floats}
+		r.Data = PopupResponse{Type: -1, Float: floats}
 		return
 	}
 
@@ -84,9 +84,9 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			var service WinLoseService
 			data, err := service.Get(c)
 			r.Data = PopupResponse{
-				Type:     1,
+				Type:  1,
 				Float: floats,
-				Data:     data,
+				Data:  data,
 			}
 			return r, err
 		}
@@ -100,9 +100,9 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			var service TeamUpService
 			data, err := service.Get(c)
 			r.Data = PopupResponse{
-				Type:     data.Type,
+				Type:  data.Type,
 				Float: floats,
-				Data:     data,
+				Data:  data,
 			}
 			return r, err
 		}
@@ -119,9 +119,9 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				return r, err
 			}
 			r.Data = PopupResponse{
-				Type:     4,
+				Type:  4,
 				Float: floats,
-				Data:     data,
+				Data:  data,
 			}
 			return r, err
 		}
@@ -139,9 +139,9 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				SpinId: spin_id_int,
 			}
 			r.Data = PopupResponse{
-				Type:     5,
+				Type:  5,
 				Float: floats,
-				Data:     spin_id_data,
+				Data:  spin_id_data,
 			}
 			return r, err
 		}
@@ -160,9 +160,9 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				var service WinLoseService
 				data, err := service.Get(c)
 				r.Data = PopupResponse{
-					Type:     1,
+					Type:  1,
 					Float: floats,
-					Data:     data,
+					Data:  data,
 				}
 				return r, err
 			}
@@ -177,9 +177,9 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				var service TeamUpService
 				data, err := service.Get(c)
 				r.Data = PopupResponse{
-					Type:     data.Type,
+					Type:  data.Type,
 					Float: floats,
-					Data:     data,
+					Data:  data,
 				}
 				return r, err
 			}
@@ -193,9 +193,9 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				var service VipService
 				data, err := service.Get(c)
 				r.Data = PopupResponse{
-					Type:     4,
+					Type:  4,
 					Float: floats,
-					Data:     data,
+					Data:  data,
 				}
 				return r, err
 			}
@@ -212,38 +212,37 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 					SpinId: spin_id_int,
 				}
 				r.Data = PopupResponse{
-					Type:     5,
+					Type:  5,
 					Float: floats,
-					Data:     spin_id_data,
+					Data:  spin_id_data,
 				}
 				return r, err
 			}
 		}
 	}
 	r.Msg = "no popup available"
-	r.Data = PopupResponse{Type: -1,Float: floats}
+	r.Data = PopupResponse{Type: -1, Float: floats}
 	return
 }
 
-
-
-func GetFloatWindow(user model.User, popup_types []models.Popups) (floats []PopupFloat, err error){
-	for _, popup_type := range popup_types{
-		if popup_type.CanFloat{
-			if popup_type.PopupType == 5{
+func GetFloatWindow(user model.User, popup_types []models.Popups) (floats []PopupFloat, err error) {
+	for _, popup_type := range popup_types {
+		if popup_type.CanFloat {
+			if popup_type.PopupType == 5 {
 				// spin popup float
 				var service SpinService
-				spin_id_int, _ := strconv.Atoi(popup_type.Meta)
+				spin_promotion_id_int, err := strconv.Atoi(popup_type.Meta)
+				spin_id_int, err := service.GetSpinIdFromPromotionId(spin_promotion_id_int)
 				// check if user still has spin chances
 				remaining_spin_counts, err := service.GetRemainingSpinCount(user, spin_id_int)
 				if err != nil {
 					return nil, err
 				}
-				if remaining_spin_counts > 0{
+				if remaining_spin_counts > 0 {
 					// user still can spin, then we add the spin popup to float list.
-					floats=append(floats, PopupFloat{
+					floats = append(floats, PopupFloat{
 						Type: 5,
-						Id:spin_id_int,
+						Id:   spin_id_int,
 					})
 				}
 			}

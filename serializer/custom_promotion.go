@@ -58,16 +58,16 @@ type IncomingCustomPromotionRequestField struct {
 	Hint         string              `json:"hint"`
 	Type         string              `json:"type"`
 	Title        string              `json:"title"`
-	InputId      int                 `json:"input_id"`
+	InputId      string              `json:"input_id"`
 	Switch       int                 `json:"switch"`
 	Options      []map[string]string `json:"option"`
 	X            string              `json:"x"`
 	Weightage    int                 `json:"weightage"`
 	ErrorHint    string              `json:"error_hint,omitempty"`
-	OrderType    string              `json:"order_type"`
-	ContentType  string              `json:"content_type"`
+	OrderType    []interface{}       `json:"order_type"`
+	ContentType  int                 `json:"content_type"`
 	OrderStatus  string              `json:"order_status"`
-	MaxClick     string              `json:"max_click"`
+	MaxClick     int                 `json:"max_click"`
 	RedirectType int                 `json:"redirect_type"`
 }
 
@@ -132,7 +132,7 @@ type CustomPromotionRequest struct {
 }
 
 type CustomPromotionRequestField struct {
-	Id          int    `json:"id"`
+	Id          string `json:"id"`
 	Key         string `json:"key,omitempty"`
 	Title       string `json:"title"`
 	Placeholder string `json:"placeholder"`
@@ -289,7 +289,7 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 		}
 
 		if requestField.Type == "keyin" {
-			contentTypeOption, _ := strconv.Atoi(incomingField.ContentType)
+			contentTypeOption := incomingField.ContentType
 			switch int64(contentTypeOption) {
 			case models.CustomPromotionTextboxOnlyInt:
 				requestField.IntegerOnly = true
@@ -304,7 +304,7 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 
 func ParseButtonClickOption(c *gin.Context, incoming IncomingCustomPromotionRequestField, promotionId, userId int64) (isExceeded bool, err error) {
 
-	buttonClickOption, _ := strconv.Atoi(incoming.MaxClick)
+	buttonClickOption := incoming.MaxClick
 	entryLimitType := int64(buttonClickOption)
 	if incoming.X == "" {
 		incoming.X = "0"

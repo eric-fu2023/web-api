@@ -23,6 +23,11 @@ func SetUserOnline(ctx *gin.Context, userId string, page string, status bool) er
 	}
 	key := fmt.Sprintf("online_user_%s", userId)
 
+	// v := RedisSessionClient.HGetAll(ctx, key)
+	// if len(v.Val()) > 0 {
+	// 	fmt.Println(v.Val())
+	// }
+
 	res := RedisSessionClient.HSet(ctx, key, val)
 	if res.Err() != nil && res.Err() != redis.Nil {
 		return res.Err()

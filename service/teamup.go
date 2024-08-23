@@ -214,20 +214,40 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		var leagueIcon, homeIcon, awayIcon, leagueName string
 
 		if len(br.Bets) > 0 {
-			_, ok := br.Bets[0].(ploutos.BetFb)
-			matchId, _ := strconv.Atoi(br.Bets[0].(ploutos.BetFb).GetMatchId())
-			if ok {
-				matchDetail, err := commonNoAuth.GetMatchDetail(int64(matchId), fbServiceApi.LanguageCHINESE)
+			switch {
+			case br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA:
+				_, ok := br.Bets[0].(ploutos.BetFb)
+				if ok {
+					matchId, _ := strconv.Atoi(br.Bets[0].(ploutos.BetFb).GetMatchId())
+					matchDetail, err := commonNoAuth.GetMatchDetail(int64(matchId), fbServiceApi.LanguageCHINESE)
 
-				if err == nil {
-					fmt.Print(matchDetail)
-					leagueIcon = matchDetail.Data.League.LeagueIconUrl
-					leagueName = matchDetail.Data.League.Name
+					if err == nil {
+						fmt.Print(matchDetail)
+						leagueIcon = matchDetail.Data.League.LeagueIconUrl
+						leagueName = matchDetail.Data.League.Name
 
-					if len(matchDetail.Data.Teams) > 1 {
-						homeIcon = matchDetail.Data.Teams[0].LogoUrl
-						awayIcon = matchDetail.Data.Teams[1].LogoUrl
+						if len(matchDetail.Data.Teams) > 1 {
+							homeIcon = matchDetail.Data.Teams[0].LogoUrl
+							awayIcon = matchDetail.Data.Teams[1].LogoUrl
+						}
 					}
+				}
+			case br.GameType == ploutos.GAME_IMSB:
+				_, ok := br.Bets[0].(ploutos.BetImsb)
+
+				if ok {
+					// matchId := 58131174
+					matchId, _ := strconv.Atoi(br.Bets[0].(ploutos.BetImsb).GetEventId())
+					matches, err := model.GetMatchDetails(int64(matchId))
+					if err == nil && len(matches) > 0 {
+						matchDetail := matches[0]
+						leagueIcon = matchDetail.Competition.Format
+						leagueName = matchDetail.Competition.Title
+
+						homeIcon = matchDetail.TeamA.LogoUrl
+						awayIcon = matchDetail.TeamB.LogoUrl
+					}
+
 				}
 			}
 		}

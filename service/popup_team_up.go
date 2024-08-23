@@ -146,7 +146,7 @@ func GenerateMembersForTeamUpSuccess(user model.User, total_team_up_target int64
 		TotalTeamUpTarget: float64(total_team_up_target)/100,
 		Ranking:           estimated_ranking,
 		Name:              user.Nickname,
-		PicSrc:            user.Avatar,
+		PicSrc:            serializer.Url(user.Avatar),
 		IsMe:              true,
 	})
 

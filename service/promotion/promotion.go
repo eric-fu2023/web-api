@@ -46,10 +46,6 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 	promotionCoverList := []serializer.PromotionCover{}
 	for _, promotion := range list {
 
-		if promotion.ID == 333 {
-			fmt.Println(promotion)
-		}
-
 		isAllowDevice := false
 		// Skip if not allow device.platform
 		if len(promotion.DisplayDevices) != 0 {
@@ -58,6 +54,8 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 					isAllowDevice = true
 				}
 			}
+		} else {
+			isAllowDevice = true
 		}
 
 		if !isAllowDevice {
@@ -202,7 +200,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 			incomingMatchList := serializer.IncomingPromotionMatchList{}
 			_ = json.Unmarshal(subPromo.SubpageContent, &incomingMatchList)
 
-			if incomingMatchList.Title == "" {
+			if len(incomingMatchList.List) == 0 {
 				continue
 			}
 			outgoingRes.ChildrenPromotions = append(outgoingRes.ChildrenPromotions, serializer.OutgoingCustomPromotionPreview{
