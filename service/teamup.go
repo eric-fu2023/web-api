@@ -191,7 +191,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 	nowTs := time.Now().UTC().Unix()
 
-	if err != nil || nowTs >= matchTime {
+	if nowTs >= matchTime {
 		r = serializer.Err(c, "", serializer.CustomTeamUpMatchStartedError, i18n.T("teamup_match_started"), err)
 		return
 	}
@@ -208,6 +208,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		commonNoAuth, openAccessServiceErr := fbService.NewOpenAccessService(tayaUrl)
 
 		if openAccessServiceErr != nil {
+			log.Printf("GET OPEN ACCESS SERVICE URL=%v openAccessServiceErr err - %v \n", tayaUrl, err)
 			return
 		}
 
@@ -221,8 +222,10 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 					matchId, _ := strconv.Atoi(br.Bets[0].(ploutos.BetFb).GetMatchId())
 					matchDetail, err := commonNoAuth.GetMatchDetail(int64(matchId), fbServiceApi.LanguageCHINESE)
 
-					if err == nil {
-						fmt.Print(matchDetail)
+					if err != nil {
+						log.Printf("GET MATCH DETAIL FROM TAYA URL=%v commonNoAuth.GetMatchDetail err - %v \n", tayaUrl, err)
+					} else {
+						log.Printf("GET MATCH DETAIL FROM TAYA SUCCESS %v \n", matchDetail)
 						leagueIcon = matchDetail.Data.League.LeagueIconUrl
 						leagueName = matchDetail.Data.League.Name
 
@@ -263,7 +266,13 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		teamup.AwayIcon = awayIcon
 		teamup.LeagueName = leagueName
 
-		t, _ = model.SaveTeamup(teamup)
+		// Recheck instead of lock
+		// FUTURE: mutex for same orderId
+		latestTeamup, _ := model.GetTeamUp(s.OrderId)
+		if latestTeamup.ID == 0 {
+			t, _ = model.SaveTeamup(teamup)
+		}
+
 	}
 
 	shareService, err := buildTeamupShareParamsService(serializer.BuildCustomTeamupHash(t, user, br))

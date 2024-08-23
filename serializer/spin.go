@@ -43,12 +43,20 @@ func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_co
 }
 
 func BuildSpinItem(a ploutos.SpinItem) (b SpinItem) {
+	text_color:=""
+	bg_color:=""
+	if len(a.TextColor)>0 && a.TextColor[0] == '#' {
+		text_color = a.TextColor[1:]
+	}
+	if len(a.BgColor)>0 && a.BgColor[0] == '#' {
+		bg_color = a.BgColor[1:]
+	}
 	b = SpinItem{
 		ID:        a.ID,
 		Name:      a.Name,
-		PicSrc:    a.PicSrc,
-		TextColor: a.TextColor,
-		BgColor:   a.BgColor,
+		PicSrc:    Url(a.PicSrc),
+		TextColor: text_color,
+		BgColor:   bg_color,
 		IsWin:     a.IsWin,
 	}
 	return
