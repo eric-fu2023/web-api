@@ -91,7 +91,8 @@ func ShouldPopupSpin(user User, spin_id int) (bool, error) {
 
 	var previous_spin_result []ploutos.SpinResult
 	err := DB.Model(ploutos.SpinResult{}).Where("user_id = ? AND spin_id = ?", user.ID, spin_id).Where("created_at > ?", startOfToday).Order("created_at DESC").Find(&previous_spin_result).Error
-	if errors.Is(err, logger.ErrRecordNotFound) {
+
+	if err==nil || errors.Is(err, logger.ErrRecordNotFound) {
 		// if spin result not found
 		err = nil
 		Shown(user)
