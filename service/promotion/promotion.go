@@ -99,46 +99,71 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 	user, _ := u.(model.User)
 	deviceInfo, _ := util.GetDeviceInfo(c)
 
-	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
+	var promotion models.Promotion
+	if (p.ID == 99999) {
+		// TODO : remove mock data
+		promotion = models.Promotion{
+			Type:  int(models.PromotionTypeNewbie),
+		}
+	} else {
+		promotion, err = model.PromotionGetActive(c, brand, p.ID, now)
+	}
+
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
 	// tz := time.FixedZone("local", int(promotion.Timezone))
 	// now = now.In(tz)
-	session, err := model.PromotionSessionGetActive(c, p.ID, now)
-	if err != nil {
-		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
-		return
-	}
+
 	var (
 		progress    int64
 		reward      int64
 		claimStatus serializer.ClaimStatus
 		voucherView serializer.Voucher
 		extra       any
+		session     models.PromotionSession
+
+		customData any
+		newbieData any
 	)
-	if loggedIn {
-		progress = ProgressByType(c, promotion, session, user.ID, now)
-		claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
-		reward, _, _, err = RewardByType(c, promotion, session, user.ID, progress, now)
-		extra = ExtraByType(c, promotion, session, user.ID, progress, now)
-	}
-	if claimStatus.HasClaimed {
-		v, err := model.VoucherGetByUserSession(c, user.ID, session.ID)
-		if err != nil {
-		} else {
-			voucherView = serializer.BuildVoucher(v, deviceInfo.Platform)
-		}
-	} else {
-		v, err := model.VoucherTemplateGetByPromotion(c, p.ID)
-		if err != nil {
-		} else {
-			voucherView = serializer.BuildVoucherFromTemplate(v, reward, deviceInfo.Platform)
-		}
+
+	switch int64(promotion.Type) {
+		
+		case models.PromotionTypeCustomTemplate:
+			customData = "anything"
+
+		case models.PromotionTypeNewbie:
+			newbieData = serializer.BuildDummyNewbiePromotion()
+
+		default: // default promotion type.. 
+			session, err := model.PromotionSessionGetActive(c, p.ID, now)
+			if err != nil {
+				r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+				return r, err
+			}
+			if loggedIn {
+				progress = ProgressByType(c, promotion, session, user.ID, now)
+				claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
+				reward, _, _, err = RewardByType(c, promotion, session, user.ID, progress, now)
+				extra = ExtraByType(c, promotion, session, user.ID, progress, now)
+			}
+			if claimStatus.HasClaimed {
+				v, err := model.VoucherGetByUserSession(c, user.ID, session.ID)
+				if err != nil {
+				} else {
+					voucherView = serializer.BuildVoucher(v, deviceInfo.Platform)
+				}
+			} else {
+				v, err := model.VoucherTemplateGetByPromotion(c, p.ID)
+				if err != nil {
+				} else {
+					voucherView = serializer.BuildVoucherFromTemplate(v, reward, deviceInfo.Platform)
+				}
+			}
 	}
 
-	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, session, voucherView, claimStatus, extra)
+	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, session, voucherView, claimStatus, extra, customData, newbieData)
 	return
 }
 

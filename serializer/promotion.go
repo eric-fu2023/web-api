@@ -51,6 +51,8 @@ type PromotionDetail struct {
 	IsVipAssociated        bool              `json:"is_vip_associated"`
 	DisplayOnly            bool              `json:"display_only"`
 	Extra                  any               `json:"extra"`
+	CustomTemplateData 	   json.RawMessage	 `json:"custom_template_data"`
+	NewbieData		 	   interface{} 	 	 `json:"newbie_data"` // TODO : to be updated
 
 	IsCustom bool `json:"is_custom"`
 }
@@ -117,7 +119,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, v Voucher, cl ClaimStatus, extra any) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, v Voucher, cl ClaimStatus, extra any, customData any, newbieData any) PromotionDetail {
 	raw := json.RawMessage(p.Image)
 	m := make(map[string]string)
 	json.Unmarshal(raw, &m)
@@ -146,6 +148,8 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		IsVipAssociated:        p.VipAssociated,
 		DisplayOnly:            p.DisplayOnly,
 		Extra:                  extra,
+		// CustomTemplateData: 	json.RawMessage(customData),	
+		NewbieData: 			newbieData,
 	}
 }
 
