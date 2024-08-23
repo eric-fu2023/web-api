@@ -15,7 +15,7 @@ type DollarJackpotBetReportResponse struct {
 	EndTimeTs   int64    `json:"end_time_ts"`
 	Status      int64    `json:"status"` // 0:ongoing, 1: computing, 2: ended
 	IsWin       bool     `json:"is_win"`
-	Win         int64    `json:"win"`
+	Win         float64    `json:"win"`
 }
 
 func BuildDollarJackpotBetReportResponse(c *gin.Context, a model.DollarJackpotBetReport, contribution *int64) (b DollarJackpotBetReportResponse) {
@@ -26,7 +26,7 @@ func BuildDollarJackpotBetReportResponse(c *gin.Context, a model.DollarJackpotBe
 		EndTimeTs:   a.JackpotDraws.EndTime.Unix(),
 		Status:      a.JackpotDraws.Status,
 		IsWin:       a.Win > 0,
-		Win:         a.Win - a.Bet,
+		Win:         float64(a.Win - a.Bet)/100.0,
 	}
 	if a.JackpotDraws.DollarJackpot != nil {
 		t := util.MoneyFloat(a.JackpotDraws.DollarJackpot.Prize)
