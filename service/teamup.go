@@ -28,8 +28,6 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	// fbService "blgit.rfdev.tech/taya/game-service/fb2/client/"
-	fbService "blgit.rfdev.tech/taya/game-service/fb2/client"
-	fbServiceApi "blgit.rfdev.tech/taya/game-service/fb2/client/api"
 
 	"github.com/gin-gonic/gin"
 )
@@ -204,13 +202,13 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 	if teamup.ID == 0 {
 
-		tayaUrl, _ := model.GetAppConfig("taya_url", "apiServerAddress")
-		commonNoAuth, openAccessServiceErr := fbService.NewOpenAccessService(tayaUrl)
+		// tayaUrl, _ := model.GetAppConfig("taya_url", "apiServerAddress")
+		// commonNoAuth, openAccessServiceErr := fbService.NewOpenAccessService(tayaUrl)
 
-		if openAccessServiceErr != nil {
-			log.Printf("GET OPEN ACCESS SERVICE URL=%v openAccessServiceErr err - %v \n", tayaUrl, err)
-			return
-		}
+		// if openAccessServiceErr != nil {
+		// 	log.Printf("GET OPEN ACCESS SERVICE URL=%v openAccessServiceErr err - %v \n", tayaUrl, err)
+		// 	return
+		// }
 
 		var leagueIcon, homeIcon, awayIcon, leagueName string
 
@@ -220,18 +218,19 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 				_, ok := br.Bets[0].(ploutos.BetFb)
 				if ok {
 					matchId, _ := strconv.Atoi(br.Bets[0].(ploutos.BetFb).GetMatchId())
-					matchDetail, err := commonNoAuth.GetMatchDetail(int64(matchId), fbServiceApi.LanguageCHINESE)
+					// matchDetail, err := commonNoAuth.GetMatchDetail(int64(matchId), fbServiceApi.LanguageCHINESE)
+					match, err := model.GetFbMatchDetails(int64(matchId))
 
 					if err != nil {
-						log.Printf("GET MATCH DETAIL FROM TAYA URL=%v commonNoAuth.GetMatchDetail err - %v \n", tayaUrl, err)
+						log.Printf("GET MATCH DETAIL HUUUUUUUUU DEBUG FROM TAYA URL=%v commonNoAuth.GetMatchDetail err - %v \n", match, err)
 					} else {
-						log.Printf("GET MATCH DETAIL FROM TAYA SUCCESS %v \n", matchDetail)
-						leagueIcon = matchDetail.Data.League.LeagueIconUrl
-						leagueName = matchDetail.Data.League.Name
+						log.Printf("GET MATCH DETAIL FROM TAYA SUCCESS %v \n", match)
+						leagueIcon = match.Lg.Lurl
+						leagueName = match.Lg.Na
 
-						if len(matchDetail.Data.Teams) > 1 {
-							homeIcon = matchDetail.Data.Teams[0].LogoUrl
-							awayIcon = matchDetail.Data.Teams[1].LogoUrl
+						if len(match.Ts) > 1 {
+							homeIcon = match.Ts[0].Lurl
+							awayIcon = match.Ts[1].Lurl
 						}
 					}
 				}
@@ -241,7 +240,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 				if ok {
 					// matchId := 58131174
 					matchId, _ := strconv.Atoi(br.Bets[0].(ploutos.BetImsb).GetEventId())
-					matches, err := model.GetMatchDetails(int64(matchId))
+					matches, err := model.GetImsbMatchDetails(int64(matchId))
 					if err == nil && len(matches) > 0 {
 						matchDetail := matches[0]
 						leagueIcon = matchDetail.Competition.Format
