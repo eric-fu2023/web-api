@@ -58,12 +58,18 @@ func ShouldPopupVIP(user User) (bool, error) {
 	if res.Err() == redis.Nil {
 		// if no vip level up record, we check if user vip level is more than 0
 		if current_vip_level> 0{
+			res:=cache.RedisClient.HSet(context.Background(), key, strconv.FormatInt(user.ID, 10), vip.VipRule.VIPLevel)
+			if res.Err() != nil{
+				fmt.Println("update downgrade vip level failed, ", res.Err().Error())
+			}
 			return true, nil
 		}else{
+			fmt.Println("current_vip_level = 0")
 			return false, nil
 		}
 	}
 	if res.Err() != nil && res.Err() != redis.Nil{
+		fmt.Println("resdis error0")
 		return false, res.Err()
 	}
 	previous_vip_level, err := strconv.ParseInt(res.Val(),10,64)
@@ -71,6 +77,10 @@ func ShouldPopupVIP(user User) (bool, error) {
 		fmt.Println("err convert vip level from redis string to int64, ", err)
 	}
 	if current_vip_level > previous_vip_level {
+			res:=cache.RedisClient.HSet(context.Background(), key, strconv.FormatInt(user.ID, 10), vip.VipRule.VIPLevel)
+			if res.Err() != nil{
+				fmt.Println("update downgrade vip level failed, ", res.Err().Error())
+			}
 			return true, nil
 		} else if current_vip_level < previous_vip_level{
 			// if there is a vip downgrade, we need to update the deleted_at for the record
@@ -80,6 +90,7 @@ func ShouldPopupVIP(user User) (bool, error) {
 			}
 		}
 	
+		fmt.Println("program ends error0")
 	return false,err
 }
 
