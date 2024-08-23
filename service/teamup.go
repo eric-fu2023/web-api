@@ -204,7 +204,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 	if teamup.ID == 0 {
 
-		tayaUrl, _ := model.GetAppConfigWithCache("taya_url", "apiServerAddress")
+		tayaUrl, _ := model.GetAppConfig("taya_url", "apiServerAddress")
 		commonNoAuth, openAccessServiceErr := fbService.NewOpenAccessService(tayaUrl)
 
 		if openAccessServiceErr != nil {
