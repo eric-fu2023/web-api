@@ -112,6 +112,7 @@ func prepareObj(c *gin.Context, dollarJackpotDraw model.DollarJackpotDraw) (data
 
 type DollarJackpotWinnersService struct {
 	common.Page
+	JackPotId int `json:"jackpot_id" form:"jackpot_id"`
 }
 
 func (service *DollarJackpotWinnersService) List(c *gin.Context) (r serializer.Response, err error) {
@@ -120,7 +121,7 @@ func (service *DollarJackpotWinnersService) List(c *gin.Context) (r serializer.R
 	var dollarJackpotDraws []model.DollarJackpotDraw
 	err = model.DB.Model(model.DollarJackpotDraw{}).Scopes(model.Paginate(service.Page.Page, service.Page.Limit)).Preload(`Winner`).
 		InnerJoins(`DollarJackpot`).Order(`start_time DESC`).
-		Where(`winner_id != ?`, 0).Where(`DollarJackpot.brand_id`, brand).Find(&dollarJackpotDraws).Error
+		Where(`winner_id != ?`, 0).Where(`DollarJackpot.brand_id`, brand).Where(`dollar_jackpot_id`, service.JackPotId).Find(&dollarJackpotDraws).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
