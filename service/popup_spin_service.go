@@ -163,7 +163,6 @@ func (service *SpinService) GetRemainingSpinCount(user model.User, spin_id int) 
 
 func (service *SpinService) GetSpinIdFromPromotionId(spin_promotion_id int) (spin_id int, err error) {
 	var spin ploutos.Spins
-	err = model.DB.Model(ploutos.Spins{}).Where("promotion_id = ?", spin_id).Find(&spin).Error
+	err = model.DB.Model(ploutos.Spins{}).Where("promotion_id = ?", spin_promotion_id).Find(&spin).Error
 	return int(spin.ID), err
-
 }
