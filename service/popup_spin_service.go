@@ -152,11 +152,18 @@ func (service *SpinService) GetRemainingSpinCount(user model.User, spin_id int) 
 	now := time.Now()
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	var spin_results []ploutos.SpinResult
-	err = model.DB.Debug().Model(ploutos.SpinResult{}).Where("spin_id = ?", spin_id).Where("user_id = ?", user.ID).Where("created_at > ?", startOfToday).Find(&spin_results).Error
+	err = model.DB.Model(ploutos.SpinResult{}).Where("spin_id = ?", spin_id).Where("user_id = ?", user.ID).Where("created_at > ?", startOfToday).Find(&spin_results).Error
 	if err != nil {
 		return
 	}
 	spin_results_counts := len(spin_results)
 
 	return spin.Counts - spin_results_counts, err
+}
+
+func (service *SpinService) GetSpinIdFromPromotionId(spin_promotion_id int) (spin_id int, err error) {
+	var spin ploutos.Spins
+	err = model.DB.Model(ploutos.Spins{}).Where("promotion_id = ?", spin_id).Find(&spin).Error
+	return int(spin.ID), err
+
 }
