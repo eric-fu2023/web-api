@@ -85,7 +85,7 @@ func GetMatchDetails(matchIds ...int64) (matches []ImsbMatchDetailResponse, err 
 		fmt.Println("Error marshalling JSON:", err)
 		return
 	}
-	bataceDomainUrl, _ := GetAppConfigWithCache("server_url", "domain")
+	bataceDomainUrl, _ := GetAppConfig("server_url", "domain")
 	url := bataceDomainUrl + "index/v1/batace/im_match/fetch"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
