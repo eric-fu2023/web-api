@@ -46,7 +46,7 @@ func BuildSpinItem(a ploutos.SpinItem) (b SpinItem) {
 	b = SpinItem{
 		ID:        a.ID,
 		Name:      a.Name,
-		PicSrc:    a.PicSrc,
+		PicSrc:    Url(a.PicSrc),
 		TextColor: a.TextColor,
 		BgColor:   a.BgColor,
 		IsWin:     a.IsWin,
