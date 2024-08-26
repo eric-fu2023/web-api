@@ -172,6 +172,10 @@ type PromotionCustomDetail struct {
 }
 
 func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, err error) {
+	if (p.ID == 99999) { // TODO remove temporary 
+		return 
+	}
+
 	now := time.Now()
 	brand := c.MustGet(`_brand`).(int)
 	u, _ := c.Get("user")
