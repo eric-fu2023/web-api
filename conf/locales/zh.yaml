@@ -653,3 +653,7 @@ notification_slashed_teamup_success_title: "砍单成功"
 notification_slashed_teamup_fail_title: "砍单失败"
 notification_slashed_teamup_success: "恭喜！您的 #%s 订单已成功砍单，%s USD奖励已转到您的钱包，快来查看并使用您的奖励吧！"
 notification_slashed_teamup_fail: "很遗憾，您的# %s 订单砍单失败了。请再试一次或呼唤更多好友来帮忙，祝您下次成功！"
+
+registration_device_restrict_exceed_count: "设备ID注册次数已到达了上限"
+registration_ip_restrict_exceed_count: "IP地址注册次数已到达了上限"
+registration_restrict_exceed_count: "注册次数已到达了上限"

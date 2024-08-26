@@ -653,3 +653,7 @@ notification_slashed_teamup_success_title: "Teamup Successful"
 notification_slashed_teamup_fail_title: "Teamup Fail"
 notification_slashed_teamup_success: "Congratulation! Your teamup is successful."
 notification_slashed_teamup_fail: "Unfortunately, your teamup failed."
+
+registration_device_restrict_exceed_count: "DeviceInfo Count for Registration Exceeded."
+registration_ip_restrict_exceed_count: "IP Count for Registration Exceeded."
+registration_restrict_exceed_count: "Count for Registration Exceeded."

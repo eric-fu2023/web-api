@@ -135,7 +135,12 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		q = q.Where(`username = ?`, service.Username)
 	}
 	if rows := q.Scopes(model.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 {
-		// new user
+		// New User
+		isAllowed := CheckRegistrationDeviceIPCount(deviceInfo.Uuid, c.ClientIP())
+		if !isAllowed {
+			return serializer.Err(c, service, serializer.CodeDBError, i18n.T("registration_restrict_exceed_count"), err)
+		}
+
 		user = model.User{
 			User: ploutos.User{
 				CountryCode:             service.CountryCode,

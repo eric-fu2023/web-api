@@ -82,6 +82,11 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 		return serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 	}
 
+	isAllowed := CheckRegistrationDeviceIPCount(deviceInfo.Uuid, c.ClientIP())
+	if !isAllowed {
+		return serializer.Err(c, service, serializer.CodeDBError, i18n.T("registration_restrict_exceed_count"), err)
+	}
+
 	user := model.User{
 		User: ploutos.User{
 			Username:                service.Username,
@@ -200,4 +205,21 @@ func ConnectChannelAgent(user *model.User, tx *gorm.DB) (err error) {
 	// fmt.Printf("=== POST username - %s, channelCode - %s, userChannelId - %s, userAgentId - %s === \n", user.Username, user.Channel, strconv.Itoa(int(user.ChannelId)), strconv.Itoa(int(user.AgentId)))
 
 	return
+}
+
+func CheckRegistrationDeviceIPCount(deviceId, ip string) (isAllowed bool) {
+	registrationLoginRule, _ := model.GetRegistrationLoginRule()
+	if registrationLoginRule.ID != 0 {
+		deviceCount, ipCount := model.GetRegistrationDeviceIPCount(deviceId, ip)
+
+		if deviceId != "" && registrationLoginRule.RegisterDeviceRestrict && deviceCount >= registrationLoginRule.RegisterDeviceRestrictCount {
+			return false
+		}
+
+		if registrationLoginRule.RegisterIPRestrict && ipCount >= registrationLoginRule.RegisterIPRestrictCount {
+			return false
+		}
+	}
+	return true
+
 }
