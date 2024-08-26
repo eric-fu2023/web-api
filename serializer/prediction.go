@@ -94,6 +94,9 @@ type SelectionInfo struct {
 	Ts []TeamInfo        `json:"ts"`
 	ID int               `json:"id"`
 	Bt int64             `json:"bt"`
+
+	// for imsb
+	ImsbMg []ImsbSelectionInfo `json:"odds,omitempty"`
 }
 
 type ImsbSelectionInfo struct {
