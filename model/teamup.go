@@ -136,8 +136,6 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 		return
 	}
 
-	// err = failTeamup(res)
-
 	return
 }
 
@@ -154,8 +152,6 @@ func GetCustomTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) 
 	if err != nil {
 		return
 	}
-
-	// err = failTeamup(res)
 
 	return
 }
@@ -212,31 +208,6 @@ func UpdateTeamupProgress(tx *gorm.DB, teamupId, amount, slashAmount int64) erro
 		}
 		return nil
 	})
-}
-
-// func failTeamup(res TeamupCustomRes) (err error) {
-// 	tsNow := time.Now().UTC().Unix()
-// 	hasFailedTeamup := false
-// 	for i, tu := range res {
-// 		if tsNow > tu.TeamupEndTime {
-// 			res[i].Status = 2
-// 			if !hasFailedTeamup {
-// 				err = updateTeamupStatusToFail(tsNow)
-// 				hasFailedTeamup = true
-// 			}
-// 		}
-// 	}
-
-// 	return
-// }
-
-func updateTeamupStatusToFail(tsNow int64) (err error) {
-	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Model(&ploutos.Teamup{}).Where("teamup_end_time < ?", tsNow).Update("status", ploutos.TeamupStatusFail).Error
-		return
-	})
-
-	return
 }
 
 func GetRecentCompletedSuccessTeamup(numMinutes int64) (res TeamupSuccess, err error) {
