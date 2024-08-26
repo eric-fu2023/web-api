@@ -334,6 +334,25 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 			if err != nil {
 				return err
 			}
+
+			transaction := ploutos.Transaction{
+				UserId:                teamup.UserId,
+				Amount:                amount,
+				BalanceBefore:         sum.Balance - amount,
+				BalanceAfter:          sum.Balance,
+				TransactionType:       ploutos.TransactionTypeTeamupPromotion,
+				Wager:                 0,
+				WagerBefore:           sum.RemainingWager,
+				WagerAfter:            sum.RemainingWager + amount,
+				ExternalTransactionId: strconv.Itoa(int(teamup.ID)),
+				GameVendorId:          0,
+			}
+			err = tx.Create(&transaction).Error
+			if err != nil {
+				log.Printf("Error creating teamup transaction, err: %v", err)
+				return err
+			}
+
 			util.GetLoggerEntry(c).Info("Team Up Cash Order", coId, teamup.ID)
 			common.SendUserSumSocketMsg(teamup.UserId, sum.UserSum, "teamup_success", float64(amount)/100)
 
@@ -393,12 +412,14 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 		res[i].InfoJson = nil
 
-		if br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA || br.GameType == ploutos.GAME_DB_SPORT {
-			var outgoingBet model.OutgoingBet
+		var outgoingBet model.OutgoingBet
 
-			var matchTime int64
+		var matchTime int64
 
-			for _, bet := range br.Bets {
+		for _, bet := range br.Bets {
+
+			switch {
+			case br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA || br.GameType == ploutos.GAME_DB_SPORT:
 				if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
 					matchTime = *bet.GetMatchTime()
 					// comment out to show real match time
@@ -423,8 +444,32 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 					outgoingBet.MatchTime = teamupEndTime
 					res[i].Bet = outgoingBet
 				}
-			}
+			case br.GameType == ploutos.GAME_IMSB:
+				if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
+					matchTime = *bet.GetMatchTime()
+					// comment out to show real match time
+					// teamupEndTime := matchTime - 600 // 600 seconds = 10 minutes
+					teamupEndTime := matchTime
+					copier.Copy(&outgoingBet, bet)
+					betImsb := bet.(ploutos.BetImsb)
+					teams := strings.Split(betImsb.GetMatchName(), " vs ")
+					if len(teams) > 1 {
+						outgoingBet.HomeName = teams[0]
+						outgoingBet.AwayName = teams[1]
+					}
+					outgoingBet.LeagueIcon = res[i].LeagueIcon
+					outgoingBet.HomeIcon = res[i].HomeIcon
+					outgoingBet.AwayIcon = res[i].AwayIcon
+					outgoingBet.LeagueName = betImsb.GetCompetitionName()
 
+					if res[i].IsParlay {
+						outgoingBet.MatchName = res[i].BetType
+					}
+
+					outgoingBet.MatchTime = teamupEndTime
+					res[i].Bet = outgoingBet
+				}
+			}
 		}
 	}
 

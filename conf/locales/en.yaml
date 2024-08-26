@@ -656,4 +656,4 @@ notification_slashed_teamup_fail: "Unfortunately, your teamup failed."
 
 registration_device_restrict_exceed_count: "DeviceInfo Count for Registration Exceeded."
 registration_ip_restrict_exceed_count: "IP Count for Registration Exceeded."
-registration_restrict_exceed_count: "Count for Registration Exceeded."
+registration_restrict_exceed_count: "Maximum Registration Limit Reached."
