@@ -16,7 +16,7 @@ type Prediction struct {
 	IsLocked        bool              `json:"is_locked"`
 	CreatedAt       time.Time         `json:"created_at"`
 	ViewCount       int64             `json:"view_count"`
-	SelectionList   []FbSelectionInfo `json:"selection_list,omitempty"`
+	SelectionList   []SelectionInfo   `json:"selection_list,omitempty"`
 	Status          int64             `json:"status"`
 	AnalystDetail   *Analyst          `json:"analyst_detail,omitempty"`
 	SportId         int64             `json:"sport_id"`
@@ -88,12 +88,43 @@ type TeamInfo struct {
 	ID   int    `json:"id"`
 	Lurl string `json:"lurl"`
 }
-type FbSelectionInfo struct {
+type SelectionInfo struct {
 	Mg []MarketGroupInfo `json:"mg"`
 	Lg LeagueInfo        `json:"lg"`
 	Ts []TeamInfo        `json:"ts"`
 	ID int               `json:"id"`
 	Bt int64             `json:"bt"`
+}
+
+type ImsbSelectionInfo struct {
+	BetID      string          `json:"bet_id"`
+	BetName    string          `json:"bet_name"`
+	BetStatus  int             `json:"bet_status"`
+	BetLocked  bool            `json:"bet_locked"`
+	BetTypeID  int             `json:"bet_type_id"`
+	BetMarket  int             `json:"bet_market"`
+	Match      ImsbMatchDetail `json:"match"`
+	OddsDetail ImsbOddsDetail  `json:"odds"`
+	Priority   int             `json:"priority"`
+}
+
+type ImsbOddsDetail struct {
+	ID         int64   `json:"id"`
+	Name       string  `json:"name"`
+	Value      float64 `json:"value"`
+	Status     int     `json:"status"`
+	Market     int     `json:"market"`
+	IsLocked   bool    `json:"is_locked"`
+	OddsStatus int     `json:"odds_status"`
+	BetStatus  int     `json:"bet_status"`
+	PredictionStatus bool `json:"predict_status"`
+	IsSelected bool `json:"is_selected"`
+}
+
+type ImsbMatchDetail struct {
+	CricketMatchID int    `json:"cricket_match_id"`
+	Title          string `json:"title"`
+	ImMatchID      int    `json:"im_match_id"`
 }
 
 func BuildPredictionsList(predictions []model.Prediction, page, limit int) (preds []Prediction) {
@@ -105,7 +136,7 @@ func BuildPredictionsList(predictions []model.Prediction, page, limit int) (pred
 }
 
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
-	selectionList := []FbSelectionInfo{}
+	selectionList := []SelectionInfo{}
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
 	// the unknown/black/red status of of the entire PredictionArticle
@@ -117,7 +148,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 	for _, selection := range prediction.PredictionSelections {
 		marketGroupKey := model.GenerateMarketGroupKeyFromSelection(selection)
 
-		selectionIdx := slices.IndexFunc(selectionList, func(s FbSelectionInfo) bool {
+		selectionIdx := slices.IndexFunc(selectionList, func(s SelectionInfo) bool {
 			return s.ID == int(selection.FbMatch.MatchID)
 		})
 
@@ -147,7 +178,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			// } else {
 			// 	betResult = int(selection.BetResult)
 			// }
-			
+
 			betResult := models.BetResultUnknown
 			for _, sel := range prediction.PredictionSelections {
 				if odd.ID == sel.FbOdds.ID {
@@ -200,11 +231,11 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			mgStatus := models.BetResultUnknown
 			for _, op := range opList {
 				if op.Status == int(models.BetResultWin) {
-					// if any op win, whole mg win 
+					// if any op win, whole mg win
 					mgStatus = models.BetResultWin
 					break
 				}
-				// all lose 
+				// all lose
 				mgStatus = models.BetResultLose
 			}
 
@@ -219,7 +250,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 
 		if selectionIdx == -1 {
-			selectionList = append(selectionList, FbSelectionInfo{
+			selectionList = append(selectionList, SelectionInfo{
 				Bt: selection.FbMatch.StartTimeUtcTs,
 				ID: int(selection.FbMatch.MatchID),
 				Ts: []TeamInfo{
@@ -291,7 +322,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 	return
 }
 
-func SortPredictionList(predictions []Prediction, page,limit int) []Prediction {
+func SortPredictionList(predictions []Prediction, page, limit int) []Prediction {
 	// sort by status.. unsettled then settled
 	// then in each grp, sort by （命中率 50%，近X中X 50%）
 	unsettled := []Prediction{}
@@ -343,7 +374,7 @@ func SortPredictionList(predictions []Prediction, page,limit int) []Prediction {
 		}
 	})
 
-	slices.SortFunc(unsettled, func (a, b Prediction) int {
+	slices.SortFunc(unsettled, func(a, b Prediction) int {
 		if weightage(a) < weightage(b) {
 			return 1
 		} else if weightage(a) > weightage(b) {
@@ -355,12 +386,12 @@ func SortPredictionList(predictions []Prediction, page,limit int) []Prediction {
 
 	finalList := append(unsettled, settled...)
 
-	start := limit * (page - 1) 
+	start := limit * (page - 1)
 	if start > len(finalList) {
 		return []Prediction{}
 	}
 	end := limit * page
-	if (end > len(finalList)) {
+	if end > len(finalList) {
 		end = len(finalList)
 	}
 
@@ -368,12 +399,12 @@ func SortPredictionList(predictions []Prediction, page,limit int) []Prediction {
 }
 
 func weightage(prediction Prediction) float64 {
-	if (prediction.AnalystDetail == nil) {
+	if prediction.AnalystDetail == nil {
 		return 0.00
 	}
 	accuracyWeight := float64(prediction.AnalystDetail.Accuracy) * 0.5
 	nearXweight := ((float64(prediction.AnalystDetail.RecentWins) / float64(prediction.AnalystDetail.RecentTotal)) * 100 * 0.5)
-	return  accuracyWeight + nearXweight
+	return accuracyWeight + nearXweight
 }
 
 func CustomizeOddsName(oddsName string) string {
