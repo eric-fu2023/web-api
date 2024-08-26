@@ -43,22 +43,22 @@ type Achievement struct {
 	IsShowRecentResult bool `json:"is_show_recent_result"`
 }
 
-func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
+func BuildAnalystsList(analysts []model.Analyst, brandId int) (resp []Analyst) {
 	resp = []Analyst{}
 	for _, a := range analysts {
 		// only display analysts with published PredictionArticles
 		if len(a.Predictions) > 0 {
-			resp = append(resp, BuildAnalystDetail(a))
+			resp = append(resp, BuildAnalystDetail(a, brandId))
 		}
 	}
 	return
 }
 
-func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
+func BuildAnalystDetail(analyst model.Analyst, brandId int) (resp Analyst) {
 	predictions := make([]Prediction, len(analyst.Predictions))
 
 	for i, pred := range analyst.Predictions {
-		predictions[i] = BuildPrediction(pred, true, false)
+		predictions[i] = BuildPrediction(pred, true, false, brandId)
 	}
 
 	summary := ploutos.PredictionAnalystSummary{}
@@ -93,7 +93,7 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst) {
 	resp = []Analyst{}
 	for _, a := range followings {
-		resp = append(resp, BuildAnalystDetail(a.Analyst))
+		resp = append(resp, BuildAnalystDetail(a.Analyst, 3001)) // TODO : add brand id
 	}
 	return
 }

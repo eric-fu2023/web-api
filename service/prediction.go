@@ -22,6 +22,7 @@ type PredictionListService struct {
 func (service *PredictionListService) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
+   brandId := c.MustGet("_brand").(int)
 
 	user := model.User{}
 
@@ -68,7 +69,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 			}
 
 			r.Msg = i18n.T("success")
-			r.Data = serializer.BuildPredictionsList(predictions, service.Page.Page, service.Limit)
+			r.Data = serializer.BuildPredictionsList(predictions, service.Page.Page, service.Limit, brandId)
 			return
 
 		} else {
@@ -85,7 +86,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 			}
 
 			r.Msg = i18n.T("success")
-			r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions, service.Page.Page, service.Limit)
+			r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions, service.Page.Page, service.Limit, brandId)
 			return
 		}
 
@@ -103,7 +104,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 		}
 
 		r.Msg = i18n.T("success")
-		r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions[:1],service.Page.Page, service.Limit)
+		r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions[:1],service.Page.Page, service.Limit, brandId)
 		return
 	}
 
@@ -116,6 +117,7 @@ type PredictionDetailService struct {
 func (service *PredictionDetailService) GetDetail(c *gin.Context) (r serializer.Response, err error) {
 
 	data, err := model.GetPrediction(service.PredictionId)
+   brandId := c.MustGet("_brand").(int)
 
 	// if (service.PredictionId == 8) {
 	// 	var jsonData map[string]interface{}
@@ -137,7 +139,7 @@ func (service *PredictionDetailService) GetDetail(c *gin.Context) (r serializer.
 		return
 	}
 
-	r.Data = serializer.BuildPrediction(data, false, false)
+	r.Data = serializer.BuildPrediction(data, false, false, brandId)
 
 	return
 }

@@ -40,13 +40,14 @@ func (p AnalystService) GetAnalystList(c *gin.Context) (r serializer.Response, e
 	// r.Data = serializer.BuildAnalystList(analysts)
 
 	data, err := model.Analyst{}.List(p.Page.Page, p.Limit, p.SportId)
+	brandId := c.MustGet("_brand").(int)
 
 	if err != nil {
 		r = serializer.DBErr(c, p, "", err)
 		return
 	}
 
-	r.Data = serializer.BuildAnalystsList(data)
+	r.Data = serializer.BuildAnalystsList(data, brandId)
 
 	return
 }
@@ -151,13 +152,14 @@ type AnalystDetailService struct {
 
 func (service AnalystDetailService) GetAnalyst(c *gin.Context) (r serializer.Response, err error) {
 	data, err := model.Analyst{}.GetDetail(int(service.Id))
+	brandId := c.MustGet("_brand").(int)
 
 	if err != nil {
 		r = serializer.DBErr(c, service, "", err)
 		return
 	}
 
-	r.Data = serializer.BuildAnalystDetail(data)
+	r.Data = serializer.BuildAnalystDetail(data, brandId)
 
 	return
 }

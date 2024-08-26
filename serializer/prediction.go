@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"encoding/json"
 	"slices"
 	"time"
 	"web-api/model"
@@ -107,7 +108,7 @@ type ImsbSelectionInfo struct {
 	BetTypeID  int             `json:"bet_type_id"`
 	BetMarket  int             `json:"bet_market"`
 	Match      ImsbMatchDetail `json:"match"`
-	OddsDetail ImsbOddsDetail  `json:"odds"`
+	OddsDetail []ImsbOddsDetail  `json:"odds"`
 	Priority   int             `json:"priority"`
 }
 
@@ -120,7 +121,7 @@ type ImsbOddsDetail struct {
 	IsLocked   bool    `json:"is_locked"`
 	OddsStatus int     `json:"odds_status"`
 	BetStatus  int     `json:"bet_status"`
-	PredictionStatus bool `json:"predict_status"`
+	PredictionStatus int `json:"predict_status"`
 	IsSelected bool `json:"is_selected"`
 }
 
@@ -130,15 +131,25 @@ type ImsbMatchDetail struct {
 	ImMatchID      int    `json:"im_match_id"`
 }
 
-func BuildPredictionsList(predictions []model.Prediction, page, limit int) (preds []Prediction) {
+func BuildPredictionsList(predictions []model.Prediction, page, limit, brandId int) (preds []Prediction) {
 	finalList := make([]Prediction, len(predictions))
 	for i, p := range predictions {
-		finalList[i] = BuildPrediction(p, false, false)
+		finalList[i] = BuildPrediction(p, false, false, brandId)
 	}
 	return SortPredictionList(finalList, page, limit)
 }
 
-func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
+func BuildImsbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
+
+	return 
+}
+
+func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool, brandId int) (pred Prediction) {
+
+	if brandId == 1002 {
+		return BuildMockImsbPrediction(prediction, omitAnalyst, isLocked)
+	}
+
 	selectionList := []SelectionInfo{}
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
@@ -307,7 +318,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			Status:          int64(prediction.PredictionResult),
 		}
 	} else {
-		analyst := BuildAnalystDetail(prediction.AnalystDetail)
+		analyst := BuildAnalystDetail(prediction.AnalystDetail, brandId)
 		pred = Prediction{
 			PredictionId:    prediction.ID,
 			AnalystId:       prediction.AnalystId,
@@ -418,3 +429,183 @@ func CustomizeOddsName(oddsName string) string {
 		return oddsName
 	}
 }
+
+func BuildMockImsbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
+	data := Prediction{}
+
+	err := json.Unmarshal([]byte(mockData), &data)
+
+	if err != nil {
+		return
+	}
+	return data
+
+}
+var mockData = `
+{
+   "prediction_id": 46,
+   "analyst_id": 27,
+   "prediction_title": "美女方案",
+   "prediction_desc": "<p>啊的发疯的发生地方</p>",
+   "is_locked": false,
+   "created_at": "2024-08-22T02:24:28.628004Z",
+   "view_count": 16,
+   "selection_list": [
+      {
+         "odds": [
+            {
+               "bet_id": "f041ea4b-f758-4bee-98ed-a105693585f1",
+               "bet_name": "Match - Head to Head (inc. Super Over) - Live",
+               "bet_status": 1,
+               "bet_locked": false,
+               "bet_type_id": 4,
+               "bet_market": 3,
+               "match": {
+                  "cricket_match_id": 0,
+                  "title": "Kolkata Knight Riders SRL VS Punjab Kings SRL",
+                  "im_match_id": 59249875
+               },
+               "odds": [
+                  {
+                     "id": 3574733796,
+                     "name": "Home",
+                     "value": 0,
+                     "status": 1,
+                     "market": 3,
+                     "is_locked": false,
+                     "odds_status": 1,
+                     "bet_status": 1,
+					 "predict_status":0,
+					 "is_selected":false
+                  },
+                  {
+                     "id": 3574733797,
+                     "name": "Away",
+                     "value": 0,
+                     "status": 1,
+                     "market": 3,
+                     "is_locked": false,
+                     "odds_status": 1,
+                     "bet_status": 1,
+					 "predict_status":2,
+					 "is_selected":true
+                  }
+               ],
+               "priority": 2
+            },
+            {
+               "bet_id": "d66c7792-8288-435b-b5d2-227829653987",
+               "bet_name": "Innings 1 - Total Runs for Over 3 - Punjab Kings SRL - Live",
+               "bet_status": 1,
+               "bet_locked": false,
+               "bet_type_id": 99,
+               "bet_market": 3,
+               "match": {
+                  "cricket_match_id": 0,
+                  "title": "Kolkata Knight Riders SRL VS Punjab Kings SRL",
+                  "im_match_id": 59249875
+               },
+               "odds": [
+                  {
+                     "id": 3576873744,
+                     "name": "Over 8.5",
+                     "value": 0,
+                     "status": 1,
+                     "market": 3,
+                     "is_locked": false,
+                     "odds_status": 1,
+                     "bet_status": 1,
+					 "predict_status":2,
+					 "is_selected":true
+                  },
+                  {
+                     "id": 3576873747,
+                     "name": "Under 8.5",
+                     "value": 0,
+                     "status": 1,
+                     "market": 3,
+                     "is_locked": false,
+                     "odds_status": 1,
+                     "bet_status": 1,
+					 "predict_status":1,
+					 "is_selected":true
+                  }
+               ],
+               "priority": 26
+            }
+         ],
+         "lg": {
+            "na": "爱尔兰甲级联赛",
+            "id": 10937,
+            "or": 1586,
+            "lurl": "https://static.fastbs55.com/data/b7156de3cd38c823863d7e35df595908.png",
+            "sid": 1,
+            "rid": 70,
+            "rnm": "爱尔兰",
+            "rlg": "https://static.fastbs55.com/data/28b56ea98e9c4b353e574757cb33d90f.png",
+            "hot": false,
+            "slid": 109370000
+         },
+         "ts": [
+            {
+               "na": "科布漫步者",
+               "id": 55479,
+               "lurl": "https://static.fastbs55.com/data/9970a75e1ee535a3c140cc0fcc3ab44c.png"
+            },
+            {
+               "na": "科克城",
+               "id": 55424,
+               "lurl": "https://static.fastbs55.com/data/53f5e1f95af79ac48ac756212df43a51.png"
+            }
+         ],
+         "id": 59249875,
+         "bt": 1724438700000
+      }
+   ],
+   "status": 0,
+   "analyst_detail": {
+      "analyst_id": 27,
+      "analyst_name": "美女球探",
+      "analyst_desc": "{球探名字}是一位经验丰富的足球球探，专注于挖掘和评估年轻足球天才。他/她在足球界拥有多年经验，曾为多家顶级俱乐部和国家队提供过出色的球员推荐服务。{球探名字}以敏锐的眼光和深厚的战术知识著称，能够在早期识别出球员的潜力，并帮助他们迈向职业生涯的巅峰。  凭借广泛的人脉和深刻的洞察力，{球探名字}在全球范围内建立了广泛的球员观察网络，擅长发现隐藏的足球人才，帮助俱乐部和球队建立起具有长期竞争力的阵容。他/她对年轻球员的全面评估和独到见解，深受足球界的高度认可。",
+      "analyst_source": {
+         "source_name": "九品芝麻官之白面包青天",
+         "source_icon": "https://static.tayalive.com/aha-img/prediction_source_icon/prediction_source_icon-20240816090644-gAOnKB.jpg"
+      },
+      "analyst_image": "https://static.tayalive.com/aha-img/prediction_analyst_avatar/prediction_analyst_avatar-20240816090157-qHr8c3.jpg",
+      "winning_streak": 0,
+      "accuracy": 0,
+      "num_followers": 0,
+      "total_predictions": 2,
+      "predictions": [
+         {
+            "prediction_id": 46,
+            "analyst_id": 27,
+            "prediction_title": "美女方案",
+            "prediction_desc": "<p>啊的发疯的发生地方</p>",
+            "is_locked": false,
+            "created_at": "2024-08-22T02:24:38.917257Z",
+            "view_count": 16,
+            "status": 0,
+            "sport_id": 1
+         },
+         {
+            "prediction_id": 21,
+            "analyst_id": 27,
+            "prediction_title": "asda",
+            "prediction_desc": "<p>asdsada</p>",
+            "is_locked": false,
+            "created_at": "2024-08-16T08:41:17.766199Z",
+            "view_count": 32,
+            "status": 2,
+            "sport_id": 1
+         }
+      ],
+      "recent_total": 0,
+      "recent_wins": 0,
+      "is_show_streak": false,
+      "is_show_accuracy": false,
+      "is_show_recent_wins": false
+   },
+   "sport_id": 1
+}
+`
