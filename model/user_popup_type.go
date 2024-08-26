@@ -90,7 +90,6 @@ func ShouldPopupVIP(user User) (bool, error) {
 			}
 		}
 	
-		fmt.Println("program ends error0")
 	return false,err
 }
 
