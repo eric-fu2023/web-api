@@ -7,7 +7,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -90,16 +89,16 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 
 	teamupRes, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit, start, end)
 
-	sort.SliceStable(teamupRes, func(i, j int) bool {
-		// Move status 0, 1, and 2 to the front
-		if teamupRes[i].Status == 0 || teamupRes[i].Status == 1 || teamupRes[i].Status == 2 {
-			if teamupRes[j].Status == 0 || teamupRes[j].Status == 1 || teamupRes[j].Status == 2 {
-				return teamupRes[i].Status < teamupRes[j].Status
-			}
-			return true
-		}
-		return false
-	})
+	// sort.SliceStable(teamupRes, func(i, j int) bool {
+	// 	// Move status 0, 1, and 2 to the front
+	// 	if teamupRes[i].Status == 0 || teamupRes[i].Status == 1 || teamupRes[i].Status == 2 {
+	// 		if teamupRes[j].Status == 0 || teamupRes[j].Status == 1 || teamupRes[j].Status == 2 {
+	// 			return teamupRes[i].Status < teamupRes[j].Status
+	// 		}
+	// 		return true
+	// 	}
+	// 	return false
+	// })
 
 	r.Data = parseBetReport(teamupRes)
 
