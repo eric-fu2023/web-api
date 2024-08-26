@@ -22,23 +22,23 @@ type TeamUpService struct {
 }
 
 type TeamUpPopupResponse struct {
-	Id                 int64                   `json:"id"`
-	OrderId            string                  `json:"order_id"`
-	Status             int                     `json:"status"`
+	Id      int64  `json:"id"`
+	OrderId string `json:"order_id"`
+	Status  int    `json:"status"`
 	// TotalTeamupDeposit int64                   `json:"total_deposit"`
-	TotalTeamUpTarget  float64                   `json:"total_target"`
-	Percent            int64                   `json:"percent"`
-	Start              int64                   `json:"start"`
-	End                int64                   `json:"end"`
-	Type               int                     `json:"type"`
-	Members            []TeamUpPopupMemberInfo `json:"members"`
+	TotalTeamUpTarget float64                 `json:"total_target"`
+	Progress          float64                 `json:"progress"`
+	Start             int64                   `json:"start"`
+	End               int64                   `json:"end"`
+	Type              int                     `json:"type"`
+	Members           []TeamUpPopupMemberInfo `json:"members"`
 }
 type TeamUpPopupMemberInfo struct {
-	TotalTeamUpTarget float64  `json:"total_target"`
-	Ranking           int64  `json:"ranking"`
-	Name              string `json:"name"`
-	PicSrc            string `json:"pic_src"`
-	IsMe              bool   `json:"is_me"`
+	TotalTeamUpTarget float64 `json:"total_target"`
+	Ranking           int64   `json:"ranking"`
+	Name              string  `json:"name"`
+	PicSrc            string  `json:"pic_src"`
+	IsMe              bool    `json:"is_me"`
 }
 
 func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err error) {
@@ -64,7 +64,7 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 	}
 
 	var teamup_type int
-	members := make([]TeamUpPopupMemberInfo,0)
+	members := make([]TeamUpPopupMemberInfo, 0)
 	if team_up.Status == 0 {
 		// ongoing
 		teamup_type = 3
@@ -75,16 +75,16 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 	}
 
 	data = TeamUpPopupResponse{
-		Id:                 team_up.ID,
-		OrderId:            team_up.OrderId,
-		Status:             team_up.Status,
+		Id:      team_up.ID,
+		OrderId: team_up.OrderId,
+		Status:  team_up.Status,
 		// TotalTeamupDeposit: team_up.TotalTeamupDeposit / 100,
-		TotalTeamUpTarget:  float64(team_up.TotalTeamUpTarget) / 100,
-		Percent:            team_up.TotalFakeProgress,
-		Start:              yesterdayStart.Unix(),
-		End:                yesterdayEnd.Unix(),
-		Type:               teamup_type,
-		Members:            members,
+		TotalTeamUpTarget: float64(team_up.TotalTeamUpTarget) / 100,
+		Progress:          float64(team_up.TotalFakeProgress) / 100,
+		Start:             yesterdayStart.Unix(),
+		End:               yesterdayEnd.Unix(),
+		Type:              teamup_type,
+		Members:           members,
 	}
 	service.Shown(c)
 	return data, nil
@@ -143,7 +143,7 @@ func GenerateMembersForTeamUpSuccess(user model.User, total_team_up_target int64
 		IsMe:              false,
 	})
 	resp = append(resp, TeamUpPopupMemberInfo{
-		TotalTeamUpTarget: float64(total_team_up_target)/100,
+		TotalTeamUpTarget: float64(total_team_up_target) / 100,
 		Ranking:           estimated_ranking,
 		Name:              user.Nickname,
 		PicSrc:            serializer.Url(user.Avatar),
@@ -160,7 +160,7 @@ func GenerateMembersForTeamUpSuccess(user model.User, total_team_up_target int64
 	}
 
 	resp = append(resp, TeamUpPopupMemberInfo{
-		TotalTeamUpTarget: float64(ranking_lower_total_target)/100,
+		TotalTeamUpTarget: float64(ranking_lower_total_target) / 100,
 		Ranking:           estimated_ranking + 1,
 		Name:              ranking_lower_user_nickname,
 		PicSrc:            avatar.GetRandomAvatarUrl(),
