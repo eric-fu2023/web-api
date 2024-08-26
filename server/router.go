@@ -273,6 +273,7 @@ func NewRouter() *gin.Engine {
 			user.Use(middleware.AuthRequired(true, true))
 			{
 				user.POST("/profile", api.ProfileUpdate)
+				user.POST("/clear_wager", api.ClearWager)
 				user.POST("/nickname", api.NicknameUpdate)
 				user.POST("/profile_pic", api.ProfilePicUpload)
 				user.GET("/notifications", api.UserNotificationList)

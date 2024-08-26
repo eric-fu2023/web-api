@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -193,7 +194,16 @@ func ProfileUpdate(c *gin.Context) {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}
 }
-
+func ClearWager(c *gin.Context) {
+	fmt.Println("ClearWagerClearWager")
+	var service_wager service.ServiceWager
+	if err := c.ShouldBindWith(&service_wager, binding.FormMultipart); err == nil {
+		res := service_wager.WagerClear(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service_wager, err))
+	}
+}
 func NicknameUpdate(c *gin.Context) {
 	var service service.NicknameUpdateService
 	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
