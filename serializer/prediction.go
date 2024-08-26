@@ -101,16 +101,7 @@ func BuildPredictionsList(predictions []model.Prediction, page, limit int) (pred
 	for i, p := range predictions {
 		finalList[i] = BuildPrediction(p, false, false)
 	}
-	// return finalList
-	start := limit * (page - 1)
-	if start > len(finalList) {
-		return []Prediction{}
-	}
-	end := limit * page
-	if end > len(finalList) {
-		end = len(finalList)
-	}
-	return SortPredictionList(finalList)[start:end]
+	return SortPredictionList(finalList, page, limit)
 }
 
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
@@ -300,7 +291,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 	return
 }
 
-func SortPredictionList(predictions []Prediction) []Prediction {
+func SortPredictionList(predictions []Prediction, page,limit int) []Prediction {
 	// sort by status.. unsettled then settled
 	// then in each grp, sort by （命中率 50%，近X中X 50%）
 	unsettled := []Prediction{}
@@ -362,7 +353,18 @@ func SortPredictionList(predictions []Prediction) []Prediction {
 		}
 	})
 
-	return append(unsettled, settled...)
+	finalList := append(unsettled, settled...)
+
+	start := limit * (page - 1) 
+	if start > len(finalList) {
+		return []Prediction{}
+	}
+	end := limit * page
+	if (end > len(finalList)) {
+		end = len(finalList)
+	}
+
+	return finalList[start:end]
 }
 
 func weightage(prediction Prediction) float64 {

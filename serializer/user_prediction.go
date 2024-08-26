@@ -23,14 +23,5 @@ func BuildUserPredictionsWithLock(preds []model.Prediction, userPreds []model.Us
 		ls[i] = BuildPrediction(pred, false, !exist)
 	}
 
-	start := limit * (page - 1) 
-	if start > len(preds) {
-		return []Prediction{}
-	}
-	end := limit * page
-	if (end > len(preds)) {
-		end = len(preds)
-	}
-	// return ls
-	return SortPredictionList(ls)[start:end]
+	return SortPredictionList(ls, page, limit)
 }
