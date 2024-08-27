@@ -47,7 +47,7 @@ func (p AnalystService) GetAnalystList(c *gin.Context) (r serializer.Response, e
 		return
 	}
 
-	r.Data = serializer.BuildAnalystsList(data, brandId)
+	r.Data = serializer.BuildAnalystsList(data, model.BrandId(brandId))
 
 	return
 }
@@ -124,7 +124,7 @@ func (p AnalystService) GetFollowingAnalystList(c *gin.Context) (r serializer.Re
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
-	r.Data = serializer.BuildFollowingList(followings, brandId)
+	r.Data = serializer.BuildFollowingList(followings, model.BrandId(brandId))
 	return
 }
 
@@ -160,7 +160,7 @@ func (service AnalystDetailService) GetAnalyst(c *gin.Context) (r serializer.Res
 		return
 	}
 
-	r.Data = serializer.BuildAnalystDetail(data, brandId)
+	r.Data = serializer.BuildAnalystDetail(data, model.BrandId(brandId))
 
 	return
 }

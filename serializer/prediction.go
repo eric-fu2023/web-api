@@ -131,7 +131,7 @@ type ImsbMatchDetail struct {
 	ImMatchID      int    `json:"im_match_id"`
 }
 
-func BuildPredictionsList(predictions []model.Prediction, page, limit, brandId int) (preds []Prediction) {
+func BuildPredictionsList(predictions []model.Prediction, page, limit int, brandId model.BrandId) (preds []Prediction) {
 	finalList := make([]Prediction, len(predictions))
 	for i, p := range predictions {
 		finalList[i] = BuildPrediction(p, false, false, brandId)
@@ -313,7 +313,7 @@ func BuildFbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked b
 			Status:          int64(prediction.PredictionResult),
 		}
 	} else {
-		analyst := BuildAnalystDetail(prediction.AnalystDetail, brandId)
+		analyst := BuildAnalystDetail(prediction.AnalystDetail, model.BrandIdAha)
 		pred = Prediction{
 			PredictionId:    prediction.ID,
 			AnalystId:       prediction.AnalystId,
@@ -331,10 +331,10 @@ func BuildFbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked b
 	return
 }
 
-func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool, brandId int) (pred Prediction) {
+func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool, brandId model.BrandId) (pred Prediction) {
 
 	switch brandId {
-	case 1002: // batace
+	case model.BrandIdBatace: // batace
 		return BuildMockImsbPrediction(prediction, omitAnalyst, isLocked)
 
 	default:

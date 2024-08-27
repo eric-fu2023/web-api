@@ -25,6 +25,12 @@ type ListPredictionCond struct {
 	SportId   int64
 }
 
+type BrandId int
+const (
+	BrandIdAha BrandId = 3001
+	BrandIdBatace BrandId = 1002
+)
+
 func preloadPredictions() *gorm.DB {
 	return DB.
 		Preload("PredictionSelections").

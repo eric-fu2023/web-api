@@ -43,7 +43,7 @@ type Achievement struct {
 	IsShowRecentResult bool `json:"is_show_recent_result"`
 }
 
-func BuildAnalystsList(analysts []model.Analyst, brandId int) (resp []Analyst) {
+func BuildAnalystsList(analysts []model.Analyst, brandId model.BrandId) (resp []Analyst) {
 	resp = []Analyst{}
 	for _, a := range analysts {
 		// only display analysts with published PredictionArticles
@@ -54,7 +54,7 @@ func BuildAnalystsList(analysts []model.Analyst, brandId int) (resp []Analyst) {
 	return
 }
 
-func BuildAnalystDetail(analyst model.Analyst, brandId int) (resp Analyst) {
+func BuildAnalystDetail(analyst model.Analyst, brandId model.BrandId) (resp Analyst) {
 	predictions := make([]Prediction, len(analyst.Predictions))
 
 	for i, pred := range analyst.Predictions {
@@ -90,7 +90,7 @@ func BuildAnalystDetail(analyst model.Analyst, brandId int) (resp Analyst) {
 	return
 }
 
-func BuildFollowingList(followings []model.UserAnalystFollowing, brandId int) (resp []Analyst) {
+func BuildFollowingList(followings []model.UserAnalystFollowing, brandId model.BrandId) (resp []Analyst) {
 	resp = []Analyst{}
 	for _, a := range followings {
 		resp = append(resp, BuildAnalystDetail(a.Analyst, brandId))
