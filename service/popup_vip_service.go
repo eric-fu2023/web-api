@@ -31,7 +31,7 @@ func (service *VipService) Get(c *gin.Context) (data map[string]int64, err error
 	}
 	_, shown_err := service.Shown(c)
 	if shown_err != nil {
-		fmt.Println("vip shown_err: ", err)
+		fmt.Println("vip shown_err: ", shown_err)
 		return data, shown_err
 	}
 	return
