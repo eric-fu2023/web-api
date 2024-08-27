@@ -10,17 +10,17 @@ import (
 )
 
 type Prediction struct {
-	PredictionId    int64             `json:"prediction_id"`
-	AnalystId       int64             `json:"analyst_id"`
-	PredictionTitle string            `json:"prediction_title"`
-	PredictionDesc  string            `json:"prediction_desc"`
-	IsLocked        bool              `json:"is_locked"`
-	CreatedAt       time.Time         `json:"created_at"`
-	ViewCount       int64             `json:"view_count"`
-	SelectionList   []SelectionInfo   `json:"selection_list,omitempty"`
-	Status          int64             `json:"status"`
-	AnalystDetail   *Analyst          `json:"analyst_detail,omitempty"`
-	SportId         int64             `json:"sport_id"`
+	PredictionId    int64           `json:"prediction_id"`
+	AnalystId       int64           `json:"analyst_id"`
+	PredictionTitle string          `json:"prediction_title"`
+	PredictionDesc  string          `json:"prediction_desc"`
+	IsLocked        bool            `json:"is_locked"`
+	CreatedAt       time.Time       `json:"created_at"`
+	ViewCount       int64           `json:"view_count"`
+	SelectionList   []SelectionInfo `json:"selection_list,omitempty"`
+	Status          int64           `json:"status"`
+	AnalystDetail   *Analyst        `json:"analyst_detail,omitempty"`
+	SportId         int64           `json:"sport_id"`
 }
 
 type PredictedMatch struct {
@@ -101,28 +101,28 @@ type SelectionInfo struct {
 }
 
 type ImsbSelectionInfo struct {
-	BetID      string          `json:"bet_id"`
-	BetName    string          `json:"bet_name"`
-	BetStatus  int             `json:"bet_status"`
-	BetLocked  bool            `json:"bet_locked"`
-	BetTypeID  int             `json:"bet_type_id"`
-	BetMarket  int             `json:"bet_market"`
-	Match      ImsbMatchDetail `json:"match"`
-	OddsDetail []ImsbOddsDetail  `json:"odds"`
-	Priority   int             `json:"priority"`
+	BetID      string           `json:"bet_id"`
+	BetName    string           `json:"bet_name"`
+	BetStatus  int              `json:"bet_status"`
+	BetLocked  bool             `json:"bet_locked"`
+	BetTypeID  int              `json:"bet_type_id"`
+	BetMarket  int              `json:"bet_market"`
+	Match      ImsbMatchDetail  `json:"match"`
+	OddsDetail []ImsbOddsDetail `json:"odds"`
+	Priority   int              `json:"priority"`
 }
 
 type ImsbOddsDetail struct {
-	ID         int64   `json:"id"`
-	Name       string  `json:"name"`
-	Value      float64 `json:"value"`
-	Status     int     `json:"status"`
-	Market     int     `json:"market"`
-	IsLocked   bool    `json:"is_locked"`
-	OddsStatus int     `json:"odds_status"`
-	BetStatus  int     `json:"bet_status"`
-	PredictionStatus int `json:"predict_status"`
-	IsSelected bool `json:"is_selected"`
+	ID               int64   `json:"id"`
+	Name             string  `json:"name"`
+	Value            float64 `json:"value"`
+	Status           int     `json:"status"`
+	Market           int     `json:"market"`
+	IsLocked         bool    `json:"is_locked"`
+	OddsStatus       int     `json:"odds_status"`
+	BetStatus        int     `json:"bet_status"`
+	PredictionStatus int     `json:"predict_status"`
+	IsSelected       bool    `json:"is_selected"`
 }
 
 type ImsbMatchDetail struct {
@@ -131,7 +131,7 @@ type ImsbMatchDetail struct {
 	ImMatchID      int    `json:"im_match_id"`
 }
 
-func BuildPredictionsList(predictions []model.Prediction, page, limit, brandId int) (preds []Prediction) {
+func BuildPredictionsList(predictions []model.Prediction, page, limit int, brandId model.BrandId) (preds []Prediction) {
 	finalList := make([]Prediction, len(predictions))
 	for i, p := range predictions {
 		finalList[i] = BuildPrediction(p, false, false, brandId)
@@ -140,16 +140,42 @@ func BuildPredictionsList(predictions []model.Prediction, page, limit, brandId i
 }
 
 func BuildImsbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
+	// selectionList := []SelectionInfo{}
+	selectionList := BuildMockSelectionListImsb()
 
-	return 
+	if omitAnalyst {
+		pred = Prediction{
+			PredictionId:    prediction.ID,
+			AnalystId:       prediction.AnalystId,
+			PredictionTitle: prediction.Title,
+			PredictionDesc:  prediction.Content,
+			CreatedAt:       prediction.PublishedAt,
+			ViewCount:       int64(prediction.Views),
+			IsLocked:        prediction.PredictionResult == models.PredictionResultUnknown && isLocked,
+			SelectionList:   selectionList,
+			SportId:         int64(prediction.FbSportId),
+			Status:          int64(prediction.PredictionResult),
+		}
+	} else {
+		analyst := BuildAnalystDetail(prediction.AnalystDetail, model.BrandIdBatace)
+		pred = Prediction{
+			PredictionId:    prediction.ID,
+			AnalystId:       prediction.AnalystId,
+			PredictionTitle: prediction.Title,
+			PredictionDesc:  prediction.Content,
+			CreatedAt:       prediction.CreatedAt,
+			ViewCount:       int64(prediction.Views),
+			IsLocked:        prediction.PredictionResult == models.PredictionResultUnknown && isLocked,
+			SelectionList:   selectionList,
+			AnalystDetail:   &analyst,
+			SportId:         int64(prediction.FbSportId),
+			Status:          int64(prediction.PredictionResult),
+		}
+	}
+	return
 }
 
-func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool, brandId int) (pred Prediction) {
-
-	if brandId == 1002 {
-		return BuildMockImsbPrediction(prediction, omitAnalyst, isLocked)
-	}
-
+func BuildFbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
 	selectionList := []SelectionInfo{}
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
@@ -318,7 +344,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 			Status:          int64(prediction.PredictionResult),
 		}
 	} else {
-		analyst := BuildAnalystDetail(prediction.AnalystDetail, brandId)
+		analyst := BuildAnalystDetail(prediction.AnalystDetail, model.BrandIdAha)
 		pred = Prediction{
 			PredictionId:    prediction.ID,
 			AnalystId:       prediction.AnalystId,
@@ -334,6 +360,17 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 	}
 	return
+}
+
+func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool, brandId model.BrandId) (pred Prediction) {
+
+	switch brandId {
+	case model.BrandIdBatace: // batace
+		return BuildImsbPrediction(prediction, omitAnalyst, isLocked)
+
+	default:
+		return BuildFbPrediction(prediction, omitAnalyst, isLocked)
+	}
 }
 
 func SortPredictionList(predictions []Prediction, page, limit int) []Prediction {
@@ -441,6 +478,16 @@ func BuildMockImsbPrediction(prediction model.Prediction, omitAnalyst bool, isLo
 	return data
 
 }
+
+func BuildMockSelectionListImsb() (ls []SelectionInfo){
+	err := json.Unmarshal([]byte(mockSelectionList), &ls)
+
+	if err != nil {
+		return
+	}
+	return ls
+}
+
 var mockData = `
 {
    "prediction_id": 46,
@@ -609,3 +656,117 @@ var mockData = `
    "sport_id": 1
 }
 `
+var mockSelectionList = `
+[
+      {
+         "odds": [
+            {
+               "bet_id": "f041ea4b-f758-4bee-98ed-a105693585f1",
+               "bet_name": "Match - Head to Head (inc. Super Over) - Live",
+               "bet_status": 1,
+               "bet_locked": false,
+               "bet_type_id": 4,
+               "bet_market": 3,
+               "match": {
+                  "cricket_match_id": 0,
+                  "title": "Kolkata Knight Riders SRL VS Punjab Kings SRL",
+                  "im_match_id": 59249875
+               },
+               "odds": [
+                  {
+                     "id": 3574733796,
+                     "name": "Home",
+                     "value": 0,
+                     "status": 1,
+                     "market": 3,
+                     "is_locked": false,
+                     "odds_status": 1,
+                     "bet_status": 1,
+					 "predict_status":0,
+					 "is_selected":false
+                  },
+                  {
+                     "id": 3574733797,
+                     "name": "Away",
+                     "value": 0,
+                     "status": 1,
+                     "market": 3,
+                     "is_locked": false,
+                     "odds_status": 1,
+                     "bet_status": 1,
+					 "predict_status":2,
+					 "is_selected":true
+                  }
+               ],
+               "priority": 2
+            },
+            {
+               "bet_id": "d66c7792-8288-435b-b5d2-227829653987",
+               "bet_name": "Innings 1 - Total Runs for Over 3 - Punjab Kings SRL - Live",
+               "bet_status": 1,
+               "bet_locked": false,
+               "bet_type_id": 99,
+               "bet_market": 3,
+               "match": {
+                  "cricket_match_id": 0,
+                  "title": "Kolkata Knight Riders SRL VS Punjab Kings SRL",
+                  "im_match_id": 59249875
+               },
+               "odds": [
+                  {
+                     "id": 3576873744,
+                     "name": "Over 8.5",
+                     "value": 0,
+                     "status": 1,
+                     "market": 3,
+                     "is_locked": false,
+                     "odds_status": 1,
+                     "bet_status": 1,
+					 "predict_status":2,
+					 "is_selected":true
+                  },
+                  {
+                     "id": 3576873747,
+                     "name": "Under 8.5",
+                     "value": 0,
+                     "status": 1,
+                     "market": 3,
+                     "is_locked": false,
+                     "odds_status": 1,
+                     "bet_status": 1,
+					 "predict_status":1,
+					 "is_selected":true
+                  }
+               ],
+               "priority": 26
+            }
+         ],
+         "lg": {
+            "na": "爱尔兰甲级联赛",
+            "id": 10937,
+            "or": 1586,
+            "lurl": "https://static.fastbs55.com/data/b7156de3cd38c823863d7e35df595908.png",
+            "sid": 1,
+            "rid": 70,
+            "rnm": "爱尔兰",
+            "rlg": "https://static.fastbs55.com/data/28b56ea98e9c4b353e574757cb33d90f.png",
+            "hot": false,
+            "slid": 109370000
+         },
+         "ts": [
+            {
+               "na": "科布漫步者",
+               "id": 55479,
+               "lurl": "https://static.fastbs55.com/data/9970a75e1ee535a3c140cc0fcc3ab44c.png"
+            },
+            {
+               "na": "科克城",
+               "id": 55424,
+               "lurl": "https://static.fastbs55.com/data/53f5e1f95af79ac48ac756212df43a51.png"
+            }
+         ],
+         "id": 59249875,
+         "bt": 1724438700000
+      }
+   ]
+	  `
