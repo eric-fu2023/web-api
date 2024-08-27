@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -126,22 +127,36 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 			tx = tx.Where(`teamup_end_time >= ?`, start).Where(`teamup_end_time <= ?`, end)
 		}
 
-		tx = tx.Order(`teamups.status ASC`).Order(`teamup_end_time ASC`)
-		// tx = tx.Order(`
-		// 	CASE
-		// 		WHEN teamups.status = 0 THEN 0
-		// 		WHEN teamups.status IN (1, 2) THEN 1
-		// 		ELSE 2
-		// 	END ASC
-		// `).Order(`
-		// 	CASE
-		// 		WHEN teamups.status = 0 THEN teamup_end_time
-		// 		WHEN teamups.status IN (1, 2) THEN teamup_end_time DESC
-		// 		ELSE NULL
-		// 	END
-		// `)
+		switch {
+		case len(status) == 1:
+			tx = tx.Order(`teamup_end_time ASC`)
+		case len(status) == 2:
+			tx = tx.Order(`teamup_end_time DESC`)
+		case len(status) == 3:
+			tx = tx.Order(`teamups.status ASC`).Order(`teamup_end_time DESC`)
+		}
 
 		err = tx.Scopes(Paginate(page, limit)).Scan(&res).Error
+
+		// 成功和失败按照时间排序
+		endedStartIndex := 0
+		endedEndIndex := len(res) - 1
+
+		if len(status) == 3 {
+			for i, t := range res {
+				if t.Status != 0 {
+					endedStartIndex = i
+					break
+				}
+			}
+		}
+
+		if endedStartIndex >= 0 && endedEndIndex < len(res) && endedStartIndex <= endedEndIndex {
+			sort.Slice(res[endedStartIndex:endedEndIndex+1], func(i, j int) bool {
+				return res[endedStartIndex+i].TeamupCompletedTime > res[endedStartIndex+j].TeamupCompletedTime
+			})
+		}
+
 		return
 	})
 
