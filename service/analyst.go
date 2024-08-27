@@ -112,6 +112,7 @@ func (p AnalystService) GetFollowingAnalystList(c *gin.Context) (r serializer.Re
 	// brand := c.MustGet(`_brand`).(int)
 	// deviceInfo, _ := util.GetDeviceInfo(c)
 	u, _ := c.Get("user")
+	brandId := c.MustGet("_brand").(int)
 
 	user := model.User{}
 	if u != nil {
@@ -123,7 +124,7 @@ func (p AnalystService) GetFollowingAnalystList(c *gin.Context) (r serializer.Re
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
-	r.Data = serializer.BuildFollowingList(followings)
+	r.Data = serializer.BuildFollowingList(followings, brandId)
 	return
 }
 

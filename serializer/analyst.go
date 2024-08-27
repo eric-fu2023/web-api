@@ -90,10 +90,10 @@ func BuildAnalystDetail(analyst model.Analyst, brandId int) (resp Analyst) {
 	return
 }
 
-func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst) {
+func BuildFollowingList(followings []model.UserAnalystFollowing, brandId int) (resp []Analyst) {
 	resp = []Analyst{}
 	for _, a := range followings {
-		resp = append(resp, BuildAnalystDetail(a.Analyst, 3001)) // TODO : add brand id
+		resp = append(resp, BuildAnalystDetail(a.Analyst, brandId))
 	}
 	return
 }
