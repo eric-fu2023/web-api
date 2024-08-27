@@ -144,12 +144,7 @@ func BuildImsbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked
 	return 
 }
 
-func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool, brandId int) (pred Prediction) {
-
-	if brandId == 1002 {
-		return BuildMockImsbPrediction(prediction, omitAnalyst, isLocked)
-	}
-
+func BuildFbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
 	selectionList := []SelectionInfo{}
 	// get all odds id that the analyst had selected
 	allSelectedOddsId := make([]int64, len(prediction.PredictionSelections))
@@ -334,6 +329,17 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 		}
 	}
 	return
+}
+
+func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool, brandId int) (pred Prediction) {
+
+	switch brandId {
+	case 1002 : // batace
+		return BuildMockImsbPrediction(prediction, omitAnalyst, isLocked)
+
+	default : 
+		return BuildFbPrediction(prediction, omitAnalyst, isLocked)
+	}
 }
 
 func SortPredictionList(predictions []Prediction, page, limit int) []Prediction {
