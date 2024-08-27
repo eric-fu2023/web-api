@@ -3,8 +3,6 @@ package cashin
 import (
 	"encoding/json"
 	"errors"
-	"log"
-	"strconv"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/exchange"
@@ -165,7 +163,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
 
 	// 查看是否有砍单记录，添加进度到砍单任务
-	go calculateTeamupSlashProgress(cashOrder, user.ID)
+	// go calculateTeamupSlashProgress(cashOrder, user.ID)
 
 	return
 }
@@ -213,29 +211,4 @@ func processCashInMethod(m model.CashMethod) (err error) {
 		return errors.New("cash method not permitted")
 	}
 	return nil
-}
-
-func calculateTeamupSlashProgress(cashOrder model.CashOrder, userId int64) {
-	slashMultiplierString, err := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
-	if err != nil {
-		log.Printf("Get Slash Multiplier err - %v \n", err)
-		return
-	}
-	slashMultiplier, err := strconv.Atoi(slashMultiplierString)
-	if err != nil {
-		log.Printf("Get Slash Multiplier err - %v \n", err)
-		return
-	}
-
-	if cashOrder.AppliedCashInAmount < int64(slashMultiplier) {
-		return
-	}
-
-	// Convert cash amount into slash progress by dividing multiplier
-	contributedSlashProgress := cashOrder.AppliedCashInAmount / int64(slashMultiplier)
-	err = model.GetTeamupProgressToUpdate(userId, cashOrder.AppliedCashInAmount, contributedSlashProgress)
-	if err != nil {
-		log.Print(err.Error())
-		return
-	}
 }
