@@ -461,6 +461,9 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 					outgoingBet.HomeIcon = res[i].HomeIcon
 					outgoingBet.AwayIcon = res[i].AwayIcon
 					outgoingBet.LeagueName = betImsb.GetCompetitionName()
+					outgoingBet.MarketName = betImsb.BetType
+					outgoingBet.OptionName = betImsb.Selection + " " + fmt.Sprint(betImsb.Odds)
+					outgoingBet.MatchName = betImsb.EventName
 
 					if res[i].IsParlay {
 						outgoingBet.MatchName = res[i].BetType
