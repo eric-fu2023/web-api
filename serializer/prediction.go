@@ -10,17 +10,17 @@ import (
 )
 
 type Prediction struct {
-	PredictionId    int64             `json:"prediction_id"`
-	AnalystId       int64             `json:"analyst_id"`
-	PredictionTitle string            `json:"prediction_title"`
-	PredictionDesc  string            `json:"prediction_desc"`
-	IsLocked        bool              `json:"is_locked"`
-	CreatedAt       time.Time         `json:"created_at"`
-	ViewCount       int64             `json:"view_count"`
-	SelectionList   []SelectionInfo   `json:"selection_list,omitempty"`
-	Status          int64             `json:"status"`
-	AnalystDetail   *Analyst          `json:"analyst_detail,omitempty"`
-	SportId         int64             `json:"sport_id"`
+	PredictionId    int64           `json:"prediction_id"`
+	AnalystId       int64           `json:"analyst_id"`
+	PredictionTitle string          `json:"prediction_title"`
+	PredictionDesc  string          `json:"prediction_desc"`
+	IsLocked        bool            `json:"is_locked"`
+	CreatedAt       time.Time       `json:"created_at"`
+	ViewCount       int64           `json:"view_count"`
+	SelectionList   []SelectionInfo `json:"selection_list,omitempty"`
+	Status          int64           `json:"status"`
+	AnalystDetail   *Analyst        `json:"analyst_detail,omitempty"`
+	SportId         int64           `json:"sport_id"`
 }
 
 type PredictedMatch struct {
@@ -101,28 +101,28 @@ type SelectionInfo struct {
 }
 
 type ImsbSelectionInfo struct {
-	BetID      string          `json:"bet_id"`
-	BetName    string          `json:"bet_name"`
-	BetStatus  int             `json:"bet_status"`
-	BetLocked  bool            `json:"bet_locked"`
-	BetTypeID  int             `json:"bet_type_id"`
-	BetMarket  int             `json:"bet_market"`
-	Match      ImsbMatchDetail `json:"match"`
-	OddsDetail []ImsbOddsDetail  `json:"odds"`
-	Priority   int             `json:"priority"`
+	BetID      string           `json:"bet_id"`
+	BetName    string           `json:"bet_name"`
+	BetStatus  int              `json:"bet_status"`
+	BetLocked  bool             `json:"bet_locked"`
+	BetTypeID  int              `json:"bet_type_id"`
+	BetMarket  int              `json:"bet_market"`
+	Match      ImsbMatchDetail  `json:"match"`
+	OddsDetail []ImsbOddsDetail `json:"odds"`
+	Priority   int              `json:"priority"`
 }
 
 type ImsbOddsDetail struct {
-	ID         int64   `json:"id"`
-	Name       string  `json:"name"`
-	Value      float64 `json:"value"`
-	Status     int     `json:"status"`
-	Market     int     `json:"market"`
-	IsLocked   bool    `json:"is_locked"`
-	OddsStatus int     `json:"odds_status"`
-	BetStatus  int     `json:"bet_status"`
-	PredictionStatus int `json:"predict_status"`
-	IsSelected bool `json:"is_selected"`
+	ID               int64   `json:"id"`
+	Name             string  `json:"name"`
+	Value            float64 `json:"value"`
+	Status           int     `json:"status"`
+	Market           int     `json:"market"`
+	IsLocked         bool    `json:"is_locked"`
+	OddsStatus       int     `json:"odds_status"`
+	BetStatus        int     `json:"bet_status"`
+	PredictionStatus int     `json:"predict_status"`
+	IsSelected       bool    `json:"is_selected"`
 }
 
 type ImsbMatchDetail struct {
@@ -141,7 +141,7 @@ func BuildPredictionsList(predictions []model.Prediction, page, limit, brandId i
 
 func BuildImsbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
 
-	return 
+	return
 }
 
 func BuildFbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
@@ -334,10 +334,10 @@ func BuildFbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked b
 func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool, brandId int) (pred Prediction) {
 
 	switch brandId {
-	case 1002 : // batace
+	case 1002: // batace
 		return BuildMockImsbPrediction(prediction, omitAnalyst, isLocked)
 
-	default : 
+	default:
 		return BuildFbPrediction(prediction, omitAnalyst, isLocked)
 	}
 }
@@ -447,6 +447,7 @@ func BuildMockImsbPrediction(prediction model.Prediction, omitAnalyst bool, isLo
 	return data
 
 }
+
 var mockData = `
 {
    "prediction_id": 46,
