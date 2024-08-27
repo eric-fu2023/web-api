@@ -2,6 +2,8 @@ package cashin
 
 import (
 	"context"
+	"log"
+	"strconv"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
@@ -53,6 +55,9 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		if err != nil {
 			return
 		}
+
+		// 查看是否有砍单记录，添加进度到砍单任务
+		go calculateTeamupSlashProgress(newCashOrderState.AppliedCashInAmount, newCashOrderState.UserId)
 		return
 	})
 	if err == nil {
@@ -102,4 +107,29 @@ func HandleSmPixelReporting(c context.Context, order model.CashOrder) {
 	}
 
 	social_media_pixel.ReportPayment(c, user, paymentDetails)
+}
+
+func calculateTeamupSlashProgress(appliedCashInAmount, userId int64) {
+	slashMultiplierString, err := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
+	if err != nil {
+		log.Printf("Get Slash Multiplier err - %v \n", err)
+		return
+	}
+	slashMultiplier, err := strconv.Atoi(slashMultiplierString)
+	if err != nil {
+		log.Printf("Get Slash Multiplier err - %v \n", err)
+		return
+	}
+
+	if appliedCashInAmount < int64(slashMultiplier) {
+		return
+	}
+
+	// Convert cash amount into slash progress by dividing multiplier
+	contributedSlashProgress := appliedCashInAmount / int64(slashMultiplier)
+	err = model.GetTeamupProgressToUpdate(userId, appliedCashInAmount, contributedSlashProgress)
+	if err != nil {
+		log.Print(err.Error())
+		return
+	}
 }
