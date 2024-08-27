@@ -17,7 +17,6 @@ type Analyst struct {
 	Accuracy         int          `json:"accuracy"`
 	NumFollowers     int          `json:"num_followers"`
 	TotalPredictions int          `json:"total_predictions"`
-	Predictions      []Prediction `json:"predictions"`
 	RecentTotal      int          `json:"recent_total"`
 	RecentWins       int          `json:"recent_wins"`
 
@@ -55,12 +54,6 @@ func BuildAnalystsList(analysts []model.Analyst, brandId model.BrandId) (resp []
 }
 
 func BuildAnalystDetail(analyst model.Analyst, brandId model.BrandId) (resp Analyst) {
-	predictions := make([]Prediction, len(analyst.Predictions))
-
-	for i, pred := range analyst.Predictions {
-		predictions[i] = BuildPrediction(pred, true, false, brandId)
-	}
-
 	summary := ploutos.PredictionAnalystSummary{}
 	for _, s := range analyst.Summaries{
 		if s.FbSportId == 0 { // overall results
@@ -75,9 +68,8 @@ func BuildAnalystDetail(analyst model.Analyst, brandId model.BrandId) (resp Anal
 		AnalystSource:    Source{Name: analyst.PredictionAnalystSource.SourceName, Icon: Url(analyst.PredictionAnalystSource.IconUrl)},
 		AnalystImage:     Url(analyst.AvatarUrl),
 		AnalystDesc:      analyst.AnalystDesc,
-		Predictions:      predictions,
 		NumFollowers:     len(analyst.PredictionAnalystFollowers),
-		TotalPredictions: len(analyst.Predictions),
+		TotalPredictions: summary.TotalArticles,
 		WinningStreak:    summary.RecentStreak,
 		Accuracy:         summary.Accuracy,
 		RecentTotal:      summary.RecentTotal,

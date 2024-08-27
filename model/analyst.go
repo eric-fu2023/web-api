@@ -25,12 +25,6 @@ func preloadAnalyst() *gorm.DB {
 		Preload("PredictionAnalystSource").
 		Preload("PredictionAnalystFollowers").
 		Preload("Predictions", AnalystPredictionFilter).
-		Preload("Predictions.PredictionSelections").
-		Preload("Predictions.PredictionSelections.FbOdds").
-		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
-		Preload("Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
-		Preload("Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).
-		Preload("Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Preload("Summaries").
 		Where("is_active", true)
 }
@@ -77,13 +71,6 @@ func GetFollowingAnalystList(c context.Context, userId int64, page, limit int) (
 		Preload("Analyst").
 		Preload("Analyst.PredictionAnalystSource").
 		Preload("Analyst.PredictionAnalystFollowers").
-		Preload("Analyst.Predictions", AnalystPredictionFilter).
-		Preload("Analyst.Predictions.PredictionSelections").
-		Preload("Analyst.Predictions.PredictionSelections.FbOdds").
-		Preload("Analyst.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList").
-		Preload("Analyst.Predictions.PredictionSelections.FbOdds.FbOddsOrderRequestList.TayaBetReport").
-		Preload("Analyst.Predictions.PredictionSelections.FbOdds.RelatedOdds", SortFbOddsByShortName).
-		Preload("Analyst.Predictions.PredictionSelections.FbOdds.MarketGroupInfo").
 		Preload("Analyst.Summaries").
 		Joins("JOIN prediction_analysts on prediction_analyst_followers.analyst_id = prediction_analysts.id").
 		WithContext(c).
