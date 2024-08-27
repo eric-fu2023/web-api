@@ -127,7 +127,7 @@ func ShouldPopupSpin(user User, spin_id int) (bool, error) {
 }
 
 func GetPopupList(condition int64) (resp_list []ploutos.Popups, err error) {
-	err = DB.Model(ploutos.Popups{}).Where("condition = ?", condition).
+	err = DB.Debug().Model(ploutos.Popups{}).Where("condition = ?", condition).
 		Find(&resp_list).Error
 	return
 }

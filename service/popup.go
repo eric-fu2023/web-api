@@ -34,6 +34,14 @@ type PopupFloat struct {
 func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, err error) {
 	// check what to popup
 	PopupTypes, err := model.GetPopupList(service.Condition)
+	if err!=nil{
+		fmt.Println("get PopupTypes error", err)
+	}
+
+	for _, popup := range PopupTypes {
+		fmt.Println("PopupTypes type", popup.PopupType)
+		fmt.Println("PopupTypes can float", popup.CanFloat)
+	}
 
 	u, isUser := c.Get("user")
 	if !isUser {
@@ -111,10 +119,12 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 
 		ShouldVIP, err := model.ShouldPopupVIP(user)
 		fmt.Println("ShouldPopUpVIP", ShouldVIP)
+		fmt.Println("VIPAvailable", VIPAvailable(PopupTypes))
 		if err != nil {
 			return r, err
 		}
 		if ShouldVIP && VIPAvailable(PopupTypes) {
+			fmt.Println("return vip popup")
 			var service VipService
 			data, err := service.Get(c)
 			if err != nil {
