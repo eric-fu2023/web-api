@@ -136,43 +136,7 @@ func BuildPredictionsList(predictions []model.Prediction, brandId model.BrandId)
 	for i, p := range predictions {
 		finalList[i] = BuildPrediction(p, false, false, brandId)
 	}
-	return finalList
-}
-
-func BuildImsbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
-	// selectionList := []SelectionInfo{}
-	selectionList := BuildMockSelectionListImsb()
-
-	if omitAnalyst {
-		pred = Prediction{
-			PredictionId:    prediction.ID,
-			AnalystId:       prediction.AnalystId,
-			PredictionTitle: prediction.Title,
-			PredictionDesc:  prediction.Content,
-			CreatedAt:       prediction.PublishedAt,
-			ViewCount:       int64(prediction.Views),
-			IsLocked:        prediction.PredictionResult == models.PredictionResultUnknown && isLocked,
-			SelectionList:   selectionList,
-			SportId:         int64(prediction.FbSportId),
-			Status:          int64(prediction.PredictionResult),
-		}
-	} else {
-		analyst := BuildAnalystDetail(prediction.AnalystDetail, model.BrandIdBatace)
-		pred = Prediction{
-			PredictionId:    prediction.ID,
-			AnalystId:       prediction.AnalystId,
-			PredictionTitle: prediction.Title,
-			PredictionDesc:  prediction.Content,
-			CreatedAt:       prediction.CreatedAt,
-			ViewCount:       int64(prediction.Views),
-			IsLocked:        prediction.PredictionResult == models.PredictionResultUnknown && isLocked,
-			SelectionList:   selectionList,
-			AnalystDetail:   &analyst,
-			SportId:         int64(prediction.FbSportId),
-			Status:          int64(prediction.PredictionResult),
-		}
-	}
-	return
+	return SortPredictionList(finalList, page, limit)
 }
 
 func BuildFbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
@@ -362,19 +326,7 @@ func BuildFbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked b
 	return
 }
 
-func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool, brandId model.BrandId) (pred Prediction) {
-
-	switch brandId {
-	case model.BrandIdBatace: // batace
-		return BuildImsbPrediction(prediction, omitAnalyst, isLocked)
-
-	default:
-		return BuildFbPrediction(prediction, omitAnalyst, isLocked)
-	}
-}
-
-// deprecated
-func SortPredictionList(predictions []Prediction, page, limit int) []Prediction {
+func SortPredictionList(predictions []Prediction, page,limit int) []Prediction {
 	// sort by status.. unsettled then settled
 	// then in each grp, sort by （命中率 50%，近X中X 50%）
 	unsettled := []Prediction{}
