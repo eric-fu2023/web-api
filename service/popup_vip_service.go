@@ -21,6 +21,7 @@ func (service *VipService) Get(c *gin.Context) (data map[string]int64, err error
 	user := u.(model.User)
 	vip, err := model.GetVipWithDefault(nil, user.ID)
 	if err != nil {
+		fmt.Println("GetVipWithDefault err: ", err)
 		return
 	}
 	currentVipRule := vip.VipRule
@@ -30,6 +31,7 @@ func (service *VipService) Get(c *gin.Context) (data map[string]int64, err error
 	}
 	_, shown_err := service.Shown(c)
 	if shown_err != nil {
+		fmt.Println("vip shown_err: ", err)
 		return data, shown_err
 	}
 	return
