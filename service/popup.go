@@ -240,17 +240,15 @@ func GetFloatWindow(user model.User, popup_types []models.Popups) (floats []Popu
 				spin_promotion_id_int, err := strconv.Atoi(popup_type.Meta)
 				spin_id_int, err := service.GetSpinIdFromPromotionId(spin_promotion_id_int)
 				// check if user still has spin chances
-				remaining_spin_counts, err := service.GetRemainingSpinCount(user, spin_id_int)
 				if err != nil {
+					fmt.Println("GetSpinIdFromPromotionId err")
 					return nil, err
 				}
-				if remaining_spin_counts > 0 {
 					// user still can spin, then we add the spin popup to float list.
 					floats = append(floats, PopupFloat{
 						Type: 5,
 						Id:   spin_id_int,
 					})
-				}
 			}
 		}
 	}
