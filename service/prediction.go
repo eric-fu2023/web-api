@@ -69,7 +69,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 			}
 
 			r.Msg = i18n.T("success")
-			r.Data = serializer.BuildPredictionsList(predictions, service.Page.Page, service.Limit, model.BrandId(brandId))
+			r.Data = serializer.BuildPredictionsList(predictions, model.BrandId(brandId))
 			return
 
 		} else {
@@ -86,7 +86,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 			}
 
 			r.Msg = i18n.T("success")
-			r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions, service.Page.Page, service.Limit, model.BrandId(brandId))
+			r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions, model.BrandId(brandId))
 			return
 		}
 
@@ -104,7 +104,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 		}
 
 		r.Msg = i18n.T("success")
-		r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions[:1],service.Page.Page, service.Limit, model.BrandId(brandId))
+		r.Data = serializer.BuildUserPredictionsWithLock(predictions, userPredictions[:1], model.BrandId(brandId))
 		return
 	}
 
