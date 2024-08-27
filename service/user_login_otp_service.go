@@ -241,12 +241,13 @@ func LogSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time, lo
 			if err = model.LogAuthEvent(lastAuthEvent[0]); err != nil {
 				util.GetLoggerEntry(c).Errorf("Log auth event error: %s", err.Error())
 			}
+			time.Sleep(1 * time.Millisecond)
 		}
 	}
 	event := model.AuthEvent{
 		AuthEvent: ploutos.AuthEvent{
 			UserId:      user.ID,
-			Type:        consts.AuthEventType["logout"],
+			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["successful"],
 			DateTime:    loginTime.Format(time.DateTime),
 			LoginMethod: loginMethod,
