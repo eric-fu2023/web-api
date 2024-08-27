@@ -110,7 +110,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		}
 
 		ShouldVIP, err := model.ShouldPopupVIP(user)
-		fmt.Println("ShouldVIP", ShouldVIP)
+		fmt.Println("ShouldPopUpVIP", ShouldVIP)
 		if err != nil {
 			return r, err
 		}
@@ -134,7 +134,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		spin_id_int, _ := spin_service.GetSpinIdFromPromotionId(spin_promotion_id_int)
 		ShouldPopupSpin, err := model.ShouldPopupSpin(user, spin_id_int)
 		fmt.Println("ShouldPopupSpin", ShouldPopupSpin)
-		fmt.Println("should_spin", should_spin)
+		fmt.Println("ShouldPopupSpin", should_spin)
 		if err != nil {
 			return r, err
 		}

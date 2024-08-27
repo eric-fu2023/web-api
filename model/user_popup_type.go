@@ -55,10 +55,14 @@ func ShouldPopupVIP(user User) (bool, error) {
 	res:=cache.RedisClient.HGet(context.Background(), key, strconv.FormatInt(user.ID, 10))
 	vip, err := GetVipWithDefault(nil, user.ID)
 	current_vip_level := vip.VipRule.VIPLevel
+	fmt.Println("current_vip_level", current_vip_level)
+
 	if res.Err() == redis.Nil {
+		fmt.Println("vip_level not found in redis")
 		// if no vip level up record, we check if user vip level is more than 0
-		if current_vip_level> 0{
-			res:=cache.RedisClient.HSet(context.Background(), key, strconv.FormatInt(user.ID, 10), vip.VipRule.VIPLevel)
+		if current_vip_level > 0{
+			fmt.Println("vip_level larger than 0")
+			res := cache.RedisClient.HSet(context.Background(), key, strconv.FormatInt(user.ID, 10), vip.VipRule.VIPLevel)
 			if res.Err() != nil{
 				fmt.Println("update downgrade vip level failed, ", res.Err().Error())
 			}
@@ -69,7 +73,7 @@ func ShouldPopupVIP(user User) (bool, error) {
 		}
 	}
 	if res.Err() != nil && res.Err() != redis.Nil{
-		fmt.Println("resdis error0")
+		fmt.Println("get vip redis error")
 		return false, res.Err()
 	}
 	previous_vip_level, err := strconv.ParseInt(res.Val(),10,64)
@@ -103,6 +107,7 @@ func ShouldPopupSpin(user User, spin_id int) (bool, error) {
 	err := DB.Model(ploutos.SpinResult{}).Where("user_id = ? AND spin_id = ?", user.ID, spin_id).Where("created_at > ?", startOfToday).Order("created_at DESC").Find(&previous_spin_result).Error
 
 	if err==nil || errors.Is(err, logger.ErrRecordNotFound) {
+		fmt.Println("get spin result error, but the error is no records",err)
 		// if spin result not found
 		err = nil
 		Shown(user)
@@ -112,6 +117,8 @@ func ShouldPopupSpin(user User, spin_id int) (bool, error) {
 	err = DB.Model(ploutos.Spins{}).Where("id = ?", spin_id).Find(&spin).Error
 	// if not displayed today
 	if len(previous_spin_result) < spin.Counts {
+		fmt.Println("get spin result length ",len(previous_spin_result))
+		fmt.Println("get spin counts ",spin.Counts)
 		Shown(user)
 		return true, nil
 	}
@@ -128,10 +135,10 @@ func GetPopupList(condition int64) (resp_list []ploutos.Popups, err error) {
 func Shown(user User) ( err error) {
 	key := "popup/records/" + time.Now().Format("2006-01-02")
 	res := cache.RedisClient.HSet(context.Background(), key, user.ID, "5")
-	expire_time, err := strconv.Atoi(os.Getenv("POPUP_RECORD_EXPIRE_MINS"))
-	cache.RedisClient.ExpireNX(context.Background(), key, time.Duration(expire_time)*time.Minute)
 	if res.Err() != nil {
 		fmt.Print("insert win lose popup record into redis failed ", key)
 	}
+	expire_time, err := strconv.Atoi(os.Getenv("POPUP_RECORD_EXPIRE_MINS"))
+	cache.RedisClient.ExpireNX(context.Background(), key, time.Duration(expire_time)*time.Minute)
 	return
 }

@@ -166,7 +166,7 @@ func (service *SpinService) GetSpinIdFromPromotionId(spin_promotion_id int) (spi
 	var spin ploutos.Spins
 	err = model.DB.Debug().Model(ploutos.Spins{}).Where("promotion_id = ?", spin_promotion_id).Find(&spin).Error
 	if err!=nil{
-		fmt.Println("get spin id errpr",err)
+		fmt.Println("get spin id error",err)
 	}
 	fmt.Println("get spin ",spin.ID)
 	return int(spin.ID), err
