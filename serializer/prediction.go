@@ -131,12 +131,12 @@ type ImsbMatchDetail struct {
 	ImMatchID      int    `json:"im_match_id"`
 }
 
-func BuildPredictionsList(predictions []model.Prediction, page, limit int, brandId model.BrandId) (preds []Prediction) {
+func BuildPredictionsList(predictions []model.Prediction, brandId model.BrandId) (preds []Prediction) {
 	finalList := make([]Prediction, len(predictions))
 	for i, p := range predictions {
 		finalList[i] = BuildPrediction(p, false, false, brandId)
 	}
-	return SortPredictionList(finalList, page, limit)
+	return finalList
 }
 
 func BuildImsbPrediction(prediction model.Prediction, omitAnalyst bool, isLocked bool) (pred Prediction) {
@@ -373,6 +373,7 @@ func BuildPrediction(prediction model.Prediction, omitAnalyst bool, isLocked boo
 	}
 }
 
+// deprecated
 func SortPredictionList(predictions []Prediction, page, limit int) []Prediction {
 	// sort by status.. unsettled then settled
 	// then in each grp, sort by （命中率 50%，近X中X 50%）
