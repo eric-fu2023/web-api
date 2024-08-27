@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -126,17 +127,42 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 			tx = tx.Where(`teamup_end_time >= ?`, start).Where(`teamup_end_time <= ?`, end)
 		}
 
-		tx = tx.Order(`teamup_end_time ASC`)
+		switch {
+		case len(status) == 1:
+			tx = tx.Order(`teamup_end_time ASC`)
+		case len(status) == 2:
+			tx = tx.Order(`teamup_end_time DESC`)
+		case len(status) == 3:
+			tx = tx.Order(`teamups.status ASC`).Order(`teamup_end_time DESC`)
+		}
 
 		err = tx.Scopes(Paginate(page, limit)).Scan(&res).Error
+
+		// 成功和失败按照时间排序
+		endedStartIndex := 0
+		endedEndIndex := len(res) - 1
+
+		if len(status) == 3 {
+			for i, t := range res {
+				if t.Status != 0 {
+					endedStartIndex = i
+					break
+				}
+			}
+		}
+
+		if endedStartIndex >= 0 && endedEndIndex < len(res) && endedStartIndex <= endedEndIndex {
+			sort.Slice(res[endedStartIndex:endedEndIndex+1], func(i, j int) bool {
+				return res[endedStartIndex+i].TeamupCompletedTime > res[endedStartIndex+j].TeamupCompletedTime
+			})
+		}
+
 		return
 	})
 
 	if err != nil {
 		return
 	}
-
-	err = failTeamup(res)
 
 	return
 }
@@ -154,8 +180,6 @@ func GetCustomTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) 
 	if err != nil {
 		return
 	}
-
-	err = failTeamup(res)
 
 	return
 }
@@ -212,31 +236,6 @@ func UpdateTeamupProgress(tx *gorm.DB, teamupId, amount, slashAmount int64) erro
 		}
 		return nil
 	})
-}
-
-func failTeamup(res TeamupCustomRes) (err error) {
-	tsNow := time.Now().UTC().Unix()
-	hasFailedTeamup := false
-	for i, tu := range res {
-		if tsNow > tu.TeamupEndTime {
-			res[i].Status = 2
-			if !hasFailedTeamup {
-				err = updateTeamupStatusToFail(tsNow)
-				hasFailedTeamup = true
-			}
-		}
-	}
-
-	return
-}
-
-func updateTeamupStatusToFail(tsNow int64) (err error) {
-	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Model(&ploutos.Teamup{}).Where("teamup_end_time < ?", tsNow).Update("status", ploutos.TeamupStatusFail).Error
-		return
-	})
-
-	return
 }
 
 func GetRecentCompletedSuccessTeamup(numMinutes int64) (res TeamupSuccess, err error) {

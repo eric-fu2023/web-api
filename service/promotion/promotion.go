@@ -79,7 +79,7 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 	for i, promotionCover := range promotionCoverList {
 		childrenPromotions, exists := parentIdToPromotionMap[promotionCover.ID]
 		if exists {
-			promotionCoverList[i].IsCustom = true
+			promotionCoverList[i].IsCustom = false
 			promotionCoverList[i].ChildrenPromotions = childrenPromotions
 		}
 	}
@@ -99,46 +99,71 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 	user, _ := u.(model.User)
 	deviceInfo, _ := util.GetDeviceInfo(c)
 
-	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
+	var promotion models.Promotion
+	if p.ID == 99999 {
+		// TODO : remove mock data
+		promotion = models.Promotion{
+			Type: int(models.PromotionTypeNewbie),
+		}
+	} else {
+		promotion, err = model.PromotionGetActive(c, brand, p.ID, now)
+	}
+
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
 	// tz := time.FixedZone("local", int(promotion.Timezone))
 	// now = now.In(tz)
-	session, err := model.PromotionSessionGetActive(c, p.ID, now)
-	if err != nil {
-		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
-		return
-	}
+
 	var (
 		progress    int64
 		reward      int64
 		claimStatus serializer.ClaimStatus
 		voucherView serializer.Voucher
 		extra       any
+		session     models.PromotionSession
+
+		customData any
+		newbieData any
 	)
-	if loggedIn {
-		progress = ProgressByType(c, promotion, session, user.ID, now)
-		claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
-		reward, _, _, err = RewardByType(c, promotion, session, user.ID, progress, now)
-		extra = ExtraByType(c, promotion, session, user.ID, progress, now)
-	}
-	if claimStatus.HasClaimed {
-		v, err := model.VoucherGetByUserSession(c, user.ID, session.ID)
+
+	switch int64(promotion.Type) {
+
+	case models.PromotionTypeCustomTemplate:
+		customData = "anything"
+
+	case models.PromotionTypeNewbie:
+		newbieData = serializer.BuildDummyNewbiePromotion()
+
+	default: // default promotion type..
+		session, err := model.PromotionSessionGetActive(c, p.ID, now)
 		if err != nil {
-		} else {
-			voucherView = serializer.BuildVoucher(v, deviceInfo.Platform)
+			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+			return r, err
 		}
-	} else {
-		v, err := model.VoucherTemplateGetByPromotion(c, p.ID)
-		if err != nil {
+		if loggedIn {
+			progress = ProgressByType(c, promotion, session, user.ID, now)
+			claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
+			reward, _, _, err = RewardByType(c, promotion, session, user.ID, progress, now)
+			extra = ExtraByType(c, promotion, session, user.ID, progress, now)
+		}
+		if claimStatus.HasClaimed {
+			v, err := model.VoucherGetByUserSession(c, user.ID, session.ID)
+			if err != nil {
+			} else {
+				voucherView = serializer.BuildVoucher(v, deviceInfo.Platform)
+			}
 		} else {
-			voucherView = serializer.BuildVoucherFromTemplate(v, reward, deviceInfo.Platform)
+			v, err := model.VoucherTemplateGetByPromotion(c, p.ID)
+			if err != nil {
+			} else {
+				voucherView = serializer.BuildVoucherFromTemplate(v, reward, deviceInfo.Platform)
+			}
 		}
 	}
 
-	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, session, voucherView, claimStatus, extra)
+	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, session, voucherView, claimStatus, extra, customData, newbieData)
 	return
 }
 
@@ -147,6 +172,10 @@ type PromotionCustomDetail struct {
 }
 
 func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, err error) {
+	if p.ID == 99999 { // TODO remove temporary
+		return
+	}
+
 	now := time.Now()
 	brand := c.MustGet(`_brand`).(int)
 	u, _ := c.Get("user")
@@ -167,7 +196,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 	if promotion.ParentId == 0 {
 		parentPromotion = promotion
 	} else {
-		outgoingRes.IsCustomPromotion = true
+		outgoingRes.IsCustomPromotion = false
 		parentPromotion, err = model.PromotionGetActive(c, brand, promotion.ParentId, now)
 		if err != nil {
 			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -196,7 +225,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		}
 
 		for _, subPromo := range subPromotions {
-			outgoingRes.IsCustomPromotion = true
+			outgoingRes.IsCustomPromotion = false
 			incomingMatchList := serializer.IncomingPromotionMatchList{}
 			_ = json.Unmarshal(subPromo.SubpageContent, &incomingMatchList)
 

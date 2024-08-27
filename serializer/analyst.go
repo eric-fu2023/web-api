@@ -17,7 +17,6 @@ type Analyst struct {
 	Accuracy         int          `json:"accuracy"`
 	NumFollowers     int          `json:"num_followers"`
 	TotalPredictions int          `json:"total_predictions"`
-	Predictions      []Prediction `json:"predictions"`
 	RecentTotal      int          `json:"recent_total"`
 	RecentWins       int          `json:"recent_wins"`
 
@@ -43,24 +42,18 @@ type Achievement struct {
 	IsShowRecentResult bool `json:"is_show_recent_result"`
 }
 
-func BuildAnalystsList(analysts []model.Analyst) (resp []Analyst) {
+func BuildAnalystsList(analysts []model.Analyst, brandId model.BrandId) (resp []Analyst) {
 	resp = []Analyst{}
 	for _, a := range analysts {
 		// only display analysts with published PredictionArticles
 		if len(a.Predictions) > 0 {
-			resp = append(resp, BuildAnalystDetail(a))
+			resp = append(resp, BuildAnalystDetail(a, brandId))
 		}
 	}
 	return
 }
 
-func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
-	predictions := make([]Prediction, len(analyst.Predictions))
-
-	for i, pred := range analyst.Predictions {
-		predictions[i] = BuildPrediction(pred, true, false)
-	}
-
+func BuildAnalystDetail(analyst model.Analyst, brandId model.BrandId) (resp Analyst) {
 	summary := ploutos.PredictionAnalystSummary{}
 	for _, s := range analyst.Summaries{
 		if s.FbSportId == 0 { // overall results
@@ -75,9 +68,8 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 		AnalystSource:    Source{Name: analyst.PredictionAnalystSource.SourceName, Icon: Url(analyst.PredictionAnalystSource.IconUrl)},
 		AnalystImage:     Url(analyst.AvatarUrl),
 		AnalystDesc:      analyst.AnalystDesc,
-		Predictions:      predictions,
 		NumFollowers:     len(analyst.PredictionAnalystFollowers),
-		TotalPredictions: len(analyst.Predictions),
+		TotalPredictions: summary.TotalArticles,
 		WinningStreak:    summary.RecentStreak,
 		Accuracy:         summary.Accuracy,
 		RecentTotal:      summary.RecentTotal,
@@ -90,10 +82,10 @@ func BuildAnalystDetail(analyst model.Analyst) (resp Analyst) {
 	return
 }
 
-func BuildFollowingList(followings []model.UserAnalystFollowing) (resp []Analyst) {
+func BuildFollowingList(followings []model.UserAnalystFollowing, brandId model.BrandId) (resp []Analyst) {
 	resp = []Analyst{}
 	for _, a := range followings {
-		resp = append(resp, BuildAnalystDetail(a.Analyst))
+		resp = append(resp, BuildAnalystDetail(a.Analyst, brandId))
 	}
 	return
 }

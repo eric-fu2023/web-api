@@ -135,7 +135,12 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 		q = q.Where(`username = ?`, service.Username)
 	}
 	if rows := q.Scopes(model.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 {
-		// new user
+		// New User
+		isAllowed := CheckRegistrationDeviceIPCount(deviceInfo.Uuid, c.ClientIP())
+		if !isAllowed {
+			return serializer.Err(c, service, serializer.CodeDBError, i18n.T("registration_restrict_exceed_count"), err)
+		}
+
 		user = model.User{
 			User: ploutos.User{
 				CountryCode:             service.CountryCode,
@@ -224,18 +229,21 @@ func LogSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time, lo
 	}
 
 	lastAuthEvent, _ := model.GetLatestAuthEvents(user.ID, 1)
+	util.GetLoggerEntry(c).Infof("Get Last Auth Event: %s", lastAuthEvent)
 	if len(lastAuthEvent) > 0 {
-		util.GetLoggerEntry(c).Errorf("Log auth event error: %s", lastAuthEvent)
-		// if lastAuthEvent[0].Type == consts.AuthEventType["login"] && lastAuthEvent[0].Status == consts.AuthEventStatus["successful"] {
-		// 	lastAuthEvent[0].Type = consts.AuthEventType["forced_logout"]
-		// 	lastAuthEvent[0].DateTime = loginTime.Format(time.DateTime)
-
-		// 	if err = model.LogAuthEvent(lastAuthEvent[0]); err != nil {
-		// 		util.GetLoggerEntry(c).Errorf("Log auth event error: %s", err.Error())
-		// 	}
-		// }
+		util.GetLoggerEntry(c).Infof("Log auth event : %s", lastAuthEvent)
+		util.GetLoggerEntry(c).Infof("Log auth event type: %s", lastAuthEvent[0].Type)
+		util.GetLoggerEntry(c).Infof("Log auth event status: %s", lastAuthEvent[0].Status)
+		if lastAuthEvent[0].Type == consts.AuthEventType["login"] && lastAuthEvent[0].Status == consts.AuthEventStatus["successful"] {
+			lastAuthEvent[0].Type = consts.AuthEventType["forced_logout"]
+			lastAuthEvent[0].DateTime = loginTime.Format(time.DateTime)
+			util.GetLoggerEntry(c).Infof("Log auth event insert: %s", lastAuthEvent[0].Type)
+			if err = model.LogAuthEvent(lastAuthEvent[0]); err != nil {
+				util.GetLoggerEntry(c).Errorf("Log auth event error: %s", err.Error())
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
 	}
-
 	event := model.AuthEvent{
 		AuthEvent: ploutos.AuthEvent{
 			UserId:      user.ID,
@@ -254,7 +262,6 @@ func LogSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time, lo
 			Uuid:        deviceInfo.Uuid,
 		},
 	}
-
 	if err = model.LogAuthEvent(event); err != nil {
 		util.GetLoggerEntry(c).Errorf("Log auth event error: %s", err.Error())
 	}

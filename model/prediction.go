@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
 
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -24,6 +25,12 @@ type ListPredictionCond struct {
 	FbMatchId int64
 	SportId   int64
 }
+
+type BrandId int
+const (
+	BrandIdAha BrandId = 3001
+	BrandIdBatace BrandId = 1002
+)
 
 func preloadPredictions() *gorm.DB {
 	return DB.
@@ -51,12 +58,27 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 
 	db := preloadPredictions()
 	db = db.
-		// Scopes(Paginate(cond.Page, cond.Limit)). // TODO : temp remove pagination
+		Scopes(Paginate(cond.Page, cond.Limit)).
+		Select(`
+			prediction_articles.*, 
+			case prediction_articles.prediction_result when 0 then 0 else 1 end as is_settle,
+			(COALESCE(cast(pas.recent_win as float) / NULLIF(cast(pas.recent_total as float), 0), 0) * 100 * 0.5) + (pas.accuracy * 0.5) as weight
+		`).
 		Where("prediction_articles.is_published", true).
 		Joins("left join prediction_article_bets on prediction_article_bets.article_id = prediction_articles.id").
 		Joins("left join fb_matches on prediction_article_bets.fb_match_id = fb_matches.match_id").
-		Group("prediction_articles.id").
+		Joins("left join prediction_analyst_summary pas on prediction_articles.analyst_id = pas.analyst_id and pas.fb_sport_id = 0").
+		Group("prediction_articles.id, pas.id").
+		Order("is_settle asc").
+		Order("weight desc").
 		Order("prediction_articles.published_at DESC")
+
+	if cond.AnalystId == 0 { 
+		_y, _m, _d := time.Now().AddDate(0, 0, -7).Date()
+		weekAgo := time.Date(_y, _m, _d, 0, 0, 0, 0, time.Now().Location())
+
+		db = db.Where("prediction_articles.published_at > ?", weekAgo)
+	}
 
 	if cond.AnalystId != 0 {
 		db = db.Where("prediction_articles.analyst_id", cond.AnalystId)

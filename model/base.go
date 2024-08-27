@@ -49,3 +49,9 @@ func Ongoing(now time.Time, startField, endField string) func(db *gorm.DB) *gorm
 		return db.Where(fmt.Sprintf("%s < ? and %s > ?", startField, endField), now, now)
 	}
 }
+
+func Range(fromTime, toTime time.Time, field string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(fmt.Sprintf("%s > ? and %s < ?", field, field), fromTime, toTime)
+	}
+}

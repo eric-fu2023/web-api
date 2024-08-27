@@ -128,8 +128,10 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			return r, err
 		}
 
-		should_spin, spin_id := SpinAvailable(PopupTypes)
-		spin_id_int, _ := strconv.Atoi(spin_id)
+		should_spin, spin_promotion_id := SpinAvailable(PopupTypes)
+		spin_promotion_id_int, _ := strconv.Atoi(spin_promotion_id)
+		var spin_service SpinService
+		spin_id_int, _ := spin_service.GetSpinIdFromPromotionId(spin_promotion_id_int)
 		ShouldPopupSpin, err := model.ShouldPopupSpin(user, spin_id_int)
 		fmt.Println("ShouldPopupSpin", ShouldPopupSpin)
 		fmt.Println("should_spin", should_spin)
@@ -203,8 +205,10 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			}
 		}
 		if redisPopup < 5 {
-			should_spin, spin_id := SpinAvailable(PopupTypes)
-			spin_id_int, _ := strconv.Atoi(spin_id)
+			should_spin, spin_promotion_id := SpinAvailable(PopupTypes)
+			spin_promotion_id_int, _ := strconv.Atoi(spin_promotion_id)
+			var spin_service SpinService
+			spin_id_int, _ := spin_service.GetSpinIdFromPromotionId(spin_promotion_id_int)
 			ShouldPopupSpin, err := model.ShouldPopupSpin(user, spin_id_int)
 			if err != nil {
 				return r, err
