@@ -284,6 +284,8 @@ func TeamUpAvailable(popups []models.Popups) bool {
 }
 func VIPAvailable(popups []models.Popups) bool {
 	for _, popup := range popups {
+		fmt.Println("VIPAvailable popup: ",popup.PopupType )
+		fmt.Println("VIPAvailable popup: ",popup.PopupType == 4 )
 		if popup.PopupType == 4 {
 			return true // Found a popup with PopupType == 3
 		}
