@@ -55,13 +55,11 @@ func ShouldPopupVIP(user User) (bool, error) {
 	res:=cache.RedisClient.HGet(context.Background(), key, strconv.FormatInt(user.ID, 10))
 	vip, err := GetVipWithDefault(nil, user.ID)
 	current_vip_level := vip.VipRule.VIPLevel
-	fmt.Println("current_vip_level", current_vip_level)
 
 	if res.Err() == redis.Nil {
 		fmt.Println("vip_level not found in redis")
 		// if no vip level up record, we check if user vip level is more than 0
 		if current_vip_level > 0{
-			fmt.Println("vip_level larger than 0")
 			res := cache.RedisClient.HSet(context.Background(), key, strconv.FormatInt(user.ID, 10), vip.VipRule.VIPLevel)
 			if res.Err() != nil{
 				fmt.Println("update downgrade vip level failed, ", res.Err().Error())

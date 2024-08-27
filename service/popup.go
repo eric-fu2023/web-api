@@ -38,11 +38,6 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		fmt.Println("get PopupTypes error", err)
 	}
 
-	for _, popup := range PopupTypes {
-		fmt.Println("PopupTypes type", popup.PopupType)
-		fmt.Println("PopupTypes can float", popup.CanFloat)
-	}
-
 	u, isUser := c.Get("user")
 	if !isUser {
 		// if not login, show spin only
@@ -124,7 +119,6 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			return r, err
 		}
 		if ShouldVIP && VIPAvailable(PopupTypes) {
-			fmt.Println("return vip popup")
 			var service VipService
 			data, err := service.Get(c)
 			if err != nil {
@@ -284,8 +278,6 @@ func TeamUpAvailable(popups []models.Popups) bool {
 }
 func VIPAvailable(popups []models.Popups) bool {
 	for _, popup := range popups {
-		fmt.Println("VIPAvailable popup: ",popup.PopupType )
-		fmt.Println("VIPAvailable popup: ",popup.PopupType == 4 )
 		if popup.PopupType == 4 {
 			return true // Found a popup with PopupType == 3
 		}
