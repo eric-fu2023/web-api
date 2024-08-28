@@ -52,7 +52,7 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 
 	var team_up ploutos.Teamup
 	// status = 1 is success,    status = 0 is onging
-	err = model.DB.Model(ploutos.Teamup{}).Where("user_id = ? AND updated_at < ? AND updated_at > ? AND status in (1,0) AND total_teamup_deposit !=0", user.ID, TodayStart, yesterdayStart).Order("status DESC, total_fake_progress DESC").First(&team_up).Error
+	err = model.DB.Model(ploutos.Teamup{}).Where("user_id = ? AND updated_at < ? AND updated_at > ? AND status in (1,0) AND total_fake_progress !=0", user.ID, TodayStart, yesterdayStart).Order("status DESC, total_fake_progress DESC").First(&team_up).Error
 	if errors.Is(err, logger.ErrRecordNotFound) {
 		err = nil
 		// if no team up record, we return nil

@@ -136,7 +136,7 @@ func generateMemberGGR(user model.User, ggr float64, delta int, ranking int, is_
 	}
 	if is_me {
 		name = user.Nickname
-		avatar_pic_src = user.Avatar
+		avatar_pic_src = serializer.Url(user.Avatar)
 	}
 	resp := WinLosePopupGGR{
 		GGR:     (ggr + float64(delta)) / 100.0,
