@@ -40,6 +40,7 @@ var (
 		10: OrderTypeVipCashMethodPromotion,
 		11: OrderTypeTopup,
 		12: OrderTypeTeamupRebate,
+		13: OrderTypeSpinRewards,
 	}
 	OrderOperationTypeDetailMap = map[int64]string{
 		1000: OrderOperationTypeSystemAdjust,
@@ -720,6 +721,7 @@ const (
 	OrderOperationTypeMakeUpOrder               = "make_up_order"
 	OrderOperationTypeWithdrawalReversal        = "withdrawal_reversal"
 	OrderTypeTeamupRebate                       = "teamup_rebate"
+	OrderTypeSpinRewards                        = "spin_rewards"
 	// FirstTopupMinimum      int64  = 10_00 //1000_00
 	// TopupMinimum           int64  = 5_00  //500_00
 	// TopupMax               int64  = 30000_00
