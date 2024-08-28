@@ -116,7 +116,7 @@ type PredictionDetailService struct {
 
 func (service *PredictionDetailService) GetDetail(c *gin.Context) (r serializer.Response, err error) {
 
-	data, err := model.GetPrediction(service.PredictionId)
+	data, err := model.GetPrediction(c, service.PredictionId)
    brandId := c.MustGet("_brand").(int)
 
 	// if (service.PredictionId == 8) {

@@ -5,10 +5,17 @@ import (
 	"fmt"
 	"slices"
 	"time"
+	"web-api/cache"
+	"web-api/util"
 
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+)
+
+const (
+	RedisKeyPredictionDetailTemplate = "prediction:article:%d"
 )
 
 type Prediction struct {
@@ -97,11 +104,24 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 	return
 }
 
-func GetPrediction(predictionId int64) (pred Prediction, err error) {
-	err = preloadPredictions().
+func GetPrediction(c *gin.Context, predictionId int64) (pred Prediction, err error) {
+	redisKey := fmt.Sprintf(RedisKeyPredictionDetailTemplate, predictionId)
+   
+	// get data from redis
+	if util.FindFromRedis(c, cache.RedisClient, redisKey, &pred); pred.ID != 0 {
+		return
+	}
+
+	// get data form db 
+	if err = preloadPredictions().
 		Where("is_published", true).
 		Where("prediction_articles.id = ?", predictionId).
-		First(&pred).Error
+		First(&pred).
+		Error; err != nil {
+			return 
+		}
+	// store data in redis 
+	util.CacheIntoRedis(c, cache.RedisClient, redisKey, 1 * time.Minute, &pred)
 	return
 }
 
