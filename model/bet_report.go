@@ -51,3 +51,16 @@ func GetNegativeProfit(startDate, endDate time.Time, userId int64) (res int64, e
 
 	return
 }
+
+func GetBetReportByBusinessId(businessId string) (isFoundBetReport bool, err error) {
+	var count int64
+	err = DB.Table("bet_report").
+		Where("business_id = ?", businessId).
+		Count(&count).Error
+
+	if count > 0 {
+		isFoundBetReport = true
+	}
+
+	return
+}
