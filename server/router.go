@@ -411,7 +411,7 @@ func NewRouter() *gin.Engine {
 		analyst := v1.Group("/analyst", middleware.CheckAuth())
 		{
 			analyst.GET("", analyst_api.GetAnalystDetail)
-			analyst.GET("/list", analyst_api.ListAnalysts)
+			analyst.GET("/list", middleware.Cache(1*time.Minute, false), analyst_api.ListAnalysts)
 			analyst.GET("/following", middleware.AuthRequired(true, true), analyst_api.ListFollowingAnalysts)
 			analyst.POST("/following", middleware.AuthRequired(true, true), analyst_api.ToggleFollowAnalyst)
 			analyst.GET("/following-ids", middleware.AuthRequired(true, true), analyst_api.GetFollowingAnalystIdsList)
