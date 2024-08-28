@@ -16,6 +16,7 @@ import (
 
 const (
 	RedisKeyPredictionDetailTemplate = "prediction:article:%d"
+	RedisKeyPredictionListTemplate = "prediction:articleList:%d-%d-%d-%d-%d"
 )
 
 type Prediction struct {
@@ -61,8 +62,15 @@ func preloadPredictions() *gorm.DB {
 	// Preload("AnalystDetail.Predictions").
 }
 
-func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
+func ListPredictions(c *gin.Context,cond ListPredictionCond) (preds []Prediction, err error) {
+	redisKey := fmt.Sprintf(RedisKeyPredictionListTemplate, cond.AnalystId, cond.FbMatchId, cond.SportId, cond.Page, cond.Limit)
 
+	// get data from redis
+	if util.FindFromRedis(c, cache.RedisClient, redisKey, &preds); len(preds) > 0 {
+		return
+	}
+
+	// get data from db 
 	db := preloadPredictions()
 	db = db.
 		Scopes(Paginate(cond.Page, cond.Limit)).
@@ -99,7 +107,14 @@ func ListPredictions(cond ListPredictionCond) (preds []Prediction, err error) {
 		db = db.Where("prediction_articles.fb_sport_id = ?", cond.SportId)
 	}
 
-	err = db.Find(&preds).Error
+	if err = db.Find(&preds).Error; err != nil {
+		return 
+	}
+
+	// if have value only cache it 
+	if len(preds) > 0 {
+		util.CacheIntoRedis(c, cache.RedisClient, redisKey, 1 * time.Minute, &preds)
+	}
 
 	return
 }

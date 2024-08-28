@@ -62,7 +62,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 
 		if hasPaymentToday || isWhitelisted {
 			// logged in, has payment - show all
-			predictions, err = model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId, FbMatchId: service.FbMatchId, SportId: service.SportId})
+			predictions, err = model.ListPredictions(c, model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId, FbMatchId: service.FbMatchId, SportId: service.SportId})
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return
@@ -74,7 +74,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 
 		} else {
 			// logged in, no payment - unlock 3 max
-			predictions, err = model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId, FbMatchId: service.FbMatchId, SportId: service.SportId})
+			predictions, err = model.ListPredictions(c, model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId, FbMatchId: service.FbMatchId, SportId: service.SportId})
 			if err != nil {
 				r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 				return
@@ -92,7 +92,7 @@ func (service *PredictionListService) List(c *gin.Context) (r serializer.Respons
 
 	} else {
 		// not logged in, unlock 1
-		predictions, err = model.ListPredictions(model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId, FbMatchId: service.FbMatchId, SportId: service.SportId})
+		predictions, err = model.ListPredictions(c, model.ListPredictionCond{Limit: service.Limit, Page: service.Page.Page, AnalystId: service.AnalystId, FbMatchId: service.FbMatchId, SportId: service.SportId})
 		if err != nil {
 			r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 			return
