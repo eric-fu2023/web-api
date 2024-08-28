@@ -51,3 +51,19 @@ func GetNegativeProfit(startDate, endDate time.Time, userId int64) (res int64, e
 
 	return
 }
+
+func GetBetReportByBusinessId(businessId string) (isFoundBetReport bool, err error) {
+	var count int64
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		// Use Count to get the number of records matching the conditions
+		return tx.Table("taya_bet_report").
+			Where("business_id = ?", businessId).
+			Count(&count).Error
+	})
+
+	if count > 0 {
+		isFoundBetReport = true
+	}
+
+	return
+}

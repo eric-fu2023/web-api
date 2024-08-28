@@ -16,6 +16,10 @@ var orderType = map[int64][]int64{
 	2: {ploutos.GAME_HACKSAW, ploutos.GAME_DOLLAR_JACKPOT, ploutos.GAME_STREAM_GAME},
 }
 
+type CheckOrderService struct {
+	BusinessId string `form:"business_id" json:"business_id" binding:"required"`
+}
+
 type OrderListService struct {
 	Type      int64  `form:"type" json:"type" binding:"required"`
 	IsParlay  bool   `form:"is_parlay" json:"is_parlay"`
@@ -29,6 +33,18 @@ type OrderSummary struct {
 	Count  int64 `gorm:"column:count"`
 	Amount int64 `gorm:"column:amount"`
 	Win    int64 `gorm:"column:win"`
+}
+
+func (service *CheckOrderService) CheckOrder(c *gin.Context) serializer.Response {
+
+	// Check if Business Id already generated in Bet Report
+
+	isFoundBetReport, _ := model.GetBetReportByBusinessId(service.BusinessId)
+
+	return serializer.Response{
+		Data: isFoundBetReport,
+	}
+
 }
 
 func (service *OrderListService) List(c *gin.Context) serializer.Response {

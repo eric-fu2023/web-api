@@ -182,6 +182,8 @@ func NewRouter() *gin.Engine {
 		v1.POST("/password", middleware.CheckAuth(), api.UserSetPassword)
 		v1.GET("/otp-check", api.VerifyOtp)
 
+		v1.GET("/check-order", api.CheckOrder)
+
 		requireMobile := os.Getenv("REGISTER_REQUIRES_MOBILE") == "TRUE"
 		bypassSetMobileOtpVerify := os.Getenv("REGISTER_NO_VERIFY_MOBILE_OTP") == "TRUE"
 		v1.POST("/register", api.UserRegister(requireMobile, bypassSetMobileOtpVerify))
