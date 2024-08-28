@@ -241,7 +241,7 @@ func LogSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time, lo
 			if err = model.LogAuthEvent(lastAuthEvent[0]); err != nil {
 				util.GetLoggerEntry(c).Errorf("Log auth event error: %s", err.Error())
 			}
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(1 * time.Second)
 		}
 	}
 	event := model.AuthEvent{
@@ -249,7 +249,7 @@ func LogSuccessfulLogin(c *gin.Context, user model.User, loginTime time.Time, lo
 			UserId:      user.ID,
 			Type:        consts.AuthEventType["login"],
 			Status:      consts.AuthEventStatus["successful"],
-			DateTime:    loginTime.Format(time.DateTime),
+			DateTime:    loginTime.Add(1 * time.Second).Format(time.DateTime),
 			LoginMethod: loginMethod,
 			Username:    user.Username,
 			Email:       inputtedEmail,

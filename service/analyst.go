@@ -152,7 +152,7 @@ type AnalystDetailService struct {
 }
 
 func (service AnalystDetailService) GetAnalyst(c *gin.Context) (r serializer.Response, err error) {
-	data, err := model.Analyst{}.GetDetail(int(service.Id))
+	data, err := model.Analyst{}.GetDetail(c, int(service.Id))
 	brandId := c.MustGet("_brand").(int)
 
 	if err != nil {
@@ -172,7 +172,7 @@ type AnalystAchievementService struct {
 
 func (service AnalystAchievementService) GetRecord(c *gin.Context) (r serializer.Response, err error) {
 	// predictions, err := model.ListPredictions(model.ListPredictionCond{Page: 1, Limit: 99999, AnalystId: service.AnalystId, SportId: service.SportId})
-	analyst, err := model.Analyst{}.GetDetail(int(service.AnalystId))
+	analyst, err := model.Analyst{}.GetDetail(c, int(service.AnalystId))
 
 
 	r.Data = serializer.BuildAnalystAchievement(analyst, int(service.SportId))

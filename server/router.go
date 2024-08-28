@@ -182,6 +182,8 @@ func NewRouter() *gin.Engine {
 		v1.POST("/password", middleware.CheckAuth(), api.UserSetPassword)
 		v1.GET("/otp-check", api.VerifyOtp)
 
+		v1.GET("/check-order", api.CheckOrder)
+
 		requireMobile := os.Getenv("REGISTER_REQUIRES_MOBILE") == "TRUE"
 		bypassSetMobileOtpVerify := os.Getenv("REGISTER_NO_VERIFY_MOBILE_OTP") == "TRUE"
 		v1.POST("/register", api.UserRegister(requireMobile, bypassSetMobileOtpVerify))
@@ -202,7 +204,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/games", middleware.Cache(1*time.Minute, false), api.GameList)
 		v1.GET("/room_chat/history", api.RoomChatHistory)
 		v1.GET("/stream_game", stream_game_api.StreamGame)
-		v1.GET("/stream_games", middleware.Cache(10*time.Minute, false), stream_game_api.StreamGameList)
+		v1.GET("/stream_games", middleware.Cache(1*time.Minute, false), stream_game_api.StreamGameList)
 		v1.GET("/game_categories", middleware.Cache(5*time.Minute, false), game_integration_api.GameCategoryList)
 		v1.GET("/sub_games", middleware.Cache(5*time.Minute, false), game_integration_api.SubGames)
 		v1.GET("/featured_games", middleware.Cache(5*time.Minute, false), game_integration_api.FeaturedGames)
@@ -409,7 +411,7 @@ func NewRouter() *gin.Engine {
 		analyst := v1.Group("/analyst", middleware.CheckAuth())
 		{
 			analyst.GET("", analyst_api.GetAnalystDetail)
-			analyst.GET("/list", analyst_api.ListAnalysts)
+			analyst.GET("/list", middleware.Cache(1*time.Minute, false), analyst_api.ListAnalysts)
 			analyst.GET("/following", middleware.AuthRequired(true, true), analyst_api.ListFollowingAnalysts)
 			analyst.POST("/following", middleware.AuthRequired(true, true), analyst_api.ToggleFollowAnalyst)
 			analyst.GET("/following-ids", middleware.AuthRequired(true, true), analyst_api.GetFollowingAnalystIdsList)

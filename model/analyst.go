@@ -3,16 +3,24 @@ package model
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"slices"
+	"time"
+	"web-api/cache"
+	"web-api/util"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 
 	fbService "blgit.rfdev.tech/taya/game-service/fb2/outcome_service"
 
 	"gorm.io/gorm"
 )
 
+const (
+	RedisKeyAnalystDetailTemplate = "prediction:analyst:%d"
+)
 type Analyst struct {
 	ploutos.PredictionAnalyst
 
@@ -54,14 +62,27 @@ func (Analyst) List(page, limit int, fbSportId int64) (list []Analyst, err error
 	return
 }
 
-func (Analyst) GetDetail(id int) (target Analyst, err error) {
+func (Analyst) GetDetail(c *gin.Context, id int) (target Analyst, err error) {
+	redisKey := fmt.Sprintf(RedisKeyAnalystDetailTemplate, id)
+
+	// get data from redis 
+	if util.FindFromRedis(c, cache.RedisClient, redisKey, &target); target.ID != 0 {
+		return
+	}
+
+	// get data from db 
 	db := preloadAnalyst()
 	db = db.Where("id", id)
-	err = db.
+	if err = db.
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
 		Order("id DESC").
-		First(&target).Error
+		First(&target).
+		Error; err != nil {
+			return
+		}
+	// store data in redis
+	util.CacheIntoRedis(c, cache.RedisClient, redisKey, 1 * time.Minute, &target)
 	return
 }
 

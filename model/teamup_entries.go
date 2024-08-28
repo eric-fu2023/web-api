@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"time"
 
 	"web-api/util"
@@ -18,11 +19,11 @@ const (
 	InitialRandomFakeProgressUpperLimit = int64(9200)
 
 	// Production Rate
-	// SubsequentRandomFakeProgressLowerLimit = int64(1)
-	// SubsequentRandomFakeProgressUpperLimit = int64(100)
+	SubsequentRandomFakeProgressLowerLimit = int64(1)
+	SubsequentRandomFakeProgressUpperLimit = int64(100)
 
-	SubsequentRandomFakeProgressLowerLimit = int64(400)
-	SubsequentRandomFakeProgressUpperLimit = int64(700)
+	// SubsequentRandomFakeProgressLowerLimit = int64(400)
+	// SubsequentRandomFakeProgressUpperLimit = int64(700)
 )
 
 type TeamupEntryCustomRes []struct {
@@ -194,7 +195,24 @@ func GenerateFakeProgress(currentProgress int64) (beforeProgress, afterProgress 
 		return
 	}
 
-	progress := int64(math.Min(float64(maximumAllowedProgress), float64(util.RandomNumFromRange(SubsequentRandomFakeProgressLowerLimit, SubsequentRandomFakeProgressUpperLimit))))
+	lowerLimit, err := GetAppConfigWithCache("teamup", "teamup_subsequent_fake_progress_lower")
+	if err != nil {
+		lowerLimit = "1"
+	}
+	upperLimit, err := GetAppConfigWithCache("teamup", "teamup_subsequent_fake_progress_upper")
+	if err != nil {
+		upperLimit = "100"
+	}
+	subsequentLowerLimit, err := strconv.Atoi(lowerLimit)
+	if err != nil {
+		subsequentLowerLimit = 1
+	}
+	subsequentUpperLimit, err := strconv.Atoi(upperLimit)
+	if err != nil {
+		subsequentUpperLimit = 100
+	}
+
+	progress := int64(math.Min(float64(maximumAllowedProgress), float64(util.RandomNumFromRange(int64(subsequentLowerLimit), int64(subsequentUpperLimit)))))
 	afterProgress = progress + currentProgress
 
 	return

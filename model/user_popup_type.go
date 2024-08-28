@@ -35,7 +35,7 @@ func ShouldPopupTeamUp(user User) (bool, error) {
 	yesterdayStart := time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, now.Location())
 	var team_up ploutos.Teamup
 	// status = 2 is success,    status = 0 is onging
-	err := DB.Model(ploutos.Teamup{}).Where("user_id = ? AND updated_at < ? AND updated_at > ? AND status in (1,0) AND total_teamup_deposit !=0", user.ID, TodayStart, yesterdayStart).Order("status DESC, total_teamup_deposit DESC").First(&team_up).Error
+	err := DB.Model(ploutos.Teamup{}).Where("user_id = ? AND updated_at < ? AND updated_at > ? AND status in (1,0) AND total_fake_progress !=0", user.ID, TodayStart, yesterdayStart).Order("status DESC, total_teamup_deposit DESC").First(&team_up).Error
 	if errors.Is(err, logger.ErrRecordNotFound) {
 			err = nil
 			// if no team up record, we return nil

@@ -13,6 +13,7 @@ import (
 
 const (
 	vipPromoteNote = "vip_promotion"
+	popUpNote      = "popup_winlose"
 )
 
 type InternalNotificationPushRequest struct {
@@ -33,6 +34,10 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 			vipName = p.Params["vip_level"]
 		}
 		text = fmt.Sprintf(conf.GetI18N(lang).T(common.NOTIFICATION_VIP_PROMOTION), vipName)
+	case popUpNote:
+		notificationType = consts.Notification_Type_Pop_Up
+		title = conf.GetI18N(lang).T(common.NOTIFICATION_POPUP_WINLOSE_TITLE)
+		text = conf.GetI18N(lang).T(common.NOTIFICATION_POPUP_WINLOSE)
 	}
 	common.SendNotification(p.UserID, notificationType, title, text)
 	r.Data = "Success"
