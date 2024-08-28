@@ -8,8 +8,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// TODO : refactored UserPrediction -> PredictionArticleAccess, local struct to be refactored
 type UserPrediction struct {
-	ploutos.UserPrediction
+	ploutos.PredictionArticleAccess
 }
 
 type GetUserPredictionCond struct {
@@ -79,7 +80,7 @@ func CreateUserPredictionWithDB(tx *gorm.DB, userId int64, deviceId string, pred
 		return errors.New("prediction does not exist")
 	}
 
-	obj := ploutos.UserPrediction{
+	obj := ploutos.PredictionArticleAccess{
 		UserId:       userId,
 		DeviceId:     deviceId,
 		PredictionId: predictionId,
@@ -127,7 +128,7 @@ func todayHasId(predictionId int64, deviceId string) (exist bool, err error) {
 	db.Where("prediction_id = ?", predictionId)
 	db.Where("device_id = ?", deviceId)
 
-	err = db.First(&ploutos.UserPrediction{}).Error
+	err = db.First(&ploutos.PredictionArticleAccess{}).Error
 
 	if err != nil {
 		exist = false
