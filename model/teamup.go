@@ -173,7 +173,7 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 
 			if endedStartIndex >= 0 && endedEndIndex < len(res) && endedStartIndex <= endedEndIndex {
 				sort.Slice(res[endedStartIndex:endedEndIndex+1], func(i, j int) bool {
-					return res[endedStartIndex+i].TeamupCompletedTime > res[endedStartIndex+j].TeamupCompletedTime
+					return res[endedStartIndex+i].TeamupEndTime > res[endedStartIndex+j].TeamupEndTime
 				})
 			}
 		}

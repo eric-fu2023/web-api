@@ -59,8 +59,8 @@ func (service *SpinService) Get(c *gin.Context) (r serializer.Response, err erro
 
 func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	spin_promotion_id := c.Query("id")
-	spin_promotion_id_int, err := strconv.ParseInt(spin_promotion_id, 10, 64)
+	spin_id := c.Query("id")
+	spin_id_int, err := strconv.ParseInt(spin_id, 10, 64)
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
@@ -73,7 +73,7 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 	var spin ploutos.Spins
-	err = model.DB.Model(ploutos.Spins{}).Where("promotion_id = ?", spin_promotion_id_int).Find(&spin).Error
+	err = model.DB.Model(ploutos.Spins{}).Where("id = ?", spin_id_int).Find(&spin).Error
 
 
 	var previous_spin_result []ploutos.SpinResult
@@ -162,6 +162,7 @@ func (service *SpinService) GetHistory(c *gin.Context) (r serializer.Response, e
 		Select("spins.id as spin_id, spins.name as spin_name, spin_results.created_at, spin_results.spin_result as spin_result_id, spin_items.name as spin_result_name, spin_items.type as spin_result_type, spin_results.redeemed").
 		Where("spins.promotion_id", spin_promotion_id_int).
 		Where("spin_results.user_id", user.ID).
+		Order("created_at desc").
 		Scan(&sql_data).Error
 	var data []serializer.SpinHistory
 	data = serializer.BuildSpinHistory(sql_data, i18n)
