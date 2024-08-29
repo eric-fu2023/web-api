@@ -8,6 +8,12 @@ const (
 )
 
 var (
+	SpinResultType = map[int64]string{
+		1:  SpinVoucher,
+		2:  SpinBonus,
+		3:  SpinItem,
+		4:  SpinOthers,
+	}
 	OrderTypeMap = map[int64]string{
 		-1: OrderTypeWithdraw,
 		1:  OrderTypeTopup,
@@ -744,6 +750,7 @@ const (
 	Notification_Type_Rebate              = "rebate"
 	Notification_Type_Vip_Promotion       = "vip_promotion"
 	Notification_Type_Pop_Up              = "popup_winlose"
+	Notification_Type_Spin                = "spin"
 	Notification_Type_Referral_Alliance   = "referral_alliance"
 
 	//DefaultBrand = 1001
@@ -755,4 +762,10 @@ const (
 	SmsOtpActionSetSecondaryPassword = "set_secondary_password"
 	SmsOtpActionSetMobile            = "set_mobile"
 	SmsOtpActionSetEmail             = "set_email"
+
+	// spin related
+	SpinVoucher = "spin_voucher"
+	SpinBonus = "spin_bonus"
+	SpinItem = "spin_item"
+	SpinOthers = "spin_others"
 )

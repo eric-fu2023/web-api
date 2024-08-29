@@ -11,20 +11,23 @@ import (
 )
 
 const (
-	RedisKeyDomainWebConfigs = "domain_web_configs:"
+	RedisKeyDomainWebConfigs        = "domain_web_configs:"
+	RedisExpirationDomainWebConfigs = 3 * 60 * time.Second
 )
 
 type DomainWebConfig struct {
 	ploutos.DomainWebConfig
+
+	RedirectTos []DomainWebConfig `gorm:"references:ID;foreignKey:RedirectFromId"`
 }
 
-func (DomainWebConfig) FindDomainWebConfig(c *gin.Context, origin string) (domain *DomainWebConfig) {
+func (DomainWebConfig) FindByOrigin(c *gin.Context, origin string) (domain *DomainWebConfig) {
 	// retrieve from Redis
 	if util.FindFromRedis(c, cache.RedisDomainConfigClient, RedisKeyDomainWebConfigs+origin, &domain); domain != nil {
 		return
 	}
 	// retrieve from DB
-	if err := DB.Where("is_active").Where("origin", origin).Find(&domain).Error; err != nil {
+	if err := DB.Preload("RedirectTos", "is_active").Where("is_active").Where("origin", origin).Find(&domain).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {
 			util.GetLoggerEntry(c).Warn("FindDomainsForApp failed: ", err.Error())
 		}
@@ -32,7 +35,7 @@ func (DomainWebConfig) FindDomainWebConfig(c *gin.Context, origin string) (domai
 	}
 	// cache in Redis
 	if domain != nil {
-		util.CacheIntoRedis(c, cache.RedisDomainConfigClient, RedisKeyDomainWebConfigs+origin, 20*time.Second, domain)
+		util.CacheIntoRedis(c, cache.RedisDomainConfigClient, RedisKeyDomainWebConfigs+origin, RedisExpirationDomainWebConfigs, domain)
 	}
 	return
 }

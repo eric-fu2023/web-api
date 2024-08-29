@@ -451,6 +451,7 @@ B4组排名_short: "B4组排名"
 3组_short: "3组"
 4组_short: "4组"
 
+
 streamer_not_found: "无效主播"
 general_error: "出了些问题。请再试一次。"
 login_failed: "登录失败."
@@ -569,6 +570,11 @@ cash_method_promotion: "支付渠道奖励"
 teamup_rebate: "砍单返利"
 spin_rewards: "幸运大转盘 - 彩金"
 
+spin_voucher: "包赔卷"
+spin_bonus: "彩金"
+spin_item: "奖品"
+spin_others: "其他"
+
 system_adjust: "系统调整"
 game_adjust: "游戏调整"
 cash_in_adjust: "充值调整"
@@ -628,6 +634,8 @@ NOTIFICATION_REFERRAL_ALLIANCE_TITLE: "恭喜您获得共赢奖励！"
 NOTIFICATION_REFERRAL_ALLIANCE: "恭喜您获得共赢奖励！您的共赢奖励已成功领取。"
 NOTIFICATION_POPUP_WINLOSE_TITLE: "win/lose summary"
 NOTIFICATION_POPUP_WINLOSE: "check your win/lose summary now!"
+NOTIFICATION_SPIN_TITLE: "Spin!"
+NOTIFICATION_SPIN: "Spin Now!"
 
 chat_welcome_message: "欢迎光临！ 享受与他人的实时互动。 请保持此聊天积极且尊重。 玩得开心！ 😊\n请注意，本次直播中的一些评论已被过滤，以增强社区的体验。"
 chat_welcome_name: "系统"
@@ -660,3 +668,4 @@ notification_slashed_teamup_fail: "很遗憾，您的# %s 订单砍单失败了�
 registration_device_restrict_exceed_count: "设备ID注册次数已到达了上限"
 registration_ip_restrict_exceed_count: "IP地址注册次数已到达了上限"
 registration_restrict_exceed_count: "注册次数已达上限"
+

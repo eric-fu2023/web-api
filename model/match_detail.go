@@ -44,6 +44,7 @@ type FbMatchAPIResponse struct {
 type FbMatchResponse struct {
 	Ts []FbMatchTeam `json:"ts"`
 	Lg FbLeague      `json:"lg"`
+	Bt int64         `json:"bt"`
 }
 
 type FbMatchTeam struct {

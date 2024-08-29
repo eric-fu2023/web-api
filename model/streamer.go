@@ -1,9 +1,10 @@
 package model
 
 import (
+	"web-api/conf/consts"
+
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
-	"web-api/conf/consts"
 )
 
 type Streamer struct {
@@ -29,3 +30,17 @@ func StreamerDefaultPreloads(db *gorm.DB) *gorm.DB {
 		return db.Where(`status`, 1).Order(`id`)
 	}).Preload(`UserAgoraInfo`)
 }
+
+// func CheckIfStreamerHasGame(userId, gameId int64) (isFoundBetReport bool, err error) {
+// 	var count int64
+// 	err = DB.Table("stream_game_users").
+// 		Where("stream_game_id = ?", gameId).
+// 		Where("user_id = ?", userId).
+// 		Count(&count).Error
+
+// 	if count > 0 {
+// 		isFoundBetReport = true
+// 	}
+
+// 	return
+// }

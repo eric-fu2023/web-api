@@ -30,8 +30,18 @@ type TeamupCustomRes []struct {
 	LeagueIcon          string  `json:"league_icon"`
 	LeagueName          string  `json:"league_name"`
 	HomeIcon            string  `json:"home_icon"`
+	HomeName            string  `json:"home_name"`
 	AwayIcon            string  `json:"away_icon"`
+	AwayName            string  `json:"away_name"`
 	Status              int64   `json:"status"`
+
+	MarketName string `json:"market_name"`
+	OptionName string `json:"option_name"`
+	MatchTitle string `json:"match_title"`
+	MatchId    string `json:"match_id"`
+	MatchTime  int64  `json:"match_time"`
+
+	BetReportGameType int `json:"bet_report_game_type"`
 }
 
 type OutgoingTeamupCustomRes []struct {
@@ -51,9 +61,19 @@ type OutgoingTeamupCustomRes []struct {
 	LeagueIcon          string      `json:"league_icon"`
 	LeagueName          string      `json:"league_name"`
 	HomeIcon            string      `json:"home_icon"`
+	HomeName            string      `json:"home_name"`
 	AwayIcon            string      `json:"away_icon"`
+	AwayName            string      `json:"away_name"`
 	Status              int64       `json:"status"`
 	HasJoined           bool        `json:"has_joined"`
+
+	MarketName string `json:"market_name"`
+	OptionName string `json:"option_name"`
+	MatchTitle string `json:"match_title"`
+	MatchId    string `json:"match_id"`
+	MatchTime  int64  `json:"match_time"`
+
+	BetReportGameType int `json:"bet_report_game_type"`
 }
 
 type OutgoingBet struct {
@@ -112,10 +132,11 @@ func GetTeamUp(orderId string) (teamup ploutos.Teamup, err error) {
 	return
 }
 
+// teamups.match_id as match_id, teamups.match_time as match_time, teamups.total_fake_progress as total_fake_progress,
+// tx = tx.Table("teamups").Select("teamups.league_name, teamups.option_name, teamups.bet_report_game_type, teamups.market_name, teamups.option_name, teamups.is_parlay, teamups.match_title, teamups.match_id, teamups.match_time, teamups.status, teamups.league_icon, teamups.home_icon, teamups.away_icon, teamups.total_fake_progress, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
 func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64) (res TeamupCustomRes, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		tx = tx.Table("teamups").Select("teamups.total_fake_progress, teamups.league_icon, teamups.home_icon, teamups.away_icon, teamups.status, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
-			Joins("left join bet_report on teamups.order_id = bet_report.business_id")
+		tx = tx.Table("teamups").Select("teamups.bet_report_game_type as bet_report_game_type, teamups.match_id as match_id, teamups.match_time as match_time, teamups.total_fake_progress as total_fake_progress, teamups.match_title as match_title, teamups.league_icon as league_icon, teamups.home_icon as home_icon, teamups.away_icon as away_icon, teamups.status as status, teamups.league_name as league_name, teamups.option_name as option_name, teamups.market_name as market_name, teamups.is_parlay as is_parlay, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, teamups.order_id as order_id, teamups.is_parlay as is_parlay, teamups.match_title as bet_type")
 
 		tx = tx.Where("teamups.user_id = ?", userId)
 
@@ -169,8 +190,7 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 
 func GetCustomTeamUpByTeamUpId(teamupId int64) (res TeamupCustomRes, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		tx = tx.Table("teamups").Select("teamups.status, teamups.league_icon, teamups.home_icon, teamups.away_icon, teamups.total_fake_progress, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
-			Joins("left join bet_report on teamups.order_id = bet_report.business_id")
+		tx = tx.Table("teamups").Select("teamups.league_name, teamups.option_name, teamups.bet_report_game_type, teamups.market_name, teamups.option_name, teamups.is_parlay, teamups.match_title, teamups.match_id, teamups.match_time, teamups.status, teamups.league_icon, teamups.home_icon, teamups.away_icon, teamups.total_fake_progress, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, teamups.order_id as order_id, teamups.is_parlay as is_parlay, teamups.match_title as bet_type")
 
 		tx = tx.Where("teamups.id = ?", teamupId)
 

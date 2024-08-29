@@ -156,10 +156,13 @@ func NewRouter() *gin.Engine {
 		captcha.POST("/check", api.CaptchaCheck)
 	}
 
+	// returns the random domains for API, logging and nami for mobile app, no encryption
+	r.GET("/init_app", api.DomainInitApp)
+	// returns the domain to redirect for web, no encryption
+	r.GET("/route", api.DomainInitRoute)
+
 	// all APIs below needs signature in the HTTP header
 	r.Use(middleware.CheckSignature())
-	r.GET("/init_app", api.DomainInitApp)
-
 	// all APIs below will be encrypted
 	r.Use(middleware.EncryptPayload())
 	r.Use(middleware.Ip())
@@ -170,6 +173,8 @@ func NewRouter() *gin.Engine {
 	r.Use(middleware.AB())
 
 	r.GET("/ping", api.Ping)
+	// returns the domain to redirect + the random domains for API, logging and nami for web, with encryption
+	r.GET("/init_web", api.DomainInitWeb)
 
 	v1 := r.Group("/v1")
 	{
@@ -225,6 +230,7 @@ func NewRouter() *gin.Engine {
 			popup.GET("/show", middleware.CheckAuth(), api.Show)
 			popup.GET("/spin", middleware.CheckAuth(), api.Spin)
 			popup.GET("/spin_result", middleware.AuthRequired(true, true), api.SpinResult)
+			popup.GET("/spin_history", middleware.AuthRequired(true, true), api.SpinHistory)
 		}
 
 		pm := v1.Group("/pm")

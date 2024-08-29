@@ -52,7 +52,7 @@ func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err
 	// retrieve channelCode based on origin domain
 	var domainWebConfigService DomainWebConfigService
 	cf["channel"] = map[string]string{
-		"code": domainWebConfigService.RetrieveChannelForOrigin(c),
+		"code": domainWebConfigService.RetrieveChannel(c),
 	}
 
 	r = serializer.Response{
