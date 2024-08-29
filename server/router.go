@@ -156,13 +156,13 @@ func NewRouter() *gin.Engine {
 		captcha.POST("/check", api.CaptchaCheck)
 	}
 
-	// all APIs below needs signature in the HTTP header
-	r.Use(middleware.CheckSignature())
 	// returns the random domains for API, logging and nami for mobile app, no encryption
 	r.GET("/init_app", api.DomainInitApp)
 	// returns the domain to redirect for web, no encryption
 	r.GET("/route", api.DomainInitRoute)
 
+	// all APIs below needs signature in the HTTP header
+	r.Use(middleware.CheckSignature())
 	// all APIs below will be encrypted
 	r.Use(middleware.EncryptPayload())
 	r.Use(middleware.Ip())
