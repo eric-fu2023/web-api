@@ -457,13 +457,13 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 	copier.Copy(&res, teamupRes)
 
-	for i, t := range res {
+	for i, t := range teamupRes {
 
-		br := ploutos.BetReport{
-			GameType: t.GameType,
-			InfoJson: t.InfoJson,
-		}
-		br.ParseInfo()
+		// br := ploutos.BetReport{
+		// 	GameType: t.GameType,
+		// 	InfoJson: t.InfoJson,
+		// }
+		// br.ParseInfo()
 
 		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
 		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
@@ -472,69 +472,87 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 		var outgoingBet model.OutgoingBet
 
-		var matchTime int64
+		// var matchTime int64
 
-		for _, bet := range br.Bets {
-
-			switch {
-			case br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA || br.GameType == ploutos.GAME_DB_SPORT:
-				if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
-					matchTime = *bet.GetMatchTime()
-					// comment out to show real match time
-					// teamupEndTime := matchTime - 600 // 600 seconds = 10 minutes
-					teamupEndTime := matchTime
-					copier.Copy(&outgoingBet, bet)
-					teams := strings.Split(outgoingBet.MatchName, " vs. ")
-					if len(teams) == 0 {
-						teams = strings.Split(outgoingBet.MatchName, " vs ")
-					}
-					if len(teams) > 1 {
-						outgoingBet.HomeName = teams[0]
-						outgoingBet.AwayName = teams[1]
-					}
-					outgoingBet.LeagueIcon = res[i].LeagueIcon
-					outgoingBet.HomeIcon = res[i].HomeIcon
-					outgoingBet.AwayIcon = res[i].AwayIcon
-
-					outgoingBet.LeagueName = res[i].LeagueName
-
-					if res[i].IsParlay {
-						outgoingBet.MatchName = res[i].BetType
-					}
-
-					outgoingBet.MatchTime = teamupEndTime
-					res[i].Bet = outgoingBet
-				}
-			case br.GameType == ploutos.GAME_IMSB:
-				if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
-					matchTime = *bet.GetMatchTime()
-					// comment out to show real match time
-					// teamupEndTime := matchTime - 600 // 600 seconds = 10 minutes
-					teamupEndTime := matchTime
-					copier.Copy(&outgoingBet, bet)
-					betImsb := bet.(ploutos.BetImsb)
-					teams := strings.Split(betImsb.GetMatchName(), " vs ")
-					if len(teams) > 1 {
-						outgoingBet.HomeName = teams[0]
-						outgoingBet.AwayName = teams[1]
-					}
-					outgoingBet.LeagueIcon = res[i].LeagueIcon
-					outgoingBet.HomeIcon = res[i].HomeIcon
-					outgoingBet.AwayIcon = res[i].AwayIcon
-					outgoingBet.LeagueName = betImsb.GetCompetitionName()
-					outgoingBet.MarketName = betImsb.BetType
-					outgoingBet.OptionName = betImsb.Selection + " " + fmt.Sprint(betImsb.Odds)
-					outgoingBet.MatchName = betImsb.EventName
-
-					if res[i].IsParlay {
-						outgoingBet.MatchName = res[i].BetType
-					}
-
-					outgoingBet.MatchTime = teamupEndTime
-					res[i].Bet = outgoingBet
-				}
+		switch {
+		case t.BetReportGameType == ploutos.GAME_FB || t.BetReportGameType == ploutos.GAME_TAYA || t.BetReportGameType == ploutos.GAME_DB_SPORT:
+			outgoingBet.MatchTime = t.MatchTime
+			outgoingBet.HomeName = t.HomeName
+			outgoingBet.HomeIcon = t.HomeIcon
+			outgoingBet.AwayName = t.AwayName
+			outgoingBet.AwayIcon = t.AwayIcon
+			outgoingBet.LeagueIcon = t.LeagueIcon
+			outgoingBet.LeagueName = t.LeagueName
+			outgoingBet.MarketName = t.MarketName
+			outgoingBet.MatchName = t.MatchTitle
+			outgoingBet.LeagueName = t.LeagueName
+			outgoingBet.OptionName = t.OptionName
+			teams := strings.Split(outgoingBet.MatchName, " vs ")
+			if len(teams) < 2 {
+				teams = strings.Split(outgoingBet.MatchName, " vs ")
 			}
+			if len(teams) > 1 {
+				outgoingBet.HomeName = teams[0]
+				outgoingBet.AwayName = teams[1]
+			}
+
+			res[i].Bet = outgoingBet
+			// if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
+			// 	matchTime = *bet.GetMatchTime()
+			// 	// comment out to show real match time
+			// 	// teamupEndTime := matchTime - 600 // 600 seconds = 10 minutes
+			// 	teamupEndTime := matchTime
+			// 	copier.Copy(&outgoingBet, bet)
+			// 	teams := strings.Split(outgoingBet.MatchName, " vs. ")
+			// 	if len(teams) == 0 {
+			// 		teams = strings.Split(outgoingBet.MatchName, " vs ")
+			// 	}
+			// 	if len(teams) > 1 {
+			// 		outgoingBet.HomeName = teams[0]
+			// 		outgoingBet.AwayName = teams[1]
+			// 	}
+			// 	outgoingBet.LeagueIcon = res[i].LeagueIcon
+			// 	outgoingBet.HomeIcon = res[i].HomeIcon
+			// 	outgoingBet.AwayIcon = res[i].AwayIcon
+
+			// 	outgoingBet.LeagueName = res[i].LeagueName
+
+			// 	if res[i].IsParlay {
+			// 		outgoingBet.MatchName = res[i].BetType
+			// 	}
+
+			// 	outgoingBet.MatchTime = teamupEndTime
+			// 	res[i].Bet = outgoingBet
+		case t.BetReportGameType == ploutos.GAME_IMSB:
+			// if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
+			// 	matchTime = *bet.GetMatchTime()
+			// 	// comment out to show real match time
+			// 	// teamupEndTime := matchTime - 600 // 600 seconds = 10 minutes
+			// 	teamupEndTime := matchTime
+			// 	copier.Copy(&outgoingBet, bet)
+			// 	betImsb := bet.(ploutos.BetImsb)
+			// 	teams := strings.Split(betImsb.GetMatchName(), " vs ")
+			// 	if len(teams) > 1 {
+			// 		outgoingBet.HomeName = teams[0]
+			// 		outgoingBet.AwayName = teams[1]
+			// 	}
+			// 	outgoingBet.LeagueIcon = res[i].LeagueIcon
+			// 	outgoingBet.HomeIcon = res[i].HomeIcon
+			// 	outgoingBet.AwayIcon = res[i].AwayIcon
+			// 	outgoingBet.LeagueName = betImsb.GetCompetitionName()
+			// 	outgoingBet.MarketName = betImsb.BetType
+			// 	outgoingBet.OptionName = betImsb.Selection + " " + fmt.Sprint(betImsb.Odds)
+			// 	outgoingBet.MatchName = betImsb.EventName
+
+			// 	if res[i].IsParlay {
+			// 		outgoingBet.MatchName = res[i].BetType
+			// 	}
+
+			// 	outgoingBet.MatchTime = teamupEndTime
+			// 	res[i].Bet = outgoingBet
+			// }
 		}
+
 	}
 
 	return
