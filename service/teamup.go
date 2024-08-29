@@ -307,6 +307,11 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		teamup.UserId = user.ID
 		teamup.OrderId = s.OrderId
 		teamup.TotalTeamUpTarget = s.BetAmount
+		if s.BetAmount < 1 {
+			r = serializer.Err(c, "", serializer.CustomTeamUpError, i18n.T("teamup_error"), err)
+			return
+		}
+
 		teamup.TeamupEndTime = matchExpiredTime
 		teamup.TeamupCompletedTime = matchExpiredTime
 
