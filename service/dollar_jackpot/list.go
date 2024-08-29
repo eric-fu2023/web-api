@@ -35,16 +35,17 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 	}
 	ctx := context.WithValue(context.TODO(), model.KeyCacheInfo, cacheInfo)
 	err = model.DB.WithContext(ctx).Joins(`JOIN dollar_jackpots ON dollar_jackpots.status = 1 AND dollar_jackpots.id = dollar_jackpot_draws.dollar_jackpot_id AND dollar_jackpots.brand_id = ?`, brand).
-		Where(`dollar_jackpot_draws.status`, 0).Where(`dollar_jackpots.streamer_id`, service.StreamerId).Order(`start_time`).Preload(`DollarJackpot`).Find(&draws).Error
+		Where(`dollar_jackpot_draws.status`, 0).Where(`dollar_jackpots.streamer_id`, service.StreamerId).Order(`start_time DESC`).Preload(`DollarJackpot`).Limit(1).Find(&draws).Error
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
 	for _, d := range draws {
 		if d.ID != 0 && d.DollarJackpot != nil {
-			if time.Now().After(d.StartTime) && time.Now().Before(d.EndTime) {
-				dollarJackpotDraw = d
+			if time.Now().After(d.EndTime) {
+				d.Status=1
 			}
+			dollarJackpotDraw = d
 		}
 	}
 	var data *serializer.DollarJackpotDraw
