@@ -177,6 +177,10 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		return
 	}
 
+	if s.GameType == "0" {
+		s.GameType = "4"
+	}
+
 	// br, err := model.GetTeamUpBetReport(s.OrderId)
 
 	// if err != nil {
@@ -279,7 +283,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 				teamup.MarketName = betToShow.MarketName
 				teamup.OptionName = betToShow.OptionName
 				teamup.IsParlay = br.IsParlay
-				teamup.MatchTitle = betToShow.MatchName
+				teamup.MatchTitle = br.BetType
 				teamup.MatchId = betToShow.MatchId
 
 				teamup.LeagueIcon = leagueIcon
