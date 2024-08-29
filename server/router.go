@@ -158,7 +158,10 @@ func NewRouter() *gin.Engine {
 
 	// all APIs below needs signature in the HTTP header
 	r.Use(middleware.CheckSignature())
+	// returns the random domains for API, logging and nami for mobile app, no encryption
 	r.GET("/init_app", api.DomainInitApp)
+	// returns the domain to redirect for web, no encryption
+	r.GET("/route", api.DomainInitRoute)
 
 	// all APIs below will be encrypted
 	r.Use(middleware.EncryptPayload())
@@ -170,6 +173,8 @@ func NewRouter() *gin.Engine {
 	r.Use(middleware.AB())
 
 	r.GET("/ping", api.Ping)
+	// returns the domain to redirect + the random domains for API, logging and nami for web, with encryption
+	r.GET("/init_web", api.DomainInitWeb)
 
 	v1 := r.Group("/v1")
 	{
