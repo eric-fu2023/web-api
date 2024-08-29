@@ -321,6 +321,8 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		teamup.HomeIcon = homeIcon
 		teamup.AwayIcon = awayIcon
 		teamup.LeagueName = leagueName
+		gameType, _ := strconv.Atoi(s.GameType)
+		teamup.BetReportGameType = gameType
 
 		// Recheck instead of lock
 		// FUTURE: mutex for same orderId
@@ -465,6 +467,8 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 			if br.OrderId != "" {
 				br.ParseInfo()
 				var outgoingBet model.OutgoingBet
+				res[i].IsParlay = br.IsParlay
+				res[i].BetType = br.BetType
 
 				var matchTime int64
 
