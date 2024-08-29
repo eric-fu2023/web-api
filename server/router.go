@@ -230,6 +230,7 @@ func NewRouter() *gin.Engine {
 			popup.GET("/show", middleware.CheckAuth(), api.Show)
 			popup.GET("/spin", middleware.CheckAuth(), api.Spin)
 			popup.GET("/spin_result", middleware.AuthRequired(true, true), api.SpinResult)
+			popup.GET("/spin_history", middleware.AuthRequired(true, true), api.SpinHistory)
 		}
 
 		pm := v1.Group("/pm")

@@ -144,6 +144,45 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 	return
 }
 
+func (service *SpinService) GetHistory(c *gin.Context)(r serializer.Response, err error) {
+	spin_id := c.Query("id")
+	spin_id_int, err := strconv.ParseInt(spin_id, 10, 64)
+	u, _ := c.Get("user")
+	user := u.(model.User)
+	fmt.Println(spin_id_int)
+	fmt.Println(user.ID)
+	// var data serializer.SpinHistory
+	// data = serializer.BuildSpin(spin, spin_items, spin_results_counts)
+	var data []serializer.SpinHistory
+	data = append(data, serializer.SpinHistory{
+		SpinID:1,
+		SpinName:"幸运大转盘",
+		SpinTime:1,
+		SpinResultId:1,
+		SpinResultName:"彩金888",
+		SpinResultType:"彩金",
+	},serializer.SpinHistory{
+		SpinID:1,
+		SpinName:"幸运大转盘11",
+		SpinTime:1,
+		SpinResultId:1,
+		SpinResultName:"彩金88823",
+		SpinResultType:"彩金",
+	},serializer.SpinHistory{
+		SpinID:1,
+		SpinName:"幸运大转32盘",
+		SpinTime:1,
+		SpinResultId:1,
+		SpinResultName:"彩金12888",
+		SpinResultType:"彩金123",
+	})
+	r = serializer.Response{
+		Data: data,
+	}
+	return
+
+}
+
 func (service *SpinService) GetRemainingSpinCount(user model.User, spin_id int) (remaining_counts int, err error) {
 	var spin ploutos.Spins
 	err = model.DB.Model(ploutos.Spins{}).Where("id = ?", spin_id).Find(&spin).Error
@@ -171,3 +210,6 @@ func (service *SpinService) GetSpinIdFromPromotionId(spin_promotion_id int) (spi
 	fmt.Println("get spin ",spin.ID)
 	return int(spin.ID), err
 }
+
+
+
