@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 	"web-api/cache"
@@ -42,19 +43,15 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 	if !isUser {
 		// if not login, show spin only
 		should_spin, spin_promotion_id := SpinAvailable(PopupTypes)
-		spin_promotion_id_int, _ := strconv.Atoi(spin_promotion_id)
-		var spin_service SpinService
-		spin_id_int, _ := spin_service.GetSpinIdFromPromotionId(spin_promotion_id_int)
-
 		var floats []PopupFloat
 
 		if should_spin {
 			floats = append(floats, PopupFloat{
 				Type: 5,
-				Id:   spin_id_int,
+				Id:   spin_promotion_id,
 			})
 			spin_id_data := PopupSpinId{
-				SpinId: spin_id_int,
+				SpinId: spin_promotion_id,
 			}
 			r.Data = PopupResponse{
 				Type:  5,
@@ -114,7 +111,6 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 
 		ShouldVIP, err := model.ShouldPopupVIP(user)
 		fmt.Println("ShouldPopUpVIP", ShouldVIP)
-		fmt.Println("VIPAvailable", VIPAvailable(PopupTypes))
 		if err != nil {
 			return r, err
 		}
@@ -133,18 +129,16 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		}
 
 		should_spin, spin_promotion_id := SpinAvailable(PopupTypes)
-		spin_promotion_id_int, _ := strconv.Atoi(spin_promotion_id)
-		var spin_service SpinService
-		spin_id_int, _ := spin_service.GetSpinIdFromPromotionId(spin_promotion_id_int)
-		ShouldPopupSpin, err := model.ShouldPopupSpin(user, spin_id_int)
+		ShouldPopupSpin, err := model.ShouldPopupSpin(user, spin_promotion_id)
 		fmt.Println("ShouldPopupSpin", ShouldPopupSpin)
-		fmt.Println("ShouldPopupSpin", should_spin)
+		fmt.Println("ShouldPopupSpin promotion id", spin_promotion_id)
+		fmt.Println("should_spin", should_spin)
 		if err != nil {
 			return r, err
 		}
 		if ShouldPopupSpin && should_spin {
 			spin_id_data := PopupSpinId{
-				SpinId: spin_id_int,
+				SpinId: spin_promotion_id,
 			}
 			r.Data = PopupResponse{
 				Type:  5,
@@ -210,16 +204,13 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		}
 		if redisPopup < 5 {
 			should_spin, spin_promotion_id := SpinAvailable(PopupTypes)
-			spin_promotion_id_int, _ := strconv.Atoi(spin_promotion_id)
-			var spin_service SpinService
-			spin_id_int, _ := spin_service.GetSpinIdFromPromotionId(spin_promotion_id_int)
-			ShouldPopupSpin, err := model.ShouldPopupSpin(user, spin_id_int)
+			ShouldPopupSpin, err := model.ShouldPopupSpin(user, spin_promotion_id)
 			if err != nil {
 				return r, err
 			}
 			if ShouldPopupSpin && should_spin {
 				spin_id_data := PopupSpinId{
-					SpinId: spin_id_int,
+					SpinId: spin_promotion_id,
 				}
 				r.Data = PopupResponse{
 					Type:  5,
@@ -232,27 +223,24 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 	}
 	r.Msg = "no popup available"
 	r.Data = PopupResponse{Type: -1, Float: floats}
+	ShownNothing(user)
 	return
 }
 
 func GetFloatWindow(user model.User, popup_types []models.Popups) (floats []PopupFloat, err error) {
 	for _, popup_type := range popup_types {
 		if popup_type.CanFloat {
-			if popup_type.PopupType == 5 {
+			if popup_type.PopupType == 5 && popup_type.CanFloat{
 				// spin popup float
-				var service SpinService
-				spin_promotion_id_int, err := strconv.Atoi(popup_type.Meta)
-				spin_id_int, err := service.GetSpinIdFromPromotionId(spin_promotion_id_int)
-				// check if user still has spin chances
-				if err != nil {
-					fmt.Println("GetSpinIdFromPromotionId err")
-					return nil, err
-				}
+				var spin_service SpinService
+				spin_promotion_id_int, _ := strconv.Atoi(popup_type.Meta)
+				if spin_service.CheckIsSpinAlive(spin_promotion_id_int){
 					// user still can spin, then we add the spin popup to float list.
 					floats = append(floats, PopupFloat{
 						Type: 5,
-						Id:   spin_id_int,
+						Id:   spin_promotion_id_int,
 					})
+				}
 			}
 		}
 	}
@@ -284,13 +272,17 @@ func VIPAvailable(popups []models.Popups) bool {
 	}
 	return false // No popup with PopupType == 3 was found
 }
-func SpinAvailable(popups []models.Popups) (bool, string) {
+func SpinAvailable(popups []models.Popups) (bool, int) {
 	for _, popup := range popups {
 		if popup.PopupType == 5 && popup.CanFloat{
-			return true, popup.Meta // Found a popup with PopupType == 4
+			var spin_service SpinService
+			spin_promotion_id_int, _ := strconv.Atoi(popup.Meta)
+			if spin_service.CheckIsSpinAlive(spin_promotion_id_int){
+				return true, spin_promotion_id_int // Found a popup with PopupType == 4
+			}
 		}
 	}
-	return false, "" // No popup with PopupType == 4 was found
+	return false, 0 // No popup with PopupType == 4 was found
 }
 
 func WinLoseFloat(popups []models.Popups) bool {
@@ -325,4 +317,15 @@ func SpinFloat(popups []models.Popups) bool {
 		}
 	}
 	return false // No popup with PopupType == 4 was found
+}
+
+func ShownNothing(user model.User) ( err error) {
+	key := "popup/records/" + time.Now().Format("2006-01-02")
+	res := cache.RedisClient.HSet(context.Background(), key, user.ID, "6")
+	if res.Err() != nil {
+		fmt.Print("insert win lose popup record into redis failed ", key)
+	}
+	expire_time, err := strconv.Atoi(os.Getenv("POPUP_RECORD_EXPIRE_MINS"))
+	cache.RedisClient.ExpireNX(context.Background(), key, time.Duration(expire_time)*time.Minute)
+	return
 }

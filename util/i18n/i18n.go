@@ -1,10 +1,11 @@
 package i18n
 
 import (
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
 	"os"
 	"strings"
+
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 
 	yaml "gopkg.in/yaml.v2"
 )

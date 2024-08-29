@@ -35,7 +35,7 @@ func ShouldPopupTeamUp(user User) (bool, error) {
 	yesterdayStart := time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, now.Location())
 	var team_up ploutos.Teamup
 	// status = 2 is success,    status = 0 is onging
-	err := DB.Model(ploutos.Teamup{}).Where("user_id = ? AND updated_at < ? AND updated_at > ? AND status in (1,0) AND total_teamup_deposit !=0", user.ID, TodayStart, yesterdayStart).Order("status DESC, total_teamup_deposit DESC").First(&team_up).Error
+	err := DB.Model(ploutos.Teamup{}).Where("user_id = ? AND updated_at < ? AND updated_at > ? AND status in (1,0) AND total_fake_progress !=0", user.ID, TodayStart, yesterdayStart).Order("status DESC, total_teamup_deposit DESC").First(&team_up).Error
 	if errors.Is(err, logger.ErrRecordNotFound) {
 			err = nil
 			// if no team up record, we return nil
@@ -96,13 +96,13 @@ func ShouldPopupVIP(user User) (bool, error) {
 }
 
 // here we only check if user has remaining counts.
-func ShouldPopupSpin(user User, spin_id int) (bool, error) {
+func ShouldPopupSpin(user User, spin_promotion_id int) (bool, error) {
 	// need to check if user has used all spin chances
 	now := time.Now()
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 	var previous_spin_result []ploutos.SpinResult
-	err := DB.Model(ploutos.SpinResult{}).Where("user_id = ? AND spin_id = ?", user.ID, spin_id).Where("created_at > ?", startOfToday).Order("created_at DESC").Find(&previous_spin_result).Error
+	err := DB.Model(ploutos.SpinResult{}).Joins("LEFT JOIN spins ON spins.id = spin_results.spin_id").Where("user_id = ? AND spins.promotion_id = ?", user.ID, spin_promotion_id).Where("created_at > ?", startOfToday).Order("created_at DESC").Find(&previous_spin_result).Error
 
 	if err==nil || errors.Is(err, logger.ErrRecordNotFound) {
 		fmt.Println("get spin result error, but the error is no records",err)
@@ -112,11 +112,9 @@ func ShouldPopupSpin(user User, spin_id int) (bool, error) {
 		return true, nil
 	}
 	var spin ploutos.Spins
-	err = DB.Model(ploutos.Spins{}).Where("id = ?", spin_id).Find(&spin).Error
+	err = DB.Model(ploutos.Spins{}).Where("promotion_id = ?", spin_promotion_id).Find(&spin).Error
 	// if not displayed today
 	if len(previous_spin_result) < spin.Counts {
-		fmt.Println("get spin result length ",len(previous_spin_result))
-		fmt.Println("get spin counts ",spin.Counts)
 		Shown(user)
 		return true, nil
 	}
