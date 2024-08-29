@@ -11,7 +11,7 @@ type Spin struct {
 	Button          string     `json:"button"`
 	Counts          int        `json:"counts"`
 	RemainingCounts int        `json:"remaining_counts"`
-	PromotionId     int64       `json:"promotion_id"`
+	PromotionId     int64      `json:"promotion_id"`
 	SpinItems       []SpinItem `json:"items"`
 }
 type SpinItem struct {
@@ -21,6 +21,14 @@ type SpinItem struct {
 	TextColor string `json:"text_color"`
 	BgColor   string `json:"bg_color"`
 	IsWin     bool   `json:"is_win"`
+}
+type SpinHistory struct {
+	SpinID         int64  `json:"spin_id"`
+	SpinName       string `json:"spin_name"`
+	SpinTime       int64  `json:"spin_time"`
+	SpinResultId   int64 `json:"spin_result_id"`
+	SpinResultName string `json:"spin_result_name"`
+	SpinResultType string `json:"spin_result_type"`
 }
 
 func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_counts int) (spin_resp Spin) {
@@ -43,12 +51,12 @@ func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_co
 }
 
 func BuildSpinItem(a ploutos.SpinItem) (b SpinItem) {
-	text_color:=""
-	bg_color:=""
-	if len(a.TextColor)>0 && a.TextColor[0] == '#' {
+	text_color := ""
+	bg_color := ""
+	if len(a.TextColor) > 0 && a.TextColor[0] == '#' {
 		text_color = a.TextColor[1:]
 	}
-	if len(a.BgColor)>0 && a.BgColor[0] == '#' {
+	if len(a.BgColor) > 0 && a.BgColor[0] == '#' {
 		bg_color = a.BgColor[1:]
 	}
 	b = SpinItem{
