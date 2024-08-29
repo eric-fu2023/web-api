@@ -750,6 +750,7 @@ const (
 	Notification_Type_Rebate              = "rebate"
 	Notification_Type_Vip_Promotion       = "vip_promotion"
 	Notification_Type_Pop_Up              = "popup_winlose"
+	Notification_Type_Spin                = "spin"
 	Notification_Type_Referral_Alliance   = "referral_alliance"
 
 	//DefaultBrand = 1001
