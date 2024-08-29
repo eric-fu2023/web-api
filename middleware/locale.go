@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"os"
 	"strings"
 	"web-api/util/i18n"
+
+	"github.com/gin-gonic/gin"
 )
 
 func Locale() gin.HandlerFunc {

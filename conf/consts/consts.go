@@ -8,6 +8,12 @@ const (
 )
 
 var (
+	SpinResultType = map[int64]string{
+		1:  SpinVoucher,
+		2:  SpinBonus,
+		3:  SpinItem,
+		4:  SpinOthers,
+	}
 	OrderTypeMap = map[int64]string{
 		-1: OrderTypeWithdraw,
 		1:  OrderTypeTopup,
@@ -755,4 +761,10 @@ const (
 	SmsOtpActionSetSecondaryPassword = "set_secondary_password"
 	SmsOtpActionSetMobile            = "set_mobile"
 	SmsOtpActionSetEmail             = "set_email"
+
+	// spin related
+	SpinVoucher = "spin_voucher"
+	SpinBonus = "spin_bonus"
+	SpinItem = "spin_item"
+	SpinOthers = "spin_others"
 )

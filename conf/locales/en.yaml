@@ -567,6 +567,12 @@ vip_rebate: "VIP Rebate Bonus"
 vip_referral: "VIP Referral Bonus"
 cash_method_promotion: "Cash Method Promotion"
 teamup_rebate: "Teamup Rebate Bonus"
+spin_rewards: "Spin - Bonus"
+
+spin_voucher: "Voucher"
+spin_bonus: "Bonus"
+spin_item: "Prize"
+spin_others: "Others"
 
 system_adjust: "System Adjust"
 game_adjust: "Game Adjust"

@@ -1,6 +1,10 @@
 package serializer
 
 import (
+	"time"
+	"web-api/conf/consts"
+	"web-api/util/i18n"
+
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
@@ -26,9 +30,19 @@ type SpinHistory struct {
 	SpinID         int64  `json:"spin_id"`
 	SpinName       string `json:"spin_name"`
 	SpinTime       int64  `json:"spin_time"`
-	SpinResultId   int64 `json:"spin_result_id"`
+	SpinResultId   int64  `json:"spin_result_id"`
 	SpinResultName string `json:"spin_result_name"`
 	SpinResultType string `json:"spin_result_type"`
+	Redeemed       bool   `json:"redeemed"`
+}
+type SpinSqlHistory struct {
+	SpinID         int64     `json:"spin_id"`
+	SpinName       string    `json:"spin_name"`
+	CreatedAt      time.Time `json:"created_at"`
+	SpinResultId   int64     `json:"spin_result_id"`
+	SpinResultName string    `json:"spin_result_name"`
+	SpinResultType int64     `json:"spin_result_type"`
+	Redeemed       bool      `json:"redeemed"`
 }
 
 func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_counts int) (spin_resp Spin) {
@@ -79,6 +93,22 @@ func BuildSpinResult(a ploutos.SpinItem, remaining_counts int) (b SpinResult) {
 	b = SpinResult{
 		ID:              a.ID,
 		RemainingCounts: remaining_counts,
+	}
+	return
+}
+
+func BuildSpinHistory(a []SpinSqlHistory, i18n i18n.I18n) (b []SpinHistory) {
+	for _, result := range a {
+		spin_result_type := i18n.T(consts.SpinResultType[result.SpinResultType])
+		b = append(b, SpinHistory{
+			SpinID:         result.SpinID,
+			SpinName:       result.SpinName,
+			SpinTime:       result.CreatedAt.Unix(),
+			SpinResultId:   result.SpinResultId,
+			SpinResultName: result.SpinResultName,
+			SpinResultType: spin_result_type,
+			Redeemed:       result.Redeemed,
+		})
 	}
 	return
 }

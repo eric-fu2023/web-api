@@ -144,38 +144,48 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 	return
 }
 
-func (service *SpinService) GetHistory(c *gin.Context)(r serializer.Response, err error) {
+func (service *SpinService) GetHistory(c *gin.Context) (r serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
 	spin_id := c.Query("id")
 	spin_id_int, err := strconv.ParseInt(spin_id, 10, 64)
 	u, _ := c.Get("user")
 	user := u.(model.User)
 	fmt.Println(spin_id_int)
 	fmt.Println(user.ID)
+
+	var sql_data []serializer.SpinSqlHistory
+	err = model.DB.Table("spin_results").
+		Joins("LEFT JOIN spin_items ON spin_items.id = spin_results.spin_result").
+		Joins("LEFT JOIN spins ON spins.id = spin_results.spin_id").
+		Select("spins.id as spin_id, spins.name as spin_name, spin_results.created_at, spin_results.spin_result as spin_result_id, spin_items.name as spin_result_name, spin_items.type as spin_result_type, spin_results.redeemed").
+		Where("spins.id", spin_id_int).
+		Scan(&sql_data).Error
 	// var data serializer.SpinHistory
 	// data = serializer.BuildSpin(spin, spin_items, spin_results_counts)
 	var data []serializer.SpinHistory
-	data = append(data, serializer.SpinHistory{
-		SpinID:1,
-		SpinName:"幸运大转盘",
-		SpinTime:1,
-		SpinResultId:1,
-		SpinResultName:"彩金888",
-		SpinResultType:"彩金",
-	},serializer.SpinHistory{
-		SpinID:1,
-		SpinName:"幸运大转盘11",
-		SpinTime:1,
-		SpinResultId:1,
-		SpinResultName:"彩金88823",
-		SpinResultType:"彩金",
-	},serializer.SpinHistory{
-		SpinID:1,
-		SpinName:"幸运大转32盘",
-		SpinTime:1,
-		SpinResultId:1,
-		SpinResultName:"彩金12888",
-		SpinResultType:"彩金123",
-	})
+	data = serializer.BuildSpinHistory(sql_data, i18n)
+	// data = append(data, serializer.SpinHistory{
+	// 	SpinID:1,
+	// 	SpinName:"幸运大转盘",
+	// 	SpinTime:1,
+	// 	SpinResultId:1,
+	// 	SpinResultName:"彩金888",
+	// 	SpinResultType:"彩金",
+	// },serializer.SpinHistory{
+	// 	SpinID:1,
+	// 	SpinName:"幸运大转盘11",
+	// 	SpinTime:1,
+	// 	SpinResultId:1,
+	// 	SpinResultName:"彩金88823",
+	// 	SpinResultType:"彩金",
+	// },serializer.SpinHistory{
+	// 	SpinID:1,
+	// 	SpinName:"幸运大转32盘",
+	// 	SpinTime:1,
+	// 	SpinResultId:1,
+	// 	SpinResultName:"彩金12888",
+	// 	SpinResultType:"彩金123",
+	// })
 	r = serializer.Response{
 		Data: data,
 	}
@@ -204,12 +214,9 @@ func (service *SpinService) GetRemainingSpinCount(user model.User, spin_id int) 
 func (service *SpinService) GetSpinIdFromPromotionId(spin_promotion_id int) (spin_id int, err error) {
 	var spin ploutos.Spins
 	err = model.DB.Debug().Model(ploutos.Spins{}).Where("promotion_id = ?", spin_promotion_id).Find(&spin).Error
-	if err!=nil{
-		fmt.Println("get spin id error",err)
+	if err != nil {
+		fmt.Println("get spin id error", err)
 	}
-	fmt.Println("get spin ",spin.ID)
+	fmt.Println("get spin ", spin.ID)
 	return int(spin.ID), err
 }
-
-
-
