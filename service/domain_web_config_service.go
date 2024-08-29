@@ -59,7 +59,7 @@ func (service *DomainWebConfigService) RetrieveChannel(c *gin.Context) string {
 }
 
 func retrieveRandomRedirect(c *gin.Context) string {
-	if domain := findDomainWebConfig(c); domain != nil && domain.ID > 0 {
+	if domain := findDomainWebConfig(c); domain != nil && domain.ID > 0 && domain.Redirect {
 		redirectTos := domain.RedirectTos
 		if size := len(redirectTos); size > 0 {
 			return redirectTos[time.Now().UTC().UnixMicro()%int64(size)].Origin
