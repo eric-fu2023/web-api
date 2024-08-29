@@ -203,7 +203,7 @@ func (service *SpinService) CheckIsSpinAlive(spin_promotion_id int) (isAlive boo
 	if err!= nil{
 		fmt.Println("get spin promotion error", err)
 	}
-	if promotion.EndAt.Before(time.Now()) && promotion.StartAt.After(time.Now()){
+	if promotion.EndAt.After(time.Now()) && promotion.StartAt.Before(time.Now()){
 		return true
 	}
 	return false
