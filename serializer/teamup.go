@@ -71,7 +71,7 @@ func BuildTeamup(a models.Teamup) (res Teamup) {
 	return
 }
 
-func BuildCustomTeamupHash(a models.Teamup, u model.User, br models.BetReport) (res OutgoingTeamupHash) {
+func BuildCustomTeamupHash(a models.Teamup, u model.User, isParlay bool) (res OutgoingTeamupHash) {
 
 	t := Teamup{
 		Id:                      a.ID,
@@ -86,7 +86,7 @@ func BuildCustomTeamupHash(a models.Teamup, u model.User, br models.BetReport) (
 
 	res.Nickname = u.Nickname
 	res.Avatar = u.Avatar
-	res.IsParlay = br.IsParlay
+	res.IsParlay = isParlay
 
 	return
 }
