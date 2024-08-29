@@ -208,6 +208,111 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		// 	return
 		// }
 
+		if s.MatchId == 0 {
+			br, _ := model.GetTeamUpBetReport(s.OrderId)
+
+			if br.OrderId == "" {
+				r = serializer.Err(c, "", serializer.CustomTeamUpBetReportDoesNotExistError, i18n.T("teamup_br_not_exist"), err)
+				return
+			}
+			br.ParseInfo()
+
+			var matchTime int64
+			for _, bet := range br.Bets {
+				if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
+					expiredBefore, _ := model.GetAppConfigWithCache("teamup", "teamup_event_expired_before_minutes")
+					expiredBeforeMinutes, _ := strconv.Atoi(expiredBefore)
+					matchTime = *bet.GetMatchTime() - (60 * int64(expiredBeforeMinutes)) // 60 seconds * num minutes
+				}
+			}
+
+			nowTs := time.Now().UTC().Unix()
+
+			if nowTs >= matchTime {
+				r = serializer.Err(c, "", serializer.CustomTeamUpMatchStartedError, i18n.T("teamup_match_started"), err)
+				return
+			}
+
+			var teamup ploutos.Teamup
+			teamup, err = model.GetTeamUp(s.OrderId)
+
+			var t ploutos.Teamup
+			t = teamup
+
+			var leagueIcon, homeIcon, awayIcon, leagueName string
+
+			if len(br.Bets) > 0 {
+				switch {
+				case br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA:
+					_, ok := br.Bets[0].(ploutos.BetFb)
+					if ok {
+						matchId, _ := strconv.Atoi(br.Bets[0].(ploutos.BetFb).GetMatchId())
+						// matchDetail, err := commonNoAuth.GetMatchDetail(int64(matchId), fbServiceApi.LanguageCHINESE)
+						match, err := model.GetFbMatchDetails(int64(matchId))
+
+						if err != nil {
+							log.Printf("GET MATCH DETAIL HUUUUUUUUU DEBUG FROM TAYA URL=%v commonNoAuth.GetMatchDetail err - %v \n", match, err)
+						} else {
+							log.Printf("GET MATCH DETAIL FROM TAYA SUCCESS %v \n", match)
+							leagueIcon = match.Lg.Lurl
+							leagueName = match.Lg.Na
+
+							if len(match.Ts) > 1 {
+								homeIcon = match.Ts[0].Lurl
+								awayIcon = match.Ts[1].Lurl
+							}
+						}
+					}
+				case br.GameType == ploutos.GAME_IMSB:
+				// 	_, ok := br.Bets[0].(ploutos.BetImsb)
+
+				// 	if ok {
+				// 		// matchId := 58131174
+				// 		matchId, _ := strconv.Atoi(br.Bets[0].(ploutos.BetImsb).GetEventId())
+				// 		matches, err := model.GetImsbMatchDetails(int64(matchId))
+				// 		if err == nil && len(matches) > 0 {
+				// 			matchDetail := matches[0]
+				// 			leagueIcon = matchDetail.Competition.Format
+				// 			leagueName = matchDetail.Competition.Title
+
+				// 			homeIcon = matchDetail.TeamA.LogoUrl
+				// 			awayIcon = matchDetail.TeamB.LogoUrl
+				// 		}
+
+				// 	}
+				// }
+			}
+
+			teamup.UserId = user.ID
+			teamup.OrderId = s.OrderId
+			teamup.TotalTeamUpTarget = br.Bet
+			teamup.TeamupEndTime = matchTime
+			teamup.TeamupCompletedTime = matchTime
+
+			teamup.LeagueIcon = leagueIcon
+			teamup.HomeIcon = homeIcon
+			teamup.AwayIcon = awayIcon
+			teamup.LeagueName = leagueName
+
+			// Recheck instead of lock
+			// FUTURE: mutex for same orderId
+			latestTeamup, _ := model.GetTeamUp(s.OrderId)
+			if latestTeamup.ID == 0 {
+				t, _ = model.SaveTeamup(teamup)
+			}
+
+			shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupHash(t, user, br.IsParlay))
+			if err != nil {
+				r = serializer.Err(c, "", serializer.CustomTeamUpError, i18n.T("teamup_error"), err)
+				return
+			}
+
+			r, err = shareService.Create()
+
+			return
+
+		}
+
 		var leagueIcon, homeIcon, awayIcon, leagueName string
 		var matchExpiredTime int64
 		switch {
@@ -465,6 +570,8 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 	copier.Copy(&res, teamupRes)
 
 	for i, t := range teamupRes {
+		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
+		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
 
 		if t.MatchId == "" {
 			fmt.Print(t.MatchId)
@@ -543,9 +650,6 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 			continue
 		}
-
-		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
-		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
 
 		res[i].InfoJson = nil
 
