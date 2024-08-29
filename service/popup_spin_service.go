@@ -135,9 +135,12 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 			UserID:     user.ID,
 			SpinResult: data.ID,
 			Redeemed:   false,
-			SpinID:     spin_promotion_id_int,
+			SpinID:     spin.ID,
 		}
 		err = model.DB.Create(&SpinResult).Error
+		if err!=nil{
+			fmt.Println("spin result insert err", err)
+		}
 
 		r = serializer.Response{
 			Data: data,
