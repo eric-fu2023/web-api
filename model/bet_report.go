@@ -64,3 +64,10 @@ func GetBetReportByBusinessId(businessId string) (isFoundBetReport bool, err err
 
 	return
 }
+
+func GetBetReport(businessId string) (betReport ploutos.BetReport, err error) {
+	err = DB.Table("bet_report").
+		Where("business_id = ?", businessId).
+		First(&betReport).Error
+	return
+}
