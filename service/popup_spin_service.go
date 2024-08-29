@@ -162,6 +162,7 @@ func (service *SpinService) GetHistory(c *gin.Context) (r serializer.Response, e
 		Select("spins.id as spin_id, spins.name as spin_name, spin_results.created_at, spin_results.spin_result as spin_result_id, spin_items.name as spin_result_name, spin_items.type as spin_result_type, spin_results.redeemed").
 		Where("spins.promotion_id", spin_promotion_id_int).
 		Where("spin_results.user_id", user.ID).
+		Order("created_at desc").
 		Scan(&sql_data).Error
 	var data []serializer.SpinHistory
 	data = serializer.BuildSpinHistory(sql_data, i18n)
