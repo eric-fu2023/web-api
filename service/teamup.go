@@ -291,10 +291,10 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 				}
 
 				shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupHash(t, user, br.IsParlay))
-				if err != nil {
-					r = serializer.Err(c, "", serializer.CustomTeamUpError, i18n.T("teamup_error"), err)
-					return
-				}
+				// if err != nil {
+				// 	r = serializer.Err(c, "", serializer.CustomTeamUpError, i18n.T("teamup_error"), err)
+				// 	return
+				// }
 
 				r, err = shareService.Create()
 
