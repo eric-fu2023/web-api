@@ -480,7 +480,7 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 							copier.Copy(&outgoingBet, bet)
 							teams := strings.Split(outgoingBet.MatchName, " vs ")
 							if len(teams) < 2 {
-								teams = strings.Split(outgoingBet.MatchName, " vs ")
+								teams = strings.Split(outgoingBet.MatchName, " vs. ")
 							}
 							if len(teams) > 1 {
 								outgoingBet.HomeName = teams[0]
@@ -559,7 +559,7 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 			outgoingBet.OptionName = t.OptionName
 			teams := strings.Split(outgoingBet.MatchName, " vs ")
 			if len(teams) < 2 {
-				teams = strings.Split(outgoingBet.MatchName, " vs ")
+				teams = strings.Split(outgoingBet.MatchName, " vs. ")
 			}
 			if len(teams) > 1 {
 				outgoingBet.HomeName = teams[0]
