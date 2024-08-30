@@ -7,7 +7,7 @@ import (
 )
 
 func SpinHistory(c *gin.Context) {
-	var service service.SpinService
+	var service service.SpinHistoryService
 	if err := c.ShouldBind(&service); err == nil {
 		res, _ := service.GetHistory(c)
 		c.JSON(200, res)
