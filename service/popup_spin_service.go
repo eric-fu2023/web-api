@@ -7,6 +7,7 @@ import (
 	"time"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/common"
 	"web-api/util/i18n"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -14,8 +15,7 @@ import (
 )
 
 type SpinService struct {
-}
-type SpinQueryParam struct {
+	common.Page
 	Id int `json:"id"`
 }
 
@@ -163,6 +163,7 @@ func (service *SpinService) GetHistory(c *gin.Context) (r serializer.Response, e
 		Where("spins.promotion_id", spin_promotion_id_int).
 		Where("spin_results.user_id", user.ID).
 		Order("created_at desc").
+		Scopes(model.Paginate(service.Page.Page, service.Page.Limit)).
 		Scan(&sql_data).Error
 	var data []serializer.SpinHistory
 	data = serializer.BuildSpinHistory(sql_data, i18n)
