@@ -42,10 +42,14 @@ func (service *DollarJackpotGetService) Get(c *gin.Context) (r serializer.Respon
 	}
 	for _, d := range draws {
 		if d.ID != 0 && d.DollarJackpot != nil {
-			if time.Now().After(d.EndTime) {
-				d.Status=1
+			// if pot started
+			if time.Now().After(d.StartTime){
+				// if pot supposed to end, but status still 0 (this will last for few seconds)
+				if time.Now().After(d.EndTime) {
+					d.Status=1
+				}
+				dollarJackpotDraw = d
 			}
-			dollarJackpotDraw = d
 		}
 	}
 	var data *serializer.DollarJackpotDraw
