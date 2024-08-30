@@ -21,7 +21,7 @@ type TeamupCustomRes []struct {
 	TotalTeamupDeposit  float64 `json:"total_teamup_deposit"`
 	TotalTeamupTarget   float64 `json:"total_teamup_target"`
 	TeamupEndTime       int64   `json:"teamup_end_time"`
-	TeamupLocalEndTime  int64   `json:"teamup_local_end_time"` // Use carefully
+	TeamupLocalEndTime  string  `json:"teamup_local_end_time"` // Use carefully
 	TeamupCompletedTime int64   `json:"teamup_completed_time"`
 	InfoJson            []byte  `json:"info_json,omitempty"`
 	GameType            int64   `json:"game_type"`
@@ -52,7 +52,7 @@ type OutgoingTeamupCustomRes []struct {
 	TotalTeamupDeposit  float64     `json:"total_teamup_deposit"`
 	TotalTeamupTarget   float64     `json:"total_teamup_target"`
 	TeamupEndTime       int64       `json:"teamup_end_time"`
-	TeamupLocalEndTime  int64       `json:"teamup_local_end_time"` // Use carefully
+	TeamupLocalEndTime  string      `json:"teamup_local_end_time"` // Use carefully
 	TeamupCompletedTime int64       `json:"teamup_completed_time"`
 	InfoJson            []byte      `json:"info_json,omitempty"`
 	GameType            int64       `json:"game_type"`
