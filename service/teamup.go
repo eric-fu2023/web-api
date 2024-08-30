@@ -148,6 +148,7 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 		user = u.(model.User)
 	}
 	loc := c.MustGet("_tz").(*time.Location)
+	log.Printf("GET MATCH DETAIL CHECK TIMEZONE tz - %v , teamup_id - %v \n", loc.String(), s.TeamupId)
 	if loc.String() == "UTC" {
 		loc, _ = time.LoadLocation("Asia/Tokyo")
 	}
@@ -175,8 +176,7 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 }
 
 func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, err error) {
-	nowTs := time.Now().UTC().Unix()
-	fmt.Print(nowTs)
+	loc := c.MustGet("_tz").(*time.Location)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
@@ -305,6 +305,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 				teamup.AwayIcon = awayIcon
 				teamup.LeagueName = leagueName
 				teamup.BetReportGameType = int(br.GameType)
+				teamup.Timezone = loc.String()
 
 				// Recheck instead of lock
 				// FUTURE: mutex for same orderId
@@ -388,6 +389,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		teamup.LeagueName = leagueName
 		gameType, _ := strconv.Atoi(s.GameType)
 		teamup.BetReportGameType = gameType
+		teamup.Timezone = loc.String()
 
 		// Recheck instead of lock
 		// FUTURE: mutex for same orderId
