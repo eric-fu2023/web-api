@@ -15,6 +15,8 @@ import (
 )
 
 type SpinService struct {
+}
+type SpinHistoryService struct {
 	common.Page
 	Id int `json:"id"`
 }
@@ -149,7 +151,7 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 	return
 }
 
-func (service *SpinService) GetHistory(c *gin.Context) (r serializer.Response, err error) {
+func (service *SpinHistoryService) GetHistory(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	spin_promotion_id := c.Query("id")
 	spin_promotion_id_int, err := strconv.ParseInt(spin_promotion_id, 10, 64)
