@@ -147,11 +147,17 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 	if u != nil {
 		user = u.(model.User)
 	}
-
+	loc := c.MustGet("_tz").(*time.Location)
 	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
 	outgoingRes := parseBetReport(teamupRes)
 	if len(outgoingRes) > 0 {
+		if outgoingRes[0].TeamupEndTime != 0 && loc != nil {
+			t := time.Unix(outgoingRes[0].TeamupEndTime, 0).UTC()
+			tInLoc := t.In(loc)
+			outgoingRes[0].TeamupLocalEndTime = tInLoc.Format("2006-01-02 15:04:05")
+		}
+
 		teamupId, _ := strconv.Atoi(outgoingRes[0].TeamupId)
 		if user.ID != 0 && outgoingRes[0].UserId != fmt.Sprint(user.ID) {
 			res, _ := model.GetTeamupEntryByTeamupIdAndUserId(int64(teamupId), user.ID)
@@ -166,6 +172,8 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 }
 
 func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, err error) {
+	nowTs := time.Now().UTC().Unix()
+	fmt.Print(nowTs)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
@@ -284,6 +292,9 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 				teamup.OptionName = betToShow.OptionName
 				teamup.IsParlay = br.IsParlay
 				teamup.MatchTitle = br.BetType
+				if !br.IsParlay {
+					teamup.MatchTitle = betToShow.MatchName
+				}
 				teamup.MatchId = betToShow.MatchId
 
 				teamup.LeagueIcon = leagueIcon
