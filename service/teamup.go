@@ -148,6 +148,9 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 		user = u.(model.User)
 	}
 	loc := c.MustGet("_tz").(*time.Location)
+	if loc.String() == "UTC" {
+		loc, _ = time.LoadLocation("Asia/Tokyo")
+	}
 	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
 	outgoingRes := parseBetReport(teamupRes)
