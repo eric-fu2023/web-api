@@ -44,7 +44,8 @@ type FbMatchAPIResponse struct {
 type FbMatchResponse struct {
 	Ts []FbMatchTeam `json:"ts"`
 	Lg FbLeague      `json:"lg"`
-	Bt int64         `json:"bt"`
+	Bt int64         `json:"bt"` // Start Time?
+	Nm string        `json:"nm"` // Match Name
 }
 
 type FbMatchTeam struct {
@@ -112,7 +113,7 @@ func GetFbMatchDetails(matchId int64) (match FbMatchResponse, err error) {
 	request := FbMatchDetailRequest{
 		MatchId:      fmt.Sprint(int(matchId)),
 		CurrencyId:   2,
-		LanguageType: "CMN",
+		LanguageType: "CMN", // English = "ENG"
 		OddsType:     1,
 	}
 	jsonData, err := json.Marshal(request)
