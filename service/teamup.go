@@ -641,9 +641,36 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 				outgoingBet.AwayName = teams[1]
 			}
 
-			res[i].Bet = outgoingBet
 		case t.BetReportGameType == ploutos.GAME_IMSB:
+			outgoingBet.MatchTime = t.MatchTime
+			outgoingBet.HomeName = t.HomeName
+			outgoingBet.HomeIcon = t.HomeIcon
+			outgoingBet.AwayName = t.AwayName
+			outgoingBet.AwayIcon = t.AwayIcon
+			outgoingBet.LeagueIcon = t.LeagueIcon
+			outgoingBet.LeagueName = t.LeagueName
+			outgoingBet.MarketName = t.MarketName
+			outgoingBet.MatchName = t.MatchTitle
+			outgoingBet.LeagueName = t.LeagueName
+			outgoingBet.OptionName = t.OptionName
+			teams := strings.Split(outgoingBet.MatchName, " vs ")
+			if len(teams) < 2 {
+				teams = strings.Split(outgoingBet.MatchName, " vs. ")
+			}
+			if len(teams) < 2 {
+				teams = strings.Split(outgoingBet.MatchName, " VS ")
+			}
+			if len(teams) < 2 {
+				teams = strings.Split(outgoingBet.MatchName, " VS. ")
+			}
+			if len(teams) > 1 {
+				outgoingBet.HomeName = teams[0]
+				outgoingBet.AwayName = teams[1]
+			}
+
 		}
+
+		res[i].Bet = outgoingBet
 
 	}
 
