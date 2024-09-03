@@ -177,3 +177,17 @@ func GetUserByMobileOrEmail(countryCode, mobile, email string) (User, error) {
 
 	return User{}, ErrCannotFindUser
 }
+
+// IP防薅
+func IPExisted(ip string) (isExisted bool, err error) {
+	var count int64
+	err = DB.Table("users").
+		Where("registration_ip = ?", ip).
+		Count(&count).Error
+
+	if count > 0 {
+		isExisted = true
+	}
+
+	return
+}
