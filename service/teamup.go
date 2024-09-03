@@ -200,7 +200,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 	nowTs := time.Now().UTC().Unix()
 
-	var leagueIcon, homeIcon, awayIcon, leagueName, matchTitle string
+	var leagueIcon, homeIcon, awayIcon, leagueName, matchTitle, homeName, awayName string
 
 	if teamup.ID == 0 {
 
@@ -356,9 +356,13 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 		// GET MATCH DETAILS WITH FB WAY
 		case s.GameType == fmt.Sprint(ploutos.GAME_FB) || s.GameType == fmt.Sprint(ploutos.GAME_TAYA):
-			leagueIcon, leagueName, homeIcon, awayIcon, _, _, _, err = getFbMatchDetails(s.MatchId)
+			leagueIcon, leagueName, homeIcon, awayIcon, _, homeName, awayName, err = getFbMatchDetails(s.MatchId)
 			if err != nil {
 				log.Print(err)
+			}
+
+			if !s.IsParlay {
+				s.MatchTitle = homeName + " vs " + awayName
 			}
 
 		// GET MATCH DETAILS WITH IMSB WAY (BatAce)
