@@ -451,7 +451,6 @@ B4组排名_short: "B4组排名"
 3组_short: "3组"
 4组_short: "4组"
 
-
 streamer_not_found: "无效主播"
 general_error: "出了些问题。请再试一次。"
 login_failed: "登录失败."
@@ -632,8 +631,16 @@ NOTIFICATION_VIP_PROMOTION_TITLE: "VIP成功"
 NOTIFICATION_VIP_PROMOTION: "恭喜您成功升级为VIP【 %s 】！🌟"
 NOTIFICATION_REFERRAL_ALLIANCE_TITLE: "恭喜您获得共赢奖励！"
 NOTIFICATION_REFERRAL_ALLIANCE: "恭喜您获得共赢奖励！您的共赢奖励已成功领取。"
-NOTIFICATION_POPUP_WINLOSE_TITLE: "win/lose summary"
-NOTIFICATION_POPUP_WINLOSE: "check your win/lose summary now!"
+NOTIFICATION_POPUP_WINLOSE_FIRST_TITLE: "查看你的最新战绩！"
+NOTIFICATION_POPUP_WINLOSE_SECOND_TITLE: "最新输赢战况更新！"
+NOTIFICATION_POPUP_WINLOSE_THIRD_TITLE: "你的比赛排名更新了！"
+NOTIFICATION_POPUP_WIN_FIRST_DESC: "你在前天的比赛中赢了$ %d，排名上升至第 %d 名！点击查看详情。"
+NOTIFICATION_POPUP_WIN_SECOND_DESC: "恭喜你，前天赢得$ %d，排名上升到第 %d 位！点击查看你的最新成绩。"
+NOTIFICATION_POPUP_WIN_THIRD_DESC: "前天你赢了$ %d ，排名上升至第 %d 名！继续加油！"
+NOTIFICATION_POPUP_LOSE_FIRST_DESC: "前一天的比赛你输了$ %d，排名略有下降至第 %d 名。不要气馁！"
+NOTIFICATION_POPUP_LOSE_SECOND_DESC: "前一天比赛你输了$ %d ，当前排名第 %d 名。"
+NOTIFICATION_POPUP_LOSE_THIRD_DESC: "前一天比赛你输掉了$ %d ，排名下降至第 %d 名。挑战继续，期待你的回归！"
+
 NOTIFICATION_SPIN_TITLE: "Spin!"
 NOTIFICATION_SPIN: "Spin Now!"
 
@@ -668,4 +675,3 @@ notification_slashed_teamup_fail: "很遗憾，您的# %s 订单砍单失败了�
 registration_device_restrict_exceed_count: "设备ID注册次数已到达了上限"
 registration_ip_restrict_exceed_count: "IP地址注册次数已到达了上限"
 registration_restrict_exceed_count: "注册次数已达上限"
-
