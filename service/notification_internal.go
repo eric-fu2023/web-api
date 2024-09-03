@@ -69,8 +69,13 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 
 	case spinNote:
 		notificationType = consts.Notification_Type_Spin
-		title = conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_TITLE)
-		text = conf.GetI18N(lang).T(common.NOTIFICATION_SPIN)
+		spinTitle := []string{conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_FIRST_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_SECOND_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_THIRD_TITLE)}
+		spinDesc := []string{conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_FIRST_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_SECOND_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_THIRD_DESC)}
+
+		randIndex := rand.Intn(maxIndex - minIndex + 1)
+
+		title = spinTitle[randIndex]
+		text = spinDesc[randIndex]
 	}
 	common.SendNotification(p.UserID, notificationType, title, text)
 	r.Data = "Success"
