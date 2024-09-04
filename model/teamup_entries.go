@@ -2,7 +2,9 @@ package model
 
 import (
 	"fmt"
+	"log"
 	"math"
+	"sort"
 	"strconv"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"web-api/util/i18n"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 
 	"gorm.io/gorm"
 )
@@ -66,15 +69,15 @@ func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustom
 	return
 }
 
-func CreateSlashBetRecord(teamupId, userId int64, i18n i18n.I18n) (teamup ploutos.Teamup, isTeamupSuccess, isSuccess bool, err error) {
+func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18n i18n.I18n) (teamup ploutos.Teamup, isTeamupSuccess, isSuccess bool, err error) {
 
 	// First entry - 85% ~ 92%
 	// Second entry onwards until N - 1 - 0.01% ~ 1%
 	// Capped at 99.99% if deposit not fulfilled
 
-	// LAST SLASH - if deposit fulfilled then slash - will make it 100% and complete it
-
 	// NO SLASH if user slashed before
+
+	userId := user.ID
 
 	teamup, _ = GetTeamUpByTeamUpId(teamupId)
 
@@ -95,20 +98,37 @@ func CreateSlashBetRecord(teamupId, userId int64, i18n i18n.I18n) (teamup plouto
 		}
 	}
 
+	var beforeProgress, afterProgress int64
+
 	// 10000 = 100%
 	maxPercentage := int64(10000)
 	currentTotalProgress := util.Sum(teamupEntries, func(entry ploutos.TeamupEntry) int64 {
 		return entry.FakePercentageProgress
 	})
 
-	beforeProgress, afterProgress := GenerateFakeProgress(currentTotalProgress)
+	// IF THIS USER DOESNT FULFILL
+	// 1) NEW USER
+	// 2) TOP-UP BEFORE
+	// THEN SLASH 0%
 
-	// Update status to SUCCESS if teamup deposit exceeded target
-	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
-		isTeamupSuccess = true
-		teamup.Status = int(ploutos.TeamupStatusSuccess)
-		teamup.TeamupCompletedTime = time.Now().UTC().Unix()
-		afterProgress = maxPercentage
+	isFulfillSlashReq := validSlash(c, user)
+
+	// Check if teamup is shortlisted
+	// If yes, then success the current shortlisted
+	if isFulfillSlashReq && teamup.ShortlistStatus == ploutos.ShortlistStatusShortlisted {
+		_, _ = SuccessShortlisted(teamup, currentTotalProgress, userId)
+
+		// No matter got error or not, need to return
+		// No error = success = return
+		// Got error = should not continue = return
+		return
+	}
+
+	if !isFulfillSlashReq {
+		beforeProgress = currentTotalProgress
+		afterProgress = currentTotalProgress
+	} else {
+		beforeProgress, afterProgress = GenerateFakeProgress(currentTotalProgress)
 	}
 
 	slashEntry := ploutos.TeamupEntry{
@@ -121,6 +141,55 @@ func CreateSlashBetRecord(teamupId, userId int64, i18n i18n.I18n) (teamup plouto
 	slashEntry.FakePercentageProgress = afterProgress - beforeProgress
 
 	teamup.TotalFakeProgress = afterProgress
+
+	if isFulfillSlashReq {
+		teamupContributeFixedAmountString, _ := GetAppConfigWithCache("teamup", "teamup_fixed_amount")
+		if teamupContributeFixedAmountString != "" {
+			contributeAmount, _ := strconv.Atoi(teamupContributeFixedAmountString)
+			slashEntry.ContributedTeamupDeposit = int64(contributeAmount)
+			teamup.TotalTeamupDeposit += int64(contributeAmount)
+		}
+	}
+
+	// IF THIS TOTAL_TEAMUP_DEPOSIT >= TOTAL_TEAMUP_TARGET
+	// MEANS SUCCESS, WILL THEN CHECK IF CURRENT TERM ALREADY HAS 20
+	// IF ALREADY HAS 20, PICK 4 LOWEST AMOUNT AND FLAG AS QUALIFIED
+	// IGNORE NOT QUALIFIED, ONLY THE FIRST THAT INVITED 1 MORE WILL SUCCESS
+	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
+
+		currentTerm, _ := GetCurrentTermNum()
+		termSize := 20
+
+		afterProgress = maxPercentage
+		slashEntry.FakePercentageProgress = afterProgress - beforeProgress
+		teamup.TotalFakeProgress = afterProgress
+
+		// Check If Term 2 Already Has termSize - 1 (20 - 1 = 19)
+		termTeamups, _ := FindExceedTargetStatusPendingByTerm(currentTerm)
+		teamup.Term = currentTerm
+		if len(termTeamups) > termSize-1 {
+			teamup.Term++
+		}
+		if len(termTeamups) == termSize-1 {
+			// If term has termSize-1, means can put assign term to one more teamup
+			// Calculate immediately since 19 + current = 20
+			termTeamups = append(termTeamups, teamup)
+			sort.Slice(termTeamups, func(i, j int) bool {
+				return int(termTeamups[i].TotalTeamUpTarget) < int(termTeamups[j].TotalTeamUpTarget)
+			})
+			termTeamups = termTeamups[:4]
+			var ids []int64
+			for _, t := range termTeamups {
+				ids = append(ids, t.ID)
+			}
+
+			// Turn 4 lowest slash target amount into shortlisted
+			err = FlagStatusShortlisted(ids)
+			if err != nil {
+				return
+			}
+		}
+	}
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&teamup).Error
@@ -191,7 +260,15 @@ func GenerateFakeProgress(currentProgress int64) (beforeProgress, afterProgress 
 	maximumAllowedProgress := ceilingProgress - currentProgress
 
 	if currentProgress == 0 {
-		afterProgress = util.RandomNumFromRange(InitialRandomFakeProgressLowerLimit, InitialRandomFakeProgressUpperLimit)
+		var configError error
+		initialLowerLimitString, configError := GetAppConfigWithCache("teamup", "teamup_initial_fake_progress_lower")
+		initialUpperLimitString, configError := GetAppConfigWithCache("teamup", "teamup_initial_fake_progress_upper")
+		if configError != nil {
+			log.Printf("Error computing prediction, %s\n", configError.Error())
+		}
+		initialLowerLimit, _ := strconv.Atoi(initialLowerLimitString)
+		initialUpperLimit, _ := strconv.Atoi(initialUpperLimitString)
+		afterProgress = util.RandomNumFromRange(int64(initialLowerLimit), int64(initialUpperLimit))
 		return
 	}
 
@@ -233,5 +310,22 @@ func GetTeamupEntryByTeamupIdAndUserId(teamupId, userId int64) (res ploutos.Team
 		return nil
 	})
 
+	return
+}
+
+func validSlash(c *gin.Context, user ploutos.User) (isValid bool) {
+
+	var condition1, condition2 bool
+	topUpCashOrder, _ := FirstTopup(c, user.ID)
+	if topUpCashOrder.ID != "" {
+		condition1 = true
+	}
+
+	isIPRegistered := IPExisted(user.RegistrationIp)
+	if !isIPRegistered {
+		condition2 = true
+	}
+
+	isValid = condition1 || condition2
 	return
 }

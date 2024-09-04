@@ -179,13 +179,13 @@ func GetUserByMobileOrEmail(countryCode, mobile, email string) (User, error) {
 }
 
 // IP防薅
-func IPExisted(ip string) (isExisted bool, err error) {
+func IPExisted(ip string) (isExisted bool) {
 	var count int64
-	err = DB.Table("users").
+	err := DB.Table("users").
 		Where("registration_ip = ?", ip).
 		Count(&count).Error
 
-	if count > 0 {
+	if err != nil || count > 1 {
 		isExisted = true
 	}
 

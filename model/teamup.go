@@ -279,3 +279,84 @@ func GetRecentCompletedSuccessTeamup(numMinutes int64) (res TeamupSuccess, err e
 
 	return
 }
+
+func GetCurrentTermNum() (maxTerm int64, err error) {
+
+	err = DB.Table("teamups").
+		Select("MAX(term)").
+		Scan(&maxTerm).Error
+
+	if err == nil && maxTerm == 0 {
+		maxTerm = 1
+	}
+
+	return
+}
+
+func FindExceedTargetStatusPendingByTerm(termId int64) (teamups []ploutos.Teamup, err error) {
+
+	err = DB.Table("teamups").
+		Where("term = ?", termId).
+		Where("status = ?", ploutos.TeamupStatusPending).
+		Find(&teamups).Error
+
+	return
+}
+
+// 如果一个成功，同一届的候选池里其他砍单都自动失败，只有一个成功
+func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int64, finalSlashUserId int64) (isSuccess bool, err error) {
+
+	maxPercentage := int64(10000)
+	isSuccess = true
+
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		// Check if this term has winner already
+		var wonTeamup ploutos.Teamup
+		err = tx.Model(ploutos.Teamup{}).
+			Where("term = ?", teamup.Term).
+			Where("shortlist_status = ?", ploutos.ShortlistStatusShortlistWin).
+			First(&wonTeamup).Error
+
+		if wonTeamup.ID != 0 {
+			return
+		}
+
+		teamup.ShortlistStatus = ploutos.ShortlistStatusShortlistWin
+		teamup.Status = int(ploutos.TeamupStatusSuccess)
+		teamup.TotalFakeProgress = maxPercentage
+		err = tx.Save(&teamup).Error
+		if err != nil {
+			return
+		}
+
+		slashEntry := ploutos.TeamupEntry{
+			TeamupId: teamup.ID,
+			UserId:   finalSlashUserId,
+		}
+
+		slashEntry.TeamupEndTime = teamup.TeamupEndTime
+		slashEntry.TeamupCompletedTime = teamup.TeamupCompletedTime
+		slashEntry.FakePercentageProgress = maxPercentage - teamupEntriesCurrentProgress
+		err = tx.Save(&slashEntry).Error
+
+		return
+	})
+	if err != nil {
+		isSuccess = false
+		return
+	}
+
+	return
+}
+
+func FlagStatusShortlisted(ids []int64) (err error) {
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = tx.Model(ploutos.Teamup{}).
+			Where("id IN ?", ids).
+			Update("shortlist_status", ploutos.ShortlistStatusShortlisted).Error
+
+		return
+	})
+
+	return
+}

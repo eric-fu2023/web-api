@@ -176,6 +176,9 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 }
 
 func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, err error) {
+
+	// TODO: COUNT CURRENT TERM!!!
+
 	loc := c.MustGet("_tz").(*time.Location)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
@@ -435,7 +438,7 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	user := u.(model.User)
 
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
-	teamup, isTeamupSuccess, isSuccess, err := model.CreateSlashBetRecord(s.TeamupId, user.ID, i18n)
+	teamup, isTeamupSuccess, isSuccess, err := model.CreateSlashBetRecord(c, s.TeamupId, user.User, i18n)
 
 	if isTeamupSuccess {
 
@@ -641,9 +644,36 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 				outgoingBet.AwayName = teams[1]
 			}
 
-			res[i].Bet = outgoingBet
 		case t.BetReportGameType == ploutos.GAME_IMSB:
+			outgoingBet.MatchTime = t.MatchTime
+			outgoingBet.HomeName = t.HomeName
+			outgoingBet.HomeIcon = t.HomeIcon
+			outgoingBet.AwayName = t.AwayName
+			outgoingBet.AwayIcon = t.AwayIcon
+			outgoingBet.LeagueIcon = t.LeagueIcon
+			outgoingBet.LeagueName = t.LeagueName
+			outgoingBet.MarketName = t.MarketName
+			outgoingBet.MatchName = t.MatchTitle
+			outgoingBet.LeagueName = t.LeagueName
+			outgoingBet.OptionName = t.OptionName
+			teams := strings.Split(outgoingBet.MatchName, " vs ")
+			if len(teams) < 2 {
+				teams = strings.Split(outgoingBet.MatchName, " vs. ")
+			}
+			if len(teams) < 2 {
+				teams = strings.Split(outgoingBet.MatchName, " VS ")
+			}
+			if len(teams) < 2 {
+				teams = strings.Split(outgoingBet.MatchName, " VS. ")
+			}
+			if len(teams) > 1 {
+				outgoingBet.HomeName = teams[0]
+				outgoingBet.AwayName = teams[1]
+			}
+
 		}
+
+		res[i].Bet = outgoingBet
 
 	}
 
