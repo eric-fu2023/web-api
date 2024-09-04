@@ -648,6 +648,22 @@ NOTIFICATION_SPIN_FIRST_DESC: "Today's lucky wheel is ready! Come and try your l
 NOTIFICATION_SPIN_SECOND_DESC: "Don’t Miss Out! Today’s Lucky Wheel Could Be Your Jackpot!"
 NOTIFICATION_SPIN_THIRD_DESC: "Join lucky wheel for surprise rewards! Click to spin"
 
+NOTIFICATION_TEAMUP_PROGRESS_FIRST_TITLE: "🎉 Keep it up!"
+NOTIFICATION_TEAMUP_PROGRESS_SECOND_TITLE: "🔔 Great progress on your team up! Keep going!"
+NOTIFICATION_TEAMUP_PROGRESS_THIRD_TITLE: "Accelerate the progress of team up!"
+
+NOTIFICATION_TEAMUP_SUCCESS_FIRST_TITLE: "🎉 Congratulations! Team Up successful!"
+NOTIFICATION_TEAMUP_SUCCESS_SECOND_TITLE: "🏆 You successfully completed your team up promotion"
+NOTIFICATION_TEAMUP_SUCCESS_THIRD_TITLE: "Team Up success!"
+
+NOTIFICATION_TEAMUP_PROGRESS_FIRST_DESC: "Your team up activity is %d% complete! Invite more friends to enjoy a free bet! Click to check your progress"
+NOTIFICATION_TEAMUP_PROGRESS_SECOND_DESC: "You've completed %d amount in your team up activity. Invite more friends to enjoy a free bet!"
+NOTIFICATION_TEAMUP_PROGRESS_THIRD_DESC: "Your team up activity is %d% complete, getting closer to a free bet! Invite more friends to help! "
+
+NOTIFICATION_TEAMUP_SUCCESS_FIRST_DESC: "Your team up activity is successful! The bonus has been credited to your wallet! Check it out"
+NOTIFICATION_TEAMUP_SUCCESS_SECOND_DESC: "Congratulations! Team up activity is successful and your bonus has been credited! "
+NOTIFICATION_TEAMUP_SUCCESS_THIRD_DESC: "Congratulations! Team up activity successful! The rewards are in your account now!"
+
 chat_welcome_message: "Welcome! Enjoy real-time interaction with others. Please keep this chat positive and respectful. 😊\nPlease note that some comments in this live broadcast have been filtered to enhance the community experience."
 chat_welcome_name: "System"
 

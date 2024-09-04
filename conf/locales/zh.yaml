@@ -648,6 +648,22 @@ NOTIFICATION_SPIN_FIRST_DESC: "今天的幸运轮盘已刷新，快来试试手�
 NOTIFICATION_SPIN_SECOND_DESC: "今日轮盘活动开启，丰厚奖品等着你！赶紧点击参与"
 NOTIFICATION_SPIN_THIRD_DESC: "快来参与今日的轮盘活动，惊喜奖励等着你！点击参与"
 
+NOTIFICATION_TEAMUP_PROGRESS_FIRST_TITLE: "🎉 砍单有进展！再接再厉"
+NOTIFICATION_TEAMUP_PROGRESS_SECOND_TITLE: "🔔 砍单进展顺利！继续加油！"
+NOTIFICATION_TEAMUP_PROGRESS_THIRD_TITLE: "砍单进度加速！"
+
+NOTIFICATION_TEAMUP_SUCCESS_FIRST_TITLE: "你的砍单已经成功，下注金额已返回你的钱包！快来查看详情并参与下一次砍单吧！点击查看 >"
+NOTIFICATION_TEAMUP_SUCCESS_SECOND_TITLE: "恭喜你，砍单已达成，奖励已入账！快去查看吧！"
+NOTIFICATION_TEAMUP_SUCCESS_THIRD_TITLE: "恭喜你，砍单成功！奖励已到账！"
+
+NOTIFICATION_TEAMUP_PROGRESS_FIRST_DESC: "你的砍单活动已经完成了 %d%！再邀请几个好友，就能成功免单啦！点击查看进度 >"
+NOTIFICATION_TEAMUP_PROGRESS_SECOND_DESC: "你的砍单已经砍掉 %d 元！再来几刀就能享有0元下注！赶紧邀请好友继续砍单吧！"
+NOTIFICATION_TEAMUP_PROGRESS_THIRD_DESC: "你的砍单已经完成了 %d%，距离免单更近一步！快邀请更多好友助力吧！点击查看详情 >"
+
+NOTIFICATION_TEAMUP_SUCCESS_FIRST_DESC: "🎉 恭喜！砍单成功！"
+NOTIFICATION_TEAMUP_SUCCESS_SECOND_DESC: "🏆 你成功砍单啦！"
+NOTIFICATION_TEAMUP_SUCCESS_THIRD_DESC: "砍单成功！你赢了免下注机会！"
+
 chat_welcome_message: "欢迎光临！ 享受与他人的实时互动。 请保持此聊天积极且尊重。 玩得开心！ 😊\n请注意，本次直播中的一些评论已被过滤，以增强社区的体验。"
 chat_welcome_name: "系统"
 
