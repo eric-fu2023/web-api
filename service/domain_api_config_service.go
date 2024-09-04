@@ -19,9 +19,16 @@ const (
 type DomainConfigService struct{}
 
 type DomainConfigRes struct {
-	Api    string `json:"a"`
-	Record string `json:"r"`
-	Nami   string `json:"n"`
+	// for both ba and aha, web-api
+	Api string `json:"a,omitempty"`
+	// for both ba and aha, record-center
+	Record string `json:"r,omitempty"`
+	// for aha only, hisport api to retrieve nami data
+	Nami string `json:"n,omitempty"`
+	// for ba only, batace api
+	BataceApi string `json:"b,omitempty"`
+	// for ba only, crickong api
+	CrickongApi string `json:"c,omitempty"`
 }
 
 func (service *DomainConfigService) InitApp(c *gin.Context) (code int, res serializer.Response, err error) {
@@ -40,9 +47,11 @@ func (service *DomainConfigService) InitApp(c *gin.Context) (code int, res seria
 	res = serializer.Response{
 		Msg: "success",
 		Data: DomainConfigRes{
-			Api:    FindRandomDomain(model.SupportTypeApp, model.DomainTypeApi, c),
-			Record: FindRandomDomain(model.SupportTypeApp, model.DomainTypeRecord, c),
-			Nami:   FindRandomDomain(model.SupportTypeApp, model.DomainTypeNami, c),
+			Api:         FindRandomDomain(model.SupportTypeApp, model.DomainTypeApi, c),
+			Record:      FindRandomDomain(model.SupportTypeApp, model.DomainTypeRecord, c),
+			Nami:        FindRandomDomain(model.SupportTypeApp, model.DomainTypeNami, c),
+			BataceApi:   FindRandomDomain(model.SupportTypeApp, model.DomainTypeBatace, c),
+			CrickongApi: FindRandomDomain(model.SupportTypeApp, model.DomainTypeCrickong, c),
 		},
 	}
 

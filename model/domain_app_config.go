@@ -14,9 +14,11 @@ const (
 )
 
 const (
-	DomainTypeApi    = "A"
-	DomainTypeRecord = "R"
-	DomainTypeNami   = "M"
+	DomainTypeApi      = "A"
+	DomainTypeRecord   = "R"
+	DomainTypeNami     = "M"
+	DomainTypeBatace   = "B"
+	DomainTypeCrickong = "C"
 )
 
 type DomainApiConfig struct {
