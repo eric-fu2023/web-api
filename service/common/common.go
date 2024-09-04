@@ -334,7 +334,7 @@ func abs(x int64) int64 {
 	return x
 }
 
-func SendNotification(userId int64, notificationType string, title string, text string) { // add to notification list and push
+func SendNotification(userId int64, notificationType string, title string, text string, v ...serializer.Response) { // add to notification list and push
 	go func() {
 		notification := ploutos.UserNotification{
 			UserId: userId,
@@ -345,14 +345,31 @@ func SendNotification(userId int64, notificationType string, title string, text 
 			return
 		}
 	}()
-	PushNotification(userId, notificationType, title, text)
+
+	// check whether the v argument is provided with a value
+	if len(v) > 0 {
+		PushNotification(userId, notificationType, title, text, v[0])
+	} else {
+		PushNotification(userId, notificationType, title, text)
+	}
+
 }
 
-func PushNotification(userId int64, notificationType string, title string, text string) {
+func PushNotification(userId int64, notificationType string, title string, text string, v ...serializer.Response) {
 	go func() {
-		msgData := map[string]string{
-			"notification_type": notificationType,
+		var msgData map[string]string
+		if len(v) > 0 {
+			resp, _ := json.Marshal(v[0])
+			msgData = map[string]string{
+				"notification_type": notificationType,
+				"response":          string(resp),
+			}
+		} else {
+			msgData = map[string]string{
+				"notification_type": notificationType,
+			}
 		}
+
 		notification := messaging.Notification{
 			Title: title,
 			Body:  text,

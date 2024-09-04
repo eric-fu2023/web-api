@@ -1,9 +1,13 @@
 package service
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"strconv"
+	"time"
+	"web-api/cache"
 	"web-api/conf"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -29,6 +33,8 @@ type InternalNotificationPushRequest struct {
 
 func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Response) {
 	var notificationType, title, text string
+	var resp serializer.Response
+
 	lang := model.GetUserLang(p.UserID)
 
 	switch p.Type {
@@ -67,6 +73,20 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 
 		title = popUpTitle[randIndex]
 
+		winLoseResp, err := WinLoseMetadata(p.UserID)
+		if err != nil {
+			log.Println("Unable to obtain win_lose response from WinLoseMetadata function")
+			return
+		}
+
+		// metadata needed for front end to navigate to a particular screen.
+		resp.Data = PopupResponse{
+			Type: 1,
+			Data: winLoseResp,
+		}
+
+		log.Printf("response data for win lose pop up: %+v", resp.Data)
+
 	case spinNote:
 		notificationType = consts.Notification_Type_Spin
 		spinTitle := []string{conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_FIRST_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_SECOND_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_THIRD_TITLE)}
@@ -77,7 +97,80 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 		title = spinTitle[randIndex]
 		text = spinDesc[randIndex]
 	}
-	common.SendNotification(p.UserID, notificationType, title, text)
+	common.SendNotification(p.UserID, notificationType, title, text, resp)
 	r.Data = "Success"
 	return
+}
+
+func WinLoseMetadata(userId int64) (WinLosePopupResponse, error) {
+	var user model.User
+
+	// find user based on userID
+	if err := model.DB.Where("id = ?", userId).First(&user).Error; err != nil {
+		return WinLosePopupResponse{}, err
+	}
+
+	now := time.Now()
+	yesterdayStart := time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, now.Location())
+	yesterdayEnd := yesterdayStart.Add(24 * time.Hour)
+
+	// check if user has GGR yesterday
+	type GGRRecords struct {
+		GGR    float64 `json:"win_lose"`
+		UserID int64   `json:"user_id"`
+	}
+
+	key := "popup/win_lose/" + now.Format("2006-01-02")
+	total_ranking_key := "popup/win_lose/total_ranking/" + now.Format("2006-01-02")
+	current_ranking_key := "popup/win_lose/ranking/" + now.Format("2006-01-02")
+
+	res := cache.RedisClient.HGet(context.Background(), key, strconv.FormatInt(user.ID, 10))
+	GGR, err := strconv.ParseFloat(res.Val(), 64)
+	if err != nil {
+		fmt.Println("convert GGR to float64 failed!!!!", err.Error())
+	}
+	myGGRRecord := GGRRecords{
+		GGR:    GGR,
+		UserID: user.ID,
+	}
+
+	var total_ranking int
+	var current_ranking int
+	current_ranking_string := cache.RedisClient.HGet(context.Background(), current_ranking_key, strconv.FormatInt(user.ID, 10)).Val()
+
+	if GGR < 0 {
+		total_ranking_string := cache.RedisClient.HGet(context.Background(), total_ranking_key, "lose").Val()
+		total_ranking, _ = strconv.Atoi(total_ranking_string)
+		current_ranking, _ = strconv.Atoi(current_ranking_string)
+		current_ranking = -current_ranking
+	} else {
+		total_ranking_string := cache.RedisClient.HGet(context.Background(), total_ranking_key, "win").Val()
+		total_ranking, _ = strconv.Atoi(total_ranking_string)
+		current_ranking, _ = strconv.Atoi(current_ranking_string)
+	}
+
+	var members []WinLosePopupGGR
+	if GGR > 0 {
+		members = append(members,
+			generateMemberGGR(user, myGGRRecord.GGR, rand.Intn(500), current_ranking, false, -1),
+			generateMemberGGR(user, myGGRRecord.GGR, 0, current_ranking, true, 0),
+			generateMemberGGR(user, myGGRRecord.GGR, -rand.Intn(500), current_ranking, false, 1))
+	} else if GGR < 0 {
+		members = append(members,
+			generateMemberGGR(user, myGGRRecord.GGR, rand.Intn(500)+500, current_ranking, false, 2),
+			generateMemberGGR(user, myGGRRecord.GGR, rand.Intn(500), current_ranking, false, 1),
+			generateMemberGGR(user, myGGRRecord.GGR, 0, current_ranking, true, 0))
+	}
+	data := WinLosePopupResponse{
+		CurrentRanking: current_ranking,
+		TotalRanking:   total_ranking,
+		Start:          yesterdayStart.Unix(),
+		End:            yesterdayEnd.Unix(),
+		GGR:            myGGRRecord.GGR / 100,
+		IsWin:          myGGRRecord.GGR > 0,
+		Member:         members,
+	}
+
+	return data, nil
+
 }
