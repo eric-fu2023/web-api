@@ -26,6 +26,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
+	// convert amount from buck to cent
 	amountDecimal, err := decimal.NewFromString(s.Amount)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
@@ -33,6 +34,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	}
 	amount := amountDecimal.IntPart() * 100
 
+	// retrieve channel
 	method, err := model.CashMethod{}.GetByIDWithChannel(c, s.MethodID)
 	if err != nil {
 		return
@@ -46,6 +48,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	channel := model.GetNextChannel(cashMethodChannels)
 	stats := channel.Stats
 
+	// verify amount
 	r, err = s.verifyCashInAmount(c, amount, method)
 	if err != nil {
 		return
@@ -57,34 +60,21 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		return
 	}
 
-	err = processCashInMethod(method)
+	// verify payment method
+	err = verifyCashInMethod(method)
 	if err != nil {
 		return
 	}
 
-	// switch s.MethodID {
-	// case 1, 8:
-	// default:
-	// 	err = errors.New("unsupported method")
-	// 	r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-	// 	return
-	// }
-
-	// check kyc
-	// create cash order
-	// create payment order
-	// err handling and return
-	// _, err = service.VerifyKyc(c, user.ID)
-	// if err != nil {
-	// 	r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("kyc_get_failed"), err)
-	// 	return
-	// }
-	var exchangeClient exchange.OkxClient
+	// get exchange rate
+	var exchangeClient exchange.ExchangeClient
 	er, err := exchangeClient.GetExchangeRate(c, method.Currency, true)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
+
+	// create CashInOrder
 	var userSum model.UserSum
 	userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
 	if err != nil {
@@ -101,6 +91,13 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
+
+	// if currency is not USDT, Round cashinAmount to nearest multiple 100, remove decimal
+	cashinAmount := int64(float64(cashOrder.AppliedCashInAmount) * er.AdjustedExchangeRate)
+	if method.Currency != exchange.USDT && er.AdjustedExchangeRate != 1 && er.ExchangeRate != 1 {
+		cashinAmount = (cashinAmount / 100) * 100
+	}
+
 	var transactionID string
 	switch channel.Gateway {
 	default:
@@ -121,12 +118,6 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 			_ = model.IncrementStats(stats, result)
 
 		}()
-		cashinAmount := int64(float64(cashOrder.AppliedCashInAmount) * er.AdjustedExchangeRate)
-
-		// Round cashinAmount to nearest multiple 100, remove decimal
-		if er.AdjustedExchangeRate != 1 && er.ExchangeRate != 1 {
-			cashinAmount = (cashinAmount / 100) * 100
-		}
 
 		switch config.Type {
 		default:
@@ -162,51 +153,20 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	}
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
 
-	// 查看是否有砍单记录，添加进度到砍单任务
-	// go calculateTeamupSlashProgress(cashOrder, user.ID)
-
 	return
 }
 
 func (s TopUpOrderService) verifyCashInAmount(c *gin.Context, amount int64, method model.CashMethod) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	// u, _ := c.Get("user")
-	// user := u.(model.User)
-
 	if amount < 0 || amount > method.MaxAmount || amount < method.MinAmount {
 		err = errors.New("illegal amount")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("negative_amount"), err)
 		return
 	}
 	return
-
-	// var firstTime bool = false
-	// err = model.DB.WithContext(c).Where("user_id", user.ID).Where("order_type > 0").Where("status", models.CashOrderStatusSuccess).First(&model.CashOrder{}).Error
-	// if err != nil {
-	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
-	// 		firstTime = true
-	// 		err = nil
-	// 	} else {
-	// 		return
-	// 	}
-	// }
-
-	// minAmount := method.MinAmount
-	// if amount < minAmount {
-	// 	if firstTime {
-	// 		err = errors.New("illegal amount")
-	// 		r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("first_topup_amount"), minAmount/100), err)
-	// 		return
-	// 	} else {
-	// 		err = errors.New("illegal amount")
-	// 		r = serializer.Err(c, s, serializer.CodeGeneralError, fmt.Sprintf(i18n.T("topup_amount"), minAmount/100), err)
-	// 		return
-	// 	}
-	// }
-
 }
 
-func processCashInMethod(m model.CashMethod) (err error) {
+func verifyCashInMethod(m model.CashMethod) (err error) {
 	if m.MethodType < 0 {
 		return errors.New("cash method not permitted")
 	}

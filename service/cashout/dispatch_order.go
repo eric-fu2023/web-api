@@ -26,7 +26,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 	if err != nil {
 		return
 	}
-	var exchangeClient exchange.OkxClient
+	var exchangeClient exchange.ExchangeClient
 	er, err := exchangeClient.GetExchangeRate(c, method.Currency, false)
 	if err != nil {
 		return
