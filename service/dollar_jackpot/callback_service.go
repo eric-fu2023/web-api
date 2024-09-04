@@ -1,13 +1,10 @@
 package dollar_jackpot
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"time"
 	"web-api/cache"
 	"web-api/conf/consts"
@@ -16,6 +13,10 @@ import (
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type Callback struct{}
@@ -202,6 +203,19 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 			return
 		}
 	}
+	
+	// staging mqtt got problem, need to fix that 1st
+	// pb := &paho.Publish{
+	// 	Topic:   fmt.Sprintf(`/dollar_jackpot/%s`, djd.DollarJackpotId),
+	// 	QoS:     byte(1),
+	// 	Payload: []byte("{}"),
+	// }
+	// _, err = util.MQTTClient.Publish(context.Background(), pb)
+	// if err != nil {
+	// 	util.Log().Error("dollar_jackpot send refresh message send error", err)
+	// 	return
+	// }
+
 	res = serializer.Response{
 		Msg: i18n.T("success"),
 	}
