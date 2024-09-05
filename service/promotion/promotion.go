@@ -1,8 +1,10 @@
 package promotion
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 	"web-api/model"
 	"web-api/serializer"
@@ -92,12 +94,24 @@ type PromotionDetail struct {
 	ID int64 `form:"id" json:"id"`
 }
 
+const defaultContextKey = "description"
+
 func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err error) {
+	ctx := context.WithValue(context.Background(), defaultContextKey, fmt.Sprintf("%d (p PromotionDetail) Handle ", time.Now().UnixNano()))
 	now := time.Now()
+	log.Printf("%s starting\n", ctx.Value(defaultContextKey))
+	ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("now %#v", now.String()))
 	brand := c.MustGet(`_brand`).(int)
+	ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("brand %#v", brand))
+
 	u, loggedIn := c.Get("user")
+	ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("loggedIn %#v", loggedIn))
+
 	user, _ := u.(model.User)
+	ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("user %#v", user))
+
 	deviceInfo, _ := util.GetDeviceInfo(c)
+	ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("deviceInfo %#v", deviceInfo))
 
 	var promotion models.Promotion
 	if p.ID == 99999 {
@@ -107,10 +121,12 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 		}
 	} else {
 		promotion, err = model.PromotionGetActive(c, brand, p.ID, now)
+		ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("[model.PromotionGetActive = promotion %v, promotion type %v,err %#v]", promotion, promotion.Type, err))
 	}
 
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("err != nil .returning err %#v", r))
 		return
 	}
 	// tz := time.FixedZone("local", int(promotion.Timezone))
@@ -147,6 +163,14 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 			claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
 			reward, _, _, err = RewardByType(c, promotion, session, user.ID, progress, now)
 			extra = ExtraByType(c, promotion, session, user.ID, progress, now)
+			ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("default promo type, user logged in. %#v",
+				progress,
+				claimStatus,
+				reward,
+				extra,
+			))
+
+			log.Printf("%s\n", ctx.Value(defaultContextKey))
 		}
 		if claimStatus.HasClaimed {
 			v, err := model.VoucherGetByUserSession(c, user.ID, session.ID)
