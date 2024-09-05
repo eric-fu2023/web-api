@@ -1,5 +1,7 @@
 package consts
 
+import "web-api/util/datastructures"
+
 const (
 	KycStatusPending   = 1
 	KycStatusCompleted = 2
@@ -9,10 +11,10 @@ const (
 
 var (
 	SpinResultType = map[int64]string{
-		1:  SpinVoucher,
-		2:  SpinBonus,
-		3:  SpinItem,
-		4:  SpinOthers,
+		1: SpinVoucher,
+		2: SpinBonus,
+		3: SpinItem,
+		4: SpinOthers,
 	}
 	OrderTypeMap = map[int64]string{
 		-1: OrderTypeWithdraw,
@@ -66,6 +68,9 @@ var (
 		5000: OrderOperationTypeMakeUpOrder,
 		6000: OrderOperationTypeWithdrawalReversal,
 	}
+
+	// OrderOperationTypeEnum tapes OrderOperationTypeDetailMap
+	OrderOperationTypeEnum = datastructures.KVtoVK(OrderOperationTypeDetailMap)
 
 	Platform = map[string]int64{
 		"pc":      1,
@@ -765,7 +770,7 @@ const (
 
 	// spin related
 	SpinVoucher = "spin_voucher"
-	SpinBonus = "spin_bonus"
-	SpinItem = "spin_item"
-	SpinOthers = "spin_others"
+	SpinBonus   = "spin_bonus"
+	SpinItem    = "spin_item"
+	SpinOthers  = "spin_others"
 )
