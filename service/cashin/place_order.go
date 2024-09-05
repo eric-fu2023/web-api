@@ -32,6 +32,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
+	// TODO: allow decimal places
 	amount := amountDecimal.IntPart() * 100
 
 	// retrieve channel
@@ -148,7 +149,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 			}
 		}
 		transactionID = data.PaymentOrderNo
-		r.Data = serializer.BuildPaymentOrder(data)
+		r.Data = serializer.BuildPaymentOrder(data, method.Currency, decimal.NewFromInt(cashinAmount).Div(decimal.NewFromInt(100)))
 		cashOrder.TransactionId = &transactionID
 		cashOrder.Status = models.CashOrderStatusPending
 	}
