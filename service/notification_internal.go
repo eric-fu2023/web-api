@@ -15,6 +15,7 @@ import (
 	"web-api/service/common"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leekchan/accounting"
 )
 
 const (
@@ -68,9 +69,11 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 			value := lose / 100
 			// check whether user's lang is en or zh
 			if lang == "en" {
+
 				text = fmt.Sprintf(popUpLoseDesc[randIndex], FormatINR(value), ranking)
 			} else {
-				text = fmt.Sprintf(popUpLoseDesc[randIndex], value, ranking)
+				ac := accounting.Accounting{Symbol: "$", Precision: 2}
+				text = fmt.Sprintf(popUpLoseDesc[randIndex], ac.FormatMoney(value), ranking)
 			}
 		} else {
 			value := win_lose / 100
@@ -78,7 +81,8 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 			if lang == "en" {
 				text = fmt.Sprintf(popUpWinDesc[randIndex], FormatINR(value), rank)
 			} else {
-				text = fmt.Sprintf(popUpWinDesc[randIndex], value, rank)
+				ac := accounting.Accounting{Symbol: "$", Precision: 2}
+				text = fmt.Sprintf(popUpWinDesc[randIndex], ac.FormatMoney(value), rank)
 
 			}
 		}
@@ -120,7 +124,7 @@ func FormatINR(val float64) string {
 		if newValue == float64(int(newValue)) {
 			return fmt.Sprintf("%v crore", newValue)
 		}
-		return fmt.Sprintf("₹%.2f crore", newValue)
+		return fmt.Sprintf("%.2f crore", newValue)
 	} else if val >= 100000 {
 		newValue := val / 100000
 		if newValue == float64(int(newValue)) {
