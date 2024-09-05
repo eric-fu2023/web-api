@@ -16,6 +16,7 @@ import (
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util"
+	context2 "web-api/util/context"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/chenyahui/gin-cache/persist"
@@ -53,21 +54,26 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 	return
 }
 
-func ProgressByType(c context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
+func ProgressByType(ctx context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
+	ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("ProgressByType() p.Type %d", p.Type))
+	log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
 	switch int64(p.Type) {
 	// not necessary
 	// case models.PromotionTypeVipReferral, models.PromotionTypeVipRebate:
 	// 	//separate handling based on separate table
 	case models.PromotionTypeVipWeeklyB:
 		//may need to check deposit requirement + vip
-		vip, _ := model.GetVipWithDefault(c, userID)
+		vip, _ := model.GetVipWithDefault(ctx, userID)
 		progress = vip.VipRule.VIPLevel
 		// not necessary
 	// case models.PromotionTypeVipBirthdayB, models.PromotionTypeVipPromotionB:
 	// 	vip, _ := model.GetVipWithDefault(c, userID)
 	// 	progress = vip.VipRule.VIPLevel
 	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
-		order, err := model.FirstTopup(c, userID)
+		order, err := model.FirstTopup(ctx, userID)
+		ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("model.FirstTopup(ctx, userID) = order %#v, err %v", order, err))
+		log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
+
 		if util.IsGormNotFound(err) {
 			return
 		} else if err != nil {
@@ -76,7 +82,7 @@ func ProgressByType(c context.Context, p models.Promotion, s models.PromotionSes
 		progress = order.AppliedCashInAmount
 		log.Printf("progress is %d, userid %d order %d", progress, userID, order)
 	case models.PromotionTypeReDepB:
-		orders, err := model.ScopedTopupExceptAllTimeFirst(c, userID, s.TopupStart, s.TopupEnd)
+		orders, err := model.ScopedTopupExceptAllTimeFirst(ctx, userID, s.TopupStart, s.TopupEnd)
 		if err != nil {
 			return
 		}
@@ -84,7 +90,7 @@ func ProgressByType(c context.Context, p models.Promotion, s models.PromotionSes
 			return amount + input.AppliedCashInAmount
 		}, 0)
 	case models.PromotionTypeReDepIns:
-		orders, err := model.ScopedTopupExceptAllTimeFirst(c, userID, s.TopupStart, s.TopupEnd)
+		orders, err := model.ScopedTopupExceptAllTimeFirst(ctx, userID, s.TopupStart, s.TopupEnd)
 		if err != nil {
 			return
 		}
