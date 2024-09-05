@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -73,6 +74,7 @@ func ProgressByType(c context.Context, p models.Promotion, s models.PromotionSes
 			return
 		}
 		progress = order.AppliedCashInAmount
+		log.Printf("progress is %d, userid %d order %d", progress, userID, order)
 	case models.PromotionTypeReDepB:
 		orders, err := model.ScopedTopupExceptAllTimeFirst(c, userID, s.TopupStart, s.TopupEnd)
 		if err != nil {
