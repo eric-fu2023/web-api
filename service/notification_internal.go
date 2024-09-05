@@ -53,7 +53,7 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 		popUpWinDesc := []string{conf.GetI18N(lang).T(common.NOTIFICATION_POPUP_WIN_FIRST_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_POPUP_WIN_SECOND_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_POPUP_WIN_THIRD_DESC)}
 		popUpLoseDesc := []string{conf.GetI18N(lang).T(common.NOTIFICATION_POPUP_LOSE_FIRST_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_POPUP_LOSE_SECOND_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_POPUP_LOSE_THIRD_DESC)}
 
-		win_lose, _ := strconv.ParseInt(p.Params["win_lose_amount"], 10, 64)
+		win_lose, _ := strconv.ParseFloat(p.Params["win_lose_amount"], 64)
 		rank, _ := strconv.ParseInt(p.Params["ranking"], 10, 64)
 
 		// randomly pick titles between the 3
@@ -65,10 +65,13 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 			lose := win_lose * -1 // negate
 			ranking := rank * -1
 
-			text = fmt.Sprintf(popUpLoseDesc[randIndex], lose, ranking)
+			value := lose / 100
+
+			text = fmt.Sprintf(popUpLoseDesc[randIndex], value, ranking)
 
 		} else {
-			text = fmt.Sprintf(popUpWinDesc[randIndex], win_lose, rank)
+			value := win_lose / 100
+			text = fmt.Sprintf(popUpWinDesc[randIndex], value, rank)
 		}
 
 		title = popUpTitle[randIndex]
