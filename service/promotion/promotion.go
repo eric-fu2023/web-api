@@ -10,6 +10,8 @@ import (
 	"web-api/serializer"
 	"web-api/util"
 
+	context2 "web-api/util/context"
+
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
@@ -94,24 +96,28 @@ type PromotionDetail struct {
 	ID int64 `form:"id" json:"id"`
 }
 
-const defaultContextKey = "description"
-
 func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err error) {
-	ctx := context.WithValue(context.Background(), defaultContextKey, fmt.Sprintf("%d (p PromotionDetail) Handle ", time.Now().UnixNano()))
+	ctx := context2.AppendCtx(context.Background(), context2.DefaultContextKey, fmt.Sprintf("%d (p PromotionDetail) Handle ", time.Now().UnixNano()))
 	now := time.Now()
-	log.Printf("%s starting\n", ctx.Value(defaultContextKey))
-	ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("now %#v", now.String()))
+	log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
+	ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("now %#v", now.String()))
+	log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
+
 	brand := c.MustGet(`_brand`).(int)
-	ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("brand %#v", brand))
+	ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("brand %#v", brand))
+	log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
 
 	u, loggedIn := c.Get("user")
-	ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("loggedIn %#v", loggedIn))
+	ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("loggedIn %#v", loggedIn))
+	log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
 
 	user, _ := u.(model.User)
-	ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("user %#v", user))
+	ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("user %#v", user))
+	log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
 
 	deviceInfo, _ := util.GetDeviceInfo(c)
-	ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("deviceInfo %#v", deviceInfo))
+	ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("deviceInfo %#v", deviceInfo))
+	log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
 
 	var promotion models.Promotion
 	if p.ID == 99999 {
@@ -121,12 +127,14 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 		}
 	} else {
 		promotion, err = model.PromotionGetActive(c, brand, p.ID, now)
-		ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("[model.PromotionGetActive = promotion %v, promotion type %v,err %#v]", promotion, promotion.Type, err))
+
+		ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("[model.PromotionGetActive = promotion %v, promotion type %v,err %#v]", promotion, promotion.Type, err))
 	}
 
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
-		ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("err != nil .returning err %#v", r))
+		ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("err != nil .returning err %#v", r))
+		log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
 		return
 	}
 	// tz := time.FixedZone("local", int(promotion.Timezone))
@@ -163,14 +171,14 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 			claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
 			reward, _, _, err = RewardByType(c, promotion, session, user.ID, progress, now)
 			extra = ExtraByType(c, promotion, session, user.ID, progress, now)
-			ctx = context.WithValue(ctx, defaultContextKey, fmt.Sprintf("default promo type, user logged in. %#v",
+			ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("default promo type, user logged in. progress %v, claimStatus %v, reward %v, extra %#v",
 				progress,
 				claimStatus,
 				reward,
 				extra,
 			))
 
-			log.Printf("%s\n", ctx.Value(defaultContextKey))
+			log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
 		}
 		if claimStatus.HasClaimed {
 			v, err := model.VoucherGetByUserSession(c, user.ID, session.ID)
@@ -188,6 +196,10 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 	}
 
 	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, session, voucherView, claimStatus, extra, customData, newbieData)
+
+	ctx = context2.AppendCtx(ctx, context2.DefaultContextKey, fmt.Sprintf("r.Data %#v", r.Data))
+	log.Printf("%s\n", ctx.Value(context2.DefaultContextKey))
+
 	return
 }
 
