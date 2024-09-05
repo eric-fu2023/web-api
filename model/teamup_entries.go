@@ -101,7 +101,7 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	var beforeProgress, afterProgress int64
 
 	// 10000 = 100%
-	maxPercentage := int64(10000)
+	// maxPercentage := int64(10000)
 	currentTotalProgress := util.Sum(teamupEntries, func(entry ploutos.TeamupEntry) int64 {
 		return entry.FakePercentageProgress
 	})
@@ -112,31 +112,42 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	// THEN SLASH 0%
 
 	isValidSlash := validSlash(c, user)
+	shouldGiveRandomPercentage := false
 
 	// Check if teamup is shortlisted
 	// If yes, then success the current shortlisted
 	if teamup.Term != 0 && teamup.ShortlistStatus != ploutos.ShortlistStatusNotShortlist {
 		// 如果有Term，如果这单是成功 / 入选
 		if isValidSlash {
-			_, _ = SuccessShortlisted(teamup, currentTotalProgress, userId)
+			isSuccessShortlisted, _ := SuccessShortlisted(teamup, currentTotalProgress, userId)
 
 			// No matter got error or not, need to return
 			// No error = success = return
 			// Got error = should not continue = return
+			if isSuccessShortlisted {
+				return
+			}
+
+			// Give random percentage if shortlisted by others, slash for fun
+			shouldGiveRandomPercentage = true
 		}
-		return
 	} else if teamup.Term != 0 && teamup.ShortlistStatus == ploutos.ShortlistStatusNotShortlist {
 
 		// 如果有Term，就代表CONTRIBUTION >= TARGET+不是入选/成功，就意思意思砍0
 		isValidSlash = false
+		shouldGiveRandomPercentage = true
 	}
 
 	if isValidSlash {
 		// 如果currentTotalProgress = 0，beforeProgress = 0，代表第一刀，afterProgress - beforeProgress的差值会比较大
 		beforeProgress, afterProgress = GenerateFakeProgress(currentTotalProgress)
 	} else {
-		beforeProgress = currentTotalProgress
-		afterProgress = currentTotalProgress
+		if shouldGiveRandomPercentage {
+			beforeProgress, afterProgress = GenerateFakeProgress(currentTotalProgress)
+		} else {
+			beforeProgress = currentTotalProgress
+			afterProgress = currentTotalProgress
+		}
 	}
 
 	slashEntry := ploutos.TeamupEntry{
@@ -156,7 +167,7 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 			// (beforeProgress / 100) * (TeamUpTarget / 100) / 100 = ???
 			// (6516 / 100) * (21000 / 100) / 100 = $136.836
 
-			slashValue := ((float64(beforeProgress) / 100) * (float64(teamup.TotalTeamUpTarget) / 100)) / 100
+			slashValue := ((float64(slashEntry.FakePercentageProgress) / 100) * (float64(teamup.TotalTeamUpTarget) / 100)) / 100
 			roundedCeilSlashValue := (math.Ceil(slashValue*100) / 100) * 100
 
 			slashEntry.ContributedTeamupDeposit = int64(roundedCeilSlashValue)
@@ -177,7 +188,7 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	// IGNORE NOT QUALIFIED, ONLY THE FIRST THAT INVITED 1 MORE WILL SUCCESS
 	if isValidSlash && teamup.Term == 0 && teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
 
-		afterProgress = maxPercentage
+		// afterProgress = int64(9999)
 		slashEntry.FakePercentageProgress = afterProgress - beforeProgress
 		teamup.TotalFakeProgress = afterProgress
 

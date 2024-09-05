@@ -357,6 +357,7 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 			First(&wonTeamup).Error
 
 		if wonTeamup.ID != 0 {
+			isSuccess = false
 			return
 		}
 
@@ -393,7 +394,6 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 		return
 	})
 	if err != nil {
-		isSuccess = false
 		return
 	}
 
