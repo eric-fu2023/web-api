@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -276,6 +277,137 @@ func GetRecentCompletedSuccessTeamup(numMinutes int64) (res TeamupSuccess, err e
 	if err != nil {
 		return
 	}
+
+	return
+}
+
+func GetCurrentTermNum() (maxTerm int64, err error) {
+
+	err = DB.Table("teamups").
+		Select("MAX(term)").
+		Scan(&maxTerm).Error
+
+	if err == nil && maxTerm == 0 {
+		maxTerm = 1
+	}
+
+	return
+}
+
+func CheckIfTermHasShortlistedOrWinner(termId int64) (hasShortlistedOrWinner bool) {
+
+	var teamups []ploutos.Teamup
+	err := DB.Table("teamups").
+		Where("term = ?", termId).
+		Where("shortlist_status != ?", ploutos.ShortlistStatusNotShortlist).
+		Find(&teamups)
+
+	fmt.Println(err)
+
+	if len(teamups) > 0 {
+		hasShortlistedOrWinner = true
+	}
+
+	return
+}
+
+func CheckIfTermExceedSize(termId, termSize int64) (isExceeded bool) {
+
+	var teamups []ploutos.Teamup
+	err := DB.Table("teamups").
+		Where("term = ?", termId).
+		Find(&teamups)
+
+	fmt.Println(err)
+
+	if len(teamups) > int(termSize) {
+		isExceeded = true
+	}
+
+	return
+}
+
+func FindExceedTargetStatusPendingByTerm(termId int64) (teamups []ploutos.Teamup, err error) {
+
+	err = DB.Table("teamups").
+		Where("term = ?", termId).
+		Where("status = ?", ploutos.TeamupStatusPending).
+		Find(&teamups).Error
+
+	return
+}
+
+// 如果一个成功，同一届的候选池里其他砍单都自动失败，只有一个成功
+func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int64, finalSlashUserId int64) (isSuccess bool, err error) {
+
+	maxPercentage := int64(10000)
+	isSuccess = true
+
+	if teamup.ShortlistStatus == ploutos.ShortlistStatusShortlistWin {
+		return
+	}
+
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		// 如果该届/期已经有候选池里为成功的单子，不管砍单是否有成功都算成功
+		// 可看下面注释
+		var wonTeamup ploutos.Teamup
+		err = tx.Model(ploutos.Teamup{}).
+			Where("term = ?", teamup.Term).
+			Where("shortlist_status = ?", ploutos.ShortlistStatusShortlistWin).
+			First(&wonTeamup).Error
+
+		if wonTeamup.ID != 0 {
+			return
+		}
+
+		teamup.ShortlistStatus = ploutos.ShortlistStatusShortlistWin
+
+		// 如果砍单价值超过上限 砍单仍然还是进行中知道失败，但候选池里为成功所以不会用另一张成功的单子
+		// 单子仍然进行中
+		// 单子进度依旧，不会是100%
+		teamupMaxSlashAmountString, _ := GetAppConfigWithCache("teamup", "max_slash_amount")
+		teamupMaxSlashAmount, _ := strconv.Atoi(teamupMaxSlashAmountString)
+		if teamup.TotalTeamUpTarget <= int64(teamupMaxSlashAmount) {
+			teamup.Status = int(ploutos.TeamupStatusSuccess)
+			teamup.TotalFakeProgress = maxPercentage
+		}
+		err = tx.Save(&teamup).Error
+		if err != nil {
+			return
+		}
+
+		slashEntry := ploutos.TeamupEntry{
+			TeamupId: teamup.ID,
+			UserId:   finalSlashUserId,
+		}
+
+		slashEntry.TeamupEndTime = teamup.TeamupEndTime
+		slashEntry.TeamupCompletedTime = teamup.TeamupCompletedTime
+
+		// 如果砍单价值超过上限 新用户贡献的进度为0
+		if teamup.TotalTeamUpTarget <= int64(teamupMaxSlashAmount) {
+			slashEntry.FakePercentageProgress = maxPercentage - teamupEntriesCurrentProgress
+		}
+		err = tx.Save(&slashEntry).Error
+
+		return
+	})
+	if err != nil {
+		isSuccess = false
+		return
+	}
+
+	return
+}
+
+func FlagStatusShortlisted(ids []int64) (err error) {
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		err = tx.Model(ploutos.Teamup{}).
+			Where("id IN ?", ids).
+			Update("shortlist_status", ploutos.ShortlistStatusShortlisted).Error
+
+		return
+	})
 
 	return
 }

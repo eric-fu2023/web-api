@@ -57,7 +57,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		}
 
 		// 查看是否有砍单记录，添加进度到砍单任务
-		go calculateTeamupSlashProgress(newCashOrderState.AppliedCashInAmount, newCashOrderState.UserId)
+		// go calculateTeamupSlashProgress(newCashOrderState.AppliedCashInAmount, newCashOrderState.UserId)
 		return
 	})
 	if err == nil {
