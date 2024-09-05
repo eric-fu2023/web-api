@@ -294,6 +294,39 @@ func GetCurrentTermNum() (maxTerm int64, err error) {
 	return
 }
 
+func CheckIfTermHasShortlistedOrWinner(termId int64) (hasShortlistedOrWinner bool) {
+
+	var teamups []ploutos.Teamup
+	err := DB.Table("teamups").
+		Where("term = ?", termId).
+		Where("shortlist_status != ?", ploutos.ShortlistStatusNotShortlist).
+		Find(&teamups)
+
+	fmt.Println(err)
+
+	if len(teamups) > 0 {
+		hasShortlistedOrWinner = true
+	}
+
+	return
+}
+
+func CheckIfTermExceedSize(termId, termSize int64) (isExceeded bool) {
+
+	var teamups []ploutos.Teamup
+	err := DB.Table("teamups").
+		Where("term = ?", termId).
+		Find(&teamups)
+
+	fmt.Println(err)
+
+	if len(teamups) > int(termSize) {
+		isExceeded = true
+	}
+
+	return
+}
+
 func FindExceedTargetStatusPendingByTerm(termId int64) (teamups []ploutos.Teamup, err error) {
 
 	err = DB.Table("teamups").
@@ -309,6 +342,10 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 
 	maxPercentage := int64(10000)
 	isSuccess = true
+
+	if teamup.ShortlistStatus == ploutos.ShortlistStatusShortlistWin {
+		return
+	}
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		// 如果该届/期已经有候选池里为成功的单子，不管砍单是否有成功都算成功

@@ -111,25 +111,32 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	// 2) TOP-UP BEFORE
 	// THEN SLASH 0%
 
-	isFulfillSlashReq := validSlash(c, user)
+	isValidSlash := validSlash(c, user)
 
 	// Check if teamup is shortlisted
 	// If yes, then success the current shortlisted
-	if isFulfillSlashReq && teamup.ShortlistStatus == ploutos.ShortlistStatusShortlisted {
-		_, _ = SuccessShortlisted(teamup, currentTotalProgress, userId)
+	if teamup.Term != 0 && teamup.ShortlistStatus != ploutos.ShortlistStatusNotShortlist {
+		// 如果有Term，如果这单是成功 / 入选
+		if isValidSlash {
+			_, _ = SuccessShortlisted(teamup, currentTotalProgress, userId)
 
-		// No matter got error or not, need to return
-		// No error = success = return
-		// Got error = should not continue = return
+			// No matter got error or not, need to return
+			// No error = success = return
+			// Got error = should not continue = return
+		}
 		return
+	} else if teamup.Term != 0 && teamup.ShortlistStatus == ploutos.ShortlistStatusNotShortlist {
+
+		// 如果有Term，就代表CONTRIBUTION >= TARGET+不是入选/成功，就意思意思砍0
+		isValidSlash = false
 	}
 
-	if !isFulfillSlashReq {
-		beforeProgress = currentTotalProgress
-		afterProgress = currentTotalProgress
-	} else {
+	if isValidSlash {
 		// 如果currentTotalProgress = 0，beforeProgress = 0，代表第一刀，afterProgress - beforeProgress的差值会比较大
 		beforeProgress, afterProgress = GenerateFakeProgress(currentTotalProgress)
+	} else {
+		beforeProgress = currentTotalProgress
+		afterProgress = currentTotalProgress
 	}
 
 	slashEntry := ploutos.TeamupEntry{
@@ -143,7 +150,7 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 
 	teamup.TotalFakeProgress = afterProgress
 
-	if isFulfillSlashReq {
+	if isValidSlash {
 		if currentTotalProgress == 0 {
 			// Formula
 			// (beforeProgress / 100) * (TeamUpTarget / 100) / 100 = ???
@@ -168,23 +175,24 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	// MEANS SUCCESS, WILL THEN CHECK IF CURRENT TERM ALREADY HAS 20
 	// IF ALREADY HAS 20, PICK 4 LOWEST AMOUNT AND FLAG AS QUALIFIED
 	// IGNORE NOT QUALIFIED, ONLY THE FIRST THAT INVITED 1 MORE WILL SUCCESS
-	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
-
-		currentTerm, _ := GetCurrentTermNum()
-		teamupTermSizeString, _ := GetAppConfigWithCache("teamup", "max_slash_amount")
-		termSize, _ := strconv.Atoi(teamupTermSizeString)
+	if isValidSlash && teamup.Term == 0 && teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
 
 		afterProgress = maxPercentage
 		slashEntry.FakePercentageProgress = afterProgress - beforeProgress
 		teamup.TotalFakeProgress = afterProgress
 
 		// Check If Term 2 Already Has termSize - 1 (20 - 1 = 19)
+		currentTerm, _ := GetCurrentTermNum()
+		teamupTermSizeString, _ := GetAppConfigWithCache("teamup", "term_size")
+		termSize, _ := strconv.Atoi(teamupTermSizeString)
 		termTeamups, _ := FindExceedTargetStatusPendingByTerm(currentTerm)
 		teamup.Term = currentTerm
-		if len(termTeamups) > termSize-1 {
+
+		// +1 Because include current, see if it still belongs to the same term
+		if len(termTeamups)+1 > termSize {
 			teamup.Term++
 		}
-		if len(termTeamups) == termSize-1 {
+		if len(termTeamups)+1 == termSize {
 			// If term has termSize-1, means can put assign term to one more teamup
 			// Calculate immediately since 19 + current = 20
 			termTeamups = append(termTeamups, teamup)
@@ -194,6 +202,9 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 			termTeamups = termTeamups[:4]
 			var ids []int64
 			for _, t := range termTeamups {
+				if t.ID == teamup.ID {
+					teamup.ShortlistStatus = ploutos.ShortlistStatusShortlisted
+				}
 				ids = append(ids, t.ID)
 			}
 
