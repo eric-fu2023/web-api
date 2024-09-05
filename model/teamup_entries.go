@@ -128,6 +128,7 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 		beforeProgress = currentTotalProgress
 		afterProgress = currentTotalProgress
 	} else {
+		// 如果currentTotalProgress = 0，beforeProgress = 0，代表第一刀，afterProgress - beforeProgress的差值会比较大
 		beforeProgress, afterProgress = GenerateFakeProgress(currentTotalProgress)
 	}
 
@@ -143,11 +144,23 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	teamup.TotalFakeProgress = afterProgress
 
 	if isFulfillSlashReq {
-		teamupContributeFixedAmountString, _ := GetAppConfigWithCache("teamup", "teamup_fixed_amount")
-		if teamupContributeFixedAmountString != "" {
-			contributeAmount, _ := strconv.Atoi(teamupContributeFixedAmountString)
-			slashEntry.ContributedTeamupDeposit = int64(contributeAmount)
-			teamup.TotalTeamupDeposit += int64(contributeAmount)
+		if currentTotalProgress == 0 {
+			// Formula
+			// (beforeProgress / 100) * (TeamUpTarget / 100) / 100 = ???
+			// (6516 / 100) * (21000 / 100) / 100 = $136.836
+
+			slashValue := ((float64(beforeProgress) / 100) * (float64(teamup.TotalTeamUpTarget) / 100)) / 100
+			roundedCeilSlashValue := (math.Ceil(slashValue*100) / 100) * 100
+
+			slashEntry.ContributedTeamupDeposit = int64(roundedCeilSlashValue)
+			teamup.TotalTeamupDeposit += int64(roundedCeilSlashValue)
+		} else {
+			teamupContributeFixedAmountString, _ := GetAppConfigWithCache("teamup", "teamup_fixed_amount")
+			if teamupContributeFixedAmountString != "" {
+				contributeAmount, _ := strconv.Atoi(teamupContributeFixedAmountString)
+				slashEntry.ContributedTeamupDeposit = int64(contributeAmount)
+				teamup.TotalTeamupDeposit += int64(contributeAmount)
+			}
 		}
 	}
 
@@ -158,7 +171,8 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
 
 		currentTerm, _ := GetCurrentTermNum()
-		termSize := 20
+		teamupTermSizeString, _ := GetAppConfigWithCache("teamup", "max_slash_amount")
+		termSize, _ := strconv.Atoi(teamupTermSizeString)
 
 		afterProgress = maxPercentage
 		slashEntry.FakePercentageProgress = afterProgress - beforeProgress
@@ -262,9 +276,12 @@ func GenerateFakeProgress(currentProgress int64) (beforeProgress, afterProgress 
 	if currentProgress == 0 {
 		var configError error
 		initialLowerLimitString, configError := GetAppConfigWithCache("teamup", "teamup_initial_fake_progress_lower")
+		if configError != nil {
+			log.Printf("Error computing initialLowerLimitString, %s\n", configError.Error())
+		}
 		initialUpperLimitString, configError := GetAppConfigWithCache("teamup", "teamup_initial_fake_progress_upper")
 		if configError != nil {
-			log.Printf("Error computing prediction, %s\n", configError.Error())
+			log.Printf("Error computing initialUpperLimitString, %s\n", configError.Error())
 		}
 		initialLowerLimit, _ := strconv.Atoi(initialLowerLimitString)
 		initialUpperLimit, _ := strconv.Atoi(initialUpperLimitString)

@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -310,7 +311,8 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 	isSuccess = true
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		// Check if this term has winner already
+		// 如果该届/期已经有候选池里为成功的单子，不管砍单是否有成功都算成功
+		// 可看下面注释
 		var wonTeamup ploutos.Teamup
 		err = tx.Model(ploutos.Teamup{}).
 			Where("term = ?", teamup.Term).
@@ -322,8 +324,16 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 		}
 
 		teamup.ShortlistStatus = ploutos.ShortlistStatusShortlistWin
-		teamup.Status = int(ploutos.TeamupStatusSuccess)
-		teamup.TotalFakeProgress = maxPercentage
+
+		// 如果砍单价值超过上限 砍单仍然还是进行中知道失败，但候选池里为成功所以不会用另一张成功的单子
+		// 单子仍然进行中
+		// 单子进度依旧，不会是100%
+		teamupMaxSlashAmountString, _ := GetAppConfigWithCache("teamup", "max_slash_amount")
+		teamupMaxSlashAmount, _ := strconv.Atoi(teamupMaxSlashAmountString)
+		if teamup.TotalTeamUpTarget <= int64(teamupMaxSlashAmount) {
+			teamup.Status = int(ploutos.TeamupStatusSuccess)
+			teamup.TotalFakeProgress = maxPercentage
+		}
 		err = tx.Save(&teamup).Error
 		if err != nil {
 			return
@@ -336,7 +346,11 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 
 		slashEntry.TeamupEndTime = teamup.TeamupEndTime
 		slashEntry.TeamupCompletedTime = teamup.TeamupCompletedTime
-		slashEntry.FakePercentageProgress = maxPercentage - teamupEntriesCurrentProgress
+
+		// 如果砍单价值超过上限 新用户贡献的进度为0
+		if teamup.TotalTeamUpTarget <= int64(teamupMaxSlashAmount) {
+			slashEntry.FakePercentageProgress = maxPercentage - teamupEntriesCurrentProgress
+		}
 		err = tx.Save(&slashEntry).Error
 
 		return
