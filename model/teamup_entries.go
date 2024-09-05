@@ -111,8 +111,11 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	// 2) TOP-UP BEFORE
 	// THEN SLASH 0%
 
-	isValidSlash := validSlash(c, user)
 	shouldGiveRandomPercentage := false
+	isValidSlash := validSlash(c, user)
+	if !isValidSlash {
+		shouldGiveRandomPercentage = true
+	}
 
 	// Check if teamup is shortlisted
 	// If yes, then success the current shortlisted
