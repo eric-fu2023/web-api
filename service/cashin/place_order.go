@@ -98,10 +98,13 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		return
 	}
 
-	// if currency is not USDT, round cashinAmount to nearest multiple 100, remove decimal
+	// if currency is not USDT, round up cashinAmount to remove decimal
 	// because most payment channels don't accept decimal places, except USDT wallet
 	cashinAmount := int64(float64(cashOrder.AppliedCashInAmount) * er.AdjustedExchangeRate)
 	if method.Currency != exchange.USDT && er.AdjustedExchangeRate != 1 && er.ExchangeRate != 1 {
+		if cashinAmount%100 > 0 {
+			cashinAmount += 100
+		}
 		cashinAmount = (cashinAmount / 100) * 100
 	}
 
