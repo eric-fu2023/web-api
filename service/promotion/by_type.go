@@ -56,7 +56,6 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 
 func ProgressByType(ctx context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
 	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("ProgressByType() p.Type %d", p.Type))
-	log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
 	switch int64(p.Type) {
 	// not necessary
 	// case models.PromotionTypeVipReferral, models.PromotionTypeVipRebate:
@@ -72,8 +71,6 @@ func ProgressByType(ctx context.Context, p models.Promotion, s models.PromotionS
 	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
 		order, err := model.FirstTopup(ctx, userID)
 		ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("model.FirstTopup(ctx, userID) = order %#v, err %v", order, err))
-		log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
-
 		if util.IsGormNotFound(err) {
 			return
 		} else if err != nil {
