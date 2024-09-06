@@ -45,10 +45,22 @@ const NOTIFICATION_VIP_PROMOTION_TITLE = "NOTIFICATION_VIP_PROMOTION_TITLE"
 const NOTIFICATION_VIP_PROMOTION = "NOTIFICATION_VIP_PROMOTION"
 const NOTIFICATION_REFERRAL_ALLIANCE_TITLE = "NOTIFICATION_REFERRAL_ALLIANCE_TITLE"
 const NOTIFICATION_REFERRAL_ALLIANCE = "NOTIFICATION_REFERRAL_ALLIANCE"
-const NOTIFICATION_POPUP_WINLOSE_TITLE = "NOTIFICATION_POPUP_WINLOSE_TITLE"
-const NOTIFICATION_POPUP_WINLOSE = "NOTIFICATION_POPUP_WINLOSE"
-const NOTIFICATION_SPIN_TITLE = "NOTIFICATION_SPIN_TITLE"
-const NOTIFICATION_SPIN = "NOTIFICATION_SPIN"
+const NOTIFICATION_POPUP_WINLOSE_FIRST_TITLE = "NOTIFICATION_POPUP_WINLOSE_FIRST_TITLE"
+const NOTIFICATION_POPUP_WINLOSE_SECOND_TITLE = "NOTIFICATION_POPUP_WINLOSE_SECOND_TITLE"
+const NOTIFICATION_POPUP_WINLOSE_THIRD_TITLE = "NOTIFICATION_POPUP_WINLOSE_THIRD_TITLE"
+const NOTIFICATION_POPUP_WIN_FIRST_DESC = "NOTIFICATION_POPUP_WIN_FIRST_DESC"
+const NOTIFICATION_POPUP_WIN_SECOND_DESC = "NOTIFICATION_POPUP_WIN_SECOND_DESC"
+const NOTIFICATION_POPUP_WIN_THIRD_DESC = "NOTIFICATION_POPUP_WIN_THIRD_DESC"
+const NOTIFICATION_POPUP_LOSE_FIRST_DESC = "NOTIFICATION_POPUP_LOSE_FIRST_DESC"
+const NOTIFICATION_POPUP_LOSE_SECOND_DESC = "NOTIFICATION_POPUP_LOSE_SECOND_DESC"
+const NOTIFICATION_POPUP_LOSE_THIRD_DESC = "NOTIFICATION_POPUP_LOSE_THIRD_DESC"
+
+const NOTIFICATION_SPIN_FIRST_TITLE = "NOTIFICATION_SPIN_FIRST_TITLE"
+const NOTIFICATION_SPIN_SECOND_TITLE = "NOTIFICATION_SPIN_SECOND_TITLE"
+const NOTIFICATION_SPIN_THIRD_TITLE = "NOTIFICATION_SPIN_THIRD_TITLE"
+const NOTIFICATION_SPIN_FIRST_DESC = "NOTIFICATION_SPIN_FIRST_DESC"
+const NOTIFICATION_SPIN_SECOND_DESC = "NOTIFICATION_SPIN_SECOND_DESC"
+const NOTIFICATION_SPIN_THIRD_DESC = "NOTIFICATION_SPIN_THIRD_DESC"
 
 var (
 	ErrInsuffientBalance     = errors.New("insufficient balance or invalid transaction")
@@ -322,7 +334,7 @@ func abs(x int64) int64 {
 	return x
 }
 
-func SendNotification(userId int64, notificationType string, title string, text string) { // add to notification list and push
+func SendNotification(userId int64, notificationType string, title string, text string, v ...serializer.Response) { // add to notification list and push
 	go func() {
 		notification := ploutos.UserNotification{
 			UserId: userId,
@@ -333,14 +345,31 @@ func SendNotification(userId int64, notificationType string, title string, text 
 			return
 		}
 	}()
-	PushNotification(userId, notificationType, title, text)
+
+	// check whether the v argument is provided with a value
+	if len(v) > 0 {
+		PushNotification(userId, notificationType, title, text, v[0])
+	} else {
+		PushNotification(userId, notificationType, title, text)
+	}
+
 }
 
-func PushNotification(userId int64, notificationType string, title string, text string) {
+func PushNotification(userId int64, notificationType string, title string, text string, v ...serializer.Response) {
 	go func() {
-		msgData := map[string]string{
-			"notification_type": notificationType,
+		var msgData map[string]string
+		if len(v) > 0 {
+			resp, _ := json.Marshal(v[0])
+			msgData = map[string]string{
+				"notification_type": notificationType,
+				"response":          string(resp),
+			}
+		} else {
+			msgData = map[string]string{
+				"notification_type": notificationType,
+			}
 		}
+
 		notification := messaging.Notification{
 			Title: title,
 			Body:  text,
@@ -429,7 +458,7 @@ func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftNam
 				default:
 					msg := websocket.RoomMessage{
 						Room:           fmt.Sprintf(`stream:%d`, liveStreamId),
-						Message:        message + giftName + " " + strconv.Itoa(giftQuantity) + " x ",
+						Message:        message + " " + giftName + " " + strconv.Itoa(giftQuantity) + " x ",
 						UserId:         userId,
 						UserType:       consts.ChatUserType["user"],
 						Nickname:       nickname,

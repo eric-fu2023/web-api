@@ -2,7 +2,9 @@ package model
 
 import (
 	"fmt"
+	"log"
 	"math"
+	"sort"
 	"strconv"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"web-api/util/i18n"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 
 	"gorm.io/gorm"
 )
@@ -66,15 +69,15 @@ func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustom
 	return
 }
 
-func CreateSlashBetRecord(teamupId, userId int64, i18n i18n.I18n) (teamup ploutos.Teamup, isTeamupSuccess, isSuccess bool, err error) {
+func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18n i18n.I18n) (teamup ploutos.Teamup, isTeamupSuccess, isSuccess bool, err error) {
 
 	// First entry - 85% ~ 92%
 	// Second entry onwards until N - 1 - 0.01% ~ 1%
 	// Capped at 99.99% if deposit not fulfilled
 
-	// LAST SLASH - if deposit fulfilled then slash - will make it 100% and complete it
-
 	// NO SLASH if user slashed before
+
+	userId := user.ID
 
 	teamup, _ = GetTeamUpByTeamUpId(teamupId)
 
@@ -95,20 +98,59 @@ func CreateSlashBetRecord(teamupId, userId int64, i18n i18n.I18n) (teamup plouto
 		}
 	}
 
+	var beforeProgress, afterProgress int64
+
 	// 10000 = 100%
-	maxPercentage := int64(10000)
+	// maxPercentage := int64(10000)
 	currentTotalProgress := util.Sum(teamupEntries, func(entry ploutos.TeamupEntry) int64 {
 		return entry.FakePercentageProgress
 	})
 
-	beforeProgress, afterProgress := GenerateFakeProgress(currentTotalProgress)
+	// IF THIS USER DOESNT FULFILL
+	// 1) NEW USER
+	// 2) TOP-UP BEFORE
+	// THEN SLASH 0%
 
-	// Update status to SUCCESS if teamup deposit exceeded target
-	if teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
-		isTeamupSuccess = true
-		teamup.Status = int(ploutos.TeamupStatusSuccess)
-		teamup.TeamupCompletedTime = time.Now().UTC().Unix()
-		afterProgress = maxPercentage
+	shouldGiveRandomPercentage := false
+	isValidSlash := validSlash(c, user)
+	if !isValidSlash {
+		shouldGiveRandomPercentage = true
+	}
+
+	// Check if teamup is shortlisted
+	// If yes, then success the current shortlisted
+	if teamup.Term != 0 && teamup.ShortlistStatus != ploutos.ShortlistStatusNotShortlist {
+		// 如果有Term，如果这单是成功 / 入选
+		if isValidSlash {
+			isSuccessShortlisted, _ := SuccessShortlisted(teamup, currentTotalProgress, userId)
+
+			// No matter got error or not, need to return
+			// No error = success = return
+			// Got error = should not continue = return
+			if isSuccessShortlisted {
+				return
+			}
+
+			// Give random percentage if shortlisted by others, slash for fun
+			shouldGiveRandomPercentage = true
+		}
+	} else if teamup.Term != 0 && teamup.ShortlistStatus == ploutos.ShortlistStatusNotShortlist {
+
+		// 如果有Term，就代表CONTRIBUTION >= TARGET+不是入选/成功，就意思意思砍0
+		isValidSlash = false
+		shouldGiveRandomPercentage = true
+	}
+
+	if isValidSlash {
+		// 如果currentTotalProgress = 0，beforeProgress = 0，代表第一刀，afterProgress - beforeProgress的差值会比较大
+		beforeProgress, afterProgress = GenerateFakeProgress(currentTotalProgress)
+	} else {
+		if shouldGiveRandomPercentage {
+			beforeProgress, afterProgress = GenerateFakeProgress(currentTotalProgress)
+		} else {
+			beforeProgress = currentTotalProgress
+			afterProgress = currentTotalProgress
+		}
 	}
 
 	slashEntry := ploutos.TeamupEntry{
@@ -121,6 +163,84 @@ func CreateSlashBetRecord(teamupId, userId int64, i18n i18n.I18n) (teamup plouto
 	slashEntry.FakePercentageProgress = afterProgress - beforeProgress
 
 	teamup.TotalFakeProgress = afterProgress
+
+	if isValidSlash {
+
+		// 需求改动 所有砍为小砍
+		teamupContributeFixedAmountString, _ := GetAppConfigWithCache("teamup", "teamup_fixed_amount")
+		if teamupContributeFixedAmountString != "" {
+			contributeAmount, _ := strconv.Atoi(teamupContributeFixedAmountString)
+			slashEntry.ContributedTeamupDeposit = int64(contributeAmount)
+			teamup.TotalTeamupDeposit += int64(contributeAmount)
+		}
+		// if teamup.TotalTeamupDeposit == 0 { // 如果贡献价值为0（首次），大砍
+		// 	// 计算公式
+		// 	// (首次砍刀百分比 / 100) * (砍单目标价值 / 100) / 100 = 砍成价值
+		// 	// (6516 / 100) * (21000 / 100) / 100 = $136.836
+
+		// 	slashValue := ((float64(slashEntry.FakePercentageProgress) / 100) * (float64(teamup.TotalTeamUpTarget) / 100)) / 100
+		// 	roundedCeilSlashValue := (math.Ceil(slashValue*100) / 100) * 100
+
+		// 	slashEntry.ContributedTeamupDeposit = int64(roundedCeilSlashValue)
+		// 	teamup.TotalTeamupDeposit += int64(roundedCeilSlashValue)
+		// } else { // 如果贡献价值不为0（不是首次），小砍
+		// 	teamupContributeFixedAmountString, _ := GetAppConfigWithCache("teamup", "teamup_fixed_amount")
+		// 	if teamupContributeFixedAmountString != "" {
+		// 		contributeAmount, _ := strconv.Atoi(teamupContributeFixedAmountString)
+		// 		slashEntry.ContributedTeamupDeposit = int64(contributeAmount)
+		// 		teamup.TotalTeamupDeposit += int64(contributeAmount)
+		// 	}
+		// }
+	}
+
+	// 如果未进入候选池 + 后端数值已达标 = 加入候选池 （20进4）
+	if isValidSlash && teamup.Term == 0 && teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
+
+		// afterProgress = int64(9999)
+		slashEntry.FakePercentageProgress = afterProgress - beforeProgress
+		teamup.TotalFakeProgress = afterProgress
+
+		// 获得该期
+		currentTerm, _ := GetCurrentTermNum()
+		teamupTermSizeString, _ := GetAppConfigWithCache("teamup", "term_size")
+		termSize, _ := strconv.Atoi(teamupTermSizeString)
+		termTeamups, _ := FindExceedTargetStatusPendingByTerm(currentTerm)
+		// 默认该单为这一期
+		teamup.Term = currentTerm
+
+		// 如果这期已大过一期该有的上限，就是下一期了
+		if len(termTeamups)+1 > termSize {
+			teamup.Term++
+		}
+		// 如果改单是这期最后一个
+		// 选价值最小的4张单晋级，之后这4张单选一张砍单成功
+		if len(termTeamups)+1 == termSize {
+
+			// 默认为4
+			teamupTermShortlistedNumString, _ := GetAppConfigWithCache("teamup", "teamup_shortlisted_num")
+			termShortlistedNum, _ := strconv.Atoi(teamupTermShortlistedNumString)
+
+			// 把这单加入并筛选出4个价值最小的
+			termTeamups = append(termTeamups, teamup)
+			sort.Slice(termTeamups, func(i, j int) bool {
+				return int(termTeamups[i].TotalTeamUpTarget) < int(termTeamups[j].TotalTeamUpTarget)
+			})
+			termTeamups = termTeamups[:termShortlistedNum]
+			var ids []int64
+			for _, t := range termTeamups {
+				if t.ID == teamup.ID {
+					teamup.ShortlistStatus = ploutos.ShortlistStatusShortlisted
+				}
+				ids = append(ids, t.ID)
+			}
+
+			// 选价值最小的4张单晋级，之后这4张单选一张砍单成功
+			err = FlagStatusShortlisted(ids)
+			if err != nil {
+				return
+			}
+		}
+	}
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Save(&teamup).Error
@@ -191,7 +311,18 @@ func GenerateFakeProgress(currentProgress int64) (beforeProgress, afterProgress 
 	maximumAllowedProgress := ceilingProgress - currentProgress
 
 	if currentProgress == 0 {
-		afterProgress = util.RandomNumFromRange(InitialRandomFakeProgressLowerLimit, InitialRandomFakeProgressUpperLimit)
+		var configError error
+		initialLowerLimitString, configError := GetAppConfigWithCache("teamup", "teamup_initial_fake_progress_lower")
+		if configError != nil {
+			log.Printf("Error computing initialLowerLimitString, %s\n", configError.Error())
+		}
+		initialUpperLimitString, configError := GetAppConfigWithCache("teamup", "teamup_initial_fake_progress_upper")
+		if configError != nil {
+			log.Printf("Error computing initialUpperLimitString, %s\n", configError.Error())
+		}
+		initialLowerLimit, _ := strconv.Atoi(initialLowerLimitString)
+		initialUpperLimit, _ := strconv.Atoi(initialUpperLimitString)
+		afterProgress = util.RandomNumFromRange(int64(initialLowerLimit), int64(initialUpperLimit))
 		return
 	}
 
@@ -233,5 +364,22 @@ func GetTeamupEntryByTeamupIdAndUserId(teamupId, userId int64) (res ploutos.Team
 		return nil
 	})
 
+	return
+}
+
+func validSlash(c *gin.Context, user ploutos.User) (isValid bool) {
+
+	var condition1, condition2 bool
+	topUpCashOrder, _ := FirstTopup(c, user.ID)
+	if topUpCashOrder.ID != "" {
+		condition1 = true
+	}
+
+	isIPRegistered := IPExisted(user.RegistrationIp)
+	if !isIPRegistered {
+		condition2 = true
+	}
+
+	isValid = condition1 || condition2
 	return
 }

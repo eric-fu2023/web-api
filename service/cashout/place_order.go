@@ -32,17 +32,23 @@ type WithdrawOrderService struct {
 
 func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
 	brand := c.MustGet(`_brand`).(int)
-
 	i18n := c.MustGet("i18n").(i18n.I18n)
-	amountDecimal := decimal.NewFromFloat(s.Amount).IntPart()
-
-	amount := amountDecimal * 100
 	user := c.MustGet("user").(model.User)
 
+	// convert amount from buck to cent
+	amountDecimal := decimal.NewFromFloat(s.Amount).IntPart()
+	if err != nil {
+		r = serializer.EnsureErr(c, err, r)
+		return
+	}
+	amount := amountDecimal * 100
+
+	// user authentication
 	if err = bcrypt.CompareHashAndPassword([]byte(user.SecondaryPassword), []byte(s.SecondaryPassword)); err != nil {
 		return serializer.ParamErr(c, s, i18n.T("secondary_password_mismatch"), nil), err
 	}
 
+	// retrieve user binded account to withdraw
 	var accountBinding models.UserAccountBinding
 	err = model.DB.Where("user_id", user.ID).Where("is_active").Where("id", s.AccountBindingID).First(&accountBinding).Error
 	if err != nil {

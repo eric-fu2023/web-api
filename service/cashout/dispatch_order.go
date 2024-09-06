@@ -14,22 +14,32 @@ import (
 )
 
 func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, accountBinding models.UserAccountBinding, retryable bool) (updatedCashOrder model.CashOrder, err error) {
-
 	updatedCashOrder = cashOrder
 	method, err := model.CashMethod{}.GetByIDWithChannel(c, cashOrder.CashMethodId)
 	if err != nil {
 		return
 	}
-	channel := model.GetNextChannel(model.FilterByAmount(c, updatedCashOrder.AppliedCashOutAmount, model.FilterChannelByVip(c, user, method.CashMethodChannel)))
+	channel, nErr := model.GetNextChannel(model.FilterByAmount(c, updatedCashOrder.AppliedCashOutAmount, model.FilterChannelByVip(c, user, method.CashMethodChannel)))
+	if nErr != nil {
+		err = nErr
+		return
+	}
 	stats := channel.Stats
 	err = processCashOutMethod(method)
 	if err != nil {
 		return
 	}
-	var exchangeClient exchange.OkxClient
+	var exchangeClient exchange.ExchangeClient
 	er, err := exchangeClient.GetExchangeRate(c, method.Currency, false)
 	if err != nil {
 		return
+	}
+
+	// if currency is not USDT, round down cashoutAmount to remove decimal
+	// because most payment channels don't accept decimal places, except USDT wallet
+	cashoutAmount := int64(float64(updatedCashOrder.AppliedCashOutAmount) * er.AdjustedExchangeRate)
+	if method.Currency != exchange.USDT && er.ExchangeRate != 1 && er.AdjustedExchangeRate != 1 {
+		cashoutAmount = (cashoutAmount / 100) * 100
 	}
 
 	switch channel.Gateway {
@@ -47,16 +57,6 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			_ = model.IncrementStats(stats, result)
 
 		}()
-		cashoutAmount := int64(float64(updatedCashOrder.AppliedCashOutAmount) * er.AdjustedExchangeRate)
-
-		// Round cashoutAmount up, remove decimal
-		if er.ExchangeRate != 1 && er.AdjustedExchangeRate != 1 {
-			cashoutAmountRemainder := cashoutAmount % 100
-			if cashoutAmountRemainder > 0 {
-				cashoutAmount += 100
-			}
-			cashoutAmount = (cashoutAmount / 100) * 100
-		}
 
 		switch config.Type {
 		case "BANK_CARD":

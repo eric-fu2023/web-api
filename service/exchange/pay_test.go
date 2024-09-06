@@ -11,7 +11,7 @@ import (
 func TestCrypto(t *testing.T) {
 	godotenv.Load("../../.env")
 
-	data, err := exchange.OkxClient{}.GetExchangeRate(context.Background(), "", true)
+	data, err := exchange.ExchangeClient{}.GetExchangeRate(context.Background(), "", true)
 	t.Log(err)
 	t.Log(data)
 	t.Error(1)
