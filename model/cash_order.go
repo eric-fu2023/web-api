@@ -128,13 +128,15 @@ func (CashOrder) IsFirstTime(c context.Context, userID int64) (bool, error) {
 
 func FirstTopup(c context.Context, userID int64) (CashOrder, error) {
 	var order CashOrder
-	err := DB.WithContext(c).
+	err := DB.Debug().WithContext(c).
 		Where("user_id", userID).
 		Where("order_type", models.CashOrderTypeCashIn).
 		Where("status", ploutos.CashOrderStatusSuccess).
 		Where("is_manual_operation", false).
 		Where("(operation_type = ? or (operation_type between ? and ?))", 0, consts.OrderOperationTypeEnum[consts.OrderOperationTypeCashInAdjust], 3999).
-		Order("created_at asc").First(&order).Error
+		Order("created_at asc").
+		First(&order).Error
+
 	return order, err
 }
 

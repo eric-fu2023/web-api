@@ -3,6 +3,7 @@ package cashin
 import (
 	"encoding/json"
 	"errors"
+	"os"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/exchange"
@@ -46,7 +47,11 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		r = serializer.ParamErr(c, s, i18n.T("invalid_amount"), err)
 		return
 	}
-	channel := model.GetNextChannel(cashMethodChannels)
+	channel, nErr := model.GetNextChannel(cashMethodChannels)
+	if nErr != nil {
+		err = nErr
+		return
+	}
 	stats := channel.Stats
 
 	// verify amount
@@ -149,7 +154,15 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 			}
 		}
 		transactionID = data.PaymentOrderNo
-		r.Data = serializer.BuildPaymentOrder(data, method.Currency, decimal.NewFromInt(cashinAmount).Div(decimal.NewFromInt(100)))
+		r.Data = serializer.BuildPaymentOrder(
+			data,
+			os.Getenv("DEFAULT_CURRENCY"),
+			amountDecimal,
+			float64(int(er.AdjustedExchangeRate*10000))/10000,
+			method.Currency,
+			decimal.NewFromInt(cashinAmount).Div(decimal.NewFromInt(100)),
+			float64(int(1/er.AdjustedExchangeRate*10000))/10000,
+		)
 		cashOrder.TransactionId = &transactionID
 		cashOrder.Status = models.CashOrderStatusPending
 	}
