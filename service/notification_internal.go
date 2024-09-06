@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -97,8 +98,9 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 
 		// metadata needed for front end to navigate to a particular screen.
 		resp.Data = PopupResponse{
-			Type: 1,
-			Data: winLoseResp,
+			Type:  1,
+			Float: []PopupFloat{},
+			Data:  winLoseResp,
 		}
 
 		log.Printf("response data for win lose pop up: %+v", resp.Data)
@@ -112,6 +114,20 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 
 		title = spinTitle[randIndex]
 		text = spinDesc[randIndex]
+
+		popUpSpinId, floats, err := SpinMetadata(p.UserID)
+
+		if err != nil {
+			log.Println("Unable to obtain popUpSpinId from SpinMetadata function")
+			return
+		}
+
+		resp.Data = PopupResponse{
+			Type:  5,
+			Float: floats,
+			Data:  popUpSpinId,
+		}
+
 	}
 	common.SendNotification(p.UserID, notificationType, title, text, resp)
 	r.Data = "Success"
@@ -137,6 +153,43 @@ func FormatINR(val float64) string {
 		return fmt.Sprintf("%v", val)
 	}
 	return fmt.Sprintf("%.2f", val)
+}
+
+func SpinMetadata(userId int64) (PopupSpinId, []PopupFloat, error) {
+	// condition : 1 = app start , 2 = app resume.
+	PopupTypes, err := model.GetPopupList(1)
+	if err != nil {
+		log.Println("SpinMetadata function: get PopupTypes error ", err)
+		return PopupSpinId{}, []PopupFloat{}, err
+	}
+
+	var user model.User
+
+	// find user based on userID
+	if err := model.DB.Where("id = ?", userId).First(&user).Error; err != nil {
+		log.Println("SpinMetadata function: fetched user from db failed ")
+		return PopupSpinId{}, []PopupFloat{}, err
+	}
+
+	floats, err := GetFloatWindow(user, PopupTypes)
+	if err != nil {
+		log.Println("SpinMetadata function: get float windows error ", err)
+		return PopupSpinId{}, []PopupFloat{}, err
+	}
+
+	// check whether spin is available
+	should_spin, spin_promotion_id := SpinAvailable(PopupTypes)
+
+	if should_spin {
+		spin_id_data := PopupSpinId{
+			SpinId: spin_promotion_id,
+		}
+
+		return spin_id_data, floats, nil
+	}
+
+	return PopupSpinId{}, []PopupFloat{}, errors.New("SpinMetadata function: an error occured")
+
 }
 
 func WinLoseMetadata(userId int64) (WinLosePopupResponse, error) {
