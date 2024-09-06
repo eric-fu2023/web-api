@@ -14,8 +14,12 @@ type TopupOrder struct {
 	TopupOrderNo     string              `json:"topup_order_no"`
 	TopupOrderStatus string              `json:"topup_order_status"`
 	OrderNumber      string              `json:"order_number"`
-	ActualCurrency   string              `json:"actual_currency"`
-	ActualAmount     decimal.Decimal     `json:"actual_amount"`
+	FromCurrency     string              `json:"from_currency"`
+	FromAmount       decimal.Decimal     `json:"from_amount"`
+	FromExchangeRate float64             `json:"from_exchange_rate"`
+	ToCurrency       string              `json:"to_currency"`
+	ToAmount         decimal.Decimal     `json:"to_amount"`
+	ToExchangeRate   float64             `json:"to_exchange_rate"`
 	TopupData        *string             `json:"topup_data"`
 	TopupDataType    *string             `json:"topup_data_type"`
 	RedirectUrl      string              `json:"redirect_url"`
@@ -44,7 +48,7 @@ func buildPaymentBankCardInfo(p finpay.PaymentBankCardInfo) paymentBankCardInfo 
 	}
 }
 
-func BuildPaymentOrder(p finpay.PaymentOrderRespData, currency string, amount decimal.Decimal) TopupOrder {
+func BuildPaymentOrder(p finpay.PaymentOrderRespData, fromCurrency string, fromAmount decimal.Decimal, fromExchangeRate float64, toCurrency string, toAmount decimal.Decimal, toExchangeRate float64) TopupOrder {
 	d := p.GetUrl()
 	b := buildPaymentBankCardInfo(p.GetBankInfo())
 
@@ -52,8 +56,12 @@ func BuildPaymentOrder(p finpay.PaymentOrderRespData, currency string, amount de
 		TopupOrderNo:     p.PaymentOrderNo,
 		TopupOrderStatus: p.PaymentOrderStatus,
 		OrderNumber:      p.MerchantOrderNo,
-		ActualCurrency:   currency,
-		ActualAmount:     amount,
+		FromCurrency:     fromCurrency,
+		FromAmount:       fromAmount,
+		FromExchangeRate: fromExchangeRate,
+		ToCurrency:       toCurrency,
+		ToAmount:         toAmount,
+		ToExchangeRate:   toExchangeRate,
 		TopupData:        &d,
 		TopupDataType:    &p.PaymentDataType,
 		RedirectUrl:      os.Getenv("FINPAY_REDIRECT_URL"),
