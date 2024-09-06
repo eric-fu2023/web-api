@@ -14,13 +14,16 @@ import (
 )
 
 func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, accountBinding models.UserAccountBinding, retryable bool) (updatedCashOrder model.CashOrder, err error) {
-
 	updatedCashOrder = cashOrder
 	method, err := model.CashMethod{}.GetByIDWithChannel(c, cashOrder.CashMethodId)
 	if err != nil {
 		return
 	}
-	channel := model.GetNextChannel(model.FilterByAmount(c, updatedCashOrder.AppliedCashOutAmount, model.FilterChannelByVip(c, user, method.CashMethodChannel)))
+	channel, nErr := model.GetNextChannel(model.FilterByAmount(c, updatedCashOrder.AppliedCashOutAmount, model.FilterChannelByVip(c, user, method.CashMethodChannel)))
+	if nErr != nil {
+		err = nErr
+		return
+	}
 	stats := channel.Stats
 	err = processCashOutMethod(method)
 	if err != nil {

@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 	"web-api/util"
@@ -105,11 +106,14 @@ func IncrementStats(stats models.CashMethodStats, result string) error {
 	case "gateway_failed":
 		field = "gateway_failed"
 	}
-	err := DB.Debug().Exec(fmt.Sprintf("update cash_method_stats set called = called + 1, %s = %s + 1 where id = ?", field, field), stats.ID).Error
+	err := DB.Debug().Exec(fmt.Sprintf("UPDATE cash_method_stats SET called = called + 1, %s = %s + 1 WHERE id = ?", field, field), stats.ID).Error
 	return err
 }
 
-func GetNextChannel(list []models.CashMethodChannel) models.CashMethodChannel {
+func GetNextChannel(list []models.CashMethodChannel) (models.CashMethodChannel, error) {
+	if len(list) == 0 {
+		return models.CashMethodChannel{}, errors.New("no cash_method_channel to filter next channel")
+	}
 	distribution := map[int64]int64{}
 	var weightTotal int64 = 0
 	accumulation := map[int64]int64{}
@@ -122,13 +126,16 @@ func GetNextChannel(list []models.CashMethodChannel) models.CashMethodChannel {
 	}
 	for _, item := range list {
 		if calledTotal == 0 {
-			return item
+			return item, nil
 		}
 		if float64(accumulation[item.ID])/float64(calledTotal) < float64(distribution[item.ID])/float64(weightTotal) {
-			return item
+			return item, nil
 		}
 	}
-	return list[0]
+	if len(list) == 0 {
+		return models.CashMethodChannel{}, errors.New("no cash_method_channel selected")
+	}
+	return list[0], nil
 }
 
 func FilterChannelByVip(c context.Context, user User, chns []models.CashMethodChannel) []models.CashMethodChannel {

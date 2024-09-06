@@ -47,7 +47,11 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		r = serializer.ParamErr(c, s, i18n.T("invalid_amount"), err)
 		return
 	}
-	channel := model.GetNextChannel(cashMethodChannels)
+	channel, nErr := model.GetNextChannel(cashMethodChannels)
+	if nErr != nil {
+		err = nErr
+		return
+	}
 	stats := channel.Stats
 
 	// verify amount
