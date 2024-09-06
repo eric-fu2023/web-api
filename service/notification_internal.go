@@ -15,6 +15,7 @@ import (
 	"web-api/service/common"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leekchan/accounting"
 )
 
 const (
@@ -66,12 +67,24 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 			ranking := rank * -1
 
 			value := lose / 100
+			// check whether user's lang is en or zh
+			if lang == "en" {
 
-			text = fmt.Sprintf(popUpLoseDesc[randIndex], value, ranking)
-
+				text = fmt.Sprintf(popUpLoseDesc[randIndex], FormatINR(value), ranking)
+			} else {
+				ac := accounting.Accounting{Symbol: "$", Precision: 2}
+				text = fmt.Sprintf(popUpLoseDesc[randIndex], ac.FormatMoney(value), ranking)
+			}
 		} else {
 			value := win_lose / 100
-			text = fmt.Sprintf(popUpWinDesc[randIndex], value, rank)
+			// check whether user's lang is en or zh
+			if lang == "en" {
+				text = fmt.Sprintf(popUpWinDesc[randIndex], FormatINR(value), rank)
+			} else {
+				ac := accounting.Accounting{Symbol: "$", Precision: 2}
+				text = fmt.Sprintf(popUpWinDesc[randIndex], ac.FormatMoney(value), rank)
+
+			}
 		}
 
 		title = popUpTitle[randIndex]
@@ -103,6 +116,27 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 	common.SendNotification(p.UserID, notificationType, title, text, resp)
 	r.Data = "Success"
 	return
+}
+
+func FormatINR(val float64) string {
+	if val >= 10000000 {
+		newValue := val / 10000000
+		if newValue == float64(int(newValue)) {
+			return fmt.Sprintf("%v crore", newValue)
+		}
+		return fmt.Sprintf("%.2f crore", newValue)
+	} else if val >= 100000 {
+		newValue := val / 100000
+		if newValue == float64(int(newValue)) {
+			return fmt.Sprintf("%v lakh", newValue)
+		}
+		return fmt.Sprintf("%.2f lakh", newValue)
+	}
+
+	if val == float64(int(val)) {
+		return fmt.Sprintf("%v", val)
+	}
+	return fmt.Sprintf("%.2f", val)
 }
 
 func WinLoseMetadata(userId int64) (WinLosePopupResponse, error) {

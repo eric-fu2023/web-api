@@ -31,8 +31,8 @@ func (repo MockAnalystRepository) GetListPagination(ctx context.Context, page in
 		err = errors.New("")
 	}
 
-	for i, _ := range repo.Analysts {
-		repo.Analysts[i].Predictions = NewMockPredictionRepo().Predictions
+	for _, _ = range repo.Analysts {
+		//repo.Analysts[i].Predictions = NewMockPredictionRepo().Predictions
 	}
 
 	start := limit * (page - 1)
@@ -58,12 +58,12 @@ func (repo MockAnalystRepository) GetDetail(ctx context.Context, id int64) (r se
 	// 	if analyst.AnalystId == id {
 	// 		analyst.Predictions = NewMockPredictionRepo().Predictions
 	// 		r.Data = analyst
-	// 		return 
+	// 		return
 	// 	}
 	// }
 	err = errors.New("Invalid id")
 	r.Error = err.Error()
-	return 
+	return
 }
 
 func NewMockAnalystRepo() (repo MockAnalystRepository) {
