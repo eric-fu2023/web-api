@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"web-api/conf/consts"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -125,8 +128,15 @@ func (CashOrder) IsFirstTime(c context.Context, userID int64) (bool, error) {
 
 func FirstTopup(c context.Context, userID int64) (CashOrder, error) {
 	var order CashOrder
-	err := DB.WithContext(c).Where("user_id", userID).Where("order_type", models.CashOrderTypeCashIn).
-		Where("status", ploutos.CashOrderStatusSuccess).Order("created_at asc").First(&order).Error
+	err := DB.Debug().WithContext(c).
+		Where("user_id", userID).
+		Where("order_type", models.CashOrderTypeCashIn).
+		Where("status", ploutos.CashOrderStatusSuccess).
+		Where("is_manual_operation", false).
+		Where("(operation_type = ? or (operation_type between ? and ?))", 0, consts.OrderOperationTypeEnum[consts.OrderOperationTypeCashInAdjust], 3999).
+		Order("created_at asc").
+		First(&order).Error
+
 	return order, err
 }
 
@@ -142,7 +152,7 @@ func ScopedTopupExceptAllTimeFirst(c context.Context, userID int64, start, end t
 
 func HasTopupToday(c context.Context, userID int64) (bool, error) {
 	var hasCashInToday bool = false
-	
+
 	now, err := util.NowGMT8()
 
 	if err != nil {
@@ -151,7 +161,7 @@ func HasTopupToday(c context.Context, userID int64) (bool, error) {
 
 	start := util.RoundDownTimeDay(now)
 	end := util.RoundUpTimeDay(now)
-	
+
 	db := DB.WithContext(c).Where("user_id", userID).Where("order_type", ploutos.CashOrderTypeCashIn).Where("status", ploutos.CashOrderStatusSuccess)
 	db.Where("created_at >= ?", start)
 	db.Where("created_at < ?", end)

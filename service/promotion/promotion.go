@@ -1,12 +1,16 @@
 package promotion
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
+
+	contextify "web-api/util/context"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
@@ -92,12 +96,22 @@ type PromotionDetail struct {
 	ID int64 `form:"id" json:"id"`
 }
 
-func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err error) {
+func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err error) {
+	ctx := contextify.AppendCtx(context.Background(), contextify.DefaultContextKey, fmt.Sprintf("%d (p PromotionDetail) Handle ", time.Now().UnixNano()))
 	now := time.Now()
-	brand := c.MustGet(`_brand`).(int)
-	u, loggedIn := c.Get("user")
+	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("now %#v", now.String()))
+
+	brand := gCtx.MustGet(`_brand`).(int)
+	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("brand %#v", brand))
+
+	u, loggedIn := gCtx.Get("user")
+	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("loggedIn %#v", loggedIn))
+
 	user, _ := u.(model.User)
-	deviceInfo, _ := util.GetDeviceInfo(c)
+	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("user %#v", user))
+
+	deviceInfo, _ := util.GetDeviceInfo(gCtx)
+	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("deviceInfo %#v", deviceInfo))
 
 	var promotion models.Promotion
 	if p.ID == 99999 {
@@ -106,11 +120,14 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 			Type: int(models.PromotionTypeNewbie),
 		}
 	} else {
-		promotion, err = model.PromotionGetActive(c, brand, p.ID, now)
+		promotion, err = model.PromotionGetActive(ctx, brand, p.ID, now)
+
+		ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("[model.PromotionGetActive = promotion %v, promotion type %v,err %#v]", promotion, promotion.Type, err))
 	}
 
 	if err != nil {
-		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+		r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", err)
+		ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("err != nil .returning err %#v", r))
 		return
 	}
 	// tz := time.FixedZone("local", int(promotion.Timezone))
@@ -137,25 +154,33 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 		newbieData = serializer.BuildDummyNewbiePromotion()
 
 	default: // default promotion type..
-		session, err := model.PromotionSessionGetActive(c, p.ID, now)
+		session, err := model.PromotionSessionGetActive(gCtx, p.ID, now)
 		if err != nil {
-			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+			r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", err)
 			return r, err
 		}
 		if loggedIn {
-			progress = ProgressByType(c, promotion, session, user.ID, now)
-			claimStatus = ClaimStatusByType(c, promotion, session, user.ID, now)
-			reward, _, _, err = RewardByType(c, promotion, session, user.ID, progress, now)
-			extra = ExtraByType(c, promotion, session, user.ID, progress, now)
+			progress = ProgressByType(ctx, promotion, session, user.ID, now)
+			claimStatus = ClaimStatusByType(ctx, promotion, session, user.ID, now)
+			reward, _, _, err = RewardByType(ctx, promotion, session, user.ID, progress, now)
+			extra = ExtraByType(ctx, promotion, session, user.ID, progress, now)
+			ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("default promo type, user logged in. progress %#v, claimStatus %#v, reward %#v, extra %#v",
+				progress,
+				claimStatus,
+				reward,
+				extra,
+			))
+
+			log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
 		}
 		if claimStatus.HasClaimed {
-			v, err := model.VoucherGetByUserSession(c, user.ID, session.ID)
+			v, err := model.VoucherGetByUserSession(gCtx, user.ID, session.ID)
 			if err != nil {
 			} else {
 				voucherView = serializer.BuildVoucher(v, deviceInfo.Platform)
 			}
 		} else {
-			v, err := model.VoucherTemplateGetByPromotion(c, p.ID)
+			v, err := model.VoucherTemplateGetByPromotion(gCtx, p.ID)
 			if err != nil {
 			} else {
 				voucherView = serializer.BuildVoucherFromTemplate(v, reward, deviceInfo.Platform)
@@ -164,6 +189,10 @@ func (p PromotionDetail) Handle(c *gin.Context) (r serializer.Response, err erro
 	}
 
 	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, session, voucherView, claimStatus, extra, customData, newbieData)
+
+	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("r.Data %#v", r.Data))
+	log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
+
 	return
 }
 
