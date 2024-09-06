@@ -134,7 +134,8 @@ func FirstTopup(c context.Context, userID int64) (CashOrder, error) {
 		Where("status", ploutos.CashOrderStatusSuccess).
 		Where("is_manual_operation", false).
 		Where("(operation_type = ? or (operation_type between ? and ?))", 0, consts.OrderOperationTypeEnum[consts.OrderOperationTypeCashInAdjust], 3999).
-		Order("created_at asc").First(&order).Error
+		Order("created_at asc").
+		First(&order).Error
 
 	return order, err
 }
