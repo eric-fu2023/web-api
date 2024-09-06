@@ -128,6 +128,8 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 			Data:  popUpSpinId,
 		}
 
+		log.Printf("response data for spin pop up float: %v data: %+v", floats, popUpSpinId)
+
 	}
 	common.SendNotification(p.UserID, notificationType, title, text, resp)
 	r.Data = "Success"
