@@ -165,55 +165,67 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	teamup.TotalFakeProgress = afterProgress
 
 	if isValidSlash {
-		if currentTotalProgress == 0 {
-			// Formula
-			// (beforeProgress / 100) * (TeamUpTarget / 100) / 100 = ???
-			// (6516 / 100) * (21000 / 100) / 100 = $136.836
 
-			slashValue := ((float64(slashEntry.FakePercentageProgress) / 100) * (float64(teamup.TotalTeamUpTarget) / 100)) / 100
-			roundedCeilSlashValue := (math.Ceil(slashValue*100) / 100) * 100
-
-			slashEntry.ContributedTeamupDeposit = int64(roundedCeilSlashValue)
-			teamup.TotalTeamupDeposit += int64(roundedCeilSlashValue)
-		} else {
-			teamupContributeFixedAmountString, _ := GetAppConfigWithCache("teamup", "teamup_fixed_amount")
-			if teamupContributeFixedAmountString != "" {
-				contributeAmount, _ := strconv.Atoi(teamupContributeFixedAmountString)
-				slashEntry.ContributedTeamupDeposit = int64(contributeAmount)
-				teamup.TotalTeamupDeposit += int64(contributeAmount)
-			}
+		// 需求改动 所有砍为小砍
+		teamupContributeFixedAmountString, _ := GetAppConfigWithCache("teamup", "teamup_fixed_amount")
+		if teamupContributeFixedAmountString != "" {
+			contributeAmount, _ := strconv.Atoi(teamupContributeFixedAmountString)
+			slashEntry.ContributedTeamupDeposit = int64(contributeAmount)
+			teamup.TotalTeamupDeposit += int64(contributeAmount)
 		}
+		// if teamup.TotalTeamupDeposit == 0 { // 如果贡献价值为0（首次），大砍
+		// 	// 计算公式
+		// 	// (首次砍刀百分比 / 100) * (砍单目标价值 / 100) / 100 = 砍成价值
+		// 	// (6516 / 100) * (21000 / 100) / 100 = $136.836
+
+		// 	slashValue := ((float64(slashEntry.FakePercentageProgress) / 100) * (float64(teamup.TotalTeamUpTarget) / 100)) / 100
+		// 	roundedCeilSlashValue := (math.Ceil(slashValue*100) / 100) * 100
+
+		// 	slashEntry.ContributedTeamupDeposit = int64(roundedCeilSlashValue)
+		// 	teamup.TotalTeamupDeposit += int64(roundedCeilSlashValue)
+		// } else { // 如果贡献价值不为0（不是首次），小砍
+		// 	teamupContributeFixedAmountString, _ := GetAppConfigWithCache("teamup", "teamup_fixed_amount")
+		// 	if teamupContributeFixedAmountString != "" {
+		// 		contributeAmount, _ := strconv.Atoi(teamupContributeFixedAmountString)
+		// 		slashEntry.ContributedTeamupDeposit = int64(contributeAmount)
+		// 		teamup.TotalTeamupDeposit += int64(contributeAmount)
+		// 	}
+		// }
 	}
 
-	// IF THIS TOTAL_TEAMUP_DEPOSIT >= TOTAL_TEAMUP_TARGET
-	// MEANS SUCCESS, WILL THEN CHECK IF CURRENT TERM ALREADY HAS 20
-	// IF ALREADY HAS 20, PICK 4 LOWEST AMOUNT AND FLAG AS QUALIFIED
-	// IGNORE NOT QUALIFIED, ONLY THE FIRST THAT INVITED 1 MORE WILL SUCCESS
+	// 如果未进入候选池 + 后端数值已达标 = 加入候选池 （20进4）
 	if isValidSlash && teamup.Term == 0 && teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
 
 		// afterProgress = int64(9999)
 		slashEntry.FakePercentageProgress = afterProgress - beforeProgress
 		teamup.TotalFakeProgress = afterProgress
 
-		// Check If Term 2 Already Has termSize - 1 (20 - 1 = 19)
+		// 获得该期
 		currentTerm, _ := GetCurrentTermNum()
 		teamupTermSizeString, _ := GetAppConfigWithCache("teamup", "term_size")
 		termSize, _ := strconv.Atoi(teamupTermSizeString)
 		termTeamups, _ := FindExceedTargetStatusPendingByTerm(currentTerm)
+		// 默认该单为这一期
 		teamup.Term = currentTerm
 
-		// +1 Because include current, see if it still belongs to the same term
+		// 如果这期已大过一期该有的上限，就是下一期了
 		if len(termTeamups)+1 > termSize {
 			teamup.Term++
 		}
+		// 如果改单是这期最后一个
+		// 选价值最小的4张单晋级，之后这4张单选一张砍单成功
 		if len(termTeamups)+1 == termSize {
-			// If term has termSize-1, means can put assign term to one more teamup
-			// Calculate immediately since 19 + current = 20
+
+			// 默认为4
+			teamupTermShortlistedNumString, _ := GetAppConfigWithCache("teamup", "teamup_shortlisted_num")
+			termShortlistedNum, _ := strconv.Atoi(teamupTermShortlistedNumString)
+
+			// 把这单加入并筛选出4个价值最小的
 			termTeamups = append(termTeamups, teamup)
 			sort.Slice(termTeamups, func(i, j int) bool {
 				return int(termTeamups[i].TotalTeamUpTarget) < int(termTeamups[j].TotalTeamUpTarget)
 			})
-			termTeamups = termTeamups[:4]
+			termTeamups = termTeamups[:termShortlistedNum]
 			var ids []int64
 			for _, t := range termTeamups {
 				if t.ID == teamup.ID {
@@ -222,7 +234,7 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 				ids = append(ids, t.ID)
 			}
 
-			// Turn 4 lowest slash target amount into shortlisted
+			// 选价值最小的4张单晋级，之后这4张单选一张砍单成功
 			err = FlagStatusShortlisted(ids)
 			if err != nil {
 				return

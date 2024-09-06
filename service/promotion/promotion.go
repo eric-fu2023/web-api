@@ -99,25 +99,19 @@ type PromotionDetail struct {
 func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err error) {
 	ctx := contextify.AppendCtx(context.Background(), contextify.DefaultContextKey, fmt.Sprintf("%d (p PromotionDetail) Handle ", time.Now().UnixNano()))
 	now := time.Now()
-	log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
 	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("now %#v", now.String()))
-	log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
 
 	brand := gCtx.MustGet(`_brand`).(int)
 	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("brand %#v", brand))
-	log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
 
 	u, loggedIn := gCtx.Get("user")
 	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("loggedIn %#v", loggedIn))
-	log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
 
 	user, _ := u.(model.User)
 	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("user %#v", user))
-	log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
 
 	deviceInfo, _ := util.GetDeviceInfo(gCtx)
 	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("deviceInfo %#v", deviceInfo))
-	log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
 
 	var promotion models.Promotion
 	if p.ID == 99999 {
@@ -134,7 +128,6 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 	if err != nil {
 		r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", err)
 		ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("err != nil .returning err %#v", r))
-		log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
 		return
 	}
 	// tz := time.FixedZone("local", int(promotion.Timezone))
