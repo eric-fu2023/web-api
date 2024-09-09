@@ -194,75 +194,75 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 		// }
 	}
 
-	var tx *gorm.DB
+	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+		// 如果未进入候选池 + 后端数值已达标 = 加入候选池 （20进4）
+		if isValidSlash && teamup.Term == 0 && teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
 
-	// 如果未进入候选池 + 后端数值已达标 = 加入候选池 （20进4）
-	if isValidSlash && teamup.Term == 0 && teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
+			// afterProgress = int64(9999)
+			slashEntry.FakePercentageProgress = afterProgress - beforeProgress
+			teamup.TotalFakeProgress = afterProgress
 
-		// afterProgress = int64(9999)
-		slashEntry.FakePercentageProgress = afterProgress - beforeProgress
-		teamup.TotalFakeProgress = afterProgress
+			// 获得该期
+			currentTerm, _ := GetCurrentTermNum()
+			teamupTermSizeString, _ := GetAppConfigWithCache("teamup", "term_size")
+			termSize, _ := strconv.Atoi(teamupTermSizeString)
+			termTeamups, _ := FindExceedTargetByTerm(currentTerm)
+			// 默认该单为这一期
+			teamup.Term = currentTerm
 
-		// 获得该期
-		currentTerm, _ := GetCurrentTermNum()
-		teamupTermSizeString, _ := GetAppConfigWithCache("teamup", "term_size")
-		termSize, _ := strconv.Atoi(teamupTermSizeString)
-		termTeamups, _ := FindExceedTargetByTerm(currentTerm)
-		// 默认该单为这一期
-		teamup.Term = currentTerm
-
-		// 如果这期已大过一期该有的上限，就是下一期了
-		if len(termTeamups)+1 > termSize {
-			teamup.Term++
-		}
-		// 如果改单是这期最后一个
-		// 选价值最小的4张单晋级，之后这4张单选一张砍单成功
-		if len(termTeamups)+1 == termSize {
-
-			// 默认为4
-			teamupTermShortlistedNumString, _ := GetAppConfigWithCache("teamup", "teamup_shortlisted_num")
-			termShortlistedNum, _ := strconv.Atoi(teamupTermShortlistedNumString)
-
-			// 把这单加入并筛选出4个价值最小的
-			termTeamups = append(termTeamups, teamup)
-			sort.Slice(termTeamups, func(i, j int) bool {
-				return int(termTeamups[i].TotalTeamUpTarget) < int(termTeamups[j].TotalTeamUpTarget)
-			})
-			termTeamups = termTeamups[:termShortlistedNum]
-			var ids []int64
-			for _, t := range termTeamups {
-				if t.ID == teamup.ID {
-					teamup.ShortlistStatus = ploutos.ShortlistStatusShortlisted
-				}
-				ids = append(ids, t.ID)
+			// 如果这期已大过一期该有的上限，就是下一期了
+			if len(termTeamups)+1 > termSize {
+				teamup.Term++
 			}
-
+			// 如果改单是这期最后一个
 			// 选价值最小的4张单晋级，之后这4张单选一张砍单成功
-			err = FlagStatusShortlisted(tx, ids)
-			if err != nil {
-				return
+			if len(termTeamups)+1 == termSize {
+
+				// 默认为4
+				teamupTermShortlistedNumString, _ := GetAppConfigWithCache("teamup", "teamup_shortlisted_num")
+				termShortlistedNum, _ := strconv.Atoi(teamupTermShortlistedNumString)
+
+				// 把这单加入并筛选出4个价值最小的
+				termTeamups = append(termTeamups, teamup)
+				sort.Slice(termTeamups, func(i, j int) bool {
+					return int(termTeamups[i].TotalTeamUpTarget) < int(termTeamups[j].TotalTeamUpTarget)
+				})
+				termTeamups = termTeamups[:termShortlistedNum]
+				var ids []int64
+				for _, t := range termTeamups {
+					if t.ID == teamup.ID {
+						teamup.ShortlistStatus = ploutos.ShortlistStatusShortlisted
+					}
+					ids = append(ids, t.ID)
+				}
+
+				// 选价值最小的4张单晋级，之后这4张单选一张砍单成功
+				err = FlagStatusShortlisted(tx, ids)
+				if err != nil {
+					return
+				}
 			}
 		}
-	}
 
-	err = tx.Transaction(func(tx2 *gorm.DB) (err error) {
-		err = tx2.Save(&teamup).Error
+		err = tx.Transaction(func(tx2 *gorm.DB) (err error) {
+			err = tx2.Save(&teamup).Error
+			return
+		})
+		if err != nil {
+			return
+		}
+
+		err = tx.Transaction(func(tx2 *gorm.DB) (err error) {
+			err = tx2.Save(&slashEntry).Error
+			return
+		})
+		if err != nil {
+			return
+		}
+
 		return
 	})
-	if err != nil {
-		return
-	}
 
-	err = tx.Transaction(func(tx2 *gorm.DB) (err error) {
-		err = tx2.Save(&slashEntry).Error
-		return
-	})
-
-	if err != nil {
-		tx.Rollback()
-		return
-	}
-	tx.Commit()
 	isSuccess = true
 
 	return
