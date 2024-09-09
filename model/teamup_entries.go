@@ -256,7 +256,7 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 		return
 	})
 
-	// isSuccess = true
+	isSuccess = true
 
 	return
 }
