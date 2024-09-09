@@ -376,11 +376,26 @@ func validSlash(c *gin.Context, user ploutos.User) (isValid bool) {
 		condition1 = true
 	}
 
+	isSlashBefore := SlashBeforeByUserId(user.ID)
+
 	isIPRegistered := IPExisted(user.RegistrationIp)
 	if !isIPRegistered {
 		condition2 = true
 	}
 
-	isValid = condition1 || condition2
+	isValid = condition1 || (condition2 && !isSlashBefore)
+	return
+}
+
+func SlashBeforeByUserId(userId int64) (isExisted bool) {
+	var count int64
+	err := DB.Table("teamup_entries").
+		Where("user_id = ?", userId).
+		Count(&count).Error
+
+	if err != nil || count > 1 {
+		isExisted = true
+	}
+
 	return
 }
