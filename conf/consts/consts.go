@@ -128,7 +128,7 @@ var (
 		"streamer":  3,
 	}
 	ChatUserType = map[string]int64{
-		"system":    1, // admin
+		"admin":     1,
 		"streamer":  2,
 		"user":      3,
 		"guest":     4,

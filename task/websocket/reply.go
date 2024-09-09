@@ -73,7 +73,7 @@ func welcomeToRoom(conn *websocket.Connection, message string) {
 					Timestamp: time.Now().Unix(),
 					Message:   m,
 					UserId:    consts.ChatSystemId,
-					UserType:  consts.ChatUserType["system"],
+					UserType:  consts.ChatUserType["admin"],
 					Nickname:  n,
 					Avatar:    serializer.Url(os.Getenv("CHAT_SYSTEM_PROFILE_IMG")),
 					Type:      consts.WebSocketMessageType["text"],
