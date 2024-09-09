@@ -438,7 +438,7 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	user := u.(model.User)
 
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
-	teamup, isTeamupSuccess, isSuccess, err := model.CreateSlashBetRecord(c, s.TeamupId, user.User, i18n)
+	teamup, isTeamupSuccess, _, err := model.CreateSlashBetRecord(c, s.TeamupId, user.User, i18n)
 
 	if isTeamupSuccess {
 
@@ -508,7 +508,7 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 		}, nil
 	}
 
-	r.Data = isSuccess
+	r.Data = isTeamupSuccess
 
 	return
 }

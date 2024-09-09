@@ -341,7 +341,7 @@ func FindExceedTargetStatusPendingByTerm(termId int64) (teamups []ploutos.Teamup
 func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int64, finalSlashUserId int64) (isSuccess bool, err error) {
 
 	maxPercentage := int64(10000)
-	isSuccess = true
+	isSuccess = false
 
 	if teamup.ShortlistStatus == ploutos.ShortlistStatusShortlistWin {
 		return
@@ -357,7 +357,6 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 			First(&wonTeamup).Error
 
 		if wonTeamup.ID != 0 {
-			isSuccess = false
 			return
 		}
 
@@ -397,6 +396,7 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 		return
 	}
 
+	isSuccess = true
 	return
 }
 
