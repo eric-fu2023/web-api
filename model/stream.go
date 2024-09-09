@@ -67,3 +67,9 @@ func StreamsABStreamSource(isA bool) func(db *gorm.DB) *gorm.DB {
 		}
 	}
 }
+
+func FilterByStreamer(streamerId int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("live_streams.streamer_id", streamerId)
+	}
+}
