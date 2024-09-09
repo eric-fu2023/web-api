@@ -327,11 +327,10 @@ func CheckIfTermExceedSize(termId, termSize int64) (isExceeded bool) {
 	return
 }
 
-func FindExceedTargetStatusPendingByTerm(termId int64) (teamups []ploutos.Teamup, err error) {
+func FindExceedTargetByTerm(termId int64) (teamups []ploutos.Teamup, err error) {
 
 	err = DB.Table("teamups").
 		Where("term = ?", termId).
-		Where("status = ?", ploutos.TeamupStatusPending).
 		Find(&teamups).Error
 
 	return

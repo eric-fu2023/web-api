@@ -205,7 +205,7 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 		currentTerm, _ := GetCurrentTermNum()
 		teamupTermSizeString, _ := GetAppConfigWithCache("teamup", "term_size")
 		termSize, _ := strconv.Atoi(teamupTermSizeString)
-		termTeamups, _ := FindExceedTargetStatusPendingByTerm(currentTerm)
+		termTeamups, _ := FindExceedTargetByTerm(currentTerm)
 		// 默认该单为这一期
 		teamup.Term = currentTerm
 
