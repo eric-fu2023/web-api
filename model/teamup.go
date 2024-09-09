@@ -349,13 +349,13 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		// 如果该届/期已经有候选池里为成功的单子，不管砍单是否有成功都算成功
 		// 可看下面注释
-		var wonTeamup ploutos.Teamup
+		var wonTeamups []ploutos.Teamup
 		err = tx.Model(ploutos.Teamup{}).
 			Where("term = ?", teamup.Term).
 			Where("shortlist_status = ?", ploutos.ShortlistStatusShortlistWin).
-			First(&wonTeamup).Error
+			Find(&wonTeamups).Error
 
-		if wonTeamup.ID != 0 {
+		if len(wonTeamups) > 0 {
 			return
 		}
 
@@ -399,14 +399,12 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 	return
 }
 
-func FlagStatusShortlisted(ids []int64) (err error) {
-	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Model(ploutos.Teamup{}).
+func FlagStatusShortlisted(tx *gorm.DB, ids []int64) (err error) {
+	return tx.Transaction(func(tx2 *gorm.DB) error {
+		err = tx2.Model(ploutos.Teamup{}).
 			Where("id IN ?", ids).
 			Update("shortlist_status", ploutos.ShortlistStatusShortlisted).Error
 
-		return
+		return err
 	})
-
-	return
 }

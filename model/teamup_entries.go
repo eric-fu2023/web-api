@@ -194,6 +194,8 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 		// }
 	}
 
+	var tx *gorm.DB
+
 	// 如果未进入候选池 + 后端数值已达标 = 加入候选池 （20进4）
 	if isValidSlash && teamup.Term == 0 && teamup.TotalTeamupDeposit >= teamup.TotalTeamUpTarget {
 
@@ -236,26 +238,31 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 			}
 
 			// 选价值最小的4张单晋级，之后这4张单选一张砍单成功
-			err = FlagStatusShortlisted(ids)
+			err = FlagStatusShortlisted(tx, ids)
 			if err != nil {
 				return
 			}
 		}
 	}
 
-	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Save(&teamup).Error
+	err = tx.Transaction(func(tx2 *gorm.DB) (err error) {
+		err = tx2.Save(&teamup).Error
 		return
 	})
 	if err != nil {
 		return
 	}
 
-	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = tx.Save(&slashEntry).Error
+	err = tx.Transaction(func(tx2 *gorm.DB) (err error) {
+		err = tx2.Save(&slashEntry).Error
 		return
 	})
 
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+	tx.Commit()
 	isSuccess = true
 
 	return
