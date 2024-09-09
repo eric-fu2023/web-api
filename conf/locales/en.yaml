@@ -594,6 +594,7 @@ min_withdraw_unmet: "Minimum withdraw amount is %f"
 
 invalid_draw_id: "Dollar Jackpot draw is invalid."
 contribution_limit_reached: "You have reached the contribution limit for this draw."
+prize_limit_reached: "You are not allowed to contribute an excessive amount."
 invalid_stream_game_draw_id: "Game is invalid or closed."
 
 NOTIFICATION_PLACE_BET_TITLE: "Bet placed successfully!"
