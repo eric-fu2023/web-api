@@ -56,7 +56,7 @@ func Event(conn *websocket.Connection, ctx context.Context, cancelFunc context.C
 						Room:     fmt.Sprintf(`stream:%d.%v`, stream.ID, lang),
 						Message:  event.Text,
 						UserId:   consts.ChatSystemId,
-						UserType: consts.ChatUserType["system"],
+						UserType: consts.ChatUserType["admin"],
 						Nickname: n,
 						Avatar:   serializer.Url(os.Getenv("CHAT_SYSTEM_PROFILE_IMG")),
 						Type:     consts.WebSocketMessageType["text"],

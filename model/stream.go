@@ -11,6 +11,16 @@ type Stream struct {
 	Match    *Match    `gorm:"references:MatchId;foreignKey:ID"`
 }
 
+func GetStreamDetail(streamId int64) (s Stream, err error) {
+	err = DB.
+		Preload("Streamer").
+		Where("id", streamId).
+		First(&s).
+		Error
+
+	return 
+}
+
 func StreamsOnlineSorted(categoryOrder string, categoryTypeOrder string, includeUpcoming bool) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		order := `sort_factor DESC, schedule_time DESC`
