@@ -3,17 +3,17 @@ package websocket
 import (
 	"context"
 	"encoding/json"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"os"
+	"strconv"
 	"strings"
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
-	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
 	"web-api/websocket"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func Reply(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
@@ -58,27 +58,30 @@ func welcomeToRoom(conn *websocket.Connection, message string) {
 			}
 			i18n := i18n.I18n{}
 			i18n.LoadLanguages(lang)
-			m := i18n.T("chat_welcome_message")
-			if os.Getenv("CHAT_WELCOME_MESSAGES") != "" {
-				m = os.Getenv("CHAT_WELCOME_MESSAGES")
+
+			parts := strings.Split(room, ":")
+			streamId := 0
+			if len(parts) > 1 {
+				streamId, _ = strconv.Atoi(parts[1])
 			}
-			n := i18n.T("chat_welcome_name")
-			if os.Getenv("CHAT_WELCOME_NAMES") != "" {
-				n = os.Getenv("CHAT_WELCOME_NAMES")
+			streamDetail, err := model.GetStreamDetail(int64(streamId))
+			if err != nil {
+				return
 			}
+
 			if v, exists := j["rejoin"]; !exists || !v.(bool) {
-				msg := websocket.RoomMessage{
+				streamerWelcomeMsg := websocket.RoomMessage{
 					SocketId:  j["socket_id"].(string),
 					Room:      room,
 					Timestamp: time.Now().Unix(),
-					Message:   m,
-					UserId:    consts.ChatSystemId,
-					UserType:  consts.ChatUserType["admin"],
-					Nickname:  n,
-					Avatar:    serializer.Url(os.Getenv("CHAT_SYSTEM_PROFILE_IMG")),
+					Message:   streamDetail.WelcomeMessage,
+					UserId:    streamDetail.StreamerId,
+					UserType:  consts.ChatUserType["streamer"],
+					Nickname:  streamDetail.Streamer.Nickname,
+					Avatar:    streamDetail.Streamer.Avatar,
 					Type:      consts.WebSocketMessageType["text"],
 				}
-				msg.Send(conn)
+				streamerWelcomeMsg.Send(conn)
 
 				if vv, ex := j["nickname"]; ex {
 					msg2 := websocket.RoomMessage{
