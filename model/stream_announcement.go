@@ -12,7 +12,6 @@ type StreamAnnouncement struct {
 
 func GetStreamerAnnouncement(streamerId int64) (list []StreamAnnouncement, err error) {
 	err = DB.
-		Debug().
 		Joins("JOIN live_streams ON live_streams.id = stream_announcements.stream_id").
 		Scopes(StreamsOnline(false), FilterByStreamer(streamerId)).
 		Limit(2).
