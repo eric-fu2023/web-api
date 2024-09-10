@@ -594,6 +594,7 @@ min_withdraw_unmet: "最低提款金额为 %f"
 
 invalid_draw_id: "Dollar Jackpot 抽奖无效."
 contribution_limit_reached: "您已达到此抽奖的贡献限制."
+prize_limit_reached: "您无法投入过多的金额"
 invalid_stream_game_draw_id: "游戏无效或已关闭."
 
 NOTIFICATION_PLACE_BET_TITLE: "下注成功！"

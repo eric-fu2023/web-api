@@ -128,12 +128,12 @@ var (
 		"streamer":  3,
 	}
 	ChatUserType = map[string]int64{
-		"system":    1,
-		"bot":       2,
+		"admin":     1,
+		"streamer":  2,
 		"user":      3,
 		"guest":     4,
 		"assistant": 5,
-		"streamer":  6,
+		"bot":       6,
 	}
 	ChatSystemId  int64 = -999999
 	AuthEventType       = map[string]int{

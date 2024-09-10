@@ -28,6 +28,16 @@ func Silenced(c *gin.Context) {
 	}
 }
 
+func StreamAnnouncementList(c *gin.Context) {
+	var service service.StreamAnnouncementService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.Get(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
 //func FollowingStreams(c *gin.Context) {
 //	var service v2.FollowingStreamService
 //	if err := c.ShouldBind(&service); err == nil {
