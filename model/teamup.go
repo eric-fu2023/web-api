@@ -153,11 +153,11 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 
 		switch {
 		case len(status) == 1:
-			tx = tx.Order(`teamup_end_time ASC`)
+			tx = tx.Order(`teamup_end_time ASC`).Order(`created_at DESC`)
 		case len(status) == 2:
-			tx = tx.Order(`teamup_end_time DESC`)
+			tx = tx.Order(`teamup_end_time DESC`).Order(`created_at DESC`)
 		case len(status) == 3:
-			tx = tx.Order(`teamups.status ASC`).Order(`teamup_end_time ASC`)
+			tx = tx.Order(`teamups.status ASC`).Order(`created_at DESC`).Order(`teamup_end_time ASC`)
 		}
 
 		err = tx.Scopes(Paginate(page, limit)).Scan(&res).Error
