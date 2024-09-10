@@ -372,6 +372,7 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 		if teamup.TotalTeamUpTarget <= int64(teamupMaxSlashAmount) {
 			teamup.Status = int(ploutos.TeamupStatusSuccess)
 			teamup.TotalFakeProgress = maxPercentage
+			teamup.TeamupCompletedTime = time.Now().UTC().Unix()
 		}
 		err = tx.Save(&teamup).Error
 		if err != nil {
