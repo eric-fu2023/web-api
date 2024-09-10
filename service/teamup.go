@@ -370,11 +370,14 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 
 		// GET MATCH DETAILS WITH IMSB WAY (BatAce)
 		case s.GameType == fmt.Sprint(ploutos.GAME_IMSB):
-			leagueIcon, leagueName, homeIcon, awayIcon, _, _, _, err = getImsbMatchDetails(s.MatchId)
+			leagueIcon, leagueName, homeIcon, awayIcon, _, homeName, awayName, err = getImsbMatchDetails(s.MatchId)
 			if err != nil {
 				log.Print(err)
 			}
 
+			if !s.IsParlay {
+				s.MatchTitle = homeName + " vs " + awayName
+			}
 		}
 
 		teamup.UserId = user.ID
