@@ -346,6 +346,8 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 		return
 	}
 
+	hasWinnerAlready := false
+
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		// 如果该届/期已经有候选池里为成功的单子，不管砍单是否有成功都算成功
 		// 可看下面注释
@@ -356,6 +358,7 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 			Find(&wonTeamups).Error
 
 		if len(wonTeamups) > 0 {
+			hasWinnerAlready = true
 			return
 		}
 
@@ -395,7 +398,9 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 		return
 	}
 
-	isSuccess = true
+	if !hasWinnerAlready {
+		isSuccess = true
+	}
 	return
 }
 

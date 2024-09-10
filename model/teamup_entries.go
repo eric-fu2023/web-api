@@ -128,7 +128,8 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 			// No error = success = return
 			// Got error = should not continue = return
 			if isSuccessShortlisted {
-				isTeamupSuccess = isSuccessShortlisted
+				isTeamupSuccess = true
+				isSuccess = true
 				return
 			}
 
