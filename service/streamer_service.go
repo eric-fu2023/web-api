@@ -68,6 +68,10 @@ func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err 
 		data.HasJackpot = true
 	}
 
+	hasGame, _ := model.GetStreamGameStreamer(streamer.ID, ploutos.GameDice)
+
+	data.HasDice = hasGame
+
 	if len(streamer.LiveStreams) == 0 && service.RecommendCount > 0 {
 		if e := model.DB.Model(model.Stream{}).Select(`recommend_streamer_id`).
 			Where(`streamer_id`, streamer.ID).Where(`status`, 4).
