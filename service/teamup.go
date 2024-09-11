@@ -211,125 +211,130 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 		if s.MatchId == "" {
 			br, _ := model.GetTeamUpBetReport(s.OrderId)
 
-			if br.OrderId == "" {
-				r = serializer.Err(c, "", serializer.CustomTeamUpBetReportDoesNotExistError, i18n.T("teamup_br_not_exist"), err)
-				return
-			}
-			br.ParseInfo()
+			if br.OrderId != "" {
+				// if br.OrderId == "" {
+				// 	r = serializer.Err(c, "", serializer.CustomTeamUpBetReportDoesNotExistError, i18n.T("teamup_br_not_exist"), err)
+				// 	return
+				// }
+				br.ParseInfo()
 
-			var matchTime int64
+				var matchTime int64
 
-			var betMatchId, betMarketName, betOptionName, betMatchName string
-
-			if len(br.Bets) > 0 {
-				switch {
-				case br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA:
-					for _, bet := range br.Bets {
-						if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
-							betToShow := bet.(ploutos.BetFb)
-
-							betMatchId = betToShow.MatchId
-							betMarketName = betToShow.MarketName
-							betOptionName = betToShow.OptionName
-							betMatchName = betToShow.MatchName
-
-							expiredBefore, _ := model.GetAppConfigWithCache("teamup", "teamup_event_expired_before_minutes")
-							expiredBeforeMinutes, _ := strconv.Atoi(expiredBefore)
-							matchTime = *bet.GetMatchTime() - (60 * int64(expiredBeforeMinutes)) // 60 seconds * num minutes
-						}
-					}
-					if nowTs >= matchTime {
-						r = serializer.Err(c, "", serializer.CustomTeamUpMatchStartedError, i18n.T("teamup_match_started"), err)
-						return
-					}
-
-				case br.GameType == ploutos.GAME_IMSB:
-					for _, bet := range br.Bets {
-						if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
-							betToShow := bet.(ploutos.BetImsb)
-
-							betMatchId = betToShow.EventId                                // "526381"
-							betMarketName = betToShow.BetType                             // "ML"
-							betOptionName = betToShow.BetType + " " + betToShow.Selection // "ML H"
-							betMatchName = betToShow.EventName                            // "Mi Cape Town vs Joburg Super Kings Srl"
-
-							expiredBefore, _ := model.GetAppConfigWithCache("teamup", "teamup_event_expired_before_minutes")
-							expiredBeforeMinutes, _ := strconv.Atoi(expiredBefore)
-							matchTime = *bet.GetMatchTime() - (60 * int64(expiredBeforeMinutes)) // 60 seconds * num minutes
-						}
-					}
-					if nowTs >= matchTime {
-						r = serializer.Err(c, "", serializer.CustomTeamUpMatchStartedError, i18n.T("teamup_match_started"), err)
-						return
-					}
-				}
-
-				var teamup ploutos.Teamup
-				teamup, err = model.GetTeamUp(s.OrderId)
-
-				var t ploutos.Teamup
-				t = teamup
+				var betMatchId, betMarketName, betOptionName, betMatchName string
 
 				if len(br.Bets) > 0 {
 					switch {
 					case br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA:
-						leagueIcon, leagueName, homeIcon, awayIcon, matchTitle, _, _, err = getFbMatchDetails(betMatchId)
-						if err != nil {
-							log.Print(err)
+						for _, bet := range br.Bets {
+							if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
+								betToShow := bet.(ploutos.BetFb)
+
+								betMatchId = betToShow.MatchId
+								betMarketName = betToShow.MarketName
+								betOptionName = betToShow.OptionName
+								betMatchName = betToShow.MatchName
+
+								expiredBefore, _ := model.GetAppConfigWithCache("teamup", "teamup_event_expired_before_minutes")
+								expiredBeforeMinutes, _ := strconv.Atoi(expiredBefore)
+								matchTime = *bet.GetMatchTime() - (60 * int64(expiredBeforeMinutes)) // 60 seconds * num minutes
+							}
 						}
-						// if !s.IsParlay {
-						// 	s.MatchTitle = homeName + " vs " + awayName
-						// }
+						if nowTs >= matchTime {
+							r = serializer.Err(c, "", serializer.CustomTeamUpMatchStartedError, i18n.T("teamup_match_started"), err)
+							return
+						}
+
 					case br.GameType == ploutos.GAME_IMSB:
-						leagueIcon, leagueName, homeIcon, awayIcon, matchTitle, _, _, err = getImsbMatchDetails(betMatchId)
-						if err != nil {
-							log.Print(err)
+						for _, bet := range br.Bets {
+							if matchTime == 0 || (matchTime != 0 && matchTime >= *bet.GetMatchTime()) {
+								betToShow := bet.(ploutos.BetImsb)
+
+								betMatchId = betToShow.EventId                                // "526381"
+								betMarketName = betToShow.BetType                             // "ML"
+								betOptionName = betToShow.BetType + " " + betToShow.Selection // "ML H"
+								betMatchName = betToShow.EventName                            // "Mi Cape Town vs Joburg Super Kings Srl"
+
+								expiredBefore, _ := model.GetAppConfigWithCache("teamup", "teamup_event_expired_before_minutes")
+								expiredBeforeMinutes, _ := strconv.Atoi(expiredBefore)
+								matchTime = *bet.GetMatchTime() - (60 * int64(expiredBeforeMinutes)) // 60 seconds * num minutes
+							}
+						}
+						if nowTs >= matchTime {
+							r = serializer.Err(c, "", serializer.CustomTeamUpMatchStartedError, i18n.T("teamup_match_started"), err)
+							return
 						}
 					}
-					if !br.IsParlay {
-						betMatchName = matchTitle
+
+					var teamup ploutos.Teamup
+					teamup, err = model.GetTeamUp(s.OrderId)
+
+					var t ploutos.Teamup
+					t = teamup
+
+					if len(br.Bets) > 0 {
+						switch {
+						case br.GameType == ploutos.GAME_FB || br.GameType == ploutos.GAME_TAYA:
+							leagueIcon, leagueName, homeIcon, awayIcon, matchTitle, _, _, err = getFbMatchDetails(betMatchId)
+							if err != nil {
+								log.Print(err)
+							}
+							// if !s.IsParlay {
+							// 	s.MatchTitle = homeName + " vs " + awayName
+							// }
+						case br.GameType == ploutos.GAME_IMSB:
+							leagueIcon, leagueName, homeIcon, awayIcon, matchTitle, _, _, err = getImsbMatchDetails(betMatchId)
+							if err != nil {
+								log.Print(err)
+							}
+						}
+						if !br.IsParlay {
+							betMatchName = matchTitle
+						}
+
+						teamup.UserId = user.ID
+						teamup.OrderId = s.OrderId
+						teamup.TotalTeamUpTarget = br.Bet
+						teamup.TeamupEndTime = matchTime
+						teamup.TeamupCompletedTime = matchTime
+
+						teamup.MatchTime = matchTime
+						teamup.MarketName = betMarketName
+						teamup.OptionName = betOptionName
+						teamup.IsParlay = br.IsParlay
+						teamup.MatchTitle = br.BetType
+						if !br.IsParlay {
+							teamup.MatchTitle = betMatchName
+						}
+						teamup.MatchId = betMatchId
+
+						teamup.LeagueIcon = leagueIcon
+						teamup.HomeIcon = homeIcon
+						teamup.AwayIcon = awayIcon
+						teamup.LeagueName = leagueName
+						teamup.BetReportGameType = int(br.GameType)
+						teamup.Timezone = loc.String()
+
+						// Recheck instead of lock
+						// FUTURE: mutex for same orderId
+						latestTeamup, _ := model.GetTeamUp(s.OrderId)
+						if latestTeamup.ID == 0 {
+							t, _ = model.SaveTeamup(teamup)
+						}
+
+						shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupHash(t, user, br.IsParlay))
+
+						r, err = shareService.Create()
+
+						return
+
 					}
-
-					teamup.UserId = user.ID
-					teamup.OrderId = s.OrderId
-					teamup.TotalTeamUpTarget = br.Bet
-					teamup.TeamupEndTime = matchTime
-					teamup.TeamupCompletedTime = matchTime
-
-					teamup.MatchTime = matchTime
-					teamup.MarketName = betMarketName
-					teamup.OptionName = betOptionName
-					teamup.IsParlay = br.IsParlay
-					teamup.MatchTitle = br.BetType
-					if !br.IsParlay {
-						teamup.MatchTitle = betMatchName
-					}
-					teamup.MatchId = betMatchId
-
-					teamup.LeagueIcon = leagueIcon
-					teamup.HomeIcon = homeIcon
-					teamup.AwayIcon = awayIcon
-					teamup.LeagueName = leagueName
-					teamup.BetReportGameType = int(br.GameType)
-					teamup.Timezone = loc.String()
-
-					// Recheck instead of lock
-					// FUTURE: mutex for same orderId
-					latestTeamup, _ := model.GetTeamUp(s.OrderId)
-					if latestTeamup.ID == 0 {
-						t, _ = model.SaveTeamup(teamup)
-					}
-
-					shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupHash(t, user, br.IsParlay))
-
-					r, err = shareService.Create()
 
 					return
-
 				}
-
-				return
+			} else {
+				r = serializer.Err(c, "", serializer.CustomTeamUpBetReportDoesNotExistError, i18n.T("teamup_br_not_exist"), err)
 			}
+			return
 		}
 
 		// FRONTEND WILL GIVE EVERYTHING BECAUSE ORDER_ID HAVENT EXIST IN BET_REPORT, EVERYTHING WILL BE IN s STRUCT
