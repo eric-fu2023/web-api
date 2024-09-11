@@ -201,7 +201,8 @@ func NewRouter() *gin.Engine {
 		v1.GET("/vendors", middleware.Cache(1*time.Minute, false), api.VendorList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute, true), api.StreamList)
 		v1.GET("/stream-announcements", middleware.Cache(1*time.Minute, false), api.StreamAnnouncementList)
-		v1.GET("/streamer", middleware.Cache(1*time.Minute, false), api.Streamer)
+		// v1.GET("/streamer", middleware.Cache(1*time.Minute, false), api.Streamer)
+		v1.GET("/streamer", api.Streamer) // remove cache due to has_jackpot needs real time updates
 		v1.GET("/topup-methods", middleware.CheckAuth(), api.TopupMethodList)
 		v1.GET("/withdraw-methods", middleware.CheckAuth(), api.WithdrawMethodList)
 		v1.GET("/avatars", middleware.Cache(1*time.Minute, false), api.AvatarList)
