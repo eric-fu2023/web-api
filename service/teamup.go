@@ -500,8 +500,13 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 			util.GetLoggerEntry(c).Error("Team Up Cash Order ERROR - ", err, teamup.ID)
 			return
 		}
-		notificationMsg := fmt.Sprintf(i18n.T("notification_slashed_teamup_success"), teamup.OrderId, fmt.Sprintf("%.2f", float64(teamup.TotalTeamUpTarget)/float64(100)))
-		go common.SendNotification(teamup.UserId, consts.Notification_Type_Cash_Transaction, i18n.T("notification_teamup_title"), notificationMsg)
+
+		SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, i18n)
+	}
+
+	if isSuccess {
+		teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
+		SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, i18n)
 	}
 
 	if err != nil {
@@ -750,4 +755,39 @@ func (s TestDepositService) TestDeposit(c *gin.Context) (r serializer.Response, 
 	}
 
 	return
+}
+
+func SendTeamupNotification(teamupType int, userId, percentage, totalTarget int64, i18n i18n.I18n) {
+
+	// TYPE 1 = PROGRESS
+	// TYPE 2 = SUCCESS
+
+	if teamupType > 2 || teamupType == 0 {
+		teamupType = 1
+	}
+
+	n := rand.Intn(3)
+
+	titles := []string{}
+	contents := []string{}
+
+	switch {
+	case teamupType == 1:
+		titles = []string{i18n.T("notification_slash_teamup_progress_title1"), i18n.T("notification_slash_teamup_progress_title2"), i18n.T("notification_slash_teamup_progress_title3")}
+		contents = []string{i18n.T("c"), i18n.T("notification_slash_teamup_progress_content2"), i18n.T("notification_slash_teamup_progress_content3")}
+
+	case teamupType == 2:
+		titles = []string{i18n.T("notification_slash_teamup_success_title1"), i18n.T("notification_slash_teamup_success_title2"), i18n.T("notification_slash_teamup_success_title3")}
+		contents = []string{i18n.T("notification_slash_teamup_success_content1"), i18n.T("notification_slash_teamup_success_content2"), i18n.T("notification_slash_teamup_success_content3")}
+	}
+
+	notificationTitle := titles[n]
+	notificationMsg := ""
+	notificationMsg = fmt.Sprintf(contents[n], fmt.Sprintf("%.2f", (float64(percentage)/float64(100))*(float64(totalTarget)/float64(100))))
+	if n != 1 {
+		notificationMsg = fmt.Sprintf(contents[n], fmt.Sprintf("%.2f", float64(percentage)/float64(100)))
+	}
+
+	go common.SendNotification(userId, consts.Notification_Type_Cash_Transaction, notificationTitle, notificationMsg)
+
 }
