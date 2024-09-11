@@ -60,6 +60,10 @@ type TestDepositService struct {
 type DummyTeamupsService struct {
 }
 
+type TeamupNotificationResp struct {
+	TeamupId int64 `json:"teamup_id"`
+}
+
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	// i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
@@ -506,12 +510,12 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 			return
 		}
 
-		SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, i18n)
+		SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 	}
 
 	if isSuccess {
 		teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
-		SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, i18n)
+		SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 	}
 
 	if err != nil {
@@ -762,7 +766,7 @@ func (s TestDepositService) TestDeposit(c *gin.Context) (r serializer.Response, 
 	return
 }
 
-func SendTeamupNotification(teamupType int, userId, percentage, totalTarget int64, i18n i18n.I18n) {
+func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, teamupId int64, i18n i18n.I18n) {
 
 	// TYPE 1 = PROGRESS
 	// TYPE 2 = SUCCESS
@@ -793,6 +797,12 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget int6
 		notificationMsg = fmt.Sprintf(contents[n], fmt.Sprintf("%.2f", float64(percentage)/float64(100)))
 	}
 
-	go common.SendNotification(userId, consts.Notification_Type_Cash_Transaction, notificationTitle, notificationMsg)
+	var resp serializer.Response
+
+	resp.Data = TeamupNotificationResp{
+		TeamupId: teamupId,
+	}
+
+	go common.SendNotification(userId, consts.Notification_Type_Teamup_Detail, notificationTitle, notificationMsg, resp)
 
 }

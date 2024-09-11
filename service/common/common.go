@@ -362,7 +362,7 @@ func PushNotification(userId int64, notificationType string, title string, text 
 			resp, _ := json.Marshal(v[0].Data)
 			msgData = map[string]string{
 				"notification_type": notificationType,
-				"data":          string(resp),
+				"data":              string(resp),
 			}
 		} else {
 			msgData = map[string]string{
