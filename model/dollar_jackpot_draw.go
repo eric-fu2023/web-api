@@ -22,3 +22,8 @@ func GetContribution(userId int64, drawId int64) func(db *gorm.DB) *gorm.DB {
 		return db.Where(`user_id`, userId).Where(`game_id`, drawId).Select(`SUM(bet) as sum`)
 	}
 }
+func GetTotalContribution(drawId int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(`game_id`, drawId).Select(`SUM(bet) as sum`)
+	}
+}

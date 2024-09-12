@@ -594,6 +594,7 @@ min_withdraw_unmet: "最低提款金额为 %f"
 
 invalid_draw_id: "Dollar Jackpot 抽奖无效."
 contribution_limit_reached: "您已达到此抽奖的贡献限制."
+prize_limit_reached: "您无法投入过多的金额"
 invalid_stream_game_draw_id: "游戏无效或已关闭."
 
 NOTIFICATION_PLACE_BET_TITLE: "下注成功！"
@@ -695,3 +696,19 @@ notification_slashed_teamup_fail: "很遗憾，您的# %s 订单砍单失败了�
 registration_device_restrict_exceed_count: "设备ID注册次数已到达了上限"
 registration_ip_restrict_exceed_count: "IP地址注册次数已到达了上限"
 registration_restrict_exceed_count: "注册次数已达上限"
+
+notification_slash_teamup_progress_title1: " 🎉 砍单有进展！再接再厉！"
+notification_slash_teamup_progress_title2: " 🔔 砍单进展顺利！继续加油！"
+notification_slash_teamup_progress_title3: " 砍单进度加速！"
+
+notification_slash_teamup_progress_content1: " 你的砍单活动已经完成了%s！再邀请几个好友，就能成功免单啦！点击查看进度 > "
+notification_slash_teamup_progress_content2: " 你的砍单已经砍掉 %s 元！再来几刀就能享有0元下注！赶紧邀请好友继续砍单吧！ "
+notification_slash_teamup_progress_content3: " 你的砍单已经完成了%s，距离免单更近一步！快邀请更多好友助力吧！点击查看详情 > "
+
+notification_slash_teamup_success_title1: " 🎉 恭喜！砍单成功！"
+notification_slash_teamup_success_title2: " 🏆 你成功砍单啦！"
+notification_slash_teamup_success_title3: " 砍单成功！你赢了免下注机会！"
+
+notification_slash_teamup_success_content1: " 你的砍单已经成功，下注金额已返回你的钱包！快来查看详情并参与下一次砍单吧！点击查看 > "
+notification_slash_teamup_success_content2: " 恭喜你，砍单已达成，奖励已入账！快去查看吧！ "
+notification_slash_teamup_success_content3: " 恭喜你，砍单成功！奖励已到账！ "

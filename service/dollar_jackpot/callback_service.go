@@ -177,6 +177,17 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 			return
 		}
 	}
+	var total_sum model.ContributionSum
+	err = model.DB.Model(ploutos.DollarJackpotBetReport{}).Scopes(model.GetTotalContribution(djd.ID)).Find(&total_sum).Error
+	if djd.DollarJackpot != nil {
+		limit := float64(djd.DollarJackpot.Prize)
+		totalContrib := total_sum.Sum + util.MoneyInt(req.Amount)
+		if limit < float64(totalContrib) {
+			res = serializer.ParamErr(c, req, i18n.T("prize_limit_reached"), err)
+			return
+		}
+	}
+
 	req.User = &user
 	err = common.ProcessTransaction(&req)
 	if err != nil {

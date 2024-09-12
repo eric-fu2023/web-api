@@ -139,3 +139,18 @@ func (service *StreamStatusService) Get(c *gin.Context) (r serializer.Response, 
 	}
 	return
 }
+
+type StreamAnnouncementService struct {
+	StreamerId int64 `form:"streamer_id" json:"streamer_id"`
+}
+
+func (service StreamAnnouncementService) Get(c *gin.Context) (r serializer.Response, err error) {
+	announcements, err := model.GetStreamerAnnouncement(service.StreamerId)
+	if err != nil {
+		r = serializer.DBErr(c, service, "", err)
+		return 
+	}
+
+	r.Data = serializer.BuildStreamAnnouncement(announcements)
+	return 
+}

@@ -11,6 +11,7 @@ import (
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
+	"blgit.rfdev.tech/taya/payment-service/foray"
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -109,13 +110,14 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	}
 
 	var transactionID string
+	config := channel.GetFinpayConfig()
 	switch channel.Gateway {
 	default:
 		err = errors.New("unsupported method")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
+	/** finpay (八达支付) **/
 	case "finpay":
-		config := channel.GetFinpayConfig()
 		var data finpay.PaymentOrderRespData
 		defer func() {
 			result := "success"
@@ -168,7 +170,31 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		)
 		cashOrder.TransactionId = &transactionID
 		cashOrder.Status = models.CashOrderStatusPending
+	/** foray (法拉利) **/
+	case "foray":
+		var data foray.PaymentOrderRespData
+		defer func() {
+			result := "success"
+			if errors.Is(err, finpay.ErrorGateway) {
+				result = "gateway_failed"
+			}
+			// if data.IsFailed() {
+			// 	result = "failed"
+			// }
+			_ = model.IncrementStats(stats, result)
+		}()
+
+		switch config.Type {
+		default:
+			data, err = foray.ForayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, user.ID, cashOrder.ID, config.Type, user.Username)
+			if err != nil {
+				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.OrderNumber)
+				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+				return
+			}
+		}
 	}
+
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
 
 	return
