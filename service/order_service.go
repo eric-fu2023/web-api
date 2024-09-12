@@ -68,11 +68,6 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 		}
 	}
 
-	statuses := []int64{2, 5, 6}
-	sumStatuses := statuses
-	if service.IsSettled != nil && *service.IsSettled {
-		sumStatuses = []int64{5, 6}
-	}
 	types := orderType[service.Type]
 	if service.Type == 2 { // 2: games (which include games from game integration)
 		var gi []ploutos.GameIntegration
@@ -86,6 +81,36 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 			}
 		}
 	}
+
+	// status mapping
+	// 0:  "Created",
+	// 1:  "Confirming",
+	// 2:  "Rejected",
+	// 3:  "Canceled",
+	// 4:  "Confirmed",
+	// 5:  "Settled",
+	// 6:  "EarlySettled",
+
+	// IsSettled = nil
+	// take all status
+
+	// IsSettled = true
+	// take status: [2, 3, 5, 6] 
+	// take sum_status: [5, 6] 
+
+	// IsSettled = false
+	// take status: [0, 1, 4] 
+	// take sum_status: [0, 1, 4] 
+
+	statuses := []int64{2, 3, 5, 6}
+	sumStatuses := statuses
+	if service.IsSettled != nil && *service.IsSettled {
+		sumStatuses = []int64{5, 6}
+	}
+	if service.IsSettled != nil && !*service.IsSettled {
+		sumStatuses = []int64{2, 3, 5, 6}
+	}
+	
 	err = model.DB.Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, types, sumStatuses, service.IsParlay, service.IsSettled, start, end)).
 		Select(`COUNT(1) as count, SUM(bet) as amount, SUM(win-bet) as win`).Find(&orderSummary).Error
 	if err != nil {
