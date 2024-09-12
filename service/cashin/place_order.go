@@ -150,7 +150,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 			}
 		}
 		transactionID = data.PaymentOrderNo
-		r.Data = serializer.BuildPaymentOrder(
+		r.Data = serializer.BuildPaymentOrderFromFinpay(
 			data,
 			os.Getenv("DEFAULT_CURRENCY"),
 			amountDecimal,
@@ -184,6 +184,18 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 				return
 			}
 		}
+		transactionID = data.OrderNumber
+		r.Data = serializer.BuildPaymentOrderFromForay(
+			data,
+			os.Getenv("DEFAULT_CURRENCY"),
+			amountDecimal,
+			float64(int(er.AdjustedExchangeRate*10000))/10000,
+			method.Currency,
+			decimal.NewFromInt(cashinAmount).Div(decimal.NewFromInt(100)),
+			float64(int(1/er.AdjustedExchangeRate*10000))/10000,
+		)
+		cashOrder.TransactionId = &transactionID
+		cashOrder.Status = models.CashOrderStatusPending
 	}
 
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
