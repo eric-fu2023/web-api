@@ -3,17 +3,25 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/eclipse/paho.golang/paho"
-	"github.com/gin-gonic/gin"
-	validator "gopkg.in/go-playground/validator.v8"
 	"time"
 	"web-api/conf"
 	"web-api/serializer"
+	"web-api/service"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	"github.com/eclipse/paho.golang/paho"
+	"github.com/gin-gonic/gin"
+	validator "gopkg.in/go-playground/validator.v8"
 )
 
 func Ping(c *gin.Context) {
+	i18n := i18n.I18n{}
+	if err := i18n.LoadLanguages("en"); err != nil {
+		fmt.Println(err)
+	}
+	c.Set("i18n", i18n)
+	service.SendTeamupNotification(2, 3697, 9998, 5196, 120, i18n)
 	country, _ := c.Get("_country")
 	city, _ := c.Get("_city")
 	c.JSON(200, serializer.Response{
