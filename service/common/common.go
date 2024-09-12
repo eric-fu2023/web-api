@@ -388,6 +388,41 @@ func PushNotification(userId int64, notificationType string, title string, text 
 	}()
 }
 
+func PushNotificationAll(notificationType string, title string, text string, v ...serializer.Response) {
+	go func() {
+		var msgData map[string]string
+		if len(v) > 0 {
+			resp, _ := json.Marshal(v[0].Data)
+			msgData = map[string]string{
+				"notification_type": notificationType,
+				"data":          string(resp),
+			}
+		} else {
+			msgData = map[string]string{
+				"notification_type": notificationType,
+			}
+		}
+
+		notification := messaging.Notification{
+			Title: title,
+			Body:  text,
+		}
+		var user_ids []int64
+		model.DB.Table("users").Select("id").Scan(&user_ids)
+		tokens, err := model.GetFcmTokenStrings(user_ids)
+		if err != nil {
+			util.Log().Error("fcm token generation error: ", err.Error())
+			return
+		}
+		client := util.FCMFactory.NewClient(false)
+		err = client.SendMessageToAll(msgData, notification, tokens)
+		if err != nil {
+			util.Log().Error("fcm sending error: ", err.Error())
+			return
+		}
+	}()
+}
+
 func LogGameCallbackRequest(action string, request any) {
 	j, _ := json.Marshal(request)
 	util.Log().Info(`%s: %s`, action, string(j))

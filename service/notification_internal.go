@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -32,7 +31,11 @@ type InternalNotificationPushRequest struct {
 	Type   string            `form:"type" json:"type" binding:"required"`
 	Params map[string]string `form:"params" json:"params"`
 }
-
+type InternalNotificationPushAllRequest struct {
+	Type   string            `form:"type" json:"type" binding:"required"`
+	Lang   string            `form:"lang" json:"lang" binding:"required"`
+	Params map[string]string `form:"params" json:"params"`
+}
 func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Response) {
 	var notificationType, title, text string
 	var resp serializer.Response
@@ -104,34 +107,41 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 		}
 
 		log.Printf("response data for win lose pop up: %+v", resp.Data)
-
-	case spinNote:
-		notificationType = consts.Notification_Type_Spin
-		spinTitle := []string{conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_FIRST_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_SECOND_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_THIRD_TITLE)}
-		spinDesc := []string{conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_FIRST_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_SECOND_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_THIRD_DESC)}
-
-		randIndex := rand.Intn(maxIndex - minIndex + 1)
-
-		title = spinTitle[randIndex]
-		text = spinDesc[randIndex]
-
-		popUpSpinId, floats, err := SpinMetadata(p.UserID)
-
-		if err != nil {
-			log.Println("Unable to obtain popUpSpinId from SpinMetadata function")
-			return
-		}
-
-		resp.Data = PopupResponse{
-			Type:  5,
-			Float: floats,
-			Data:  popUpSpinId,
-		}
-
-		log.Printf("response data for spin pop up float: %v data: %+v", floats, popUpSpinId)
-
 	}
 	common.SendNotification(p.UserID, notificationType, title, text, resp)
+	r.Data = "Success"
+	return
+}
+
+func (p InternalNotificationPushAllRequest) HandleAll(c *gin.Context) (r serializer.Response) {
+	var resp serializer.Response
+
+	lang:=p.Lang
+	notificationType := consts.Notification_Type_Spin
+	spinTitle := []string{conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_FIRST_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_SECOND_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_THIRD_TITLE)}
+	spinDesc := []string{conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_FIRST_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_SECOND_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_THIRD_DESC)}
+
+	randIndex := rand.Intn(maxIndex - minIndex + 1)
+
+	title := spinTitle[randIndex]
+	text := spinDesc[randIndex]
+
+	popUpSpinId, floats, err := SpinMetadata()
+
+	if err != nil {
+		log.Println("Unable to obtain popUpSpinId from SpinMetadata function")
+		return
+	}
+
+	resp.Data = PopupResponse{
+		Type:  5,
+		Float: floats,
+		Data:  popUpSpinId,
+	}
+
+	log.Printf("response data for spin pop up float: %v data: %+v", floats, popUpSpinId)
+
+	common.PushNotificationAll(notificationType, title, text, resp)
 	r.Data = "Success"
 	return
 }
@@ -157,41 +167,32 @@ func FormatINR(val float64) string {
 	return fmt.Sprintf("%.2f", val)
 }
 
-func SpinMetadata(userId int64) (PopupSpinId, []PopupFloat, error) {
+func SpinMetadata() (PopupSpinId, []PopupFloat, error) {
 	// condition : 1 = app start , 2 = app resume.
-	PopupTypes, err := model.GetPopupList(1)
+	popup_types, err := model.GetPopupList(1)
 	if err != nil {
 		log.Println("SpinMetadata function: get PopupTypes error ", err)
 		return PopupSpinId{}, []PopupFloat{}, err
 	}
-
-	var user model.User
-
-	// find user based on userID
-	if err := model.DB.Where("id = ?", userId).First(&user).Error; err != nil {
-		log.Println("SpinMetadata function: fetched user from db failed ")
-		return PopupSpinId{}, []PopupFloat{}, err
-	}
-
-	floats, err := GetFloatWindow(user, PopupTypes)
-	if err != nil {
-		log.Println("SpinMetadata function: get float windows error ", err)
-		return PopupSpinId{}, []PopupFloat{}, err
-	}
-
-	// check whether spin is available
-	should_spin, spin_promotion_id := SpinAvailable(PopupTypes)
-
-	if should_spin {
-		spin_id_data := PopupSpinId{
-			SpinId: spin_promotion_id,
+	var floats []PopupFloat
+	var spin_promotion_id_int int
+	for _, popup_type := range popup_types {
+		if popup_type.PopupType == 5 && popup_type.CanFloat{
+			// spin popup float
+			spin_promotion_id_int, _ = strconv.Atoi(popup_type.Meta)
+			// user still can spin, then we add the spin popup to float list.
+			floats = append(floats, PopupFloat{
+				Type: 5,
+				Id:   spin_promotion_id_int,
+			})
 		}
-
-		return spin_id_data, floats, nil
 	}
 
-	return PopupSpinId{}, []PopupFloat{}, errors.New("SpinMetadata function: an error occured")
+	spin_id_data := PopupSpinId{
+		SpinId: spin_promotion_id_int,
+	}
 
+	return spin_id_data, floats, nil
 }
 
 func WinLoseMetadata(userId int64) (WinLosePopupResponse, error) {

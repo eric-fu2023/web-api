@@ -140,6 +140,7 @@ func NewRouter() *gin.Engine {
 		internal.POST("/promotions/batch-claim", middleware.RequestLogger("internal"), internal_api.InternalPromotion)
 		internal.POST("/promotions/custom", middleware.RequestLogger("internal"), internal_api.InternalPromotionRequest)
 		internal.POST("/notification-push", middleware.RequestLogger("internal"), internal_api.Notification)
+		internal.POST("/notification-push-all", middleware.RequestLogger("internal"), internal_api.NotificationAll)
 	}
 
 	// middlewares order can't be changed
