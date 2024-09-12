@@ -359,10 +359,10 @@ func PushNotification(userId int64, notificationType string, title string, text 
 	go func() {
 		var msgData map[string]string
 		if len(v) > 0 {
-			resp, _ := json.Marshal(v[0])
+			resp, _ := json.Marshal(v[0].Data)
 			msgData = map[string]string{
 				"notification_type": notificationType,
-				"response":          string(resp),
+				"data":              string(resp),
 			}
 		} else {
 			msgData = map[string]string{

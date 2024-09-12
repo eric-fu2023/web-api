@@ -757,6 +757,8 @@ const (
 	Notification_Type_Pop_Up              = "popup_winlose"
 	Notification_Type_Spin                = "spin"
 	Notification_Type_Referral_Alliance   = "referral_alliance"
+	Notification_Type_Teamup              = "teamup"
+	Notification_Type_Teamup_Detail       = "teamup_detail"
 
 	//DefaultBrand = 1001
 	//DefaultAgent = 1000001
