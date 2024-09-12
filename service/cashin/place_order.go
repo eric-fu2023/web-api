@@ -60,19 +60,11 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	if err != nil {
 		return
 	}
-
-	if amount < 0 {
-		err = errors.New("illegal amount")
-		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
-	}
-
 	// verify payment method
 	err = verifyCashInMethod(method)
 	if err != nil {
 		return
 	}
-
 	// get exchange rate
 	var exchangeClient exchange.ExchangeClient
 	er, err := exchangeClient.GetExchangeRate(c, method.Currency, true)
@@ -80,7 +72,6 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
-
 	// create CashInOrder
 	var userSum model.UserSum
 	userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
@@ -175,12 +166,12 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		var data foray.PaymentOrderRespData
 		defer func() {
 			result := "success"
-			if errors.Is(err, finpay.ErrorGateway) {
+			if errors.Is(err, foray.ErrorGateway) {
 				result = "gateway_failed"
 			}
-			// if data.IsFailed() {
-			// 	result = "failed"
-			// }
+			if err != nil {
+				result = "failed"
+			}
 			_ = model.IncrementStats(stats, result)
 		}()
 
