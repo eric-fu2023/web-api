@@ -783,7 +783,7 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 	switch {
 	case teamupType == 1:
 		titles = []string{i18n.T("notification_slash_teamup_progress_title1"), i18n.T("notification_slash_teamup_progress_title2"), i18n.T("notification_slash_teamup_progress_title3")}
-		contents = []string{i18n.T("c"), i18n.T("notification_slash_teamup_progress_content2"), i18n.T("notification_slash_teamup_progress_content3")}
+		contents = []string{i18n.T("notification_slash_teamup_progress_content1"), i18n.T("notification_slash_teamup_progress_content2"), i18n.T("notification_slash_teamup_progress_content3")}
 
 	case teamupType == 2:
 		titles = []string{i18n.T("notification_slash_teamup_success_title1"), i18n.T("notification_slash_teamup_success_title2"), i18n.T("notification_slash_teamup_success_title3")}
@@ -791,10 +791,13 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 	}
 
 	notificationTitle := titles[n]
-	notificationMsg := ""
-	notificationMsg = fmt.Sprintf(contents[n], fmt.Sprintf("%.2f", (float64(percentage)/float64(100))*(float64(totalTarget)/float64(100))))
-	if n != 1 {
-		notificationMsg = fmt.Sprintf(contents[n], fmt.Sprintf("%.2f", float64(percentage)/float64(100)))
+	notificationMsg := contents[n]
+	if strings.Contains(notificationMsg, "%s") {
+		notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", (float64(percentage)/float64(10000))*(float64(totalTarget)/float64(100))))
+
+		if n != 1 {
+			notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", (float64(percentage)/float64(100)))+"%")
+		}
 	}
 
 	var resp serializer.Response

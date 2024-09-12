@@ -21,7 +21,7 @@ func Ping(c *gin.Context) {
 		fmt.Println(err)
 	}
 	c.Set("i18n", i18n)
-	service.SendTeamupNotification(2, 3697, 9998, 5196, 120, i18n)
+	service.SendTeamupNotification(1, 3697, 9998, 5196, 120, i18n)
 	country, _ := c.Get("_country")
 	city, _ := c.Get("_city")
 	c.JSON(200, serializer.Response{
