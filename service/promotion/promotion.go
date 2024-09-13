@@ -113,7 +113,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 	if p.ID == 99999 {
 		// TODO : remove mock data
 		promotion = models.Promotion{
-			Type: int(models.PromotionTypeNewbie),
+			Type: models.PromotionTypeNewbie,
 		}
 	} else {
 		promotion, err = model.PromotionGetActive(gCtx, brand, p.ID, now)

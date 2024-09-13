@@ -37,7 +37,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	// TODO: allow decimal places
 	amount := amountDecimal.IntPart() * 100
 
-	// retrieve channel
+	// retrieve cashMethodChannel
 	method, err := model.CashMethod{}.GetByIDWithChannel(c, s.MethodID)
 	if err != nil {
 		return
@@ -48,12 +48,12 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		r = serializer.ParamErr(c, s, i18n.T("invalid_amount"), err)
 		return
 	}
-	channel, nErr := model.GetNextChannel(cashMethodChannels)
+	cashMethodChannel, nErr := model.GetNextChannel(cashMethodChannels)
 	if nErr != nil {
 		err = nErr
 		return
 	}
-	stats := channel.Stats
+	stats := cashMethodChannel.Stats
 
 	// verify amount
 	r, err = s.verifyCashInAmount(c, amount, method)
@@ -79,12 +79,18 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
-	cashOrder := model.NewCashInOrder(user.ID,
+	cashOrder := model.NewCashInOrder(
+		user.ID,
 		s.MethodID,
+		cashMethodChannel.ID,
 		amount,
 		userSum.Balance,
 		GetWagerFromAmount(amount, DefaultWager),
-		c.ClientIP(), method.Currency, er.ExchangeRate, er.AdjustedExchangeRate)
+		c.ClientIP(),
+		method.Currency,
+		er.ExchangeRate,
+		er.AdjustedExchangeRate,
+	)
 	if err = model.DB.Debug().WithContext(c).Create(&cashOrder).Error; err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return
@@ -101,8 +107,8 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	}
 
 	var transactionID string
-	config := channel.GetFinpayConfig()
-	switch channel.Gateway {
+	config := cashMethodChannel.GetFinpayConfig()
+	switch cashMethodChannel.Gateway {
 	default:
 		err = errors.New("unsupported method")
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)

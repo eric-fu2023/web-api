@@ -26,7 +26,7 @@ const userWithdrawLockKey = "user_withdraw_lock:%d"
 
 type WithdrawOrderService struct {
 	Amount            float64 `form:"amount" json:"amount" binding:"required"`
-	AccountBindingID  int64   `form:"account_binding_id" json:"account_binding_id" binding:"required"`
+	AccountBindingId  int64   `form:"account_binding_id" json:"account_binding_id" binding:"required"`
 	SecondaryPassword string  `form:"secondary_password" json:"secondary_password" binding:"required"`
 }
 
@@ -50,7 +50,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 
 	// retrieve user binded account to withdraw
 	var accountBinding models.UserAccountBinding
-	err = model.DB.Where("user_id", user.ID).Where("is_active").Where("id", s.AccountBindingID).First(&accountBinding).Error
+	err = model.DB.Where("user_id", user.ID).Where("is_active").Where("id", s.AccountBindingId).First(&accountBinding).Error
 	if err != nil {
 		return
 	}
@@ -126,7 +126,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		var msg string
 		reviewRequired, msg = vipRuleOK(rule, payoutCount, amount, totalOut)
 
-		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance, s.AccountBindingID, msg, reviewRequired, c.ClientIP())
+		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance, s.AccountBindingId, msg, reviewRequired, c.ClientIP())
 		err = tx.Create(&cashOrder).Error
 		if err != nil {
 			return

@@ -19,12 +19,13 @@ type CashOrder struct {
 	ploutos.CashOrder
 }
 
-func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) CashOrder {
+func NewCashInOrder(userID, CashMethodId, CashMethodChannelId, amount, balanceBefore, wagerChange int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) CashOrder {
 	return CashOrder{
 		ploutos.CashOrder{
 			ID:                  ploutos.GenerateCashInOrderNo(),
 			UserId:              userID,
 			CashMethodId:        CashMethodId,
+			CashMethodChannelId: CashMethodChannelId,
 			OrderType:           1,
 			Status:              ploutos.CashOrderStatusPending,
 			AppliedCashInAmount: amount,
@@ -39,7 +40,7 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 	}
 }
 
-func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingID int64, remark string, reviewRequired bool, ip string) CashOrder {
+func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingId int64, remark string, reviewRequired bool, ip string) CashOrder {
 	var orderStatus int64 = models.CashOrderStatusPendingRiskCheck
 	var approveStatus int64
 	var reviewStatus int64
@@ -64,7 +65,7 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBinding
 			ReviewStatus:         reviewStatus,
 			//Notes:, update later
 			Ip:                   ip,
-			UserAccountBindingID: accountBindingID,
+			UserAccountBindingId: accountBindingId,
 		},
 	}
 }
