@@ -16,7 +16,6 @@ import (
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util"
-	contextify "web-api/util/context"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/chenyahui/gin-cache/persist"
@@ -58,7 +57,7 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 }
 
 func ProgressByType(ctx context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
-	ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("ProgressByType() p.Type %d", p.Type))
+	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("ProgressByType() p.Type %d", p.Type))
 	switch int64(p.Type) {
 	// not necessary
 	// case models.PromotionTypeVipReferral, models.PromotionTypeVipRebate:
@@ -73,7 +72,7 @@ func ProgressByType(ctx context.Context, p models.Promotion, s models.PromotionS
 	// 	progress = vip.VipRule.VIPLevel
 	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
 		order, err := model.FirstTopup(ctx, userID)
-		ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("model.FirstTopup(ctx, userID) = order %#v, err %v", order, err))
+		//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("model.FirstTopup(ctx, userID) = order %#v, err %v", order, err))
 		if util.IsGormNotFound(err) {
 			return
 		} else if err != nil {
