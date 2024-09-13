@@ -23,8 +23,8 @@ func BuildPaymentOrderFromForay(p foray.PaymentOrderRespData, fromCurrency strin
 		TopupData:        &p.OrderPayUrl,
 		TopupDataType:    &dataType,
 		RedirectUrl:      os.Getenv("FORAY_REDIRECT_URL"),
-		Html:             *p.OrderPayHtml,
-		WalletAddress:    *p.OrderPayInfo,
+		Html:             p.GetHtml(),
+		WalletAddress:    p.GetWallet(),
 		BankCardInfo:     paymentBankCardInfo{},
 	}
 }
