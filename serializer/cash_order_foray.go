@@ -7,8 +7,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func BuildPaymentOrderFromForay(p foray.PaymentOrderRespData, fromCurrency string, fromAmount decimal.Decimal, fromExchangeRate float64, toCurrency string, toAmount decimal.Decimal, toExchangeRate float64) TopupOrder {
-	dataType := "H5_URL"
+func BuildPaymentOrderFromForay(p foray.PaymentOrderRespData, paymentType string, fromCurrency string, fromAmount decimal.Decimal, fromExchangeRate float64, toCurrency string, toAmount decimal.Decimal, toExchangeRate float64) TopupOrder {
+	dataType := retrievePaymentDataType(paymentType)
 
 	return TopupOrder{
 		TopupOrderNo:     p.OrderNumber,
@@ -26,5 +26,14 @@ func BuildPaymentOrderFromForay(p foray.PaymentOrderRespData, fromCurrency strin
 		Html:             p.GetHtml(),
 		WalletAddress:    p.GetWallet(),
 		BankCardInfo:     paymentBankCardInfo{},
+	}
+}
+
+func retrievePaymentDataType(paymentType string) string {
+	switch paymentType {
+	case "CRYPTO":
+		return "CRYPTO_WALLET"
+	default:
+		return "H5_URL"
 	}
 }

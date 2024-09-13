@@ -187,6 +187,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		transactionID = data.OrderNumber
 		r.Data = serializer.BuildPaymentOrderFromForay(
 			data,
+			config.Type,
 			os.Getenv("DEFAULT_CURRENCY"),
 			amountDecimal,
 			float64(int(er.AdjustedExchangeRate*10000))/10000,

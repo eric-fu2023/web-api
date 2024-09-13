@@ -10,6 +10,7 @@ import (
 	dollar_jackpot_api "web-api/api/dollar_jackpot"
 	fb_api "web-api/api/fb"
 	api_finpay "web-api/api/finpay"
+	api_foray "web-api/api/foray"
 	game_integration_api "web-api/api/game_integration"
 	imsb_api "web-api/api/imsb"
 	internal_api "web-api/api/internalapi"
@@ -114,10 +115,16 @@ func NewRouter() *gin.Engine {
 		}
 	}
 
+	/* payment channel callback */
 	if os.Getenv("FINPAY_CALLBACK_ENABLED") == "true" {
 		fpCallback := r.Group("/callback/finpay")
 		fpCallback.POST("/payment-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayPaymentCallback)
 		fpCallback.POST("/transfer-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayTransferCallback)
+	}
+	if os.Getenv("FORAY_CALLBACK_ENABLED") == "true" {
+		fpCallback := r.Group("/callback/foray")
+		fpCallback.POST("/payment-order", middleware.RequestLogger("Foray callback"), api_foray.ForayPaymentCallback)
+		fpCallback.POST("/transfer-order", middleware.RequestLogger("Foray callback"), api_foray.ForayTransferCallback)
 	}
 
 	if os.Getenv("BACKEND_APIS_ON") == "true" {
