@@ -60,19 +60,11 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	if err != nil {
 		return
 	}
-
-	if amount < 0 {
-		err = errors.New("illegal amount")
-		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
-	}
-
 	// verify payment method
 	err = verifyCashInMethod(method)
 	if err != nil {
 		return
 	}
-
 	// get exchange rate
 	var exchangeClient exchange.ExchangeClient
 	er, err := exchangeClient.GetExchangeRate(c, method.Currency, true)
@@ -80,7 +72,6 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
-
 	// create CashInOrder
 	var userSum model.UserSum
 	userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
@@ -159,7 +150,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 			}
 		}
 		transactionID = data.PaymentOrderNo
-		r.Data = serializer.BuildPaymentOrder(
+		r.Data = serializer.BuildPaymentOrderFromFinpay(
 			data,
 			os.Getenv("DEFAULT_CURRENCY"),
 			amountDecimal,
@@ -175,12 +166,12 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		var data foray.PaymentOrderRespData
 		defer func() {
 			result := "success"
-			if errors.Is(err, finpay.ErrorGateway) {
+			if errors.Is(err, foray.ErrorGateway) {
 				result = "gateway_failed"
 			}
-			// if data.IsFailed() {
-			// 	result = "failed"
-			// }
+			if err != nil {
+				result = "failed"
+			}
 			_ = model.IncrementStats(stats, result)
 		}()
 
@@ -193,6 +184,18 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 				return
 			}
 		}
+		transactionID = data.OrderNumber
+		r.Data = serializer.BuildPaymentOrderFromForay(
+			data,
+			os.Getenv("DEFAULT_CURRENCY"),
+			amountDecimal,
+			float64(int(er.AdjustedExchangeRate*10000))/10000,
+			method.Currency,
+			decimal.NewFromInt(cashinAmount).Div(decimal.NewFromInt(100)),
+			float64(int(1/er.AdjustedExchangeRate*10000))/10000,
+		)
+		cashOrder.TransactionId = &transactionID
+		cashOrder.Status = models.CashOrderStatusPending
 	}
 
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
