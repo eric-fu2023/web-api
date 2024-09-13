@@ -11,7 +11,7 @@ import (
 
 func ForayPaymentCallback(c *gin.Context) {
 	var service cashin_foray.ForayPaymentCallback
-	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
+	if err := c.ShouldBindWith(&service, binding.JSON); err == nil {
 		if err := service.Handle(c); err == nil {
 			c.String(200, "ok")
 		} else {
@@ -19,7 +19,7 @@ func ForayPaymentCallback(c *gin.Context) {
 			c.String(500, "failed")
 		}
 	} else {
-		c.String(400, "param error")
+		c.String(400, "param error: "+err.Error())
 	}
 }
 
