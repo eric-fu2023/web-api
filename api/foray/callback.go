@@ -6,11 +6,12 @@ import (
 	"web-api/util"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 func ForayPaymentCallback(c *gin.Context) {
 	var service cashin_foray.ForayPaymentCallback
-	if err := c.ShouldBind(&service); err == nil {
+	if err := c.ShouldBindWith(&service, binding.Form); err == nil {
 		if err := service.Handle(c); err == nil {
 			c.String(200, "ok")
 		} else {
