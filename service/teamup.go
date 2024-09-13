@@ -510,12 +510,12 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 			return
 		}
 
-		SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+		// SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 	}
 
 	if isSuccess {
 		teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
-		SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+		// SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 	}
 
 	if err != nil {
