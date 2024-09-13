@@ -337,9 +337,9 @@ func NewRouter() *gin.Engine {
 					fb.GET("/token", fb_api.GetToken)
 				}
 
-				dc := user.Group("/dc")
+				dcUserGroup := user.Group("/dc")
 				{
-					dc.GET("/get_url", dc_api.GetUrl)
+					dcUserGroup.GET("/get_url", dc_api.GetUrl)
 				}
 
 				imsb := user.Group("/imsb")
@@ -348,9 +348,9 @@ func NewRouter() *gin.Engine {
 					imsb.POST("/apply_voucher", imsb_api.ApplyVoucher)
 				}
 
-				dj := user.Group("/dollar_jackpot")
+				djUserGroup := user.Group("/dollar_jackpot")
 				{
-					dj.POST("/place_order", dollar_jackpot_api.PlaceOrder)
+					djUserGroup.POST("/place_order", dollar_jackpot_api.PlaceOrder)
 				}
 
 				sg := user.Group("/stream_game")
@@ -400,12 +400,12 @@ func NewRouter() *gin.Engine {
 					achievement.POST("/complete", api.AchievementComplete)
 				}
 
-				referralAlliance := user.Group("/referral/alliance")
+				referralAllianceUserGroup := user.Group("/referral/alliance")
 				{
-					referralAlliance.GET("/summary", referral_alliance_api.GetSummary)
-					referralAlliance.GET("/referrals", referral_alliance_api.ListReferrals)
-					referralAlliance.GET("/referral_summary", referral_alliance_api.GetReferralSummary)
-					referralAlliance.GET("/referral_reward_records", referral_alliance_api.GetReferralRewardRecords)
+					referralAllianceUserGroup.GET("/summary", referral_alliance_api.GetSummary)
+					referralAllianceUserGroup.GET("/referrals", referral_alliance_api.ListReferrals)
+					referralAllianceUserGroup.GET("/referral_summary", referral_alliance_api.GetReferralSummary)
+					referralAllianceUserGroup.GET("/referral_reward_records", referral_alliance_api.GetReferralRewardRecords)
 				}
 			}
 		}
