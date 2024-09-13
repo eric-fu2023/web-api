@@ -34,7 +34,10 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 	case models.PromotionTypeVipBirthdayB:
 		err := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
 		if errors.Is(err, persist.ErrCacheMiss) {
-			user := c.Value("user").(model.User)
+			user, ok := c.Value("user").(model.User)
+			if !ok {
+				return 0, 0, models.VipIncrementDetail{}, fmt.Errorf("RewardByType get reward of promotion type %d fail as user not obtained", p.Type)
+			}
 			date, _ := time.Parse(time.DateOnly, user.Birthday)
 			reward = getBirtdayReward(c, date, userID)
 		}
