@@ -12,11 +12,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type FinpayTransferCallback struct {
-	finpay.TransferCallbackRequest
+type TransferCallbackRequest = finpay.TransferCallbackRequest
+
+type ForayTransferCallback struct {
+	TransferCallbackRequest
 }
 
-func (s *FinpayTransferCallback) Handle(c *gin.Context) (err error) {
+func (s *ForayTransferCallback) Handle(c *gin.Context) (err error) {
 	if !s.IsValid() {
 		err = errors.New("invalid request")
 		return
@@ -27,7 +29,7 @@ func (s *FinpayTransferCallback) Handle(c *gin.Context) (err error) {
 		updatedCashOrder, cErr := cashout.CloseCashOutOrder(c, s.MerchantOrderNo, int64(s.Amount), 0, 0, util.JSON(s), "", true, model.DB)
 		if cErr == nil {
 			go func() {
-				pErr := on_cash_orders.Handle(c, updatedCashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinPay, on_cash_orders.RequestModeCallback)
+				pErr := on_cash_orders.Handle(c, updatedCashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeCallback)
 				if pErr != nil {
 					util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
 				}

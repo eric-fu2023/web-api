@@ -37,7 +37,7 @@ const (
 
 // Handle
 // Note: take awareness on the trigger conditions and also the sequence of process~ these will change as requirement comes in
-// See also: [Note: Work in progress]c
+// See also: [Note: Work in progress]
 func Handle(ctx context.Context, order model.CashOrder, transactionType models.TransactionType, eventType CashOrderEventType, gateway PaymentGateway, requestMode RequestIngressMode) error {
 	switch eventType {
 	case CashOrderEventTypeClose:
