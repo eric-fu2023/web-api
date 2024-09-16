@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+
 	"web-api/cache"
 	"web-api/conf"
 	"web-api/conf/consts"
@@ -28,17 +29,17 @@ const (
 	birthdayBonusRewardCacheKey = "birthday_bonus_reward_cache_key:%d"
 )
 
-func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward, meetGapType int64, vipIncrementDetail models.VipIncrementDetail, err error) {
+func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time, user *model.User) (reward, meetGapType int64, vipIncrementDetail models.VipIncrementDetail, err error) {
 	switch p.Type {
 	case models.PromotionTypeVipBirthdayB:
 		err := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
 		if errors.Is(err, persist.ErrCacheMiss) {
-			user, ok := c.Value("user").(model.User)
-			if !ok {
-				return 0, 0, models.VipIncrementDetail{}, fmt.Errorf("RewardByType get reward of promotion type %d fail as user not obtained", p.Type)
+			if user == nil {
+				err = fmt.Errorf("getting rewards for PromotionTypeVipBirthdayB userid: %d, promotion %#v ", userID, p)
+			} else {
+				date, _ := time.Parse(time.DateOnly, user.Birthday)
+				reward = getBirtdayReward(c, date, userID)
 			}
-			date, _ := time.Parse(time.DateOnly, user.Birthday)
-			reward = getBirtdayReward(c, date, userID)
 		}
 	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
 		r := getSameDayVipRewardRecord(model.DB.Debug(), userID, p.ID)

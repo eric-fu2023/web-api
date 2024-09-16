@@ -158,7 +158,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		if loggedIn {
 			progress = ProgressByType(gCtx, promotion, session, user.ID, now)
 			claimStatus = ClaimStatusByType(gCtx, promotion, session, user.ID, now)
-			reward, _, _, err = RewardByType(gCtx, promotion, session, user.ID, progress, now)
+			reward, _, _, err = RewardByType(gCtx, promotion, session, user.ID, progress, now, &user)
 			extra = ExtraByType(gCtx, promotion, session, user.ID, progress, now)
 			//ctx = contextify.AppendCtx(gCtx, contextify.DefaultContextKey, fmt.Sprintf("default promo type, user logged in. progress %#v, claimStatus %#v, reward %#v, extra %#v",
 			//	progress,

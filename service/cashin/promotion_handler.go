@@ -64,7 +64,7 @@ func HandleOneTimeBonus(c context.Context, order model.CashOrder) {
 		util.GetLoggerEntry(c).Error("get promotion session error", err)
 		return
 	}
-	_, err = promotion.Claim(c, time.Now(), p, s, user.ID)
+	_, err = promotion.Claim(c, time.Now(), p, s, user.ID, &user)
 	if err != nil {
 		util.GetLoggerEntry(c).Error("claim one time bonus error", err)
 		return

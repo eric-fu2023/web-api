@@ -43,7 +43,7 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
-	voucher, err := Claim(c, now, promotion, session, user.ID)
+	voucher, err := Claim(c, now, promotion, session, user.ID, &user)
 	if err != nil {
 		switch err.Error() {
 		case "double_claim":
@@ -61,7 +61,7 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 	return
 }
 
-func Claim(c context.Context, now time.Time, promotion models.Promotion, session models.PromotionSession, userID int64) (voucher models.Voucher, err error) {
+func Claim(c context.Context, now time.Time, promotion models.Promotion, session models.PromotionSession, userID int64, user *model.User) (voucher models.Voucher, err error) {
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userPromotionSessionClaimKey, userID, session.ID), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -83,7 +83,7 @@ func Claim(c context.Context, now time.Time, promotion models.Promotion, session
 		return
 	}
 	progress = ProgressByType(c, promotion, session, userID, now)
-	reward, meetGapType, vipIncrementDetail, err := RewardByType(c, promotion, session, userID, progress, now)
+	reward, meetGapType, vipIncrementDetail, err := RewardByType(c, promotion, session, userID, progress, now, user)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return

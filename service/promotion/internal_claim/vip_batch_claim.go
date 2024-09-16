@@ -37,7 +37,7 @@ func (p VipBatchClaimRequest) Handle(c *gin.Context) (r serializer.Response, err
 		return
 	}
 	for _, uid := range p.UserIDList {
-		voucher, err := promotion.Claim(c, now, promo, session, uid)
+		voucher, err := promotion.Claim(c, now, promo, session, uid, nil)
 		if err != nil {
 			util.GetLoggerEntry(c).Error(err)
 		}
