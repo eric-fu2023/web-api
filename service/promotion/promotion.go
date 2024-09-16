@@ -141,7 +141,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		newbieData any
 	)
 
-	switch int64(promotion.Type) {
+	switch promotion.Type {
 
 	case models.PromotionTypeCustomTemplate:
 		customData = "anything"
