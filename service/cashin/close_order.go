@@ -8,6 +8,7 @@ import (
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+	"web-api/service/promotion/on_cash_orders"
 	"web-api/service/social_media_pixel"
 	"web-api/util"
 
@@ -40,7 +41,7 @@ import (
 // Account
 // Remark
 
-func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes string, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
+func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes string, txDB *gorm.DB, transactionType int64, gateway on_cash_orders.PaymentGateway, requestMode on_cash_orders.RequestMode) (updatedCashOrder model.CashOrder, err error) {
 	var newCashOrderState model.CashOrder
 	err = txDB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		newCashOrderState, err = model.CashOrder{}.GetPendingOrPeApWithLockWithDB(orderNumber, tx)
@@ -63,7 +64,12 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		return
 	})
 	if err == nil {
-		go HandlePromotion(c.Copy(), newCashOrderState)
+		go func() {
+			pErr := on_cash_orders.Handle(c.Copy(), newCashOrderState, transactionType, on_cash_orders.CashOrderEventTypeClose, gateway, requestMode)
+			if pErr != nil {
+				util.Log().Error("cashin.CloseCashInOrder error on promotion handling", pErr)
+			}
+		}()
 	}
 	return
 }

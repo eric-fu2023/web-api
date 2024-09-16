@@ -4,6 +4,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/cashout"
+	"web-api/service/promotion/on_cash_orders"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
@@ -81,7 +82,7 @@ func (s ManualCloseOrderService) Do(c *gin.Context) (r serializer.Response, err 
 	}
 
 	tx := model.DB.Begin()
-	_, err = cashout.CloseCashOutOrder(c, s.OrderNumber, int64(cashOrder.AppliedCashOutAmount), 0, 0, util.JSON(s), "", false, tx)
+	_, err = cashout.CloseCashOutOrder(c, s.OrderNumber, int64(cashOrder.AppliedCashOutAmount), 0, 0, util.JSON(s), "", false, tx, on_cash_orders.PaymentGatewayFinPay, on_cash_orders.RequestModeManual)
 	if err != nil {
 		tx.Rollback()
 		r = serializer.EnsureErr(c, err, r)

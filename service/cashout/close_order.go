@@ -4,16 +4,18 @@ import (
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
-
-	"gorm.io/plugin/dbresolver"
+	"web-api/service/promotion/on_cash_orders"
+	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/plugin/dbresolver"
 )
 
-func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, remark string, allowPromotion bool, txDB *gorm.DB) (updatedCashOrder model.CashOrder, err error) {
+func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, remark string, allowPromotion bool, txDB *gorm.DB, gateway on_cash_orders.PaymentGateway, requestMode on_cash_orders.RequestMode) (updatedCashOrder model.CashOrder, err error) {
 	err = txDB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("id", orderNumber).
@@ -28,7 +30,7 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 		updatedCashOrder.Notes = models.EncryptedStr(notes)
 		updatedCashOrder.WagerChange += additionalWagerChange
 		updatedCashOrder.Remark += remark
-		updatedCashOrder.Status = 2
+		updatedCashOrder.Status = models.CashOrderStatusSuccess
 		// update cash order
 		err = tx.Where("id", orderNumber).Updates(updatedCashOrder).Error
 		if err != nil {
@@ -44,9 +46,12 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 		return
 	})
 	if err == nil {
-		if allowPromotion {
-			go HandlePromotion(c.Copy(), updatedCashOrder)
-		}
+		go func() {
+			pErr := on_cash_orders.Handle(c, updatedCashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, gateway, requestMode)
+			if pErr != nil {
+				util.Log().Error("cashin.CloseCashInOrder error on promotion handling", pErr)
+			}
+		}()
 	}
 
 	return
