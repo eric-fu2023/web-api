@@ -82,13 +82,15 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType models.T
 	{
 		shouldHandleCashMethodPromotion := false
 		_ = shouldHandleCashMethodPromotion
-		rcopService, err := referree_cash_order_promotion.NewService(model.DB)
+		rcopService, err := referree_cash_order_promotion.NewService(model.DB, nil, nil)
 		if err != nil {
 			util.Log().Error("referree_cash_order_promotion.NewService failed", err)
 		}
+		cashOrder := order.CashOrder
+		_ = cashOrder
 		reward, err := rcopService.AddRewardForClosedDeposit(context.TODO(), referree_cash_order_promotion.UserForm{
 			Id: 0,
-		}, &order.CashOrder)
+		}, nil)
 
 		_ = reward
 
