@@ -793,10 +793,13 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 	notificationTitle := titles[n]
 	notificationMsg := contents[n]
 	if strings.Contains(notificationMsg, "%s") {
-		notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", (float64(percentage)/float64(10000))*(float64(totalTarget)/float64(100))))
+		pString := fmt.Sprintf("%.2f", (float64(percentage)/float64(10000))*(float64(totalTarget)/float64(100)))
+		notificationMsg = fmt.Sprintf(notificationMsg, pString)
 
 		if n != 1 {
-			notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", (float64(percentage)/float64(100)))+"%")
+			pFloat64 := (float64(percentage) / float64(100))
+			notificationMsg = strings.ReplaceAll(notificationMsg, pString, "%s")
+			notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64))
 		}
 	}
 
