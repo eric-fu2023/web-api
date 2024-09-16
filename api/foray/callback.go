@@ -24,7 +24,7 @@ func ForayPaymentCallback(c *gin.Context) {
 }
 
 func ForayTransferCallback(c *gin.Context) {
-	var service cashout_foray.FinpayTransferCallback
+	var service cashout_foray.ForayTransferCallback
 	if err := c.ShouldBind(&service); err == nil {
 		if err := service.Handle(c); err == nil {
 			c.String(200, "success")

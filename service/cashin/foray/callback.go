@@ -17,16 +17,14 @@ type ForayPaymentCallback struct {
 	foray.PaymentOrderCallbackReq
 }
 
-func (s *ForayPaymentCallback) Handle(c *gin.Context) (err error) {
+func (s *ForayPaymentCallback) Handle(c *gin.Context) error {
 	if !s.IsValid() {
-		err = errors.New("invalid response")
-		return
+		return errors.New("invalid response")
 	}
 	defer model.CashOrder{}.MarkCallbackAt(c, s.OrderTranoIn, model.DB)
 
 	if !s.IsSuccess() {
-		err = cashin.MarkOrderFailed(c, s.OrderTranoIn, util.JSON(s), s.OrderNumber)
-		return
+		return cashin.MarkOrderFailed(c, s.OrderTranoIn, util.JSON(s), s.OrderNumber)
 	}
 	// check api response
 	// lock cash order
@@ -35,9 +33,19 @@ func (s *ForayPaymentCallback) Handle(c *gin.Context) (err error) {
 	// update user_sum
 	// create transaction history
 	// }
-	_, err = cashin.CloseCashInOrder(c, s.OrderTranoIn, s.OrderAmount, 0, 0, util.JSON(s), model.DB, models.TransactionTypeCashIn, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeCallback)
+
+	txType := models.TransactionTypeCashIn
+	cashOrder, err := cashin.CloseCashInOrder(c, s.OrderTranoIn, s.OrderAmount, 0, 0, util.JSON(s), model.DB, txType)
 	if err != nil {
-		return
+		return err
 	}
-	return
+	// if err == nil {
+	go func() {
+		pErr := on_cash_orders.Handle(c.Copy(), cashOrder, txType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeCallback)
+		if pErr != nil {
+			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
+		}
+	}()
+
+	return nil
 }
