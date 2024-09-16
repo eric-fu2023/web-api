@@ -3,10 +3,13 @@ package on_cash_orders
 import (
 	"context"
 	"fmt"
+	"web-api/util"
 
 	"web-api/model"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+
+	"web-api/service/promotion/referree_cash_order_promotion"
 )
 
 // Note: Work in progress
@@ -74,6 +77,21 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType models.T
 		if shouldHandleCashMethodPromotion {
 			CashMethodPromotion(ctx, order)
 		}
+	}
+
+	{
+		shouldHandleCashMethodPromotion := false
+		_ = shouldHandleCashMethodPromotion
+		rcopService, err := referree_cash_order_promotion.NewService(model.DB)
+		if err != nil {
+			util.Log().Error("referree_cash_order_promotion.NewService failed", err)
+		}
+		reward, err := rcopService.AddRewardForClosedDeposit(context.TODO(), referree_cash_order_promotion.UserForm{
+			Id: 0,
+		}, &order.CashOrder)
+
+		_ = reward
+
 	}
 	return nil
 }
