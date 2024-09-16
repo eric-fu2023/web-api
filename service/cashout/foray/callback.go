@@ -4,6 +4,7 @@ import (
 	"errors"
 	"web-api/model"
 	"web-api/service/cashout"
+	"web-api/service/promotion/on_cash_orders"
 	"web-api/util"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
@@ -23,7 +24,7 @@ func (s *FinpayTransferCallback) Handle(c *gin.Context) (err error) {
 	defer model.CashOrder{}.MarkCallbackAt(c, s.MerchantOrderNo, model.DB)
 
 	if s.IsSucess() {
-		_, err = cashout.CloseCashOutOrder(c, s.MerchantOrderNo, int64(s.Amount), 0, 0, util.JSON(s), "", true, model.DB)
+		_, err = cashout.CloseCashOutOrder(c, s.MerchantOrderNo, int64(s.Amount), 0, 0, util.JSON(s), "", true, model.DB, on_cash_orders.PaymentGatewayFinPay, on_cash_orders.RequestModeCallback)
 	} else if s.IsFailed() {
 		_, err = cashout.RevertCashOutOrder(c, s.MerchantOrderNo, util.JSON(s), "refund", models.CashOrderStatusFailed, model.DB)
 	}

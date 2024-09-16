@@ -1,6 +1,9 @@
 package consts
 
-import "web-api/util/datastructures"
+import (
+	models "blgit.rfdev.tech/taya/ploutos-object"
+	"web-api/util/datastructures"
+)
 
 const (
 	KycStatusPending   = 1
@@ -50,23 +53,23 @@ var (
 		12: OrderTypeTeamupRebate,
 		13: OrderTypeSpinRewards,
 	}
-	OrderOperationTypeDetailMap = map[int64]string{
-		1000: OrderOperationTypeSystemAdjust,
-		2000: OrderOperationTypeGameAdjust,
-		3000: OrderOperationTypeCashInAdjust,
-		4000: OrderOperationTypeBonus,
-		4001: OrderOperationTypeVipUpgrade,
-		4002: OrderOperationTypeWeeklyBonus,
-		4003: OrderOperationTypeBirthdayBonus,
-		4004: OrderOperationTypeAgentBonus,
-		4005: OrderOperationTypePromoteBonus,
-		4006: OrderOperationTypeDepositBonus,
-		4007: OrderOperationTypeEventBonus,
-		4008: OrderOperationTypeReset,
-		4009: OrderOperationTypeReferralBonus,
-		4010: OrderOperationTypeCashOutBonus,
-		5000: OrderOperationTypeMakeUpOrder,
-		6000: OrderOperationTypeWithdrawalReversal,
+	OrderOperationTypeDetailMap = map[models.OperationType]string{
+		models.CashOrderOperationTypeSystemAdjust:       OrderOperationTypeSystemAdjust,
+		models.CashOrderOperationTypeGameAdjust:         OrderOperationTypeGameAdjust,
+		models.CashOrderOperationTypeCashInAdjust:       OrderOperationTypeCashInAdjust,
+		models.CashOrderOperationTypeBonus:              OrderOperationTypeBonus,
+		models.CashOrderOperationTypeVipUpgrade:         OrderOperationTypeVipUpgrade,
+		models.CashOrderOperationTypeWeeklyBonus:        OrderOperationTypeWeeklyBonus,
+		models.CashOrderOperationTypeBirthdayBonus:      OrderOperationTypeBirthdayBonus,
+		models.CashOrderOperationTypeAgentBonus:         OrderOperationTypeAgentBonus,
+		models.CashOrderOperationTypePromoteBonus:       OrderOperationTypePromoteBonus,
+		models.CashOrderOperationTypeDepositBonus:       OrderOperationTypeDepositBonus,
+		models.CashOrderOperationTypeEventBonus:         OrderOperationTypeEventBonus,
+		models.CashOrderOperationTypeReset:              OrderOperationTypeReset,
+		models.CashOrderOperationTypeReferralBonus:      OrderOperationTypeReferralBonus,
+		models.CashOrderOperationTypeCashOutBonus:       OrderOperationTypeCashOutBonus,
+		models.CashOrderOperationTypeMakeUpOrder:        OrderOperationTypeMakeUpOrder,
+		models.CashOrderOperationTypeWithdrawalReversal: OrderOperationTypeWithdrawalReversal,
 	}
 
 	// OrderOperationTypeEnum tapes OrderOperationTypeDetailMap

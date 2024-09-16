@@ -74,7 +74,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	}
 	// create CashInOrder
 	var userSum model.UserSum
-	userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
+	userSum, err = model.GetByUserIDWithLockWithDB(user.ID, model.DB)
 	if err != nil {
 		r = serializer.EnsureErr(c, err, r)
 		return

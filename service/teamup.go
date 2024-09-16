@@ -458,7 +458,7 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 			amount := teamup.TotalTeamUpTarget
-			sum, err := model.UserSum{}.UpdateUserSumWithDB(tx, teamup.UserId, amount, amount, 0, ploutos.TransactionTypeTeamupPromotion, "")
+			sum, err := model.UpdateDbUserSumAndCreateTransaction(tx, teamup.UserId, amount, amount, 0, ploutos.TransactionTypeTeamupPromotion, "")
 			if err != nil {
 				return err
 			}

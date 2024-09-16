@@ -4,6 +4,7 @@ import (
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/cashin"
+	"web-api/service/promotion/on_cash_orders"
 	"web-api/util"
 
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,7 @@ func (s ManualCloseService) Do(c *gin.Context) (r serializer.Response, err error
 	if s.TransactionType == 0 {
 		s.TransactionType = 10000
 	}
-	if _, err = cashin.CloseCashInOrder(c, s.OrderNumber, s.ActualAmount, s.BonusAmount, s.AdditionalWagerChange, util.JSON(s), model.DB, s.TransactionType); err != nil {
+	if _, err = cashin.CloseCashInOrder(c, s.OrderNumber, s.ActualAmount, s.BonusAmount, s.AdditionalWagerChange, util.JSON(s), model.DB, s.TransactionType, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeManual); err != nil {
 		r = serializer.Err(c, s, serializer.CodeGeneralError, "", err)
 		return
 	}
