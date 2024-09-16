@@ -22,9 +22,18 @@ func (s ManualCloseService) Do(c *gin.Context) (r serializer.Response, err error
 	if s.TransactionType == 0 {
 		s.TransactionType = 10000
 	}
-	if _, err = cashin.CloseCashInOrder(c, s.OrderNumber, s.ActualAmount, s.BonusAmount, s.AdditionalWagerChange, util.JSON(s), model.DB, s.TransactionType, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeManual); err != nil {
-		r = serializer.Err(c, s, serializer.CodeGeneralError, "", err)
+	cashOrder, _err := cashin.CloseCashInOrder(c, s.OrderNumber, s.ActualAmount, s.BonusAmount, s.AdditionalWagerChange, util.JSON(s), model.DB, s.TransactionType)
+	if _err != nil {
+		r = serializer.Err(c, s, serializer.CodeGeneralError, "", _err)
 		return
 	}
+	// if err == nil {
+	go func() {
+		pErr := on_cash_orders.Handle(c.Copy(), cashOrder, s.TransactionType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeManual)
+		if pErr != nil {
+			util.GetLoggerEntry(c).Error("cashin.CloseCashInOrder error on promotion handling", pErr)
+		}
+	}()
+
 	return
 }

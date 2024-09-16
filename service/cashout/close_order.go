@@ -49,7 +49,7 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 		go func() {
 			pErr := on_cash_orders.Handle(c, updatedCashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, gateway, requestMode)
 			if pErr != nil {
-				util.Log().Error("cashin.CloseCashInOrder error on promotion handling", pErr)
+				util.GetLoggerEntry(c).Error("cashin.CloseCashInOrder error on promotion handling", pErr)
 			}
 		}()
 	}
