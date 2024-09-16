@@ -271,7 +271,7 @@ func ExtraByType(c context.Context, p models.Promotion, s models.PromotionSessio
 }
 
 func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange int64, notes, name string) error {
-	txType := promotionTxTypeMapping[promoType]
+	txType := promotionTypeToTransactionTypeMapping[promoType]
 	sum, err := model.UpdateDbUserSumAndCreateTransaction(tx,
 		userId,
 		rewardAmount,
@@ -285,7 +285,7 @@ func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange i
 	if notes == "" {
 		notes = "dummy"
 	}
-	orderType := promotionOrderTypeMapping[promoType]
+	orderType := promotionTypeToCashOrderType[promoType]
 	dummyOrder := models.CashOrder{
 		ID:                    uuid.NewString(),
 		UserId:                userId,

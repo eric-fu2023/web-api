@@ -2,23 +2,7 @@ package promotion
 
 import models "blgit.rfdev.tech/taya/ploutos-object"
 
-const (
-	MatchTypeEnded        = 0
-	MatchTypePostponed    = 1
-	MatchTypeInterrupted  = 2
-	MatchTypeCancelled    = 3
-	MatchTypeNotStarted   = 4
-	MatchTypeLive         = 5
-	MatchTypeDelayed      = 6
-	MatchTypeAbandoned    = 7
-	MatchTypeSuspended    = 8
-	MatchTypeCoverageLost = 9
-
-	OddsFormatEU = 1
-	OddsFormatHK = 2
-)
-
-var promotionOrderTypeMapping = map[int64]int64{
+var promotionTypeToCashOrderType = map[int64]int64{
 	models.PromotionTypeFirstDepB:      models.CashOrderTypeDepB,
 	models.PromotionTypeReDepB:         models.CashOrderTypeDepB,
 	models.PromotionTypeFirstDepIns:    models.CashOrderTypeBetIns,
@@ -34,7 +18,7 @@ var promotionOrderTypeMapping = map[int64]int64{
 	models.PromotionTypeTeamup:         models.CashOrderTypeTeamupPromotion,
 }
 
-var promotionTxTypeMapping = map[int64]int64{
+var promotionTypeToTransactionTypeMapping = map[int64]int64{
 	models.PromotionTypeFirstDepB:      models.TransactionTypeDepB,
 	models.PromotionTypeReDepB:         models.TransactionTypeDepB,
 	models.PromotionTypeFirstDepIns:    models.TransactionTypeBetIns,
@@ -48,6 +32,22 @@ var promotionTxTypeMapping = map[int64]int64{
 	models.PromotionTypeVipReferral:    models.TransactionTypeVipReferral,
 	models.PromotionTypeCustomTemplate: models.TransactionTypeCustomPromotion,
 }
+
+const (
+	MatchTypeEnded        = 0
+	MatchTypePostponed    = 1
+	MatchTypeInterrupted  = 2
+	MatchTypeCancelled    = 3
+	MatchTypeNotStarted   = 4
+	MatchTypeLive         = 5
+	MatchTypeDelayed      = 6
+	MatchTypeAbandoned    = 7
+	MatchTypeSuspended    = 8
+	MatchTypeCoverageLost = 9
+
+	OddsFormatEU = 1
+	OddsFormatHK = 2
+)
 
 var imMatchTypeMapping = map[int]int{
 	1: MatchTypeNotStarted,
