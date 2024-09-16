@@ -2,9 +2,12 @@ package cashin_finpay
 
 import (
 	"errors"
+
 	"web-api/model"
 	"web-api/service/cashin"
 	"web-api/util"
+
+	models "blgit.rfdev.tech/taya/ploutos-object"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
 	"github.com/gin-gonic/gin"
@@ -32,7 +35,7 @@ func (s *FinpayPaymentCallback) Handle(c *gin.Context) (err error) {
 	// update user_sum
 	// create transaction history
 	// }
-	_, err = cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, 10000)
+	_, err = cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, models.TransactionTypeCashIn)
 	if err != nil {
 		return
 	}

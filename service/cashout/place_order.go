@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
 	"web-api/cache"
 	"web-api/conf"
 	"web-api/model"
@@ -13,13 +14,13 @@ import (
 	"web-api/util/i18n"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
-	"gorm.io/plugin/dbresolver"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/shopspring/decimal"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 const userWithdrawLockKey = "user_withdraw_lock:%d"
@@ -83,7 +84,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	rule := vip.VipRule
 	defer func() {
 		go func() {
-			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, model.DB)
+			userSum, _ := model.GetByUserIDWithLockWithDB(user.ID, model.DB)
 			common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "withdraw", float64(cashOrder.AppliedCashOutAmount)/100)
 		}()
 	}()
@@ -93,7 +94,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 	// check withdrawable
 	err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		var userSum model.UserSum
-		userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, tx)
+		userSum, err = model.GetByUserIDWithLockWithDB(user.ID, tx)
 		if err != nil {
 			return
 		}
@@ -134,7 +135,7 @@ func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err err
 		// make balance changes
 		// add tx record
 		var newUsersum model.UserSum
-		newUsersum, err = model.UserSum{}.UpdateUserSumWithDB(
+		newUsersum, err = model.UpdateDbUserSumAndCreateTransaction(
 			tx,
 			user.ID,
 			-amount,

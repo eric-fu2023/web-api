@@ -37,7 +37,7 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 
 		common.SendCashNotificationWithoutCurrencyId(updatedCashOrder.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_WITHDRAWAL_SUCCESS_TITLE, common.NOTIFICATION_WITHDRAWAL_SUCCESS, updatedCashOrder.AppliedCashOutAmount)
 		go func() {
-			userSum, _ := model.UserSum{}.GetByUserIDWithLockWithDB(updatedCashOrder.UserId, model.DB)
+			userSum, _ := model.GetByUserIDWithLockWithDB(updatedCashOrder.UserId, model.DB)
 			common.SendUserSumSocketMsg(updatedCashOrder.UserId, userSum.UserSum, "withdraw_success", float64(updatedCashOrder.AppliedCashOutAmount)/100)
 		}()
 

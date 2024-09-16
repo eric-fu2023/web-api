@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+
 	"web-api/model"
 	"web-api/service/common"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
@@ -103,7 +105,7 @@ func HandleCashMethodPromotion(c context.Context, order model.CashOrder) {
 			return err
 		}
 
-		sum, err := model.UserSum{}.UpdateUserSumWithDB(tx, order.UserId, amount, amount, 0, models.TransactionTypeCashMethodPromotion, "")
+		sum, err := model.UpdateDbUserSumAndCreateTransaction(tx, order.UserId, amount, amount, 0, models.TransactionTypeCashMethodPromotion, "")
 		if err != nil {
 			return err
 		}

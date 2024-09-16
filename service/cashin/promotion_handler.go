@@ -11,11 +11,11 @@ import (
 )
 
 func HandlePromotion(c context.Context, order model.CashOrder) {
-	HandleOneTimeB(c, order)
+	HandleOneTimeBonus(c, order)
 	service.HandleCashMethodPromotion(c, order)
 }
 
-func HandleOneTimeB(c context.Context, order model.CashOrder) {
+func HandleOneTimeBonus(c context.Context, order model.CashOrder) {
 	var user model.User
 	if err := model.DB.Where(`id`, order.UserId).First(&user).Error; err != nil {
 		util.GetLoggerEntry(c).Error("get user error", err)

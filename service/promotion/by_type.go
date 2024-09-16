@@ -272,7 +272,7 @@ func ExtraByType(c context.Context, p models.Promotion, s models.PromotionSessio
 
 func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange int64, notes, name string) error {
 	txType := promotionTxTypeMapping[promoType]
-	sum, err := model.UserSum{}.UpdateUserSumWithDB(tx,
+	sum, err := model.UpdateDbUserSumAndCreateTransaction(tx,
 		userId,
 		rewardAmount,
 		wagerChange,
