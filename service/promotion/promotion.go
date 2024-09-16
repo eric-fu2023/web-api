@@ -150,11 +150,12 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		newbieData = serializer.BuildDummyNewbiePromotion()
 
 	default: // default promotion type..
-		session, err := model.PromotionSessionGetActive(gCtx, p.ID, now)
+		_session, err := model.PromotionSessionGetActive(gCtx, p.ID, now)
 		if err != nil {
 			r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", err)
 			return r, err
 		}
+		session = _session
 		if loggedIn {
 			progress = ProgressByType(gCtx, promotion, session, user.ID, now)
 			claimStatus = ClaimStatusByType(gCtx, promotion, session, user.ID, now)
