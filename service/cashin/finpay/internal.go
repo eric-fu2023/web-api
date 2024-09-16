@@ -31,7 +31,7 @@ func (s ManualCloseService) Do(c *gin.Context) (r serializer.Response, err error
 	go func() {
 		pErr := on_cash_orders.Handle(c.Copy(), newCashOrderState, s.TransactionType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinPay, on_cash_orders.RequestModeManual)
 		if pErr != nil {
-			util.GetLoggerEntry(c).Error("cashin.CloseCashInOrder error on promotion handling", pErr)
+			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
 		}
 	}()
 

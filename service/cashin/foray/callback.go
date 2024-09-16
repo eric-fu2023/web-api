@@ -43,7 +43,7 @@ func (s *ForayPaymentCallback) Handle(c *gin.Context) error {
 	go func() {
 		pErr := on_cash_orders.Handle(c.Copy(), cashOrder, txType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeCallback)
 		if pErr != nil {
-			util.GetLoggerEntry(c).Error("cashin.CloseCashInOrder error on promotion handling", pErr)
+			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
 		}
 	}()
 

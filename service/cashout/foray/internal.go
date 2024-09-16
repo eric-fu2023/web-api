@@ -82,7 +82,7 @@ func (s ManualCloseOrderService) Do(c *gin.Context) (r serializer.Response, err 
 	}
 
 	tx := model.DB.Begin()
-	_, err = cashout.CloseCashOutOrder(c, s.OrderNumber, int64(cashOrder.AppliedCashOutAmount), 0, 0, util.JSON(s), "", false, tx, on_cash_orders.PaymentGatewayFinPay, on_cash_orders.RequestModeManual)
+	_, err = cashout.CloseCashOutOrder(c, s.OrderNumber, cashOrder.AppliedCashOutAmount, 0, 0, util.JSON(s), "", false, tx)
 	if err != nil {
 		tx.Rollback()
 		r = serializer.EnsureErr(c, err, r)
@@ -103,6 +103,13 @@ func (s ManualCloseOrderService) Do(c *gin.Context) (r serializer.Response, err 
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
+
+	go func() {
+		pErr := on_cash_orders.Handle(c, cashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeManual)
+		if pErr != nil {
+			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
+		}
+	}()
 
 	return
 }

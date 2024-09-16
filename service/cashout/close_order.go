@@ -1,13 +1,10 @@
 package cashout
 
 import (
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
-	"web-api/service/promotion/on_cash_orders"
-	"web-api/util"
-
-	models "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -15,7 +12,7 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
-func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, remark string, allowPromotion bool, txDB *gorm.DB, gateway on_cash_orders.PaymentGateway, requestMode on_cash_orders.RequestIngressMode) (updatedCashOrder model.CashOrder, err error) {
+func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, remark string, allowPromotion bool, txDB *gorm.DB) (updatedCashOrder model.CashOrder, err error) {
 	err = txDB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("id", orderNumber).
@@ -45,14 +42,6 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 
 		return
 	})
-	if err == nil {
-		go func() {
-			pErr := on_cash_orders.Handle(c, updatedCashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, gateway, requestMode)
-			if pErr != nil {
-				util.GetLoggerEntry(c).Error("cashin.CloseCashInOrder error on promotion handling", pErr)
-			}
-		}()
-	}
 
 	return
 }
