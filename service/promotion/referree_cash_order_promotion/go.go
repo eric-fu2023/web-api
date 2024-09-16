@@ -28,11 +28,15 @@ func NewService(db *gorm.DB) (*Service, error) {
 // 1. A refers B
 // 2. B deposits (1st, 2nd....)
 // 3. Server add reward for A
-func (s *Service) AddRewardForClosedDeposit(ctx context.Context, referree UserForm, referreeCashOrder int64) error {
+func (s *Service) AddRewardForClosedDeposit(ctx context.Context, referree UserForm, referreeCashOrder *RefereeCashOrder) (any, error) {
+	panic("implement me")
+	if referreeCashOrder == nil {
+		return nil, errors.New("referree cash order is nil")
+	}
 	var referreeDbInfo po.User
 	db := s.db.Where(`username`, referree.Id)
 	if err := db.Scopes(po.ByActiveNonStreamerUser).First(&referreeDbInfo).Error; err != nil {
-		return err
+		return nil, err
 	}
 
 	var referrer UserReferrer
@@ -43,36 +47,32 @@ func (s *Service) AddRewardForClosedDeposit(ctx context.Context, referree UserFo
 		Select("users.id as user_id, user_referrals.referral_id as referral_id").Find(&referrer).Error
 
 	if rErr != nil {
-		return rErr
+		return nil, rErr
 	}
 
-	return nil
+	return nil, nil
+
 }
 
-// AddRewardForClosedDeposit
-// adds redeemable reward for the referrer
-//
-// Example
-// 1. A refers B
-// 2. B deposits (1st, 2nd....)
-// 3. Server add reward for A
-func (s *Service) GetRewardsFor(ctx context.Context, referree UserForm, referreeCashOrder int64) error {
+// GetRewardsFor
+func (s *Service) GetRewardsFor(ctx context.Context, referrerForm UserForm) error {
+	panic("implement me")
 	var referreeDbInfo po.User
-	db := s.db.Where(`username`, referree.Id)
+	db := s.db.Where(`username`, referrerForm.Id)
 	if err := db.Scopes(po.ByActiveNonStreamerUser).First(&referreeDbInfo).Error; err != nil {
 		return err
 	}
 
-	var referrer UserReferrer
+	//var referrer UserReferrer
 
-	rErr := db.Debug().Table("user_referrals").
-		Joins("LEFT JOIN users ON users.id = user_referrals.referral_id").
-		Where("user_referrals.referral_id = ?", referree.Id).
-		Select("users.id as user_id, user_referrals.referral_id as referral_id").Find(&referrer).Error
-
-	if rErr != nil {
-		return rErr
-	}
+	//rErr := db.Debug().Table("user_referrals").
+	//	Joins("LEFT JOIN users ON users.id = user_referrals.referral_id").
+	//	Where("user_referrals.referral_id = ?", referrerForm.Id).
+	//	Select("users.id as user_id, user_referrals.referral_id as referral_id").Find(&referrer).Error
+	//
+	//if rErr != nil {
+	//	return rErr
+	//}
 
 	return nil
 }
@@ -85,3 +85,5 @@ type UserReferrer struct {
 	UserId     int64 `gorm:"column:user_id;"`
 	ReferrerId int64 `gorm:"column:referral_id;"`
 }
+
+type RefereeCashOrder = po.CashOrder
