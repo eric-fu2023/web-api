@@ -15,6 +15,8 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
+	models "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -60,7 +62,7 @@ func (service *UserLoginPasswordService) Login(c *gin.Context) serializer.Respon
 	} else {
 		return serializer.ParamErr(c, service, i18n.T("Both_cannot_be_empty"), nil)
 	}
-	if err := q.Scopes(model.ByActiveNonStreamerUser).First(&user).Error; err != nil {
+	if err := q.Scopes(models.ByActiveNonStreamerUser).First(&user).Error; err != nil {
 		return serializer.DBErr(c, service, errStr, nil)
 	}
 
