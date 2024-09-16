@@ -1,6 +1,7 @@
 package service
 
 import (
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util/i18n"
@@ -68,10 +69,12 @@ func (service *StreamerService) Get(c *gin.Context) (r serializer.Response, err 
 		data.HasJackpot = true
 	}
 
-	hasGame, _ := model.GetStreamGameStreamer(streamer.ID, ploutos.GameDice)
-
+	hasGame,  _ := model.GetStreamGameStreamer(streamer.ID, ploutos.GameDice, consts.InHouseGame)
 	data.HasDice = hasGame
 
+	hasSubGame,  _ := model.GetStreamGameStreamer(streamer.ID, 0, consts.ExternalGame)
+	data.HasGame = hasSubGame
+	
 	if len(streamer.LiveStreams) == 0 && service.RecommendCount > 0 {
 		if e := model.DB.Model(model.Stream{}).Select(`recommend_streamer_id`).
 			Where(`streamer_id`, streamer.ID).Where(`status`, 4).

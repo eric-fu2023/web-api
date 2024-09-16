@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
 	"web-api/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 func GameList(c *gin.Context) {
@@ -23,6 +24,19 @@ func UserRecentGameList(c *gin.Context) {
 	if err := c.ShouldBind(&service); err == nil {
 		res, _ := service.List(c)
 		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, service, err))
+	}
+}
+
+func GameByStreamer(c *gin.Context) {
+	var service service.GameByStreamerService
+	if err := c.ShouldBind(&service); err == nil {
+		res, e := service.Get(c)
+		c.JSON(200, res)
+		if e != nil {
+			c.Abort()
+		}
 	} else {
 		c.JSON(400, ErrorResponse(c, service, err))
 	}

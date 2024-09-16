@@ -6,6 +6,11 @@ import (
 )
 
 const (
+	InHouseGame = 1 // this is internal self-dev games such as dice
+	ExternalGame = 2 // this is 3rd party sub games
+)
+
+const (
 	KycStatusPending   = 1
 	KycStatusCompleted = 2
 	KycStatusRejected  = 3

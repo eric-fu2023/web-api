@@ -217,6 +217,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("/share", api.ShareCreate)
 		v1.GET("/share", api.ShareGet)
 		v1.GET("/games", middleware.Cache(1*time.Minute, false), api.GameList)
+		v1.GET("/streamer_external_game", api.GameByStreamer)
 		v1.GET("/room_chat/history", api.RoomChatHistory)
 		v1.GET("/stream_game", stream_game_api.StreamGame)
 		v1.GET("/stream_games", middleware.Cache(1*time.Minute, false), stream_game_api.StreamGameList)
