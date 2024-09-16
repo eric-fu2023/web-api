@@ -1,10 +1,11 @@
 package model
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"database/sql"
 	"gorm.io/gorm"
 	"time"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type ReferralAllianceSummary struct {

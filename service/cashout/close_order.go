@@ -15,7 +15,7 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
-func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, remark string, allowPromotion bool, txDB *gorm.DB, gateway on_cash_orders.PaymentGateway, requestMode on_cash_orders.RequestMode) (updatedCashOrder model.CashOrder, err error) {
+func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes, remark string, allowPromotion bool, txDB *gorm.DB, gateway on_cash_orders.PaymentGateway, requestMode on_cash_orders.RequestIngressMode) (updatedCashOrder model.CashOrder, err error) {
 	err = txDB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("id", orderNumber).

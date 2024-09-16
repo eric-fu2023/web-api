@@ -41,7 +41,7 @@ import (
 // Account
 // Remark
 
-func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes string, txDB *gorm.DB, transactionType int64, gateway on_cash_orders.PaymentGateway, requestMode on_cash_orders.RequestMode) (updatedCashOrder model.CashOrder, err error) {
+func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes string, txDB *gorm.DB, transactionType int64, gateway on_cash_orders.PaymentGateway, requestMode on_cash_orders.RequestIngressMode) (updatedCashOrder model.CashOrder, err error) {
 	var newCashOrderState model.CashOrder
 	err = txDB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		newCashOrderState, err = model.CashOrder{}.GetPendingOrPeApWithLockWithDB(orderNumber, tx)
