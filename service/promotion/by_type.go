@@ -32,8 +32,8 @@ const (
 func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time, user *model.User) (reward, meetGapType int64, vipIncrementDetail models.VipIncrementDetail, err error) {
 	switch p.Type {
 	case models.PromotionTypeVipBirthdayB:
-		err := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
-		if errors.Is(err, persist.ErrCacheMiss) {
+		rErr := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
+		if errors.Is(rErr, persist.ErrCacheMiss) {
 			if user == nil {
 				err = fmt.Errorf("getting rewards for PromotionTypeVipBirthdayB userid: %d, promotion %#v ", userID, p)
 			} else {
@@ -41,6 +41,7 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 				reward = getBirtdayReward(c, date, userID)
 			}
 		}
+		err = rErr
 	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
 		r := getSameDayVipRewardRecord(model.DB.Debug(), userID, p.ID)
 		reward = r.Amount
