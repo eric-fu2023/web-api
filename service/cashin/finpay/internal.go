@@ -25,9 +25,9 @@ func (s ManualCloseService) Do(c *gin.Context) (r serializer.Response, err error
 	newCashOrderState, cErr := cashin.CloseCashInOrder(c, s.OrderNumber, s.ActualAmount, s.BonusAmount, s.AdditionalWagerChange, util.JSON(s), model.DB, s.TransactionType)
 	if cErr != nil {
 		r = serializer.Err(c, s, serializer.CodeGeneralError, "", cErr)
+		err = cErr
 		return
 	}
-	// if err == nil {
 	go func() {
 		pErr := on_cash_orders.Handle(c.Copy(), newCashOrderState, s.TransactionType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinPay, on_cash_orders.RequestModeManual)
 		if pErr != nil {
