@@ -82,7 +82,7 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 		// TotalTeamupDeposit: team_up.TotalTeamupDeposit / 100,
 		TotalTeamUpTarget: float64(team_up.TotalTeamUpTarget) / 100,
 		Progress:          float64(team_up.TotalFakeProgress) / 100,
-		Remaining:         float64(team_up.TotalTeamUpTarget) / 100 * (1 - float64(team_up.TotalFakeProgress)/100),
+		Remaining:         float64(team_up.TotalTeamUpTarget) / 100 * (1 - float64(team_up.TotalFakeProgress)/10000),
 		Start:             yesterdayStart.Unix(),
 		End:               yesterdayEnd.Unix(),
 		Type:              teamup_type,
