@@ -17,7 +17,6 @@ import (
 	"web-api/websocket"
 
 	"github.com/gin-contrib/pprof"
-	"github.com/robfig/cron/v3"
 )
 
 var runTask bool
@@ -59,17 +58,6 @@ func main() {
 			}
 			websocketTask.Connect(10)
 		}()
-		c := cron.New(cron.WithSeconds())
-		c.AddFunc("0 */5 * * * *", func() {
-			task.RefreshPaymentOrder()
-		})
-		// c.AddFunc("0 */1 * * * *", func() {
-		// 	task.UpdateTeamupToFailIfIncomplete()
-		// })
-		//c.AddFunc("10 */1 * * * *", func() {
-		//	task.CalculateSortFactor()
-		//})
-		c.Start()
 		select {}
 	} else {
 		//task.CreateUserWallet([]int64{8, 9}, 1) // to create wallets when a new game vendor is added
