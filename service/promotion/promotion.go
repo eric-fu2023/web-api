@@ -26,6 +26,13 @@ func (p PromotionList) ListCategories(c *gin.Context) (r serializer.Response, er
 	return
 }
 
+var PromotionDevice = map[string]models.PromotionDeviceType{
+	"pc":      models.PromotionDevicePC,
+	"h5":      models.PromotionDeviceH5orM,
+	"m":       models.PromotionDeviceH5orM,
+	"ios":     models.PromotionDeviceIOS,
+	"android": models.PromotionDeviceAndroid}
+
 func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error) {
 	now := time.Now()
 	brand := c.MustGet(`_brand`).(int)
@@ -45,12 +52,11 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 	parentIdToPromotionMap := make(map[int64][]serializer.PromotionCover)
 	promotionCoverList := []serializer.PromotionCover{}
 	for _, promotion := range list {
-
 		isAllowDevice := false
 		// Skip if not allow device.platform
 		if len(promotion.DisplayDevices) != 0 {
-			for _, displayDevice := range promotion.DisplayDevices {
-				if models.PromotionDevice[deviceInfo.Platform] == int(displayDevice) {
+			for _, allowedDevices := range promotion.DisplayDevices {
+				if PromotionDevice[deviceInfo.Platform] == models.PromotionDeviceType(allowedDevices) {
 					isAllowDevice = true
 				}
 			}
