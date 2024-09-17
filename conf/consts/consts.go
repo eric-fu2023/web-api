@@ -786,5 +786,26 @@ const (
 	SpinOthers  = "spin_others"
 )
 
-// 砍单游戏名称 / 图标
-const ()
+// 游戏砍单有关
+// 游戏砍单名称 / 图标
+var (
+	GameProviderNameMap = map[string]string{
+		"ba01inr":          "BatAce Original",
+		"SPRIBE_SLOT":      "Spribe",
+		"MICROGAMING_SLOT": "Microgaming",
+		"HS_SLOT":          "Hacksaw Gaming",
+		"JFI0000":          "JFI",
+		"PLAYNGO_SLOT":     "Play'n GO",
+		"evolution":        "Evolution",
+	}
+
+	GameProviderNameToImgMap = map[string]string{
+		"ba01inr":          "https://cdn.tayalive.com/temp/aha/stream/1.jpg",
+		"SPRIBE_SLOT":      "https://cdn.tayalive.com/temp/aha/stream/2.jpg",
+		"MICROGAMING_SLOT": "https://cdn.tayalive.com/temp/aha/stream/3.jpg",
+		"HS_SLOT":          "https://cdn.tayalive.com/temp/aha/stream/4.jpg",
+		"JFI0000":          "https://cdn.tayalive.com/temp/aha/stream/5.jpg",
+		"PLAYNGO_SLOT":     "https://cdn.tayalive.com/temp/aha/stream/6.jpg",
+		"evolution":        "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+	}
+)

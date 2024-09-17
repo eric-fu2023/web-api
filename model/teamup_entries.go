@@ -276,7 +276,7 @@ func FindOngoingTeamupEntriesByUserId(userId int64) (res ploutos.TeamupEntry, er
 			Joins("JOIN teamups ON teamups.id = teamup_entries.teamup_id").
 			Where("teamup_entries.user_id = ?", userId).
 			Where("teamups.status = 0").
-			Where("teamups.bet_report_game_type in ?", []int{1, 4, 5}).
+			Where("teamups.bet_report_game_type in ?", ploutos.TeamUpSportGameTypes).
 			Order("teamup_entries.created_at ASC").
 			First(&res) // Fetch the first matching record
 

@@ -445,7 +445,11 @@ func NewRouter() *gin.Engine {
 			teamup.GET("/contribute/list", teamup_api.ContributedList)
 			teamup.POST("/slash", middleware.AuthRequired(true, false), teamup_api.SlashBet)
 
-			teamup.POST("/testdeposit", teamup_api.TestDeposit)
+			// DEPRECATED
+			// teamup.POST("/testdeposit", teamup_api.TestDeposit)
+
+			gameTeamup := teamup.Group("/game")
+			gameTeamup.GET("/detail", teamup_api.GetTeamUpItem)
 		}
 
 		v1.GET("/user/heartbeat", middleware.AuthRequired(false, false), api.Heartbeat)

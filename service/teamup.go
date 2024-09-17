@@ -552,6 +552,20 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 	copier.Copy(&res, teamupRes)
 
 	for i, t := range teamupRes {
+
+		// 游戏解析
+		// 如果是游戏
+		// TAKE NOTE PANDA
+		for j := range consts.TeamUpGameGameTypes {
+			if consts.TeamUpGameGameTypes[j] == teamupRes[i].BetReportGameType {
+				res[i].LeagueName = consts.GameProviderNameMap[t.Provider]
+				res[i].LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
+
+				continue
+			}
+		}
+
+		// 体育解析
 		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
 		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
 
