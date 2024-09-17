@@ -9,7 +9,7 @@ import (
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 
-	"web-api/service/promotion/referree_cash_order_promotion"
+	"web-api/service/promotion/tethered_rebate_promotion"
 )
 
 // Note: Work in progress
@@ -80,15 +80,15 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType models.T
 	}
 
 	{
-		shouldHandleCashMethodPromotion := false
-		_ = shouldHandleCashMethodPromotion
-		rcopService, err := referree_cash_order_promotion.NewService(model.DB, nil, nil)
+		shouldHandleTetheredRebatePromotion := false
+		_ = shouldHandleTetheredRebatePromotion
+		trpService, err := tethered_rebate_promotion.NewService(model.DB, nil, nil)
 		if err != nil {
-			util.Log().Error("referree_cash_order_promotion.NewService failed", err)
+			util.Log().Error("tethered_rebate_promotion.NewService failed", err)
 		}
 		cashOrder := order.CashOrder
 		_ = cashOrder
-		reward, err := rcopService.AddRewardForClosedDeposit(context.TODO(), referree_cash_order_promotion.UserForm{
+		reward, err := trpService.AddRewardForClosedDeposit(context.TODO(), tethered_rebate_promotion.UserForm{
 			Id: 0,
 		}, nil)
 

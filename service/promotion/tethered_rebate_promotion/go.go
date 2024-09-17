@@ -1,13 +1,17 @@
-package referree_cash_order_promotion
+// Package tethered_rebate_promotion
+// promotion: referrer to get rebate as reward on referree's first 3 deposits
+package tethered_rebate_promotion
 
 import (
 	"context"
 	"errors"
-	"gorm.io/gorm"
 	"time"
+
 	"web-api/util"
 
 	po "blgit.rfdev.tech/taya/ploutos-object"
+
+	"gorm.io/gorm"
 )
 
 type ReadLimitFunc func() int64
@@ -111,28 +115,34 @@ func (s *Service) AddRewardForClosedDeposit(ctx context.Context, referee UserFor
 	operationType := selectedCashOrder.OperationType
 	selectedCashOrderId := selectedCashOrder.ID
 
-	_ = TetherPromotion{
-		selectedCashOrderId:    selectedCashOrderId,
-		referrerId:             referrerId,
-		effectiveCashInAmount:  effectiveCashInAmount,
-		effectiveCashOutAmount: effectiveCashOutAmount,
-		orderType:              orderType,
-		operationType:          operationType,
+	tetheredPromotion := TetheredRebatePromotion{
+		SelectedCashOrderId:    selectedCashOrderId,
+		ReferrerId:             referrerId,
+		EffectiveCashInAmount:  effectiveCashInAmount,
+		EffectiveCashOutAmount: effectiveCashOutAmount,
+		OrderType:              orderType,
+		OperationType:          operationType,
 	}
-	return nil, nil
 
+	db.Create(&tetheredPromotion)
+
+	return nil, nil
 }
 
-// TetherPromotion
-type TetherPromotion struct {
-	referrerId             int64
-	selectedCashOrderId    string
-	effectiveCashInAmount  int64
-	effectiveCashOutAmount int64
-	orderType              po.CashOrderOrderType
-	operationType          po.OperationType
-	rank                   int64
-	remarks                string
+// TetheredRebatePromotion
+type TetheredRebatePromotion struct {
+	ReferrerId             int64
+	SelectedCashOrderId    string
+	EffectiveCashInAmount  int64
+	EffectiveCashOutAmount int64
+	OrderType              po.CashOrderOrderType
+	OperationType          po.OperationType
+	Rank                   int64
+	Remarks                string
+}
+
+func (t *TetheredRebatePromotion) TableName() string {
+	return "tethered_rebate_promotions"
 }
 
 // GetRewardsFor
