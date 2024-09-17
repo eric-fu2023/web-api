@@ -78,6 +78,7 @@ func (e EVO) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode strin
 	client := util.EvoFactory.NewClient()
 
 	userBalance, err := client.GetGameBalance(user.IdAsString())
+	util.Log().Info("EVO GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, check balance: %.4f, err: %v", util.IntegrationIdEvo, user.ID, userBalance, err)
 
 	if err != nil {
 		log.Printf("Error getting evo user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())

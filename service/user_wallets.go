@@ -141,7 +141,7 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 				extra := model.Extra{Locale: locale, Ip: ip}
 				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(tx, user, g.ExternalCurrency, g.GameVendor.GameCode, g.GameVendorId, extra)
 				if err != nil {
-					util.Log().Error("GAME INTEGRATION RECALL ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error())
+					util.Log().Error("`GAME INTEGRATION RECALL ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error())
 					return
 				}
 				var maxRetries = 3
