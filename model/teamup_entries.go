@@ -204,10 +204,10 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 			teamup.TotalFakeProgress = afterProgress
 
 			// 获得该期
-			currentTerm, _ := GetCurrentTermNum()
+			currentTerm, _ := GetCurrentTermNum(teamup.BetReportGameType)
 			teamupTermSizeString, _ := GetAppConfigWithCache("teamup", "term_size")
 			termSize, _ := strconv.Atoi(teamupTermSizeString)
-			termTeamups, _ := FindExceedTargetByTerm(currentTerm)
+			termTeamups, _ := FindExceedTargetByTerm(currentTerm, teamup.BetReportGameType)
 			// 默认该单为这一期
 			teamup.Term = currentTerm
 
@@ -276,6 +276,7 @@ func FindOngoingTeamupEntriesByUserId(userId int64) (res ploutos.TeamupEntry, er
 			Joins("JOIN teamups ON teamups.id = teamup_entries.teamup_id").
 			Where("teamup_entries.user_id = ?", userId).
 			Where("teamups.status = 0").
+			Where("teamups.bet_report_game_type in ?", []int{1, 4, 5}).
 			Order("teamup_entries.created_at ASC").
 			First(&res) // Fetch the first matching record
 

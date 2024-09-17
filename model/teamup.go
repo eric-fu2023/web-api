@@ -141,7 +141,7 @@ func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		tx = tx.Table("teamups").Select("teamups.bet_report_game_type as bet_report_game_type, teamups.match_id as match_id, teamups.match_time as match_time, teamups.total_fake_progress as total_fake_progress, teamups.match_title as match_title, teamups.league_icon as league_icon, teamups.home_icon as home_icon, teamups.away_icon as away_icon, teamups.status as status, teamups.league_name as league_name, teamups.option_name as option_name, teamups.market_name as market_name, teamups.is_parlay as is_parlay, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, teamups.order_id as order_id, teamups.is_parlay as is_parlay, teamups.match_title as bet_type")
 
-		tx = tx.Where("teamups.user_id = ?", userId)
+		tx = tx.Where("teamups.user_id = ?", userId).Where("teamups.bet_report_game_type in ?", []int{1, 4, 5})
 
 		if len(status) > 0 {
 			tx = tx.Where("teamups.status in ?", status)
@@ -269,7 +269,7 @@ func GetRecentCompletedSuccessTeamup(numMinutes int64) (res TeamupSuccess, err e
 		tx = tx.Table("teamups").Select("users.nickname, teamups.teamup_completed_time as time, users.avatar, teamups.total_teamup_target as amount").
 			Joins("left join users on teamups.user_id = users.id")
 
-		tx = tx.Where("teamups.status = 1").Where("teamups.teamup_completed_time >= ?", time.Now().UTC().Unix()-int64(recentMinutes.Seconds()))
+		tx = tx.Where("teamups.status = 1").Where("teamups.teamup_completed_time >= ?", time.Now().UTC().Unix()-int64(recentMinutes.Seconds())).Where("teamups.bet_report_game_type in ?", []int{1, 4, 5})
 
 		err = tx.Scan(&res).Error
 		return
@@ -281,10 +281,13 @@ func GetRecentCompletedSuccessTeamup(numMinutes int64) (res TeamupSuccess, err e
 	return
 }
 
-func GetCurrentTermNum() (maxTerm int64, err error) {
+func GetCurrentTermNum(gameType int) (maxTerm int64, err error) {
+
+	gameTypes := getGameTypeSlice(gameType)
 
 	err = DB.Table("teamups").
 		Select("MAX(term)").
+		Where("bet_report_game_type IN ?", gameTypes). // SPORTS TYPE
 		Scan(&maxTerm).Error
 
 	if err == nil && maxTerm == 0 {
@@ -294,43 +297,13 @@ func GetCurrentTermNum() (maxTerm int64, err error) {
 	return
 }
 
-func CheckIfTermHasShortlistedOrWinner(termId int64) (hasShortlistedOrWinner bool) {
+func FindExceedTargetByTerm(termId int64, gameType int) (teamups []ploutos.Teamup, err error) {
 
-	var teamups []ploutos.Teamup
-	err := DB.Table("teamups").
-		Where("term = ?", termId).
-		Where("shortlist_status != ?", ploutos.ShortlistStatusNotShortlist).
-		Find(&teamups)
-
-	fmt.Println(err)
-
-	if len(teamups) > 0 {
-		hasShortlistedOrWinner = true
-	}
-
-	return
-}
-
-func CheckIfTermExceedSize(termId, termSize int64) (isExceeded bool) {
-
-	var teamups []ploutos.Teamup
-	err := DB.Table("teamups").
-		Where("term = ?", termId).
-		Find(&teamups)
-
-	fmt.Println(err)
-
-	if len(teamups) > int(termSize) {
-		isExceeded = true
-	}
-
-	return
-}
-
-func FindExceedTargetByTerm(termId int64) (teamups []ploutos.Teamup, err error) {
+	gameTypes := getGameTypeSlice(gameType)
 
 	err = DB.Table("teamups").
 		Where("term = ?", termId).
+		Where("bet_report_game_type IN ?", gameTypes). // SPORTS TYPE
 		Find(&teamups).Error
 
 	return
@@ -349,12 +322,16 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 	hasWinnerAlready := false
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
+
+		gameTypes := getGameTypeSlice(teamup.BetReportGameType)
+
 		// 如果该届/期已经有候选池里为成功的单子，不管砍单是否有成功都算成功
 		// 可看下面注释
 		var wonTeamups []ploutos.Teamup
 		err = tx.Model(ploutos.Teamup{}).
 			Where("term = ?", teamup.Term).
 			Where("shortlist_status = ?", ploutos.ShortlistStatusShortlistWin).
+			Where("bet_report_game_type IN ?", gameTypes). // SPORTS TYPE
 			Find(&wonTeamups).Error
 
 		if len(wonTeamups) > 0 {
@@ -413,4 +390,15 @@ func FlagStatusShortlisted(tx *gorm.DB, ids []int64) (err error) {
 
 		return err
 	})
+}
+
+func getGameTypeSlice(gameType int) (res []int) {
+
+	if gameType == ploutos.GAME_TAYA || gameType == ploutos.GAME_FB || gameType == ploutos.GAME_IMSB {
+		res = []int{1, 4, 5}
+	} else {
+		res = []int{11, 12, 13, 100}
+	}
+
+	return
 }

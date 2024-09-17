@@ -1,12 +1,13 @@
 package consts
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	"web-api/util/datastructures"
+
+	models "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 const (
-	InHouseGame = 1 // this is internal self-dev games such as dice
+	InHouseGame  = 1 // this is internal self-dev games such as dice
 	ExternalGame = 2 // this is 3rd party sub games
 )
 
@@ -784,3 +785,6 @@ const (
 	SpinItem    = "spin_item"
 	SpinOthers  = "spin_others"
 )
+
+// 砍单游戏名称 / 图标
+const ()
