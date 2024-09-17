@@ -3,13 +3,10 @@ package on_cash_orders
 import (
 	"context"
 	"fmt"
-	"web-api/util"
 
 	"web-api/model"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
-
-	"web-api/service/promotion/tethered_rebate_promotion"
 )
 
 // Note: Work in progress
@@ -82,17 +79,17 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType models.T
 	{
 		shouldHandleTetheredRebatePromotion := false
 		_ = shouldHandleTetheredRebatePromotion
-		trpService, err := tethered_rebate_promotion.NewService(model.DB, nil, nil)
-		if err != nil {
-			util.Log().Error("tethered_rebate_promotion.NewService failed", err)
-		}
-		cashOrder := order.CashOrder
-		_ = cashOrder
-		reward, err := trpService.AddRewardForClosedDeposit(context.TODO(), tethered_rebate_promotion.UserForm{
-			Id: 0,
-		}, nil)
+		// trpService, err := tethered_rebate_promotion.NewService(model.DB, nil, nil)
+		// if err != nil {
+		// 	util.Log().Error("tethered_rebate_promotion.NewService failed", err)
+		// }
+		// cashOrder := order.CashOrder
+		// _ = cashOrder
+		// reward, err := trpService.AddRewardForClosedDeposit(context.TODO(), tethered_rebate_promotion.UserForm{
+		// 	Id: 0,
+		// }, nil)
 
-		_ = reward
+		// _ = reward
 
 	}
 	return nil
