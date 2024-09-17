@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"strconv"
+
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
@@ -11,6 +12,7 @@ import (
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -50,7 +52,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		newCashOrderState.EffectiveCashInAmount = newCashOrderState.AppliedCashInAmount + bonusAmount
 		newCashOrderState.Notes = models.EncryptedStr(notes)
 		newCashOrderState.WagerChange += additionalWagerChange
-		newCashOrderState.Status = 2
+		newCashOrderState.Status = models.CashOrderStatusSuccess
 		updatedCashOrder, err = closeOrder(c, orderNumber, newCashOrderState, tx, transactionType)
 		if err != nil {
 			return
@@ -60,9 +62,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		// go calculateTeamupSlashProgress(newCashOrderState.AppliedCashInAmount, newCashOrderState.UserId)
 		return
 	})
-	if err == nil {
-		go HandlePromotion(c.Copy(), newCashOrderState)
-	}
+
 	return
 }
 
@@ -74,7 +74,7 @@ func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.Cash
 	if err != nil {
 		return
 	}
-	userSum, err := model.UserSum{}.UpdateUserSumWithDB(txDB,
+	userSum, err := model.UpdateDbUserSumAndCreateTransaction(txDB,
 		newCashOrderState.UserId,
 		newCashOrderState.EffectiveCashInAmount,
 		newCashOrderState.WagerChange,

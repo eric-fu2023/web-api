@@ -1,15 +1,18 @@
 package cashout
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	"errors"
+
+	"web-api/conf/consts"
+	"web-api/model"
+	"web-api/service/common"
+
+	models "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/plugin/dbresolver"
-	"web-api/conf/consts"
-	"web-api/model"
-	"web-api/service/common"
 )
 
 // newStatus = 3, 5, 7
@@ -37,7 +40,7 @@ func RevertCashOutOrder(c *gin.Context, orderNumber string, notes, remark string
 			return
 		}
 		updatedCashOrder = newCashOrderState
-		userSum, err := model.UserSum{}.UpdateUserSumWithDB(
+		userSum, err := model.UpdateDbUserSumAndCreateTransaction(
 			tx,
 			newCashOrderState.UserId,
 			newCashOrderState.AppliedCashOutAmount,

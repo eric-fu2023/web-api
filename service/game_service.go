@@ -1,16 +1,18 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"web-api/cache"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/service/dc"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 var GameTypes = map[string]int64{
@@ -78,6 +80,40 @@ func (service *UserRecentGameListService) List(c *gin.Context) (r serializer.Res
 
 	r = serializer.Response{
 		Data: list,
+	}
+	return
+}
+
+type GameByStreamerService struct {
+	common.Platform
+	StreamerId int64 `form:"streamer_id" json:"streamer_id"`
+}
+
+func (service *GameByStreamerService) Get(c *gin.Context) (r serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	var game_id int64
+	err=model.DB.
+	Select("stream_game_id").
+	Table("stream_game_users").
+	Where("user_id = ?", service.StreamerId).
+	Where("game_type = ?", consts.ExternalGame).
+	Where("deleted_at is null").
+	Order("created_at desc").
+	Limit(1).
+	Find(&game_id).Error
+	if err!=nil{
+		fmt.Println("get game_id in stream_gae_user failed, ", err)
+		return
+	}
+	var game ploutos.SubGameBrand
+	if err = model.DB.Model(ploutos.SubGameBrand{}).Preload(`GameVendorBrand`).
+		Where("id", game_id).Find(&game).Error; err != nil {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+
+	r = serializer.Response{
+		Data: game,
 	}
 	return
 }

@@ -10,6 +10,7 @@ import (
 	dollar_jackpot_api "web-api/api/dollar_jackpot"
 	fb_api "web-api/api/fb"
 	api_finpay "web-api/api/finpay"
+	api_foray "web-api/api/foray"
 	game_integration_api "web-api/api/game_integration"
 	imsb_api "web-api/api/imsb"
 	internal_api "web-api/api/internalapi"
@@ -114,10 +115,16 @@ func NewRouter() *gin.Engine {
 		}
 	}
 
+	/* payment channel callback */
 	if os.Getenv("FINPAY_CALLBACK_ENABLED") == "true" {
 		fpCallback := r.Group("/callback/finpay")
 		fpCallback.POST("/payment-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayPaymentCallback)
 		fpCallback.POST("/transfer-order", middleware.RequestLogger("Finpay callback"), api_finpay.FinpayTransferCallback)
+	}
+	if os.Getenv("FORAY_CALLBACK_ENABLED") == "true" {
+		fpCallback := r.Group("/callback/foray")
+		fpCallback.POST("/payment-order", middleware.RequestLogger("Foray callback"), api_foray.ForayPaymentCallback)
+		fpCallback.POST("/transfer-order", middleware.RequestLogger("Foray callback"), api_foray.ForayTransferCallback)
 	}
 
 	if os.Getenv("BACKEND_APIS_ON") == "true" {
@@ -210,6 +217,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("/share", api.ShareCreate)
 		v1.GET("/share", api.ShareGet)
 		v1.GET("/games", middleware.Cache(1*time.Minute, false), api.GameList)
+		v1.GET("/streamer_external_game", api.GameByStreamer)
 		v1.GET("/room_chat/history", api.RoomChatHistory)
 		v1.GET("/stream_game", stream_game_api.StreamGame)
 		v1.GET("/stream_games", middleware.Cache(1*time.Minute, false), stream_game_api.StreamGameList)

@@ -113,7 +113,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 	if p.ID == 99999 {
 		// TODO : remove mock data
 		promotion = models.Promotion{
-			Type: int(models.PromotionTypeNewbie),
+			Type: models.PromotionTypeNewbie,
 		}
 	} else {
 		promotion, err = model.PromotionGetActive(gCtx, brand, p.ID, now)
@@ -141,7 +141,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		newbieData any
 	)
 
-	switch int64(promotion.Type) {
+	switch promotion.Type {
 
 	case models.PromotionTypeCustomTemplate:
 		customData = "anything"
@@ -150,15 +150,16 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		newbieData = serializer.BuildDummyNewbiePromotion()
 
 	default: // default promotion type..
-		session, err := model.PromotionSessionGetActive(gCtx, p.ID, now)
+		_session, err := model.PromotionSessionGetActive(gCtx, p.ID, now)
 		if err != nil {
 			r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", err)
 			return r, err
 		}
+		session = _session
 		if loggedIn {
 			progress = ProgressByType(gCtx, promotion, session, user.ID, now)
 			claimStatus = ClaimStatusByType(gCtx, promotion, session, user.ID, now)
-			reward, _, _, err = RewardByType(gCtx, promotion, session, user.ID, progress, now)
+			reward, _, _, err = RewardByType(gCtx, promotion, session, user.ID, progress, now, &user)
 			extra = ExtraByType(gCtx, promotion, session, user.ID, progress, now)
 			//ctx = contextify.AppendCtx(gCtx, contextify.DefaultContextKey, fmt.Sprintf("default promo type, user logged in. progress %#v, claimStatus %#v, reward %#v, extra %#v",
 			//	progress,

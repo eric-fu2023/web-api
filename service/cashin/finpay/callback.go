@@ -2,9 +2,13 @@ package cashin_finpay
 
 import (
 	"errors"
+
 	"web-api/model"
 	"web-api/service/cashin"
+	"web-api/service/promotion/on_cash_orders"
 	"web-api/util"
+
+	models "blgit.rfdev.tech/taya/ploutos-object"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
 	"github.com/gin-gonic/gin"
@@ -14,16 +18,14 @@ type FinpayPaymentCallback struct {
 	finpay.PaymentOrderCallBackReq
 }
 
-func (s *FinpayPaymentCallback) Handle(c *gin.Context) (err error) {
+func (s *FinpayPaymentCallback) Handle(c *gin.Context) error {
 	if !s.IsValid() {
-		err = errors.New("invalid response")
-		return
+		return errors.New("invalid response")
 	}
 	defer model.CashOrder{}.MarkCallbackAt(c, s.MerchantOrderNo, model.DB)
 
 	if !s.IsSuccess() {
-		err = cashin.MarkOrderFailed(c, s.MerchantOrderNo, util.JSON(s), s.PaymentOrderNo)
-		return
+		return cashin.MarkOrderFailed(c, s.MerchantOrderNo, util.JSON(s), s.PaymentOrderNo)
 	}
 	// check api response
 	// lock cash order
@@ -32,9 +34,17 @@ func (s *FinpayPaymentCallback) Handle(c *gin.Context) (err error) {
 	// update user_sum
 	// create transaction history
 	// }
-	_, err = cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, 10000)
+	cashOrder, err := cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, models.TransactionTypeCashIn)
 	if err != nil {
-		return
+		return err
 	}
-	return
+
+	// if err == nil {
+	go func() {
+		pErr := on_cash_orders.Handle(c.Copy(), cashOrder, models.TransactionTypeCashIn, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinPay, on_cash_orders.RequestModeCallback)
+		if pErr != nil {
+			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
+		}
+	}()
+	return nil
 }

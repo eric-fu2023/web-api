@@ -21,6 +21,7 @@ type Streamer struct {
 	Tags              []UserTag         `json:"tags,omitempty"`
 	HasJackpot        bool              `json:"has_jackpot"`
 	HasDice           bool              `json:"has_dice"`
+	HasGame           bool              `json:"has_game"`
 }
 
 func BuildStreamer(c *gin.Context, a model.Streamer) (b Streamer) {

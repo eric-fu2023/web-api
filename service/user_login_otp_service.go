@@ -134,7 +134,7 @@ func (service *UserLoginOtpService) Login(c *gin.Context) serializer.Response {
 	} else if service.Username != "" {
 		q = q.Where(`username = ?`, service.Username)
 	}
-	if rows := q.Scopes(model.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 {
+	if rows := q.Scopes(ploutos.ByActiveNonStreamerUser).Find(&user).RowsAffected; rows == 0 {
 		// New User
 		isAllowed := CheckRegistrationDeviceIPCount(deviceInfo.Uuid, c.ClientIP())
 		if !isAllowed {

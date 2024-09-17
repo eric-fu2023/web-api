@@ -103,10 +103,13 @@ func (s ManualCloseOrderService) Do(c *gin.Context) (r serializer.Response, err 
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
-	pErr := on_cash_orders.Handle(c, cashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinPay, on_cash_orders.RequestModeManual)
-	if pErr != nil {
-		util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
-	}
+
+	go func() {
+		pErr := on_cash_orders.Handle(c, cashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeManual)
+		if pErr != nil {
+			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
+		}
+	}()
 
 	return
 }

@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+
 	"web-api/cache"
 	"web-api/conf"
 	"web-api/conf/consts"
@@ -28,18 +29,19 @@ const (
 	birthdayBonusRewardCacheKey = "birthday_bonus_reward_cache_key:%d"
 )
 
-func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (reward, meetGapType int64, vipIncrementDetail models.VipIncrementDetail, err error) {
-	switch int64(p.Type) {
+func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time, user *model.User) (reward, meetGapType int64, vipIncrementDetail models.VipIncrementDetail, err error) {
+	switch p.Type {
 	case models.PromotionTypeVipBirthdayB:
-		err := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
-		if errors.Is(err, persist.ErrCacheMiss) {
-			user, ok := c.Value("user").(model.User)
-			if !ok {
-				return 0, 0, models.VipIncrementDetail{}, fmt.Errorf("RewardByType get reward of promotion type %d fail as user not obtained", p.Type)
+		rErr := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
+		if errors.Is(rErr, persist.ErrCacheMiss) {
+			if user == nil {
+				err = fmt.Errorf("getting rewards for PromotionTypeVipBirthdayB userid: %d, promotion %#v ", userID, p)
+			} else {
+				date, _ := time.Parse(time.DateOnly, user.Birthday)
+				reward = getBirtdayReward(c, date, userID)
 			}
-			date, _ := time.Parse(time.DateOnly, user.Birthday)
-			reward = getBirtdayReward(c, date, userID)
 		}
+		err = rErr
 	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
 		r := getSameDayVipRewardRecord(model.DB.Debug(), userID, p.ID)
 		reward = r.Amount
@@ -58,7 +60,7 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 
 func ProgressByType(ctx context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
 	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("ProgressByType() p.Type %d", p.Type))
-	switch int64(p.Type) {
+	switch p.Type {
 	// not necessary
 	// case models.PromotionTypeVipReferral, models.PromotionTypeVipRebate:
 	// 	//separate handling based on separate table
@@ -105,9 +107,9 @@ func ProgressByType(ctx context.Context, p models.Promotion, s models.PromotionS
 func ClaimStatusByType(c context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (claim serializer.ClaimStatus) {
 	claim.ClaimStart = s.ClaimStart.Unix()
 	claim.ClaimEnd = s.ClaimEnd.Unix()
-	switch int64(p.Type) {
+	switch p.Type {
 	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB, models.PromotionTypeVipBirthdayB:
-		v, err := model.VoucherGetByUniqueID(c, models.GenerateVoucherUniqueId(int64(p.Type), p.ID, s.ID, userID, 0, buildSuffixByType(c, p, userID)))
+		v, err := model.VoucherGetByUniqueID(c, models.GenerateVoucherUniqueId(p.Type, p.ID, s.ID, userID, 0, buildSuffixByType(c, p, userID)))
 		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		}
@@ -134,13 +136,13 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, promotionRequestID, now, meetGapType, vipIncrementDetail)
 	lang := model.GetUserLang(userID)
 
-	switch int64(p.Type) {
+	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeOneTimeDepB:
 		//add money and insert voucher
 		// add cash order
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 			wagerChange := voucher.WagerMultiplier * rewardAmount
-			err = CreateCashOrder(tx, int64(p.Type), userID, rewardAmount, wagerChange, "", "")
+			err = CreateCashOrder(tx, p.Type, userID, rewardAmount, wagerChange, "", "")
 			if err != nil {
 				return err
 			}
@@ -148,13 +150,13 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			if err != nil {
 				return err
 			}
-			if int64(p.Type) == models.PromotionTypeBeginnerB {
+			if p.Type == models.PromotionTypeBeginnerB {
 				err = model.CreateUserAchievement(userID, models.UserAchievementIdFirstAppLoginReward)
 				if err != nil {
 					return err
 				}
 			}
-			if int64(p.Type) == models.PromotionTypeOneTimeDepB {
+			if p.Type == models.PromotionTypeOneTimeDepB {
 				err = model.CreateUserAchievement(userID, models.UserAchievementIdFirstDepositBonusReward)
 				if err != nil {
 					return err
@@ -173,7 +175,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	case models.PromotionTypeVipBirthdayB:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 			wagerChange := voucher.WagerMultiplier * rewardAmount
-			err = CreateCashOrder(tx, int64(p.Type), userID, rewardAmount, wagerChange, "", "")
+			err = CreateCashOrder(tx, p.Type, userID, rewardAmount, wagerChange, "", "")
 			if err != nil {
 				return err
 			}
@@ -189,7 +191,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 			wagerChange := voucher.WagerMultiplier * rewardAmount
-			err = CreateCashOrder(tx, int64(p.Type), userID, rewardAmount, wagerChange, "", "")
+			err = CreateCashOrder(tx, p.Type, userID, rewardAmount, wagerChange, "", "")
 			if err != nil {
 				return err
 			}
@@ -206,7 +208,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		})
 		if err == nil {
 			var nType, title, text string
-			switch int64(p.Type) {
+			switch p.Type {
 			case models.PromotionTypeVipRebate:
 				nType = consts.Notification_Type_Rebate
 				title = conf.GetI18N(lang).T(common.NOTIFICATION_REBATE_TITLE)
@@ -228,7 +230,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	case models.PromotionTypeCustomTemplate:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 			wagerChange := voucher.WagerMultiplier * rewardAmount
-			err = CreateCashOrder(tx, int64(p.Type), userID, rewardAmount, wagerChange, "", p.Name)
+			err = CreateCashOrder(tx, p.Type, userID, rewardAmount, wagerChange, "", p.Name)
 			if err != nil {
 				return err
 			}
@@ -243,7 +245,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 }
 
 func ExtraByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (extra any) {
-	switch int64(p.Type) {
+	switch p.Type {
 	case models.PromotionTypeVipReferral:
 		// Get next session's reward - actually just records that cannot be claimed yet
 		summaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
@@ -271,8 +273,8 @@ func ExtraByType(c context.Context, p models.Promotion, s models.PromotionSessio
 }
 
 func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange int64, notes, name string) error {
-	txType := promotionTxTypeMapping[promoType]
-	sum, err := model.UserSum{}.UpdateUserSumWithDB(tx,
+	txType := promotionTypeToTransactionTypeMapping[promoType]
+	sum, err := model.UpdateDbUserSumAndCreateTransaction(tx,
 		userId,
 		rewardAmount,
 		wagerChange,
@@ -285,7 +287,7 @@ func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange i
 	if notes == "" {
 		notes = "dummy"
 	}
-	orderType := promotionOrderTypeMapping[promoType]
+	orderType := promotionTypeToCashOrderType[promoType]
 	dummyOrder := models.CashOrder{
 		ID:                    uuid.NewString(),
 		UserId:                userId,
@@ -312,7 +314,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	status := models.VoucherStatusReady
 	isUsable := false
 	suffix := buildSuffixByType(c, p, userID)
-	switch int64(p.Type) {
+	switch p.Type {
 	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeVipReferral, models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB, models.PromotionTypeVipBirthdayB, models.PromotionTypeCustomTemplate:
 		status = models.VoucherStatusRedeemed
 	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
@@ -321,7 +323,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 
 	voucherName := model.AmountReplace(v.Name, float64(rewardAmount)/100)
 	wagerMultiplier := v.WagerMultiplier
-	switch int64(p.Type) {
+	switch p.Type {
 	case models.PromotionTypeVipRebate:
 		vip, _ := model.GetVipWithDefault(c, userID)
 		wagerMultiplier = vip.VipRule.BirthdayBenefitWagerMultiplier
@@ -462,7 +464,7 @@ func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher mode
 		})
 
 		wagerChange := user.ReferralWagerMultiplier * totalClaimable
-		err = CreateCashOrder(tx, int64(p.Type), user.ID, totalClaimable, wagerChange, cashOrderNotes, "")
+		err = CreateCashOrder(tx, p.Type, user.ID, totalClaimable, wagerChange, cashOrderNotes, "")
 		if err != nil {
 			return fmt.Errorf("failed to create cash order: %w", err)
 		}
@@ -536,7 +538,7 @@ func buildSuffixByType(c context.Context, p models.Promotion, userID int64) stri
 	today := Today0am()
 	suffix := ""
 	vip, _ := model.GetVipWithDefault(c, userID)
-	switch int64(p.Type) {
+	switch p.Type {
 	case models.PromotionTypeVipRebate:
 		suffix = fmt.Sprintf("date-%s", today.Format(time.DateOnly))
 	case models.PromotionTypeVipWeeklyB:

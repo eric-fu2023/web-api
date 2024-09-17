@@ -27,6 +27,7 @@ type TeamUpPopupResponse struct {
 	Status  int    `json:"status"`
 	// TotalTeamupDeposit int64                   `json:"total_deposit"`
 	TotalTeamUpTarget float64                 `json:"total_target"`
+	Remaining         float64                 `json:"remaining"`
 	Progress          float64                 `json:"progress"`
 	Start             int64                   `json:"start"`
 	End               int64                   `json:"end"`
@@ -81,6 +82,7 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 		// TotalTeamupDeposit: team_up.TotalTeamupDeposit / 100,
 		TotalTeamUpTarget: float64(team_up.TotalTeamUpTarget) / 100,
 		Progress:          float64(team_up.TotalFakeProgress) / 100,
+		Remaining:         float64(team_up.TotalTeamUpTarget) / 100 * (1 - float64(team_up.TotalFakeProgress)/10000),
 		Start:             yesterdayStart.Unix(),
 		End:               yesterdayEnd.Unix(),
 		Type:              teamup_type,

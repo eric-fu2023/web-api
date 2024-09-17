@@ -3,8 +3,8 @@ package cashout
 import (
 	"errors"
 	"fmt"
-	"gorm.io/plugin/dbresolver"
 	"time"
+
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
 	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 type CustomOrderService struct {
@@ -38,7 +39,7 @@ func (svc CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err
 	// check withdrawable
 	err = model.DB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		var userSum model.UserSum
-		userSum, err = model.UserSum{}.GetByUserIDWithLockWithDB(cashOrder.UserId, model.DB.Debug().WithContext(c))
+		userSum, err = model.GetByUserIDWithLockWithDB(cashOrder.UserId, model.DB.Debug().WithContext(c))
 		if err != nil {
 			return
 		}
@@ -62,7 +63,7 @@ func (svc CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err
 		// make balance changes
 		// add tx record
 		var newUsersum model.UserSum
-		newUsersum, err = model.UserSum{}.UpdateUserSumWithDB(
+		newUsersum, err = model.UpdateDbUserSumAndCreateTransaction(
 			tx,
 			cashOrder.UserId,
 			-amount,

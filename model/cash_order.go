@@ -8,7 +8,6 @@ import (
 	"web-api/conf/consts"
 	"web-api/util"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
@@ -19,12 +18,13 @@ type CashOrder struct {
 	ploutos.CashOrder
 }
 
-func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) CashOrder {
+func NewCashInOrder(userID, CashMethodId, CashMethodChannelId, amount, balanceBefore, wagerChange int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) CashOrder {
 	return CashOrder{
 		ploutos.CashOrder{
 			ID:                  ploutos.GenerateCashInOrderNo(),
 			UserId:              userID,
 			CashMethodId:        CashMethodId,
+			CashMethodChannelId: CashMethodChannelId,
 			OrderType:           1,
 			Status:              ploutos.CashOrderStatusPending,
 			AppliedCashInAmount: amount,
@@ -39,8 +39,8 @@ func NewCashInOrder(userID, CashMethodId, amount, balanceBefore, wagerChange int
 	}
 }
 
-func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingID int64, remark string, reviewRequired bool, ip string) CashOrder {
-	var orderStatus int64 = models.CashOrderStatusPendingRiskCheck
+func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingId int64, remark string, reviewRequired bool, ip string) CashOrder {
+	var orderStatus = ploutos.CashOrderStatusPendingRiskCheck
 	var approveStatus int64
 	var reviewStatus int64
 	if reviewRequired {
@@ -64,7 +64,7 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBinding
 			ReviewStatus:         reviewStatus,
 			//Notes:, update later
 			Ip:                   ip,
-			UserAccountBindingID: accountBindingID,
+			UserAccountBindingId: accountBindingId,
 		},
 	}
 }
@@ -72,7 +72,7 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBinding
 func (CashOrder) GetPendingOrPeApWithLockWithDB(orderID string, tx *gorm.DB) (c CashOrder, err error) {
 	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("id", orderID).
-		Where("status in ?", []int64{models.CashOrderStatusPending, models.CashOrderStatusPendingApproval}).
+		Where("status in ?", []int64{ploutos.CashOrderStatusPending, ploutos.CashOrderStatusPendingApproval}).
 		First(&c).Error
 	return
 }
@@ -98,11 +98,11 @@ func (CashOrder) List(userID int64, topupOnly, withdrawOnly bool, startTime, end
 	}
 	switch statusF {
 	case "success":
-		db = db.Where("status in ?", []int64{models.CashOrderStatusSuccess})
+		db = db.Where("status in ?", []int64{ploutos.CashOrderStatusSuccess})
 	case "failed":
-		db = db.Where("status in ?", []int64{models.CashOrderStatusCancelled, models.CashOrderStatusRejected, models.CashOrderStatusFailed})
+		db = db.Where("status in ?", []int64{ploutos.CashOrderStatusCancelled, ploutos.CashOrderStatusRejected, ploutos.CashOrderStatusFailed})
 	case "pending":
-		db = db.Where("status in ?", []int64{models.CashOrderStatusPending, models.CashOrderStatusPendingApproval, models.CashOrderStatusTransferring})
+		db = db.Where("status in ?", []int64{ploutos.CashOrderStatusPending, ploutos.CashOrderStatusPendingApproval, ploutos.CashOrderStatusTransferring})
 	}
 
 	err = db.
@@ -130,7 +130,7 @@ func FirstTopup(c context.Context, userID int64) (CashOrder, error) {
 	var order CashOrder
 	err := DB.Debug().WithContext(c).
 		Where("user_id", userID).
-		Where("order_type", models.CashOrderTypeCashIn).
+		Where("order_type", ploutos.CashOrderTypeCashIn).
 		Where("status", ploutos.CashOrderStatusSuccess).
 		Where("is_manual_operation", false).
 		Where("(operation_type = ? or (operation_type between ? and ?))", 0, consts.OrderOperationTypeEnum[consts.OrderOperationTypeCashInAdjust], 3999).
@@ -141,10 +141,10 @@ func FirstTopup(c context.Context, userID int64) (CashOrder, error) {
 }
 
 func ScopedTopupExceptAllTimeFirst(c context.Context, userID int64, start, end time.Time) (list []CashOrder, err error) {
-	err = DB.WithContext(c).Where("user_id", userID).Where("order_type", models.CashOrderTypeCashIn).
+	err = DB.WithContext(c).Where("user_id", userID).Where("order_type", ploutos.CashOrderTypeCashIn).
 		Where("status", ploutos.CashOrderStatusSuccess).
 		Where("created_at > ?", start).Where("created_at < ?", end).
-		Where("id != (?)", DB.WithContext(c).Model(&CashOrder{}).Select("id").Where("user_id", userID).Where("order_type", models.CashOrderTypeCashIn).
+		Where("id != (?)", DB.WithContext(c).Model(&CashOrder{}).Select("id").Where("user_id", userID).Where("order_type", ploutos.CashOrderTypeCashIn).
 			Where("status", ploutos.CashOrderStatusSuccess).Order("created_at asc").Limit(1)).
 		Order("created_at asc").Find(&list).Error
 	return

@@ -7,12 +7,15 @@ import (
 
 const ()
 
-func GetStreamGameStreamer(userId, gameId int64) (hasGame bool, err error) {
+func GetStreamGameStreamer(userId, gameId int64, gameType int64) (hasGame bool, err error) {
 	var record ploutos.StreamGameUser
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		tx = tx.Table("stream_game_users").
 			Where("user_id = ?", userId).
-			Where("stream_game_id = ?", gameId)
+			Where("game_type",gameType)
+		if gameId!=0{
+			tx = tx.Where("stream_game_id = ?", gameId)
+		}
 		if err := tx.First(&record).Error; err != nil {
 			return err
 		}

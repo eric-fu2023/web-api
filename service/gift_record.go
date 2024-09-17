@@ -69,7 +69,7 @@ func (service *GiftSendRequestService) Handle(c *gin.Context) (r serializer.Resp
 
 	err = model.DB.Transaction(func(tx *gorm.DB) error {
 
-		userSum, _ = model.UserSum{}.GetByUserIDWithLockWithDB(user.ID, tx)
+		userSum, _ = model.GetByUserIDWithLockWithDB(user.ID, tx)
 		// userSum.MaxWithdrawable -= giftRecord.TotalPrice
 
 		balanceBefore := userSum.Balance

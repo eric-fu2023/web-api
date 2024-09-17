@@ -9,8 +9,8 @@ toolchain go1.21.1
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240815092239-0416a4359983
-	blgit.rfdev.tech/taya/payment-service v0.0.0-20240913004848-38799b13a61f
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240910012818-2977fbf3d88a
+	blgit.rfdev.tech/taya/payment-service v0.0.0-20240913111721-620948d99167
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240917064610-625474f01977
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240703073351-55719e205f9b
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
@@ -36,7 +36,6 @@ require (
 	github.com/leekchan/accounting v1.0.0
 	github.com/mailgun/mailgun-go/v4 v4.12.0
 	github.com/pkg/errors v0.9.1
-	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0

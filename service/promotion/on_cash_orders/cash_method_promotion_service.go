@@ -1,61 +1,63 @@
-package service
+package on_cash_orders
 
 import (
 	"context"
+
 	"web-api/model"
 	"web-api/service/common"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 )
 
-func HandleCashMethodPromotion(c context.Context, order model.CashOrder) {
+func CashMethodPromotion(c context.Context, order model.CashOrder) {
 	if order.CashMethodId == 0 {
-		util.GetLoggerEntry(c).Info("HandleCashMethodPromotion order.CashMethodId == 0", order.ID)
+		util.GetLoggerEntry(c).Info("CashMethodPromotion order.CashMethodId == 0", order.ID)
 		return
 	}
 	// check claim before or not
 	cashMethodPromotionRecord, err := model.FindCashMethodPromotionRecordByCashOrderId(order.ID, nil)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion FindCashMethodPromotionRecordByCashOrderId", err, order.ID)
+		util.GetLoggerEntry(c).Error("CashMethodPromotion FindCashMethodPromotionRecordByCashOrderId", err, order.ID)
 		return
 	}
 	if cashMethodPromotionRecord.ID != 0 {
-		util.GetLoggerEntry(c).Info("HandleCashMethodPromotion FindCashMethodPromotionRecordByCashOrderId order has been claimed", order.ID)
+		util.GetLoggerEntry(c).Info("CashMethodPromotion FindCashMethodPromotionRecordByCashOrderId order has been claimed", order.ID)
 		return
 	}
 
 	vipRecord, err := model.GetVipWithDefault(c, order.UserId)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetVipWithDefault", err, order.ID)
+		util.GetLoggerEntry(c).Error("CashMethodPromotion GetVipWithDefault", err, order.ID)
 		return
 	}
-	util.GetLoggerEntry(c).Info("HandleCashMethodPromotion vipRecord.VipRule.ID", vipRecord.VipRule.ID, order.ID) // wl: for staging debug
+	util.GetLoggerEntry(c).Info("CashMethodPromotion vipRecord.VipRule.ID", vipRecord.VipRule.ID, order.ID) // wl: for staging debug
 
 	// check cash method and vip combination has promotion or not
 	cashMethodPromotion, err := model.FindActiveCashMethodPromotionByCashMethodIdAndVipId(order.CashMethodId, vipRecord.VipRule.ID, &order.CreatedAt, nil)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion Find CashMethodPromotion", err, order.ID)
+		util.GetLoggerEntry(c).Error("CashMethodPromotion Find CashMethodPromotion", err, order.ID)
 		return
 	}
 	if cashMethodPromotion.ID == 0 {
-		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion no CashMethodPromotion", order.ID)
+		util.GetLoggerEntry(c).Error("CashMethodPromotion no CashMethodPromotion", order.ID)
 		return
 	}
 
-	util.GetLoggerEntry(c).Info("HandleCashMethodPromotion cashMethodPromotion.ID", cashMethodPromotion.ID, order.ID) // wl: for staging debug
+	util.GetLoggerEntry(c).Info("CashMethodPromotion cashMethodPromotion.ID", cashMethodPromotion.ID, order.ID) // wl: for staging debug
 
 	// check over payout limit or not
 	weeklyAmountRecord, dailyAmountRecord, err := model.GetWeeklyAndDailyCashMethodPromotionRecord(c, order.CashMethodId, order.UserId)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetWeeklyAndDailyCashMethodPromotionRecord", err, order.ID)
+		util.GetLoggerEntry(c).Error("CashMethodPromotion GetWeeklyAndDailyCashMethodPromotionRecord", err, order.ID)
 		return
 	}
 	if cashMethodPromotion.ID == 0 {
-		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion no CashMethodPromotion", order.ID)
+		util.GetLoggerEntry(c).Error("CashMethodPromotion no CashMethodPromotion", order.ID)
 		return
 	}
 	var weeklyAmount int64
@@ -79,11 +81,11 @@ func HandleCashMethodPromotion(c context.Context, order model.CashOrder) {
 
 	amount, err := model.GetMaxCashMethodPromotionAmount(c, weeklyAmount, dailyAmount, cashMethodPromotion, order.UserId, coAmount, false)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetMaxAmountPayment", err, order.ID)
+		util.GetLoggerEntry(c).Error("CashMethodPromotion GetMaxAmountPayment", err, order.ID)
 	}
 
 	if amount == 0 {
-		util.GetLoggerEntry(c).Info("HandleCashMethodPromotion amount == 0", order.ID)
+		util.GetLoggerEntry(c).Info("CashMethodPromotion amount == 0", order.ID)
 		return
 	}
 
@@ -103,7 +105,7 @@ func HandleCashMethodPromotion(c context.Context, order model.CashOrder) {
 			return err
 		}
 
-		sum, err := model.UserSum{}.UpdateUserSumWithDB(tx, order.UserId, amount, amount, 0, models.TransactionTypeCashMethodPromotion, "")
+		sum, err := model.UpdateDbUserSumAndCreateTransaction(tx, order.UserId, amount, amount, 0, models.TransactionTypeCashMethodPromotion, "")
 		if err != nil {
 			return err
 		}
@@ -126,13 +128,13 @@ func HandleCashMethodPromotion(c context.Context, order model.CashOrder) {
 		if err != nil {
 			return err
 		}
-		util.GetLoggerEntry(c).Info("HandleCashMethodPromotion new co", coId, order.ID) // wl: for staging debug
+		util.GetLoggerEntry(c).Info("CashMethodPromotion new co", coId, order.ID) // wl: for staging debug
 		common.SendUserSumSocketMsg(order.UserId, sum.UserSum, "promotion", float64(amount)/100)
 
 		return
 	})
 	if err != nil {
-		util.GetLoggerEntry(c).Error("HandleCashMethodPromotion start", err, order.ID)
+		util.GetLoggerEntry(c).Error("CashMethodPromotion start", err, order.ID)
 		return
 	}
 }
