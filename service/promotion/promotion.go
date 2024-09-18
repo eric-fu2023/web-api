@@ -149,7 +149,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		newbieData = serializer.BuildDummyNewbiePromotion()
 
 	default: // default promotion type..
-		_session, activeSessionError := model.GetActivePromotionSession(gCtx, p.ID, now)
+		_session, activeSessionError := model.GetActivePromotionSessionByPromotionId(gCtx, p.ID, now)
 		if activeSessionError != nil {
 			r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", activeSessionError)
 			return r, activeSessionError

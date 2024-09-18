@@ -32,7 +32,7 @@ func (p VipBatchClaimRequest) Handle(c *gin.Context) (r serializer.Response, err
 	}
 	// tz := time.FixedZone("local", int(promotion.Timezone))
 	// now = now.In(tz)
-	session, err := model.GetActivePromotionSession(c, p.PromotionID, now)
+	session, err := model.GetActivePromotionSessionByPromotionId(c, p.PromotionID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return

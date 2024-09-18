@@ -33,7 +33,7 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 	}
 	// tz := time.FixedZone("local", int(promotion.Timezone))
 	// now = now.In(tz)
-	session, err := model.GetActivePromotionSession(c, p.ID, now)
+	session, err := model.GetActivePromotionSessionByPromotionId(c, p.ID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
