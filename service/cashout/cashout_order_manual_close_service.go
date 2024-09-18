@@ -48,7 +48,7 @@ func (s ManualCloseOrderService) Do(c *gin.Context) (r serializer.Response, err 
 		r = serializer.EnsureErr(c, err, r)
 		return
 	}
-	pErr := on_cash_orders.Handle(c, cashOrder, ploutos.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinpay, on_cash_orders.RequestModeManual)
+	pErr := on_cash_orders.Handle(c, cashOrder, ploutos.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayDefault, on_cash_orders.RequestModeManual)
 	if pErr != nil {
 		util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
 	}

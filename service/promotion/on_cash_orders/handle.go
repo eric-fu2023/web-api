@@ -23,8 +23,9 @@ const (
 type PaymentGateway = string
 
 const (
-	PaymentGatewayFinpay PaymentGateway = "finpay"
-	PaymentGatewayForay  PaymentGateway = "foray"
+	PaymentGatewayDefault PaymentGateway = "default"
+	PaymentGatewayFinpay  PaymentGateway = "finpay"
+	PaymentGatewayForay   PaymentGateway = "foray"
 )
 
 type RequestIngressMode = int64
@@ -39,12 +40,6 @@ const (
 // Note: take awareness on the trigger conditions and also the sequence of process~ these will change as requirement comes in
 // See also: [Note: Work in progress]
 func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.TransactionType, eventType CashOrderEventType, gateway PaymentGateway, requestMode RequestIngressMode) error {
-	// find cashOrder with latest data
-	orderId := order.ID
-	cashOrder, err := model.CashOrder{}.Find(orderId)
-	if err != nil {
-		return fmt.Errorf("failed to find CashOrder with ID=%s, error=%s", orderId, err.Error())
-	}
 	// validate eventType
 	switch eventType {
 	case CashOrderEventTypeClose:
@@ -52,14 +47,14 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 		return fmt.Errorf("unsupported event type: %d", eventType)
 	}
 	// validate payment channel
-	switch cashOrder.CashMethodChannel.Gateway {
+	switch gateway {
 	case PaymentGatewayFinpay, PaymentGatewayForay:
 	default:
-		return fmt.Errorf("unsupported gateway: %s", cashOrder.CashMethodChannel.Gateway)
+		return fmt.Errorf("unsupported gateway: %s", gateway)
 	}
 	// one time bonus if it's cash in
 	if transactionType == ploutos.TransactionTypeCashIn {
-		OneTimeBonusPromotion(ctx, *cashOrder)
+		OneTimeBonusPromotion(ctx, order)
 	}
 	// handle
 	{
@@ -74,7 +69,7 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 		}
 
 		if shouldHandleCashMethodPromotion {
-			CashMethodPromotion(ctx, *cashOrder)
+			CashMethodPromotion(ctx, order)
 		}
 	}
 
