@@ -25,7 +25,7 @@ func VoucherGetByUniqueID(c context.Context, uniqueID string) (v models.Voucher,
 	return
 }
 
-func VoucherGetByUserAndPromotionSession(c context.Context, userID int64, promotionSessionID int64) (v models.Voucher, err error) {
+func GetVoucherByUserAndPromotionSession(c context.Context, userID int64, promotionSessionID int64) (v models.Voucher, err error) {
 	err = DB.Debug().WithContext(c).Where("user_id", userID).Where("promotion_session_id", promotionSessionID).Order("created_at desc").First(&v).Error
 	return
 }

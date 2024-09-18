@@ -118,7 +118,7 @@ func GetPromotionSessionClaimStatus(c context.Context, p ploutos.Promotion, s pl
 			claim.HasClaimed = true
 		}
 	case ploutos.PromotionTypeFirstDepB, ploutos.PromotionTypeFirstDepIns:
-		v, err := model.VoucherGetByUserAndPromotionSession(c, userID, s.ID)
+		v, err := model.GetVoucherByUserAndPromotionSession(c, userID, s.ID)
 		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		} else {
@@ -128,7 +128,7 @@ func GetPromotionSessionClaimStatus(c context.Context, p ploutos.Promotion, s pl
 			}
 		}
 	default:
-		v, err := model.VoucherGetByUserAndPromotionSession(c, userID, s.ID)
+		v, err := model.GetVoucherByUserAndPromotionSession(c, userID, s.ID)
 		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		}
@@ -248,7 +248,7 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 	return
 }
 
-func GetPromotionExtraDetails(c context.Context, p ploutos.Promotion, s ploutos.PromotionSession, userID, progress int64, now time.Time) any {
+func GetPromotionExtraDetails(c context.Context, p ploutos.Promotion, userID int64, now time.Time) any {
 	var extra any
 	switch p.Type {
 	case ploutos.PromotionTypeVipReferral:
