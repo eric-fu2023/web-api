@@ -164,10 +164,10 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			}
 			claimStatus = GetPromotionSessionClaimStatus(gCtx, promotion, activeSession, user.ID, now)
 			reward, _, _, err = GetPromotionRewards(gCtx, promotion, user.ID, progress, now, &user)
-			extra = GetPromotionExtraDetails(gCtx, promotion, activeSession, user.ID, progress, now)
+			extra = GetPromotionExtraDetails(gCtx, promotion, user.ID, now)
 		}
 		if claimStatus.HasClaimed {
-			v, err := model.VoucherGetByUserAndPromotionSession(gCtx, user.ID, activeSession.ID)
+			v, err := model.GetVoucherByUserAndPromotionSession(gCtx, user.ID, activeSession.ID)
 			if err != nil {
 			} else {
 				voucherView = serializer.BuildVoucher(v, deviceInfo.Platform)
