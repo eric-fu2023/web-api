@@ -47,24 +47,26 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 		user = u.(model.User)
 	}
 
-	list, err := model.PromotionList(c, brand, now)
+	promotions, err := model.OngoingPromotions(c, brand, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
-	parentIdToPromotionMap := make(map[int64][]serializer.PromotionCover)
-	promotionCoverList := []serializer.PromotionCover{}
-	for _, promotion := range list {
+	childPromotionCoversMap := make(map[int64][]serializer.PromotionCover)
+	promotionCovers := []serializer.PromotionCover{}
+	for _, promotion := range promotions {
 		isAllowDevice := false
 		// Skip if not allow device.platform
-		if len(promotion.DisplayDevices) != 0 {
-			for _, allowedDevices := range promotion.DisplayDevices {
-				if PromotionDevice[deviceInfo.Platform] == models.PromotionDeviceType(allowedDevices) {
+		switch allowedDevices := promotion.DisplayDevices; len(allowedDevices) {
+		case 0:
+			isAllowDevice = true
+		default:
+			for _, allowedDevice := range allowedDevices {
+				if PromotionDevice[deviceInfo.Platform] == models.PromotionDeviceType(allowedDevice) {
 					isAllowDevice = true
+					break
 				}
 			}
-		} else {
-			isAllowDevice = true
 		}
 
 		if !isAllowDevice {
@@ -77,23 +79,23 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 			_ = json.Unmarshal(promotionCover.SubpageContent, &content)
 			promotionCover.Name = content.Title
 			promotionCover.Title = content.Title
-			parentIdToPromotionMap[promotion.ParentId] = append(parentIdToPromotionMap[promotion.ParentId], promotionCover)
+			childPromotionCoversMap[promotion.ParentId] = append(childPromotionCoversMap[promotion.ParentId], promotionCover)
 		} else {
 			if promotion.LoginStatus == int32(models.CustomPromotionLoginStatusAny) || (promotion.LoginStatus == int32(models.CustomPromotionLoginStatusLogin) && user.ID != 0) {
-				promotionCoverList = append(promotionCoverList, promotionCover)
+				promotionCovers = append(promotionCovers, promotionCover)
 			}
 		}
 	}
 
-	for i, promotionCover := range promotionCoverList {
-		childrenPromotions, exists := parentIdToPromotionMap[promotionCover.ID]
+	for i, promotionCover := range promotionCovers {
+		childrenPromotions, exists := childPromotionCoversMap[promotionCover.ID]
 		if exists {
-			promotionCoverList[i].IsCustom = false
-			promotionCoverList[i].ChildrenPromotions = childrenPromotions
+			promotionCovers[i].IsCustom = false
+			promotionCovers[i].ChildrenPromotions = childrenPromotions
 		}
 	}
 
-	r.Data = promotionCoverList
+	r.Data = promotionCovers
 	return
 }
 
