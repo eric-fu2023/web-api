@@ -5,6 +5,7 @@ import (
 	"time"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+
 	"gorm.io/gorm"
 )
 
@@ -13,8 +14,10 @@ func OngoingPromotions(c context.Context, brandId int, now time.Time) (list []mo
 	return
 }
 
-func PromotionGetActive(c context.Context, brandID int, promotionID int64, now time.Time) (p models.Promotion, err error) {
-	err = DB.Debug().WithContext(c).Where("brand_id = ? or brand_id = 0", brandID).Where("is_active").Where("id", promotionID).Scopes(Ongoing(now, "start_at", "end_at")).First(&p).Error
+// OngoingPromotionById
+// select scope should be identical to OngoingPromotions() ? idk.
+func OngoingPromotionById(c context.Context, brandId int, promotionId int64, now time.Time) (p models.Promotion, err error) {
+	err = DB.Debug().WithContext(c).Where("brand_id = ? or brand_id = 0", brandId).Where("is_active").Where("id", promotionId).Scopes(Ongoing(now, "start_at", "end_at")).First(&p).Error
 	return
 }
 

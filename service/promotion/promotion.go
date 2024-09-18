@@ -121,7 +121,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			Type: models.PromotionTypeNewbie,
 		}
 	} else {
-		promotion, err = model.PromotionGetActive(gCtx, brand, p.ID, now)
+		promotion, err = model.OngoingPromotionById(gCtx, brand, p.ID, now)
 	}
 
 	if err != nil {
@@ -215,7 +215,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		parentPromotion = promotion
 	} else {
 		outgoingRes.IsCustomPromotion = false
-		parentPromotion, err = model.PromotionGetActive(c, brand, promotion.ParentId, now)
+		parentPromotion, err = model.OngoingPromotionById(c, brand, promotion.ParentId, now)
 		if err != nil {
 			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 			return

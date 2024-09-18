@@ -26,7 +26,7 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 	deviceInfo, _ := util.GetDeviceInfo(c)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 
-	promotion, err := model.PromotionGetActive(c, brand, p.ID, now)
+	promotion, err := model.OngoingPromotionById(c, brand, p.ID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
