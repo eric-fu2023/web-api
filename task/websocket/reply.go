@@ -8,6 +8,7 @@ import (
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
+	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
 	"web-api/websocket"
@@ -78,7 +79,7 @@ func welcomeToRoom(conn *websocket.Connection, message string) {
 					UserId:    streamDetail.StreamerId,
 					UserType:  consts.ChatUserType["streamer"],
 					Nickname:  streamDetail.Streamer.Nickname,
-					Avatar:    streamDetail.Streamer.Avatar,
+					Avatar:    serializer.Url(streamDetail.Streamer.Avatar),
 					Type:      consts.WebSocketMessageType["text"],
 				}
 				streamerWelcomeMsg.Send(conn)
