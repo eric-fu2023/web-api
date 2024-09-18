@@ -395,7 +395,7 @@ func PushNotificationAll(notificationType string, title string, text string, v .
 			resp, _ := json.Marshal(v[0].Data)
 			msgData = map[string]string{
 				"notification_type": notificationType,
-				"data":          string(resp),
+				"data":              string(resp),
 			}
 		} else {
 			msgData = map[string]string{
@@ -510,6 +510,30 @@ func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftNam
 						cancelFunc()
 						return
 					}
+				}
+			},
+		})
+	}()
+}
+
+func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, startTime, amount int64, providerName, icon string) {
+	go func() {
+		conn := websocket.Connection{}
+		conn.Connect(os.Getenv("WS_NOTIFICATION_URL"), os.Getenv("WS_NOTIFICATION_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
+			func(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					msg := websocket.TeamupGameNotificationMessage{
+						Event:        "popup_teamup_game",
+						TeamupId:     teamupId,
+						StartTime:    startTime,
+						Amount:       amount,
+						ProviderName: providerName,
+						Icon:         icon,
+					}
+					msg.Send(conn)
 				}
 			},
 		})

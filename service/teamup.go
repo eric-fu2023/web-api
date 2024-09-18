@@ -561,11 +561,14 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 	for i, t := range teamupRes {
 
+		res[i].TeamupType = ploutos.TeamupTypeSports
+
 		// 游戏解析
 		// 如果是游戏
 		// TAKE NOTE PANDA
 		for j := range ploutos.TeamUpGameGameTypes {
 			if ploutos.TeamUpGameGameTypes[j] == teamupRes[i].BetReportGameType {
+				res[i].TeamupType = ploutos.TeamupTypeGames
 				res[i].LeagueName = consts.GameProviderNameMap[t.Provider]
 				res[i].LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
 

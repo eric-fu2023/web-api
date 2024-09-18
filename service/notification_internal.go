@@ -117,21 +117,25 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 		teamupId, _ := strconv.ParseInt(p.Params["teamup_id"], 10, 64)
 
 		var resp serializer.Response
+		providerName := consts.GameProviderNameMap[p.Params["provider"]]
+		providerIcon := consts.GameProviderNameToImgMap[p.Params["provider"]]
 
 		resp.Data = TeamupGamePopUpNotification{
 			TeamupId:     int64(teamupId),
 			StartTime:    int64(startTime),
 			Amount:       int64(amount) / 100,
-			ProviderName: consts.GameProviderNameToImgMap[p.Params["provider"]],
-			Icon:         consts.GameProviderNameMap[p.Params["provider"]],
+			ProviderName: consts.GameProviderNameMap[p.Params["provider"]],
+			Icon:         consts.GameProviderNameToImgMap[p.Params["provider"]],
 		}
 
 		title = conf.GetI18N(lang).T("notification_teamup_start_game_title")
 		text = conf.GetI18N(lang).T("notification_teamup_start_game_content")
 
+		common.SendNotification(3697, notificationType, title, text, resp)                                                                      // DEBUG PURPOSE
+		common.SendTeamupGamePopupNotificationSocketMsg(3697, int64(teamupId), int64(startTime), int64(amount)/100, providerName, providerIcon) // DEBUG PURPOSE
+		common.SendTeamupGamePopupNotificationSocketMsg(p.UserID, int64(teamupId), int64(startTime), int64(amount)/100, providerName, providerIcon)
 	}
-	common.SendNotification(455, notificationType, title, text, resp)
-	// common.SendNotification(p.UserID, notificationType, title, text, resp)
+	common.SendNotification(p.UserID, notificationType, title, text, resp)
 	r.Data = "Success"
 	return
 }
