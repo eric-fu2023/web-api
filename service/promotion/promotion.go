@@ -106,7 +106,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 	brand := gCtx.MustGet(`_brand`).(int)
 	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("brand %#v", brand))
 
-	u, loggedIn := gCtx.Get("user")
+	u, hasUserInfo := gCtx.Get("user")
 	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("loggedIn %#v", loggedIn))
 
 	user, _ := u.(model.User)
@@ -162,10 +162,10 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			return r, err
 		}
 		session = _session
-		if loggedIn {
-			progress = ProgressByType(gCtx, promotion, session, user.ID, now)
-			claimStatus = ClaimStatusByType(gCtx, promotion, session, user.ID, now)
-			reward, _, _, err = RewardByType(gCtx, promotion, session, user.ID, progress, now, &user)
+		if hasUserInfo {
+			progress = GetPromotionSessionProgress(gCtx, promotion, session, user.ID, now)
+			claimStatus = GetPromotionSessionClaimStatus(gCtx, promotion, session, user.ID, now)
+			reward, _, _, err = RewardByPromotionType(gCtx, promotion, user.ID, progress, now, &user)
 			extra = ExtraByType(gCtx, promotion, session, user.ID, progress, now)
 			//ctx = contextify.AppendCtx(gCtx, contextify.DefaultContextKey, fmt.Sprintf("default promo type, user logged in. progress %#v, claimStatus %#v, reward %#v, extra %#v",
 			//	progress,
@@ -177,13 +177,13 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			//log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
 		}
 		if claimStatus.HasClaimed {
-			v, err := model.VoucherGetByUserSession(gCtx, user.ID, session.ID)
+			v, err := model.VoucherGetByUserAndPromotionSession(gCtx, user.ID, session.ID)
 			if err != nil {
 			} else {
 				voucherView = serializer.BuildVoucher(v, deviceInfo.Platform)
 			}
 		} else {
-			v, err := model.VoucherTemplateGetByPromotion(gCtx, p.ID)
+			v, err := model.GetPromotionVoucherTemplateByPromotionId(gCtx, p.ID)
 			if err != nil {
 			} else {
 				voucherView = serializer.BuildVoucherFromTemplate(v, reward, deviceInfo.Platform)

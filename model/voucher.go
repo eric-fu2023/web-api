@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -23,7 +25,7 @@ func VoucherGetByUniqueID(c context.Context, uniqueID string) (v models.Voucher,
 	return
 }
 
-func VoucherGetByUserSession(c context.Context, userID int64, promotionSessionID int64) (v models.Voucher, err error) {
+func VoucherGetByUserAndPromotionSession(c context.Context, userID int64, promotionSessionID int64) (v models.Voucher, err error) {
 	err = DB.Debug().WithContext(c).Where("user_id", userID).Where("promotion_session_id", promotionSessionID).Order("created_at desc").First(&v).Error
 	return
 }

@@ -29,7 +29,7 @@ const (
 	birthdayBonusRewardCacheKey = "birthday_bonus_reward_cache_key:%d"
 )
 
-func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time, user *model.User) (reward, meetGapType int64, vipIncrementDetail models.VipIncrementDetail, err error) {
+func RewardByPromotionType(c context.Context, p models.Promotion, userID, progress int64, now time.Time, user *model.User) (reward, vipMeetGapType int64, vipIncrementDetail models.VipIncrementDetail, err error) {
 	switch p.Type {
 	case models.PromotionTypeVipBirthdayB:
 		rErr := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
@@ -53,13 +53,13 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 		if err != nil {
 			return
 		}
-		reward, meetGapType, vipIncrementDetail = p.GetRewardDetails().GetReward(progress, vip.VipRule.VIPLevel)
+		reward, vipMeetGapType, vipIncrementDetail = p.GetRewardDetails().GetReward(progress, vip.VipRule.VIPLevel)
 	}
 	return
 }
 
-func ProgressByType(ctx context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
-	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("ProgressByType() p.Type %d", p.Type))
+func GetPromotionSessionProgress(ctx context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
+	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("GetPromotionSessionProgress() p.Type %d", p.Type))
 	switch p.Type {
 	// not necessary
 	// case models.PromotionTypeVipReferral, models.PromotionTypeVipRebate:
@@ -104,7 +104,7 @@ func ProgressByType(ctx context.Context, p models.Promotion, s models.PromotionS
 	return
 }
 
-func ClaimStatusByType(c context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (claim serializer.ClaimStatus) {
+func GetPromotionSessionClaimStatus(c context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (claim serializer.ClaimStatus) {
 	claim.ClaimStart = s.ClaimStart.Unix()
 	claim.ClaimEnd = s.ClaimEnd.Unix()
 	switch p.Type {
@@ -114,7 +114,7 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 			claim.HasClaimed = true
 		}
 	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
-		v, err := model.VoucherGetByUserSession(c, userID, s.ID)
+		v, err := model.VoucherGetByUserAndPromotionSession(c, userID, s.ID)
 		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		} else {
@@ -124,7 +124,7 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 			}
 		}
 	default:
-		v, err := model.VoucherGetByUserSession(c, userID, s.ID)
+		v, err := model.VoucherGetByUserAndPromotionSession(c, userID, s.ID)
 		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		}

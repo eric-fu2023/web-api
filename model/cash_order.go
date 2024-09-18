@@ -126,6 +126,7 @@ func (CashOrder) IsFirstTime(c context.Context, userID int64) (bool, error) {
 	return firstTime, nil
 }
 
+// FirstTopup
 func FirstTopup(c context.Context, userID int64) (CashOrder, error) {
 	var order CashOrder
 	err := DB.Debug().WithContext(c).

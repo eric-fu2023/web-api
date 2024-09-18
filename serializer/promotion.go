@@ -3,6 +3,7 @@ package serializer
 import (
 	"encoding/json"
 	"strconv"
+
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
@@ -51,8 +52,8 @@ type PromotionDetail struct {
 	IsVipAssociated        bool              `json:"is_vip_associated"`
 	DisplayOnly            bool              `json:"display_only"`
 	Extra                  any               `json:"extra"`
-	CustomTemplateData 	   json.RawMessage	 `json:"custom_template_data"`
-	NewbieData		 	   interface{} 	 	 `json:"newbie_data"` // TODO : to be updated
+	CustomTemplateData     json.RawMessage   `json:"custom_template_data"`
+	NewbieData             interface{}       `json:"newbie_data"` // TODO : to be updated
 
 	IsCustom bool `json:"is_custom"`
 }
@@ -119,7 +120,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, v Voucher, cl ClaimStatus, extra any, customData any, newbieData any) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, voucher Voucher, cl ClaimStatus, extra any, customData any, newbieData any) PromotionDetail {
 	raw := json.RawMessage(p.Image)
 	m := make(map[string]string)
 	json.Unmarshal(raw, &m)
@@ -131,32 +132,32 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 	return PromotionDetail{
 		ID:                     p.ID,
 		Name:                   p.Name,
-		Description:            json.RawMessage(p.Description),
+		Description:            p.Description,
 		Image:                  Url(image),
 		StartAt:                p.StartAt.Unix(),
 		EndAt:                  p.EndAt.Unix(),
 		ResetAt:                s.EndAt.Unix(),
-		Type:                   int64(p.Type),
-		RewardType:             int64(p.RewardType),
+		Type:                   p.Type,
+		RewardType:             p.RewardType,
 		RecurringDay:           int64(p.RecurringDay),
 		RewardDistributionType: int64(p.RewardDistributionType),
 		ClaimStatus:            cl,
 		PromotionProgress:      BuildPromotionProgress(progress, p.GetRewardDetails()),
 		Reward:                 float64(reward) / 100,
-		Voucher:                v,
+		Voucher:                voucher,
 		Category:               int64(p.Category),
 		IsVipAssociated:        p.VipAssociated,
 		DisplayOnly:            p.DisplayOnly,
 		Extra:                  extra,
-		// CustomTemplateData: 	json.RawMessage(customData),	
-		NewbieData: 			newbieData,
+		// CustomTemplateData: 	json.RawMessage(customData),
+		NewbieData: newbieData,
 	}
 }
 
-func BuildPromotionProgress(progress int64, rewards models.RewardDetails) PromotionProgress {
+func BuildPromotionProgress(progress int64, tieredRewards models.RewardDetails) PromotionProgress {
 	return PromotionProgress{
 		Progress: float64(progress) / 100,
-		Tiers:    util.MapSlice(rewards.Rewards, buildPromotionTier),
+		Tiers:    util.MapSlice(tieredRewards.Rewards, buildPromotionTier),
 	}
 }
 
