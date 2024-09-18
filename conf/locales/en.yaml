@@ -453,6 +453,7 @@ B4组排名_short: "Group B4 Ranking"
 
 streamer_not_found: "Streamer does not exist."
 general_error: "Something went wrong. Please try again."
+sms_otp_error: "Something went wrong. Please try other another binding option."
 login_failed: "Login failed."
 password_encrypt_failed: "Password encryption failed."
 password_update_failed: "Updating password failed."
