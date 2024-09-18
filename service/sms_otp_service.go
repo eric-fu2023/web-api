@@ -1,11 +1,8 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	smsutil "blgit.rfdev.tech/zhibo/utilities/sms"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"math/rand"
 	"os"
 	"regexp"
@@ -16,6 +13,10 @@ import (
 	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	smsutil "blgit.rfdev.tech/zhibo/utilities/sms"
+	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -68,7 +69,8 @@ func (service *SmsOtpService) GetSMS(c *gin.Context) serializer.Response {
 	}
 	if err != nil {
 		util.GetLoggerEntry(c).Errorf("sendOtp error: %s", err.Error())
-		return serializer.GeneralErr(c, err)
+		// return serializer.GeneralErr(c, err)
+		return serializer.Err(c, "", serializer.CodeGeneralError, i18n.T("sms_otp_error"), err)
 	}
 
 	resp := serializer.SendOtp{}

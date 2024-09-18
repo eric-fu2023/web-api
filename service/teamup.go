@@ -64,6 +64,14 @@ type TeamupNotificationResp struct {
 	TeamupId int64 `json:"teamup_id"`
 }
 
+type TeamupGamePopUpNotification struct {
+	Amount       int64  `json:"amount"`
+	Icon         string `json:"icon"`
+	ProviderName string `json:"provider_name"`
+	StartTime    int64  `json:"start_time"`
+	TeamupId     int64  `json:"teamup_id"`
+}
+
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	// i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
@@ -552,6 +560,23 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 	copier.Copy(&res, teamupRes)
 
 	for i, t := range teamupRes {
+
+		res[i].TeamupType = ploutos.TeamupTypeSports
+
+		// 游戏解析
+		// 如果是游戏
+		// TAKE NOTE PANDA
+		for j := range ploutos.TeamUpGameGameTypes {
+			if ploutos.TeamUpGameGameTypes[j] == teamupRes[i].BetReportGameType {
+				res[i].TeamupType = ploutos.TeamupTypeGames
+				res[i].LeagueName = consts.GameProviderNameMap[t.Provider]
+				res[i].LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
+
+				continue
+			}
+		}
+
+		// 体育解析
 		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
 		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
 

@@ -27,7 +27,7 @@ func (s *FinpayTransferCallback) Handle(c *gin.Context) (err error) {
 		cashOrder, _err := cashout.CloseCashOutOrder(c, s.MerchantOrderNo, int64(s.Amount), 0, 0, util.JSON(s), "", true, model.DB)
 		if err == nil {
 			go func() {
-				pErr := on_cash_orders.Handle(c, cashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinPay, on_cash_orders.RequestModeCallback)
+				pErr := on_cash_orders.Handle(c, cashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinpay, on_cash_orders.RequestModeCallback)
 				if pErr != nil {
 					util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
 				}

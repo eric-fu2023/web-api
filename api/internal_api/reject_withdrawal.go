@@ -2,13 +2,13 @@ package internal_api
 
 import (
 	"web-api/serializer"
-	cashout_finpay "web-api/service/cashout/finpay"
+	cashout "web-api/service/cashout"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RejectWithdrawal(c *gin.Context) {
-	var service cashout_finpay.CashOutOrderService
+	var service cashout.CashOutOrderService
 	if err := c.ShouldBind(&service); err == nil {
 		if res, err := service.Reject(c); err == nil {
 			c.JSON(200, res)
@@ -21,7 +21,7 @@ func RejectWithdrawal(c *gin.Context) {
 }
 
 func ApproveWithdrawal(c *gin.Context) {
-	var service cashout_finpay.CashOutOrderService
+	var service cashout.CashOutOrderService
 	if err := c.ShouldBind(&service); err == nil {
 		if res, err := service.Approve(c); err == nil {
 			c.JSON(200, res)

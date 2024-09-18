@@ -453,6 +453,7 @@ B4组排名_short: "B4组排名"
 
 streamer_not_found: "无效主播"
 general_error: "出了些问题。请再试一次。"
+sms_otp_error: "出了些问题。请尝试其他绑定方式。"
 login_failed: "登录失败."
 password_encrypt_failed: "密码加密失败."
 password_update_failed: "密码更新失败."
@@ -712,3 +713,6 @@ notification_slash_teamup_success_title3: " 砍单成功！你赢了免下注机
 notification_slash_teamup_success_content1: " 你的砍单已经成功，下注金额已返回你的钱包！快来查看详情并参与下一次砍单吧！点击查看 > "
 notification_slash_teamup_success_content2: " 恭喜你，砍单已达成，奖励已入账！快去查看吧！ "
 notification_slash_teamup_success_content3: " 恭喜你，砍单成功！奖励已到账！ "
+
+notification_teamup_start_game_title: "Want to recover your losses?"
+notification_teamup_start_game_content: "We are here to help you. Opt-in to our new campaign and find out to recover this amount into your account."

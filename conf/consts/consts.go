@@ -1,12 +1,13 @@
 package consts
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	"web-api/util/datastructures"
+
+	models "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 const (
-	InHouseGame = 1 // this is internal self-dev games such as dice
+	InHouseGame  = 1 // this is internal self-dev games such as dice
 	ExternalGame = 2 // this is 3rd party sub games
 )
 
@@ -783,4 +784,36 @@ const (
 	SpinBonus   = "spin_bonus"
 	SpinItem    = "spin_item"
 	SpinOthers  = "spin_others"
+)
+
+// 游戏砍单有关
+// 游戏砍单名称 / 图标
+var (
+	GameProviderNameMap = map[string]string{
+		"ba01inr":          "BatAce Original",
+		"SPRIBE_SLOT":      "Spribe",
+		"MICROGAMING_SLOT": "Microgaming",
+		"HS_SLOT":          "Hacksaw Gaming",
+		"JFI0000":          "JFI",
+		"PLAYNGO_SLOT":     "Play'n GO",
+		"evolution":        "Evolution",
+		"Evolution":        "Evolution",
+		"IMOne Slot":       "IMOne Slot",
+		"Mumbai":           "Mumbai",
+		"9Wickets":         "9Wickets",
+	}
+
+	GameProviderNameToImgMap = map[string]string{
+		"ba01inr":          "",
+		"SPRIBE_SLOT":      "",
+		"MICROGAMING_SLOT": "",
+		"HS_SLOT":          "",
+		"JFI0000":          "",
+		"PLAYNGO_SLOT":     "",
+		"evolution":        "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+		"Evolution":        "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+		"IMOne Slot":       "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+		"Mumbai":           "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+		"9Wickets":         "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+	}
 )

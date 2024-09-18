@@ -12,7 +12,7 @@ import (
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
 	"blgit.rfdev.tech/taya/payment-service/foray"
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 )
@@ -166,7 +166,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 			float64(int(1/er.AdjustedExchangeRate*10000))/10000,
 		)
 		cashOrder.TransactionId = &transactionID
-		cashOrder.Status = models.CashOrderStatusPending
+		cashOrder.Status = ploutos.CashOrderStatusPending
 	/** foray (法拉利) **/
 	case "foray":
 		var data foray.PaymentOrderRespData
@@ -202,7 +202,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 			float64(int(1/er.AdjustedExchangeRate*10000))/10000,
 		)
 		cashOrder.TransactionId = &transactionID
-		cashOrder.Status = models.CashOrderStatusPending
+		cashOrder.Status = ploutos.CashOrderStatusPending
 	}
 
 	_ = model.DB.Debug().WithContext(c).Save(&cashOrder)
