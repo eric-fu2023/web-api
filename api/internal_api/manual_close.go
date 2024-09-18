@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func FinpayBackdoor(c *gin.Context) {
+func ManualCloseCashInOrder(c *gin.Context) {
 	var service cashin.ManualCloseService
 	if err := c.ShouldBind(&service); err == nil {
 		if res, err := service.Do(c); err == nil {

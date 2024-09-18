@@ -12,7 +12,7 @@ func InitInternalApi(r *gin.Engine) {
 	internal := r.Group("/internal")
 	{
 		internal.Use(middleware.BrandAgent())
-		internal.POST("/top-up-order/close", middleware.RequestLogger("internal"), internal_api.FinpayBackdoor)
+		internal.POST("/top-up-order/close", middleware.RequestLogger("internal"), internal_api.ManualCloseCashInOrder)
 		internal.POST("/withdraw-order/reject", middleware.RequestLogger("internal"), internal_api.RejectWithdrawal)
 		internal.POST("/withdraw-order/approve", middleware.RequestLogger("internal"), internal_api.ApproveWithdrawal)
 		internal.POST("/withdraw-order/insert", middleware.RequestLogger("internal"), internal_api.CustomOrder)

@@ -21,14 +21,13 @@ func (s ManualCloseService) Do(c *gin.Context) (r serializer.Response, err error
 	if s.TransactionType == 0 {
 		s.TransactionType = 10000
 	}
-	newCashOrderState, cErr := CloseCashInOrder(c, s.OrderNumber, s.ActualAmount, s.BonusAmount, s.AdditionalWagerChange, util.JSON(s), model.DB, s.TransactionType)
-	if cErr != nil {
-		r = serializer.Err(c, s, serializer.CodeGeneralError, "", cErr)
-		err = cErr
+	closedCashInOrder, err := CloseCashInOrder(c, s.OrderNumber, s.ActualAmount, s.BonusAmount, s.AdditionalWagerChange, util.JSON(s), model.DB, s.TransactionType)
+	if err != nil {
+		r = serializer.Err(c, s, serializer.CodeGeneralError, "", err)
 		return
 	}
 	go func() {
-		pErr := on_cash_orders.Handle(c.Copy(), newCashOrderState, s.TransactionType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinPay, on_cash_orders.RequestModeManual)
+		pErr := on_cash_orders.Handle(c.Copy(), closedCashInOrder, s.TransactionType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinpay, on_cash_orders.RequestModeManual)
 		if pErr != nil {
 			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
 		}

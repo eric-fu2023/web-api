@@ -13,7 +13,7 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
@@ -50,7 +50,7 @@ func (s WithdrawOrderService) CreateOrder(c *gin.Context) (r serializer.Response
 	}
 
 	// retrieve user binded account to withdraw
-	var accountBinding models.UserAccountBinding
+	var accountBinding ploutos.UserAccountBinding
 	err = model.DB.Where("user_id", user.ID).Where("is_active").Where("id", s.AccountBindingId).First(&accountBinding).Error
 	if err != nil {
 		return
@@ -76,7 +76,7 @@ func (s WithdrawOrderService) CreateOrder(c *gin.Context) (r serializer.Response
 	}
 
 	var reviewRequired bool = false
-	var cashOrder model.CashOrder
+	var cashOrder ploutos.CashOrder
 	vip, err := model.GetVipWithDefault(c, user.ID)
 	if err != nil {
 		return
@@ -211,7 +211,7 @@ var (
 	ErrCashMethodNotAvailable = errors.New("cash method limit exceeded")
 )
 
-func vipRuleOK(rule models.VIPRule, payoutCount, amount, totalAmount int64) (bool, string) {
+func vipRuleOK(rule ploutos.VIPRule, payoutCount, amount, totalAmount int64) (bool, string) {
 	if amount > rule.WithdrawAmount {
 		return true, formatMsg("max single withdraw amount exceeded")
 	}

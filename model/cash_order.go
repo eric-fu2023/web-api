@@ -16,30 +16,32 @@ import (
 
 type CashOrder struct {
 	ploutos.CashOrder
+
+	CashMethod        ploutos.CashMethod        `gorm:"foreignKey:CashMethodId;references:ID"`
+	CashMethodChannel ploutos.CashMethodChannel `gorm:"foreignKey:CashMethodChannelId;references:ID"`
 }
 
-func NewCashInOrder(userID, CashMethodId, CashMethodChannelId, amount, balanceBefore, wagerChange int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) CashOrder {
-	return CashOrder{
-		ploutos.CashOrder{
-			ID:                  ploutos.GenerateCashInOrderNo(),
-			UserId:              userID,
-			CashMethodId:        CashMethodId,
-			CashMethodChannelId: CashMethodChannelId,
-			OrderType:           1,
-			Status:              ploutos.CashOrderStatusPending,
-			AppliedCashInAmount: amount,
-			BalanceBefore:       balanceBefore,
-			WagerChange:         wagerChange,
-			//Notes:, update later
-			CurrencyCode:         currency,
-			ExchangeRate:         exchangerRate,
-			ExchangeRateAdjusted: exchangerRateAdjusted,
-			Ip:                   ip,
-		},
+func NewCashInOrder(userID, CashMethodId, CashMethodChannelId, amount, balanceBefore, wagerChange int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) ploutos.CashOrder {
+	return ploutos.CashOrder{
+		ID:                  ploutos.GenerateCashInOrderNo(),
+		UserId:              userID,
+		CashMethodId:        CashMethodId,
+		CashMethodChannelId: CashMethodChannelId,
+		OrderType:           1,
+		Status:              ploutos.CashOrderStatusPending,
+		AppliedCashInAmount: amount,
+		BalanceBefore:       balanceBefore,
+		WagerChange:         wagerChange,
+		//Notes:, update later
+		CurrencyCode:         currency,
+		ExchangeRate:         exchangerRate,
+		ExchangeRateAdjusted: exchangerRateAdjusted,
+		Ip:                   ip,
 	}
+
 }
 
-func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingId int64, remark string, reviewRequired bool, ip string) CashOrder {
+func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingId int64, remark string, reviewRequired bool, ip string) ploutos.CashOrder {
 	var orderStatus = ploutos.CashOrderStatusPendingRiskCheck
 	var approveStatus int64
 	var reviewStatus int64
@@ -49,24 +51,28 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBinding
 		reviewStatus = 1
 	}
 
-	return CashOrder{
-		ploutos.CashOrder{
-			ID:                   ploutos.GenerateCashOutOrderNo(),
-			UserId:               userID,
-			CashMethodId:         CashMethodId,
-			OrderType:            -1,
-			Status:               orderStatus,
-			AppliedCashOutAmount: amount,
-			BalanceBefore:        balanceBefore,
-			Remark:               remark,
-			RequireReview:        reviewRequired,
-			ApproveStatus:        approveStatus,
-			ReviewStatus:         reviewStatus,
-			//Notes:, update later
-			Ip:                   ip,
-			UserAccountBindingId: accountBindingId,
-		},
+	return ploutos.CashOrder{
+		ID:                   ploutos.GenerateCashOutOrderNo(),
+		UserId:               userID,
+		CashMethodId:         CashMethodId,
+		OrderType:            -1,
+		Status:               orderStatus,
+		AppliedCashOutAmount: amount,
+		BalanceBefore:        balanceBefore,
+		Remark:               remark,
+		RequireReview:        reviewRequired,
+		ApproveStatus:        approveStatus,
+		ReviewStatus:         reviewStatus,
+		//Notes:, update later
+		Ip:                   ip,
+		UserAccountBindingId: accountBindingId,
 	}
+}
+
+func (CashOrder) Find(orderId string) (c *CashOrder, err error) {
+	var cashOrder CashOrder
+	err = DB.Preload("CashMethod").Preload("CashMethodChannel").Where("id", orderId).Find(&cashOrder).Error
+	return
 }
 
 func (CashOrder) GetPendingOrPeApWithLockWithDB(orderID string, tx *gorm.DB) (c CashOrder, err error) {
