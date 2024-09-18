@@ -52,10 +52,10 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 		return fmt.Errorf("unsupported event type: %d", eventType)
 	}
 	// validate payment channel
-	switch cashOrder.CashMethod.Gateway {
+	switch cashOrder.CashMethodChannel.Gateway {
 	case PaymentGatewayFinpay, PaymentGatewayForay:
 	default:
-		return fmt.Errorf("unsupported gateway: %s", cashOrder.CashMethod.Gateway)
+		return fmt.Errorf("unsupported gateway: %s", cashOrder.CashMethodChannel.Gateway)
 	}
 	// one time bonus if it's cash in
 	if transactionType == ploutos.TransactionTypeCashIn {
