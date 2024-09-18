@@ -36,7 +36,8 @@ type TeamupCustomRes []struct {
 	AwayIcon            string  `json:"away_icon"`
 	AwayName            string  `json:"away_name"`
 	Status              int64   `json:"status"`
-	Provider            string  `json:"status"`
+	Provider            string  `json:"provider"`
+	TeamupType          int64   `json:"teamup_type"`
 
 	MarketName string `json:"market_name"`
 	OptionName string `json:"option_name"`
@@ -70,6 +71,8 @@ type OutgoingTeamupCustomRes []struct {
 	AwayName            string      `json:"away_name"`
 	Status              int64       `json:"status"`
 	HasJoined           bool        `json:"has_joined"`
+	Provider            string      `json:"provider"`
+	TeamupType          int64       `json:"teamup_type"`
 
 	MarketName string `json:"market_name"`
 	OptionName string `json:"option_name"`

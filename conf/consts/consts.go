@@ -797,15 +797,23 @@ var (
 		"JFI0000":          "JFI",
 		"PLAYNGO_SLOT":     "Play'n GO",
 		"evolution":        "Evolution",
+		"Evolution":        "Evolution",
+		"IMOne Slot":       "IMOne Slot",
+		"Mumbai":           "Mumbai",
+		"9Wickets":         "9Wickets",
 	}
 
 	GameProviderNameToImgMap = map[string]string{
-		"ba01inr":          "https://cdn.tayalive.com/temp/aha/stream/1.jpg",
-		"SPRIBE_SLOT":      "https://cdn.tayalive.com/temp/aha/stream/2.jpg",
-		"MICROGAMING_SLOT": "https://cdn.tayalive.com/temp/aha/stream/3.jpg",
-		"HS_SLOT":          "https://cdn.tayalive.com/temp/aha/stream/4.jpg",
-		"JFI0000":          "https://cdn.tayalive.com/temp/aha/stream/5.jpg",
-		"PLAYNGO_SLOT":     "https://cdn.tayalive.com/temp/aha/stream/6.jpg",
+		"ba01inr":          "",
+		"SPRIBE_SLOT":      "",
+		"MICROGAMING_SLOT": "",
+		"HS_SLOT":          "",
+		"JFI0000":          "",
+		"PLAYNGO_SLOT":     "",
 		"evolution":        "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+		"Evolution":        "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+		"IMOne Slot":       "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+		"Mumbai":           "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+		"9Wickets":         "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
 	}
 )
