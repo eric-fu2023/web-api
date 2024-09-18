@@ -64,6 +64,14 @@ type TeamupNotificationResp struct {
 	TeamupId int64 `json:"teamup_id"`
 }
 
+type TeamupGamePopUpNotification struct {
+	Amount       int64  `json:"amount"`
+	Icon         string `json:"icon"`
+	ProviderName string `json:"provider_name"`
+	StartTime    int64  `json:"start_time"`
+	TeamupId     int64  `json:"teamup_id"`
+}
+
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	// i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")

@@ -19,11 +19,12 @@ import (
 )
 
 const (
-	vipPromoteNote = "vip_promotion"
-	popUpNote      = "popup_winlose"
-	spinNote       = "spin"
-	minIndex       = 0
-	maxIndex       = 2
+	TEAMUP_GAME_POPUP_NOTIFICATION_TYPE = "popup_teamup_game"
+	vipPromoteNote                      = "vip_promotion"
+	popUpNote                           = "popup_winlose"
+	spinNote                            = "spin"
+	minIndex                            = 0
+	maxIndex                            = 2
 )
 
 type InternalNotificationPushRequest struct {
@@ -36,6 +37,7 @@ type InternalNotificationPushAllRequest struct {
 	Lang   string            `form:"lang" json:"lang" binding:"required"`
 	Params map[string]string `form:"params" json:"params"`
 }
+
 func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Response) {
 	var notificationType, title, text string
 	var resp serializer.Response
@@ -107,8 +109,29 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 		}
 
 		log.Printf("response data for win lose pop up: %+v", resp.Data)
+
+	case TEAMUP_GAME_POPUP_NOTIFICATION_TYPE:
+		notificationType = p.Type
+		amount, _ := strconv.ParseInt(p.Params["amount"], 10, 64)
+		startTime, _ := strconv.ParseInt(p.Params["start_time"], 10, 64)
+		teamupId, _ := strconv.ParseInt(p.Params["teamup_id"], 10, 64)
+
+		var resp serializer.Response
+
+		resp.Data = TeamupGamePopUpNotification{
+			TeamupId:     int64(teamupId),
+			StartTime:    int64(startTime),
+			Amount:       int64(amount) / 100,
+			ProviderName: consts.GameProviderNameToImgMap[p.Params["provider"]],
+			Icon:         consts.GameProviderNameMap[p.Params["provider"]],
+		}
+
+		title = conf.GetI18N(lang).T("notification_teamup_start_game_title")
+		text = conf.GetI18N(lang).T("notification_teamup_start_game_content")
+
 	}
-	common.SendNotification(p.UserID, notificationType, title, text, resp)
+	common.SendNotification(455, notificationType, title, text, resp)
+	// common.SendNotification(p.UserID, notificationType, title, text, resp)
 	r.Data = "Success"
 	return
 }
@@ -116,7 +139,7 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 func (p InternalNotificationPushAllRequest) HandleAll(c *gin.Context) (r serializer.Response) {
 	var resp serializer.Response
 
-	lang:=p.Lang
+	lang := p.Lang
 	notificationType := consts.Notification_Type_Spin
 	spinTitle := []string{conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_FIRST_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_SECOND_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_THIRD_TITLE)}
 	spinDesc := []string{conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_FIRST_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_SECOND_DESC), conf.GetI18N(lang).T(common.NOTIFICATION_SPIN_THIRD_DESC)}
@@ -177,7 +200,7 @@ func SpinMetadata() (PopupSpinId, []PopupFloat, error) {
 	var floats []PopupFloat
 	var spin_promotion_id_int int
 	for _, popup_type := range popup_types {
-		if popup_type.PopupType == 5 && popup_type.CanFloat{
+		if popup_type.PopupType == 5 && popup_type.CanFloat {
 			// spin popup float
 			spin_promotion_id_int, _ = strconv.Atoi(popup_type.Meta)
 			// user still can spin, then we add the spin popup to float list.

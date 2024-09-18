@@ -712,3 +712,6 @@ notification_slash_teamup_success_title3: " Team Up success! "
 notification_slash_teamup_success_content1: " Your team up activity is successful! The bonus has been credited to your wallet! Check it out!"
 notification_slash_teamup_success_content2: " Congratulations! Team up activity is successful and your bonus has been credited! "
 notification_slash_teamup_success_content3: " Congratulations! Team up activity successful! The rewards are in your account now!"
+
+notification_teamup_start_game_title: "Want to recover your losses?"
+notification_teamup_start_game_content: "We are here to help you. Opt-in to our new campaign and find out to recover this amount into your account."
