@@ -36,8 +36,13 @@ func Claim(ctx context.Context, now time.Time, promotion models.Promotion, sessi
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "Unavailable for now", err)
 		return
 	}
-	progress = GetPromotionSessionProgress(ctx, promotion, session, userID, now)
-	reward, meetGapType, vipIncrementDetail, err := RewardByPromotionType(ctx, promotion, userID, progress, now, user)
+	progress, err = GetPromotionSessionProgress(ctx, promotion, session, userID)
+	// FIXME
+	// to remove error suppression
+	if !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
+		return voucher, err
+	}
+	reward, meetGapType, vipIncrementDetail, err := GetPromotionRewards(ctx, promotion, userID, progress, now, user)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
