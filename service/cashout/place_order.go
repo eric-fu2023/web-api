@@ -31,7 +31,7 @@ type WithdrawOrderService struct {
 	SecondaryPassword string  `form:"secondary_password" json:"secondary_password" binding:"required"`
 }
 
-func (s WithdrawOrderService) Do(c *gin.Context) (r serializer.Response, err error) {
+func (s WithdrawOrderService) CreateOrder(c *gin.Context) (r serializer.Response, err error) {
 	brand := c.MustGet(`_brand`).(int)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	user := c.MustGet("user").(model.User)
