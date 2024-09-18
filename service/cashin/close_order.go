@@ -2,8 +2,6 @@ package cashin
 
 import (
 	"context"
-	"log"
-	"strconv"
 
 	"web-api/conf/consts"
 	"web-api/model"
@@ -39,7 +37,6 @@ import (
 // WagerChange -- only special cases
 // Account
 // Remark
-
 func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes string, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
 	var newCashOrderState model.CashOrder
 	err = txDB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
@@ -53,22 +50,19 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		newCashOrderState.Notes = models.EncryptedStr(notes)
 		newCashOrderState.WagerChange += additionalWagerChange
 		newCashOrderState.Status = models.CashOrderStatusSuccess
-		updatedCashOrder, err = closeOrder(c, orderNumber, newCashOrderState, tx, transactionType)
+		updatedCashOrder, err = closeOrder(newCashOrderState, tx, transactionType)
 		if err != nil {
 			return
 		}
 
-		// 查看是否有砍单记录，添加进度到砍单任务
-		// go calculateTeamupSlashProgress(newCashOrderState.AppliedCashInAmount, newCashOrderState.UserId)
 		return
 	})
 
 	return
 }
 
-func closeOrder(c *gin.Context, orderNumber string, newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
+func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
 	// update cash order
-
 	err = txDB.Omit(clause.Associations).Updates(newCashOrderState).Error
 	// modify user sum
 	if err != nil {
@@ -107,29 +101,4 @@ func HandleSmPixelReporting(c context.Context, order model.CashOrder) {
 	}
 
 	social_media_pixel.ReportPayment(c, user, paymentDetails)
-}
-
-func calculateTeamupSlashProgress(appliedCashInAmount, userId int64) {
-	slashMultiplierString, err := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
-	if err != nil {
-		log.Printf("Get Slash Multiplier err - %v \n", err)
-		return
-	}
-	slashMultiplier, err := strconv.Atoi(slashMultiplierString)
-	if err != nil {
-		log.Printf("Get Slash Multiplier err - %v \n", err)
-		return
-	}
-
-	if appliedCashInAmount < int64(slashMultiplier) {
-		return
-	}
-
-	// Convert cash amount into slash progress by dividing multiplier
-	contributedSlashProgress := appliedCashInAmount / int64(slashMultiplier)
-	err = model.GetTeamupProgressToUpdate(userId, appliedCashInAmount, contributedSlashProgress)
-	if err != nil {
-		log.Print(err.Error())
-		return
-	}
 }

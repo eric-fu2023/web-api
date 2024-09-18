@@ -6,6 +6,8 @@ import (
 	"web-api/util/i18n"
 
 	"github.com/shopspring/decimal"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 type TopupOrder struct {
@@ -41,7 +43,7 @@ type WithdrawOrder struct {
 	OrderNumber         string `json:"order_number"`
 }
 
-func BuildWithdrawOrder(p model.CashOrder) WithdrawOrder {
+func BuildWithdrawOrder(p ploutos.CashOrder) WithdrawOrder {
 	txnID := ""
 	if p.TransactionId != nil {
 		txnID = *p.TransactionId

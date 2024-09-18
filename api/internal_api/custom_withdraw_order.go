@@ -3,7 +3,6 @@ package internal_api
 import (
 	"web-api/serializer"
 	"web-api/service/cashout"
-	cashout_finpay "web-api/service/cashout/finpay"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,7 +21,7 @@ func CustomOrder(c *gin.Context) {
 }
 
 func ManualCloseCashOut(c *gin.Context) {
-	var service cashout_finpay.ManualCloseOrderService
+	var service cashout.ManualCloseOrderService
 	if err := c.ShouldBind(&service); err == nil {
 		if res, err := service.Do(c); err == nil {
 			c.JSON(200, res)
