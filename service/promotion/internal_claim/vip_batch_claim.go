@@ -2,6 +2,7 @@ package internalclaim
 
 import (
 	"time"
+
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/promotion"
@@ -31,7 +32,7 @@ func (p VipBatchClaimRequest) Handle(c *gin.Context) (r serializer.Response, err
 	}
 	// tz := time.FixedZone("local", int(promotion.Timezone))
 	// now = now.In(tz)
-	session, err := model.PromotionSessionGetActive(c, p.PromotionID, now)
+	session, err := model.GetActivePromotionSession(c, p.PromotionID, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return

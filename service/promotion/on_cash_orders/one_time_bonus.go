@@ -38,12 +38,12 @@ func OneTimeBonusPromotion(ctx context.Context, order model.CashOrder) {
 		return
 	}
 	now := time.Now()
-	p, err := model.PromotionGetActive(context.TODO(), int(user.BrandId), int64(promotionId), now)
+	p, err := model.OngoingPromotionById(context.TODO(), int(user.BrandId), int64(promotionId), now)
 	if err != nil {
 		util.GetLoggerEntry(ctx).Error("get promotion error", err)
 		return
 	}
-	s, err := model.PromotionSessionGetActive(context.TODO(), p.ID, now)
+	s, err := model.GetActivePromotionSession(context.TODO(), p.ID, now)
 	if err != nil {
 		util.GetLoggerEntry(ctx).Error("get promotion session error", err)
 		return

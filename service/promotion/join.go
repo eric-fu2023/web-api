@@ -31,7 +31,7 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 
 	var errorFields []int64
 
-	promotion, err := model.PromotionGetActive(c, brand, p.PromotionId, now)
+	promotion, err := model.OngoingPromotionById(c, brand, p.PromotionId, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_not_found"), err)
 		return

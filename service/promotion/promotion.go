@@ -2,13 +2,16 @@ package promotion
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
+
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -44,24 +47,26 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 		user = u.(model.User)
 	}
 
-	list, err := model.PromotionList(c, brand, now)
+	promotions, err := model.OngoingPromotions(c, brand, now)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
-	parentIdToPromotionMap := make(map[int64][]serializer.PromotionCover)
-	promotionCoverList := []serializer.PromotionCover{}
-	for _, promotion := range list {
+	childPromotionCoversMap := make(map[int64][]serializer.PromotionCover)
+	promotionCovers := []serializer.PromotionCover{}
+	for _, promotion := range promotions {
 		isAllowDevice := false
 		// Skip if not allow device.platform
-		if len(promotion.DisplayDevices) != 0 {
-			for _, allowedDevices := range promotion.DisplayDevices {
-				if PromotionDevice[deviceInfo.Platform] == models.PromotionDeviceType(allowedDevices) {
+		switch allowedDevices := promotion.DisplayDevices; len(allowedDevices) {
+		case 0:
+			isAllowDevice = true
+		default:
+			for _, allowedDevice := range allowedDevices {
+				if PromotionDevice[deviceInfo.Platform] == models.PromotionDeviceType(allowedDevice) {
 					isAllowDevice = true
+					break
 				}
 			}
-		} else {
-			isAllowDevice = true
 		}
 
 		if !isAllowDevice {
@@ -74,23 +79,23 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 			_ = json.Unmarshal(promotionCover.SubpageContent, &content)
 			promotionCover.Name = content.Title
 			promotionCover.Title = content.Title
-			parentIdToPromotionMap[promotion.ParentId] = append(parentIdToPromotionMap[promotion.ParentId], promotionCover)
+			childPromotionCoversMap[promotion.ParentId] = append(childPromotionCoversMap[promotion.ParentId], promotionCover)
 		} else {
 			if promotion.LoginStatus == int32(models.CustomPromotionLoginStatusAny) || (promotion.LoginStatus == int32(models.CustomPromotionLoginStatusLogin) && user.ID != 0) {
-				promotionCoverList = append(promotionCoverList, promotionCover)
+				promotionCovers = append(promotionCovers, promotionCover)
 			}
 		}
 	}
 
-	for i, promotionCover := range promotionCoverList {
-		childrenPromotions, exists := parentIdToPromotionMap[promotionCover.ID]
+	for i, promotionCover := range promotionCovers {
+		childrenPromotions, exists := childPromotionCoversMap[promotionCover.ID]
 		if exists {
-			promotionCoverList[i].IsCustom = false
-			promotionCoverList[i].ChildrenPromotions = childrenPromotions
+			promotionCovers[i].IsCustom = false
+			promotionCovers[i].ChildrenPromotions = childrenPromotions
 		}
 	}
 
-	r.Data = promotionCoverList
+	r.Data = promotionCovers
 	return
 }
 
@@ -99,21 +104,15 @@ type PromotionDetail struct {
 }
 
 func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err error) {
-	//ctx := contextify.AppendCtx(context.Background(), contextify.DefaultContextKey, fmt.Sprintf("%d (p PromotionDetail) Handle ", time.Now().UnixNano()))
 	now := time.Now()
-	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("now %#v", now.String()))
 
 	brand := gCtx.MustGet(`_brand`).(int)
-	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("brand %#v", brand))
 
-	u, loggedIn := gCtx.Get("user")
-	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("loggedIn %#v", loggedIn))
+	u, hasUserInfo := gCtx.Get("user")
 
 	user, _ := u.(model.User)
-	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("user %#v", user))
 
 	deviceInfo, _ := util.GetDeviceInfo(gCtx)
-	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("deviceInfo %#v", deviceInfo))
 
 	var promotion models.Promotion
 	if p.ID == 99999 {
@@ -122,26 +121,20 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			Type: models.PromotionTypeNewbie,
 		}
 	} else {
-		promotion, err = model.PromotionGetActive(gCtx, brand, p.ID, now)
-
-		//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("[model.PromotionGetActive = promotion %v, promotion type %v,err %#v]", promotion, promotion.Type, err))
+		promotion, err = model.OngoingPromotionById(gCtx, brand, p.ID, now)
 	}
 
 	if err != nil {
 		r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", err)
-		//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("err != nil .returning err %#v", r))
 		return
 	}
-	// tz := time.FixedZone("local", int(promotion.Timezone))
-	// now = now.In(tz)
-
 	var (
-		progress    int64
-		reward      int64
-		claimStatus serializer.ClaimStatus
-		voucherView serializer.Voucher
-		extra       any
-		session     models.PromotionSession
+		progress      int64
+		reward        int64
+		claimStatus   serializer.ClaimStatus
+		voucherView   serializer.Voucher
+		extra         any
+		activeSession models.PromotionSession
 
 		customData any
 		newbieData any
@@ -156,34 +149,31 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		newbieData = serializer.BuildDummyNewbiePromotion()
 
 	default: // default promotion type..
-		_session, err := model.PromotionSessionGetActive(gCtx, p.ID, now)
-		if err != nil {
-			r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", err)
-			return r, err
+		_session, activeSessionError := model.GetActivePromotionSession(gCtx, p.ID, now)
+		if activeSessionError != nil {
+			r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", activeSessionError)
+			return r, activeSessionError
 		}
-		session = _session
-		if loggedIn {
-			progress = ProgressByType(gCtx, promotion, session, user.ID, now)
-			claimStatus = ClaimStatusByType(gCtx, promotion, session, user.ID, now)
-			reward, _, _, err = RewardByType(gCtx, promotion, session, user.ID, progress, now, &user)
-			extra = ExtraByType(gCtx, promotion, session, user.ID, progress, now)
-			//ctx = contextify.AppendCtx(gCtx, contextify.DefaultContextKey, fmt.Sprintf("default promo type, user logged in. progress %#v, claimStatus %#v, reward %#v, extra %#v",
-			//	progress,
-			//	claimStatus,
-			//	reward,
-			//	extra,
-			//))
-
-			//log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
+		activeSession = _session
+		if hasUserInfo {
+			progress, err = GetPromotionSessionProgress(gCtx, promotion, activeSession, user.ID)
+			// FIXME
+			// to remove error suppression
+			if !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
+				return r, err
+			}
+			claimStatus = GetPromotionSessionClaimStatus(gCtx, promotion, activeSession, user.ID, now)
+			reward, _, _, err = GetPromotionRewards(gCtx, promotion, user.ID, progress, now, &user)
+			extra = GetPromotionExtraDetails(gCtx, promotion, activeSession, user.ID, progress, now)
 		}
 		if claimStatus.HasClaimed {
-			v, err := model.VoucherGetByUserSession(gCtx, user.ID, session.ID)
+			v, err := model.VoucherGetByUserAndPromotionSession(gCtx, user.ID, activeSession.ID)
 			if err != nil {
 			} else {
 				voucherView = serializer.BuildVoucher(v, deviceInfo.Platform)
 			}
 		} else {
-			v, err := model.VoucherTemplateGetByPromotion(gCtx, p.ID)
+			v, err := model.GetPromotionVoucherTemplateByPromotionId(gCtx, p.ID)
 			if err != nil {
 			} else {
 				voucherView = serializer.BuildVoucherFromTemplate(v, reward, deviceInfo.Platform)
@@ -191,11 +181,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		}
 	}
 
-	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, session, voucherView, claimStatus, extra, customData, newbieData)
-
-	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("r.Data %#v", r.Data))
-	//log.Printf("%s\n", ctx.Value(contextify.DefaultContextKey))
-
+	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, activeSession, voucherView, claimStatus, extra, customData, newbieData)
 	return
 }
 
@@ -229,7 +215,7 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		parentPromotion = promotion
 	} else {
 		outgoingRes.IsCustomPromotion = false
-		parentPromotion, err = model.PromotionGetActive(c, brand, promotion.ParentId, now)
+		parentPromotion, err = model.OngoingPromotionById(c, brand, promotion.ParentId, now)
 		if err != nil {
 			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 			return

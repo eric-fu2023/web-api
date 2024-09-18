@@ -18,7 +18,7 @@ import (
 	"web-api/service/common"
 	"web-api/util"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/chenyahui/gin-cache/persist"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -29,9 +29,9 @@ const (
 	birthdayBonusRewardCacheKey = "birthday_bonus_reward_cache_key:%d"
 )
 
-func RewardByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time, user *model.User) (reward, meetGapType int64, vipIncrementDetail models.VipIncrementDetail, err error) {
+func GetPromotionRewards(c context.Context, p ploutos.Promotion, userID, progress int64, now time.Time, user *model.User) (reward, vipMeetGapType int64, vipIncrementDetail ploutos.VipIncrementDetail, err error) {
 	switch p.Type {
-	case models.PromotionTypeVipBirthdayB:
+	case ploutos.PromotionTypeVipBirthdayB:
 		rErr := cache.RedisStore.Get(fmt.Sprintf(birthdayBonusRewardCacheKey, userID), &reward)
 		if errors.Is(rErr, persist.ErrCacheMiss) {
 			if user == nil {
@@ -42,79 +42,83 @@ func RewardByType(c context.Context, p models.Promotion, s models.PromotionSessi
 			}
 		}
 		err = rErr
-	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
+	case ploutos.PromotionTypeVipRebate, ploutos.PromotionTypeVipPromotionB, ploutos.PromotionTypeVipWeeklyB:
 		r := getSameDayVipRewardRecord(model.DB.Debug(), userID, p.ID)
 		reward = r.Amount
-	case models.PromotionTypeVipReferral:
+	case ploutos.PromotionTypeVipReferral:
 		reward = rewardVipReferral(c, userID, now)
 	default:
-		var vip models.VipRecord
+		var vip ploutos.VipRecord
 		vip, err = model.GetVipWithDefault(c, userID)
 		if err != nil {
 			return
 		}
-		reward, meetGapType, vipIncrementDetail = p.GetRewardDetails().GetReward(progress, vip.VipRule.VIPLevel)
+		reward, vipMeetGapType, vipIncrementDetail = p.GetRewardDetails().GetReward(progress, vip.VipRule.VIPLevel)
 	}
 	return
 }
 
-func ProgressByType(ctx context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (progress int64) {
-	//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("ProgressByType() p.Type %d", p.Type))
+var ErrPromotionSessionUnknownPromotionType = errors.New("unknown promotion type for calculating progress. please explicit express promotion type")
+
+// GetPromotionSessionProgress
+func GetPromotionSessionProgress(ctx context.Context, p ploutos.Promotion, s ploutos.PromotionSession, userID int64) (int64, error) {
 	switch p.Type {
-	// not necessary
-	// case models.PromotionTypeVipReferral, models.PromotionTypeVipRebate:
-	// 	//separate handling based on separate table
-	case models.PromotionTypeVipWeeklyB:
+	case ploutos.PromotionTypeVipWeeklyB:
 		//may need to check deposit requirement + vip
 		vip, _ := model.GetVipWithDefault(ctx, userID)
-		progress = vip.VipRule.VIPLevel
+		return vip.VipRule.VIPLevel, nil
 		// not necessary
-	// case models.PromotionTypeVipBirthdayB, models.PromotionTypeVipPromotionB:
+	// case ploutos.PromotionTypeVipBirthdayB, ploutos.PromotionTypeVipPromotionB:
 	// 	vip, _ := model.GetVipWithDefault(c, userID)
 	// 	progress = vip.VipRule.VIPLevel
-	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
+	case ploutos.PromotionTypeFirstDepB, ploutos.PromotionTypeFirstDepIns:
 		order, err := model.FirstTopup(ctx, userID)
-		//ctx = contextify.AppendCtx(ctx, contextify.DefaultContextKey, fmt.Sprintf("model.FirstTopup(ctx, userID) = order %#v, err %v", order, err))
 		if util.IsGormNotFound(err) {
-			return
+			return 0, err
 		} else if err != nil {
-			return
+			return 0, err
 		}
-		progress = order.AppliedCashInAmount
+		progress := order.AppliedCashInAmount
 		log.Printf("progress is %d, userid %d order %d", progress, userID, order)
-	case models.PromotionTypeReDepB:
+		return order.AppliedCashInAmount, nil
+	case ploutos.PromotionTypeReDepB:
+
 		orders, err := model.ScopedTopupExceptAllTimeFirst(ctx, userID, s.TopupStart, s.TopupEnd)
 		if err != nil {
-			return
+			return 0, err
 		}
-		progress = util.Reduce(orders, func(amount int64, input model.CashOrder) int64 {
+		return util.Reduce(orders, func(amount int64, input model.CashOrder) int64 {
 			return amount + input.AppliedCashInAmount
-		}, 0)
-	case models.PromotionTypeReDepIns:
+		}, 0), nil
+	case ploutos.PromotionTypeReDepIns:
 		orders, err := model.ScopedTopupExceptAllTimeFirst(ctx, userID, s.TopupStart, s.TopupEnd)
 		if err != nil {
-			return
+			return 0, err
 		}
+
+		var progress int64 = 0
 		for _, o := range orders {
 			if progress < o.AppliedCashInAmount {
 				progress = o.AppliedCashInAmount
 			}
 		}
+		return progress, nil
 	}
-	return
+
+	return 0, ErrPromotionSessionUnknownPromotionType
 }
 
-func ClaimStatusByType(c context.Context, p models.Promotion, s models.PromotionSession, userID int64, now time.Time) (claim serializer.ClaimStatus) {
+func GetPromotionSessionClaimStatus(c context.Context, p ploutos.Promotion, s ploutos.PromotionSession, userID int64, now time.Time) (claim serializer.ClaimStatus) {
 	claim.ClaimStart = s.ClaimStart.Unix()
 	claim.ClaimEnd = s.ClaimEnd.Unix()
 	switch p.Type {
-	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB, models.PromotionTypeVipBirthdayB:
-		v, err := model.VoucherGetByUniqueID(c, models.GenerateVoucherUniqueId(p.Type, p.ID, s.ID, userID, 0, buildSuffixByType(c, p, userID)))
+	case ploutos.PromotionTypeVipRebate, ploutos.PromotionTypeVipPromotionB, ploutos.PromotionTypeVipWeeklyB, ploutos.PromotionTypeVipBirthdayB:
+		v, err := model.VoucherGetByUniqueID(c, ploutos.GenerateVoucherUniqueId(p.Type, p.ID, s.ID, userID, 0, buildSuffixByType(c, p, userID)))
 		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		}
-	case models.PromotionTypeFirstDepB, models.PromotionTypeFirstDepIns:
-		v, err := model.VoucherGetByUserSession(c, userID, s.ID)
+	case ploutos.PromotionTypeFirstDepB, ploutos.PromotionTypeFirstDepIns:
+		v, err := model.VoucherGetByUserAndPromotionSession(c, userID, s.ID)
 		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		} else {
@@ -124,7 +128,7 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 			}
 		}
 	default:
-		v, err := model.VoucherGetByUserSession(c, userID, s.ID)
+		v, err := model.VoucherGetByUserAndPromotionSession(c, userID, s.ID)
 		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		}
@@ -132,12 +136,12 @@ func ClaimStatusByType(c context.Context, p models.Promotion, s models.Promotion
 	return
 }
 
-func ClaimVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, userID, promotionRequestID int64, rewardAmount int64, now time.Time, meetGapType int64, vipIncrementDetail models.VipIncrementDetail) (voucher models.Voucher, err error) {
+func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.PromotionSession, v ploutos.VoucherTemplate, userID, promotionRequestID int64, rewardAmount int64, now time.Time, meetGapType int64, vipIncrementDetail ploutos.VipIncrementDetail) (voucher ploutos.Voucher, err error) {
 	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, promotionRequestID, now, meetGapType, vipIncrementDetail)
 	lang := model.GetUserLang(userID)
 
 	switch p.Type {
-	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeOneTimeDepB:
+	case ploutos.PromotionTypeFirstDepB, ploutos.PromotionTypeReDepB, ploutos.PromotionTypeBeginnerB, ploutos.PromotionTypeOneTimeDepB:
 		//add money and insert voucher
 		// add cash order
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
@@ -150,14 +154,14 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 			if err != nil {
 				return err
 			}
-			if p.Type == models.PromotionTypeBeginnerB {
-				err = model.CreateUserAchievement(userID, models.UserAchievementIdFirstAppLoginReward)
+			if p.Type == ploutos.PromotionTypeBeginnerB {
+				err = model.CreateUserAchievement(userID, ploutos.UserAchievementIdFirstAppLoginReward)
 				if err != nil {
 					return err
 				}
 			}
-			if p.Type == models.PromotionTypeOneTimeDepB {
-				err = model.CreateUserAchievement(userID, models.UserAchievementIdFirstDepositBonusReward)
+			if p.Type == ploutos.PromotionTypeOneTimeDepB {
+				err = model.CreateUserAchievement(userID, ploutos.UserAchievementIdFirstDepositBonusReward)
 				if err != nil {
 					return err
 				}
@@ -167,12 +171,12 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		if err == nil {
 			common.SendCashNotificationWithoutCurrencyId(userID, consts.Notification_Type_Deposit_Bonus, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_BONUS_SUCCESS, rewardAmount)
 		}
-	case models.PromotionTypeVipReferral:
+	case ploutos.PromotionTypeVipReferral:
 		err = claimVoucherReferralVip(c, p, voucher, userID, now)
 		if err == nil {
 			common.SendNotification(userID, consts.Notification_Type_Referral_Alliance, conf.GetI18N(lang).T(common.NOTIFICATION_REFERRAL_ALLIANCE_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_REFERRAL_ALLIANCE))
 		}
-	case models.PromotionTypeVipBirthdayB:
+	case ploutos.PromotionTypeVipBirthdayB:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 			wagerChange := voucher.WagerMultiplier * rewardAmount
 			err = CreateCashOrder(tx, p.Type, userID, rewardAmount, wagerChange, "", "")
@@ -188,7 +192,7 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		if err == nil {
 			common.SendNotification(userID, consts.Notification_Type_Birthday_Bonus, conf.GetI18N(lang).T(common.NOTIFICATION_BIRTHDAY_BONUS_SUCCESS_TITLE), conf.GetI18N(lang).T(common.NOTIFICATION_BIRTHDAY_BONUS_SUCCESS))
 		}
-	case models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB:
+	case ploutos.PromotionTypeVipRebate, ploutos.PromotionTypeVipPromotionB, ploutos.PromotionTypeVipWeeklyB:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 			wagerChange := voucher.WagerMultiplier * rewardAmount
 			err = CreateCashOrder(tx, p.Type, userID, rewardAmount, wagerChange, "", "")
@@ -209,25 +213,25 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		if err == nil {
 			var nType, title, text string
 			switch p.Type {
-			case models.PromotionTypeVipRebate:
+			case ploutos.PromotionTypeVipRebate:
 				nType = consts.Notification_Type_Rebate
 				title = conf.GetI18N(lang).T(common.NOTIFICATION_REBATE_TITLE)
 				text = conf.GetI18N(lang).T(common.NOTIFICATION_REBATE)
-			case models.PromotionTypeVipPromotionB:
+			case ploutos.PromotionTypeVipPromotionB:
 				nType = consts.Notification_Type_Vip_Promotion_Bonus
 				title = conf.GetI18N(lang).T(common.NOTIFICATION_VIP_PROMOTION_BONUS_TITLE)
 				text = conf.GetI18N(lang).T(common.NOTIFICATION_VIP_PROMOTION_BONUS)
-			case models.PromotionTypeVipWeeklyB:
+			case ploutos.PromotionTypeVipWeeklyB:
 				nType = consts.Notification_Type_Weekly_Bonus
 				title = conf.GetI18N(lang).T(common.NOTIFICATION_WEEKLY_BONUS_TITLE)
 				text = conf.GetI18N(lang).T(common.NOTIFICATION_WEEKLY_BONUS)
 			}
 			common.SendNotification(userID, nType, title, text)
 		}
-	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
+	case ploutos.PromotionTypeFirstDepIns, ploutos.PromotionTypeReDepIns:
 		//insert voucher only
 		err = model.DB.Create(&voucher).Error
-	case models.PromotionTypeCustomTemplate:
+	case ploutos.PromotionTypeCustomTemplate:
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 			wagerChange := voucher.WagerMultiplier * rewardAmount
 			err = CreateCashOrder(tx, p.Type, userID, rewardAmount, wagerChange, "", p.Name)
@@ -244,9 +248,10 @@ func ClaimVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	return
 }
 
-func ExtraByType(c context.Context, p models.Promotion, s models.PromotionSession, userID, progress int64, now time.Time) (extra any) {
+func GetPromotionExtraDetails(c context.Context, p ploutos.Promotion, s ploutos.PromotionSession, userID, progress int64, now time.Time) any {
+	var extra any
 	switch p.Type {
-	case models.PromotionTypeVipReferral:
+	case ploutos.PromotionTypeVipReferral:
 		// Get next session's reward - actually just records that cannot be claimed yet
 		summaries, err := model.GetReferralAllianceSummaries(model.GetReferralAllianceSummaryCond{
 			ReferrerIds:     []int64{userID},
@@ -269,7 +274,7 @@ func ExtraByType(c context.Context, p models.Promotion, s models.PromotionSessio
 		extra = referralExtra
 	}
 
-	return
+	return extra
 }
 
 func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange int64, notes, name string) error {
@@ -288,12 +293,12 @@ func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange i
 		notes = "dummy"
 	}
 	orderType := promotionTypeToCashOrderType[promoType]
-	dummyOrder := models.CashOrder{
+	dummyOrder := ploutos.CashOrder{
 		ID:                    uuid.NewString(),
 		UserId:                userId,
 		OrderType:             orderType,
-		Status:                models.CashOrderStatusSuccess,
-		Notes:                 models.EncryptedStr(notes),
+		Status:                ploutos.CashOrderStatusSuccess,
+		Notes:                 ploutos.EncryptedStr(notes),
 		AppliedCashInAmount:   rewardAmount,
 		ActualCashInAmount:    rewardAmount,
 		EffectiveCashInAmount: rewardAmount,
@@ -309,39 +314,38 @@ func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange i
 	return nil
 }
 
-func CraftVoucherByType(c context.Context, p models.Promotion, s models.PromotionSession, v models.VoucherTemplate, rewardAmount, userID int64, promotionRequestID int64, now time.Time, meetGapType int64, vipIncrementDetail models.VipIncrementDetail) (voucher models.Voucher) {
+func CraftVoucherByType(c context.Context, p ploutos.Promotion, ps ploutos.PromotionSession, v ploutos.VoucherTemplate, rewardAmount, userID int64, promotionRequestID int64, now time.Time, meetGapType int64, vipIncrementDetail ploutos.VipIncrementDetail) (voucher ploutos.Voucher) {
 	endAt := earlier(v.EndAt, v.GetExpiryTimeStamp(now, p.Timezone))
-	status := models.VoucherStatusReady
+	status := ploutos.VoucherStatusReady
 	isUsable := false
 	suffix := buildSuffixByType(c, p, userID)
 	switch p.Type {
-	case models.PromotionTypeFirstDepB, models.PromotionTypeReDepB, models.PromotionTypeBeginnerB, models.PromotionTypeVipReferral, models.PromotionTypeVipRebate, models.PromotionTypeVipPromotionB, models.PromotionTypeVipWeeklyB, models.PromotionTypeVipBirthdayB, models.PromotionTypeCustomTemplate:
-		status = models.VoucherStatusRedeemed
-	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
+	case ploutos.PromotionTypeFirstDepB, ploutos.PromotionTypeReDepB, ploutos.PromotionTypeBeginnerB, ploutos.PromotionTypeVipReferral, ploutos.PromotionTypeVipRebate, ploutos.PromotionTypeVipPromotionB, ploutos.PromotionTypeVipWeeklyB, ploutos.PromotionTypeVipBirthdayB, ploutos.PromotionTypeCustomTemplate:
+		status = ploutos.VoucherStatusRedeemed
+	case ploutos.PromotionTypeFirstDepIns, ploutos.PromotionTypeReDepIns:
 		isUsable = true
 	}
 
 	voucherName := model.AmountReplace(v.Name, float64(rewardAmount)/100)
 	wagerMultiplier := v.WagerMultiplier
 	switch p.Type {
-	case models.PromotionTypeVipRebate:
+	case ploutos.PromotionTypeVipRebate:
 		vip, _ := model.GetVipWithDefault(c, userID)
 		wagerMultiplier = vip.VipRule.BirthdayBenefitWagerMultiplier
-	case models.PromotionTypeVipPromotionB:
+	case ploutos.PromotionTypeVipPromotionB:
 		vip, _ := model.GetVipWithDefault(c, userID)
 		wagerMultiplier = vip.VipRule.PromotionBenefitWagerMultiplier
-	case models.PromotionTypeVipWeeklyB:
+	case ploutos.PromotionTypeVipWeeklyB:
 		vip, _ := model.GetVipWithDefault(c, userID)
 		wagerMultiplier = vip.VipRule.WeeklyBenefitWagerMultiplier
-	case models.PromotionTypeVipBirthdayB:
+	case ploutos.PromotionTypeVipBirthdayB:
 		vip, _ := model.GetVipWithDefault(c, userID)
 		wagerMultiplier = vip.VipRule.BirthdayBenefitWagerMultiplier
-	case models.PromotionTypeCustomTemplate:
+	case ploutos.PromotionTypeCustomTemplate:
 		voucherName = p.Name
 	}
 
-	voucher = models.Voucher{
-
+	voucher = ploutos.Voucher{
 		UserID:            userID,
 		Status:            status,
 		StartAt:           now,
@@ -357,7 +361,7 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 		UsageDetails:       v.UsageDetails,
 		Image:              v.Image,
 		WagerMultiplier:    wagerMultiplier,
-		PromotionSessionID: s.ID,
+		PromotionSessionID: ps.ID,
 		IsUsable:           isUsable,
 		// ReferenceType
 		// ReferenceID
@@ -374,10 +378,10 @@ func CraftVoucherByType(c context.Context, p models.Promotion, s models.Promotio
 	return
 }
 
-func ValidateVoucherUsageByType(v models.Voucher, oddsFormat, matchType int, odds float64, betAmount int64, isParley bool) (ret bool) {
+func ValidateVoucherUsageByType(v ploutos.Voucher, oddsFormat, matchType int, odds float64, betAmount int64, isParley bool) (ret bool) {
 	ret = false
 	switch v.PromotionType {
-	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
+	case ploutos.PromotionTypeFirstDepIns, ploutos.PromotionTypeReDepIns:
 		if isParley {
 			return
 		}
@@ -395,10 +399,10 @@ func ValidateVoucherUsageByType(v models.Voucher, oddsFormat, matchType int, odd
 	return
 }
 
-func ValidateUsageDetailsByType(v models.Voucher, matchType int, odds float64, betAmount int64) (ret bool) {
+func ValidateUsageDetailsByType(v ploutos.Voucher, matchType int, odds float64, betAmount int64) (ret bool) {
 	ret = false
 	switch v.PromotionType {
-	case models.PromotionTypeFirstDepIns, models.PromotionTypeReDepIns:
+	case ploutos.PromotionTypeFirstDepIns, ploutos.PromotionTypeReDepIns:
 		u := v.GetUsageDetails()
 		ret = false
 		// for _, c := range u.MatchType {
@@ -442,7 +446,7 @@ func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward i
 	return util.Max(summaries[0].ClaimableReward, 0) // return 0 if negative
 }
 
-func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher models.Voucher, userID int64, now time.Time) error {
+func claimVoucherReferralVip(c context.Context, p ploutos.Promotion, voucher ploutos.Voucher, userID int64, now time.Time) error {
 	user := c.Value("user").(model.User)
 	return model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 		rewardRecords, err := claimReferralAllianceRewards(tx, userID, now)
@@ -478,7 +482,7 @@ func claimVoucherReferralVip(c context.Context, p models.Promotion, voucher mode
 	})
 }
 
-func claimReferralAllianceRewards(tx *gorm.DB, referrerId int64, now time.Time) ([]models.ReferralAllianceReward, error) {
+func claimReferralAllianceRewards(tx *gorm.DB, referrerId int64, now time.Time) ([]ploutos.ReferralAllianceReward, error) {
 	// Get reward records
 	cond := model.GetReferralAllianceRewardsCond{
 		ReferrerIds:      []int64{referrerId},
@@ -510,7 +514,7 @@ func earlier(a time.Time, b time.Time) time.Time {
 	return b
 }
 
-func getSameDayVipRewardRecord(tx *gorm.DB, userID, prmotionID int64) models.VipRewardRecords {
+func getSameDayVipRewardRecord(tx *gorm.DB, userID, prmotionID int64) ploutos.VipRewardRecords {
 	r, _ := model.GetVipRewardRecord(tx, userID, prmotionID, Today0am().UTC())
 	return r
 }
@@ -534,17 +538,17 @@ func getBirtdayReward(c context.Context, date time.Time, userID int64) (reward i
 	return
 }
 
-func buildSuffixByType(c context.Context, p models.Promotion, userID int64) string {
+func buildSuffixByType(c context.Context, p ploutos.Promotion, userID int64) string {
 	today := Today0am()
 	suffix := ""
 	vip, _ := model.GetVipWithDefault(c, userID)
 	switch p.Type {
-	case models.PromotionTypeVipRebate:
+	case ploutos.PromotionTypeVipRebate:
 		suffix = fmt.Sprintf("date-%s", today.Format(time.DateOnly))
-	case models.PromotionTypeVipWeeklyB:
-	case models.PromotionTypeVipBirthdayB:
+	case ploutos.PromotionTypeVipWeeklyB:
+	case ploutos.PromotionTypeVipBirthdayB:
 		suffix = fmt.Sprintf("year-%d", today.Year())
-	case models.PromotionTypeVipPromotionB:
+	case ploutos.PromotionTypeVipPromotionB:
 		suffix = fmt.Sprintf("vip-%d", vip.VipRule.VIPLevel)
 	}
 	return suffix
