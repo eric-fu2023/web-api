@@ -9,7 +9,7 @@ import (
 	"web-api/service/social_media_pixel"
 	"web-api/util"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -47,9 +47,9 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		newCashOrderState.ActualCashInAmount = actualAmount
 		newCashOrderState.BonusCashInAmount = bonusAmount
 		newCashOrderState.EffectiveCashInAmount = newCashOrderState.AppliedCashInAmount + bonusAmount
-		newCashOrderState.Notes = models.EncryptedStr(notes)
+		newCashOrderState.Notes = ploutos.EncryptedStr(notes)
 		newCashOrderState.WagerChange += additionalWagerChange
-		newCashOrderState.Status = models.CashOrderStatusSuccess
+		newCashOrderState.Status = ploutos.CashOrderStatusSuccess
 		updatedCashOrder, err = closeOrder(newCashOrderState, tx, transactionType)
 		if err != nil {
 			return

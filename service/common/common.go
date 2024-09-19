@@ -526,12 +526,61 @@ func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, startTime,
 					return
 				default:
 					msg := websocket.TeamupGameNotificationMessage{
-						Event:        "popup_teamup_game",
+						UserId:       userId,
+						Event:        "teamup_game",
 						TeamupId:     teamupId,
 						StartTime:    startTime,
 						Amount:       amount,
 						ProviderName: providerName,
 						Icon:         icon,
+					}
+					msg.Send(conn)
+				}
+			},
+		})
+	}()
+}
+func TESTSENDCHAT(userId int64) {
+	go func() {
+		conn := websocket.Connection{}
+		conn.Connect(os.Getenv("WS_URL"), os.Getenv("WS_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
+			func(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					msg := websocket.RoomMessage{
+						Room:     fmt.Sprintf(`stream:%d`, 3345),
+						UserId:   userId,
+						UserType: consts.ChatUserType["user"],
+					}
+					if e := msg.Send(conn); e != nil {
+						cancelFunc()
+						return
+					}
+				}
+			},
+		})
+	}()
+}
+
+func TESTSENDNOTIFICATION(userId int64) {
+	go func() {
+		conn := websocket.Connection{}
+		conn.Connect(os.Getenv("WS_NOTIFICATION_URL"), os.Getenv("WS_NOTIFICATION_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
+			func(conn *websocket.Connection, ctx context.Context, cancelFunc context.CancelFunc) {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					msg := websocket.TeamupGameNotificationMessage{
+						UserId:       userId,
+						Event:        "teamup_game",
+						TeamupId:     1,
+						StartTime:    12,
+						Amount:       123,
+						ProviderName: "ADAS",
+						Icon:         "SADASAAA",
 					}
 					msg.Send(conn)
 				}

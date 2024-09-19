@@ -7,6 +7,7 @@ import (
 )
 
 type TeamupGameNotificationMessage struct {
+	UserId       int64  `json:"user_id"`
 	Amount       int64  `json:"amount"`
 	Icon         string `json:"icon"`
 	Event        string `json:"event"`
@@ -18,7 +19,7 @@ type TeamupGameNotificationMessage struct {
 
 func (msg TeamupGameNotificationMessage) Send(conn *Connection) (err error) {
 	if msg, err := json.Marshal(msg); err == nil {
-		if err = conn.Send(fmt.Sprintf(`42["teamup_game", %s]`, string(msg))); err != nil {
+		if err = conn.Send(fmt.Sprintf(`42["common", %s]`, string(msg))); err != nil {
 			util.Log().Error("ws send error", err)
 		}
 	}

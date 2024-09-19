@@ -42,13 +42,13 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	if err != nil {
 		return
 	}
-	cashMethodChannels := model.FilterByAmount(c, amount, model.FilterChannelByVip(c, user, method.CashMethodChannel))
+	cashMethodChannels := model.FilterCashMethodChannelsByAmount(c, amount, model.FilterCashMethodChannelsByVip(c, user, method.CashMethodChannels))
 	if len(cashMethodChannels) == 0 {
 		err = errors.New("illegal amount")
 		r = serializer.ParamErr(c, s, i18n.T("invalid_amount"), err)
 		return
 	}
-	cashMethodChannel, nErr := model.GetNextChannel(cashMethodChannels)
+	cashMethodChannel, nErr := model.GetNextCashMethodChannel(cashMethodChannels)
 	if nErr != nil {
 		err = nErr
 		return
@@ -107,7 +107,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	}
 
 	var transactionID string
-	config := cashMethodChannel.GetFinpayConfig()
+	config := cashMethodChannel.GetGatewayConfig()
 	switch cashMethodChannel.Gateway {
 	default:
 		err = errors.New("unsupported method")
@@ -124,7 +124,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 			if data.IsFailed() {
 				result = "failed"
 			}
-			_ = model.IncrementStats(stats, result)
+			_ = model.IncrementCashMethodStats(stats, result)
 
 		}()
 
@@ -178,7 +178,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 			if err != nil {
 				result = "failed"
 			}
-			_ = model.IncrementStats(stats, result)
+			_ = model.IncrementCashMethodStats(stats, result)
 		}()
 
 		switch config.Type {

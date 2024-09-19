@@ -91,6 +91,15 @@ func BuildCustomTeamupHash(a models.Teamup, u model.User, isParlay bool) (res Ou
 	return
 }
 
+func BuildCustomTeamupGameHash(teamupId int64, u model.User) (res OutgoingTeamupHash) {
+
+	res.Id = teamupId
+	res.Nickname = u.Nickname
+	res.Avatar = u.Avatar
+
+	return
+}
+
 func GenerateOtherTeamups(nicknames []string, successTeamups model.TeamupSuccess) (res []OtherTeamupContribution) {
 
 	for i := 0; i < len(nicknames); i++ {

@@ -1,10 +1,11 @@
 package cashout
 
 import (
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -16,18 +17,18 @@ func CloseCashOutOrder(c *gin.Context, orderNumber string, actualAmount, bonusAm
 	err = txDB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("id", orderNumber).
-			Where("status in ?", append(models.CashOrderStatusCollectionNonTerminal, models.CashOrderStatusSuccess)).
+			Where("status in ?", append(ploutos.CashOrderStatusCollectionNonTerminal, ploutos.CashOrderStatusSuccess)).
 			First(&updatedCashOrder).Error
-		if err != nil || updatedCashOrder.Status == models.CashOrderStatusSuccess {
+		if err != nil || updatedCashOrder.Status == ploutos.CashOrderStatusSuccess {
 			return
 		}
 		updatedCashOrder.ActualCashOutAmount = actualAmount
 		updatedCashOrder.BonusCashOutAmount = bonusAmount
 		updatedCashOrder.EffectiveCashOutAmount = updatedCashOrder.AppliedCashOutAmount + bonusAmount
-		updatedCashOrder.Notes = models.EncryptedStr(notes)
+		updatedCashOrder.Notes = ploutos.EncryptedStr(notes)
 		updatedCashOrder.WagerChange += additionalWagerChange
 		updatedCashOrder.Remark += remark
-		updatedCashOrder.Status = models.CashOrderStatusSuccess
+		updatedCashOrder.Status = ploutos.CashOrderStatusSuccess
 		// update cash order
 		err = tx.Where("id", orderNumber).Updates(updatedCashOrder).Error
 		if err != nil {

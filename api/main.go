@@ -6,7 +6,7 @@ import (
 	"time"
 	"web-api/conf"
 	"web-api/serializer"
-	"web-api/service"
+	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
 
@@ -21,7 +21,11 @@ func Ping(c *gin.Context) {
 		fmt.Println(err)
 	}
 	c.Set("i18n", i18n)
-	service.SendTeamupNotification(1, 3697, 9998, 5196, 120, i18n)
+	// common.SendTeamupGamePopupNotificationSocketMsg(3621, int64(188), int64(1727320740), int64(60000)/100, "IMOne Slot", "https://static.tayalive.com/batace-img/icon/IMOne-min.png") // DEBUG PURPOSE
+	// common.SendTeamupGamePopupNotificationSocketMsg(3671, int64(188), int64(1727320740), int64(60000)/100, "IMOne Slot", "https://static.tayalive.com/batace-img/icon/IMOne-min.png") // DEBUG PURPOSE
+
+	common.TESTSENDNOTIFICATION(3671)
+	common.TESTSENDCHAT(3671)
 	country, _ := c.Get("_country")
 	city, _ := c.Get("_city")
 	c.JSON(200, serializer.Response{

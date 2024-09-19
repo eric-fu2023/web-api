@@ -68,7 +68,7 @@ type TeamupGamePopUpNotification struct {
 	Amount       int64  `json:"amount"`
 	Icon         string `json:"icon"`
 	ProviderName string `json:"provider_name"`
-	StartTime    int64  `json:"start_time"`
+	EndTime      int64  `json:"end_time"`
 	TeamupId     int64  `json:"teamup_id"`
 }
 
@@ -189,22 +189,31 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 
 func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, err error) {
 
-	// TODO: COUNT CURRENT TERM!!!
-
 	loc := c.MustGet("_tz").(*time.Location)
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
+	if s.GameType == "0" {
+		s.GameType = "4"
+	}
+
 	user.Avatar = serializer.Url(user.Avatar)
+	gameType, _ := strconv.Atoi(s.GameType)
+
+	for j := range ploutos.TeamUpGameGameTypes {
+		if ploutos.TeamUpGameGameTypes[j] == gameType {
+			shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupGameHash(s.TeamupId, user))
+
+			r, err = shareService.Create()
+
+			return
+		}
+	}
 
 	if s.OrderId == "" {
 		r = serializer.Err(c, "", serializer.CustomTeamUpError, i18n.T("teamup_error"), err)
 		return
-	}
-
-	if s.GameType == "0" {
-		s.GameType = "4"
 	}
 
 	var teamup ploutos.Teamup
@@ -562,6 +571,7 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 	for i, t := range teamupRes {
 
 		res[i].TeamupType = ploutos.TeamupTypeSports
+		var outgoingBet model.OutgoingBet
 
 		// 游戏解析
 		// 如果是游戏
@@ -571,6 +581,11 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 				res[i].TeamupType = ploutos.TeamupTypeGames
 				res[i].LeagueName = consts.GameProviderNameMap[t.Provider]
 				res[i].LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
+
+				outgoingBet.LeagueName = consts.GameProviderNameMap[t.Provider]
+				outgoingBet.LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
+
+				res[i].Bet = outgoingBet
 
 				continue
 			}
@@ -585,7 +600,7 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 			br, _ := model.GetBetReport(t.OrderId)
 			if br.OrderId != "" {
 				br.ParseInfo()
-				var outgoingBet model.OutgoingBet
+
 				res[i].IsParlay = br.IsParlay
 				res[i].BetType = br.BetType
 
@@ -659,8 +674,6 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 		}
 
 		res[i].InfoJson = nil
-
-		var outgoingBet model.OutgoingBet
 
 		// var matchTime int64
 
