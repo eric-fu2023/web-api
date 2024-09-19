@@ -37,6 +37,7 @@ func (a RoomMessage) Send(conn *Connection) (err error) {
 		util.Log().Error("json marshal error", err)
 		return
 	}
+	fmt.Println("evTTent - ", event)
 	if err = conn.Send(fmt.Sprintf(`42["%s", %s]`, event, string(msg))); err != nil {
 		util.Log().Error("ws send error", err)
 		return

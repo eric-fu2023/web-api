@@ -68,7 +68,7 @@ type TeamupGamePopUpNotification struct {
 	Amount       int64  `json:"amount"`
 	Icon         string `json:"icon"`
 	ProviderName string `json:"provider_name"`
-	StartTime    int64  `json:"start_time"`
+	EndTime      int64  `json:"end_time"`
 	TeamupId     int64  `json:"teamup_id"`
 }
 
