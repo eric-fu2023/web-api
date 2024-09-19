@@ -202,14 +202,12 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	user.Avatar = serializer.Url(user.Avatar)
 
 	if s.TeamupId != 0 {
-		for j := range ploutos.TeamUpGameGameTypes {
-			if ploutos.TeamupTypeGames == s.TeamupType {
-				shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupGameHash(s.TeamupId, user))
+		if ploutos.TeamupTypeGames == s.TeamupType {
+			shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupGameHash(s.TeamupId, user))
 
-				r, err = shareService.Create()
+			r, err = shareService.Create()
 
-				return
-			}
+			return
 		}
 	}
 
