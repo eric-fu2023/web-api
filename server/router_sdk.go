@@ -32,19 +32,6 @@ func InitSdkApi(r *gin.Engine) {
 		}
 	}
 
-	if os.Getenv("GAME_TAYA_EXPOSE_CALLBACKS") == "true" {
-		fbCallback := r.Group("/taya/fb/callback")
-		{
-			fbCallback.POST("/health", taya_api.CallbackHealth)
-			fbCallback.POST("/balance", taya_api.CallbackBalance)
-			fbCallback.POST("/order_pay", taya_api.CallbackOrderPay)
-			fbCallback.POST("/check_order_pay", taya_api.CallbackCheckOrderPay)
-			fbCallback.POST("/sync_transaction", taya_api.CallbackSyncTransaction)
-			fbCallback.POST("/sync_orders", taya_api.CallbackSyncOrders)
-			fbCallback.POST("/sync_cashout", taya_api.CallbackSyncCashout)
-		}
-	}
-
 	if os.Getenv("GAME_FB_EXPOSE_CALLBACKS") == "true" {
 		fbCallback := r.Group("/fb/callback")
 		{
