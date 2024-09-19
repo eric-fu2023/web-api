@@ -7,10 +7,11 @@ import (
 	"web-api/service/cashin"
 	"web-api/util"
 
-	"blgit.rfdev.tech/taya/payment-service/foray"
-	models "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/gin-gonic/gin"
 	"web-api/service/promotion/on_cash_orders"
+
+	"blgit.rfdev.tech/taya/payment-service/foray"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
 )
 
 type ForayPaymentCallback struct {
@@ -34,7 +35,7 @@ func (s *ForayPaymentCallback) Handle(c *gin.Context) error {
 	// create transaction history
 	// }
 
-	txType := models.TransactionTypeCashIn
+	txType := ploutos.TransactionTypeCashIn
 	cashOrder, err := cashin.CloseCashInOrder(c, s.OrderTranoIn, s.OrderAmount, 0, 0, util.JSON(s), model.DB, txType)
 	if err != nil {
 		return err

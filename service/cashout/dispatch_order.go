@@ -8,12 +8,12 @@ import (
 	"web-api/util"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm/clause"
 )
 
-func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, accountBinding models.UserAccountBinding, retryable bool) (updatedCashOrder model.CashOrder, err error) {
+func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, accountBinding ploutos.UserAccountBinding, retryable bool) (updatedCashOrder model.CashOrder, err error) {
 	updatedCashOrder = cashOrder
 	method, err := model.CashMethod{}.GetByIDWithChannel(c, cashOrder.CashMethodId)
 	if err != nil {
@@ -44,7 +44,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 
 	switch channel.Gateway {
 	case "finpay":
-		config := channel.GetFinpayConfig()
+		config := channel.GetGatewayConfig()
 		var data finpay.TransferOrderResponse
 		defer func() {
 			result := "success"
@@ -73,9 +73,9 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			data, err = finpay.FinpayClient{}.DefaulGenericCashOutV1(c, cashoutAmount, updatedCashOrder.ID, method.Currency, string(accountBinding.AccountNumber), accountName, bankInfo.BankBranchName, bankInfo.BankCode, bankInfo.BankName, user.Username, config.ChannelCode, config.Type, config.TypeExtra)
 		}
 		if data.IsSuccess() {
-			updatedCashOrder.Status = models.CashOrderStatusTransferring
+			updatedCashOrder.Status = ploutos.CashOrderStatusTransferring
 			updatedCashOrder.TransactionId = &data.TransferOrderNo
-			updatedCashOrder.Notes = models.EncryptedStr(util.JSON(data))
+			updatedCashOrder.Notes = ploutos.EncryptedStr(util.JSON(data))
 			updatedCashOrder.CurrencyCode = method.Currency
 			updatedCashOrder.ExchangeRate = er.ExchangeRate
 			updatedCashOrder.ExchangeRateAdjusted = er.AdjustedExchangeRate
@@ -91,7 +91,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 		} else if retryable {
 			return
 		} else if data.IsFailed() || errors.Is(err, finpay.ErrorGateway) {
-			updatedCashOrder, err = RevertCashOutOrder(c, updatedCashOrder.ID, util.JSON(data), "Request Failed", models.CashOrderStatusFailed, model.DB)
+			updatedCashOrder, err = RevertCashOutOrder(c, updatedCashOrder.ID, util.JSON(data), "Request Failed", ploutos.CashOrderStatusFailed, model.DB)
 			if err != nil {
 				return
 			}
