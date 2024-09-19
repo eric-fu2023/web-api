@@ -42,7 +42,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	if err != nil {
 		return
 	}
-	cashMethodChannels := model.FilterCashMethodChannelsByAmount(c, amount, model.FilterCashMethodChannelsByVip(c, user, method.CashMethodChannel))
+	cashMethodChannels := model.FilterCashMethodChannelsByAmount(c, amount, model.FilterCashMethodChannelsByVip(c, user, method.CashMethodChannels))
 	if len(cashMethodChannels) == 0 {
 		err = errors.New("illegal amount")
 		r = serializer.ParamErr(c, s, i18n.T("invalid_amount"), err)

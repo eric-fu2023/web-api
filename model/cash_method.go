@@ -30,7 +30,7 @@ func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform st
 	user, _ := u.(User)
 
 	var t []CashMethod
-	q := DB.Debug().Preload("CashMethodChannel", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
+	q := DB.Debug().Preload("CashMethodChannels", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
 	if withdrawOnly {
 		q = q.Where("method_type < 0")
 	}
@@ -47,7 +47,7 @@ func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform st
 
 	err = q.Order("sort desc").Find(&t).Error
 	for i := range t {
-		chns := FilterCashMethodChannelsByVip(c, user, t[i].CashMethodChannel)
+		chns := FilterCashMethodChannelsByVip(c, user, t[i].CashMethodChannels)
 		if len(chns) == 0 {
 			continue
 		}
@@ -73,7 +73,7 @@ func (a *CashMethod) IsSupportedPlatform(platform string) bool {
 
 func (CashMethod) ListWithAvailableChannel(c *gin.Context, withdrawOnly, topupOnly bool, platform string, brandID int) (list []CashMethod, err error) {
 	var t []CashMethod
-	q := DB.Preload("CashMethodChannel").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
+	q := DB.Preload("CashMethodChannels").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
 	if withdrawOnly {
 		q = q.Where("method_type < 0")
 	}
@@ -83,7 +83,7 @@ func (CashMethod) ListWithAvailableChannel(c *gin.Context, withdrawOnly, topupOn
 	err = q.Order("sort desc").Find(&t).Error
 	for i := range t {
 		if t[i].IsSupportedPlatform(platform) &&
-			util.Reduce(t[i].CashMethodChannel, func(weight int64, ch ploutos.CashMethodChannel) int64 {
+			util.Reduce(t[i].CashMethodChannels, func(weight int64, ch ploutos.CashMethodChannel) int64 {
 				return weight + ch.Weight
 			}, 0) > 0 {
 			list = append(list, t[i])
