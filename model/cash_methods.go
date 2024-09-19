@@ -28,7 +28,7 @@ func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform st
 	user, _ := u.(User)
 
 	var t []CashMethod
-	q := DB.Preload("CashMethodChannel", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
+	q := DB.Debug().Preload("CashMethodChannel", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
 	if withdrawOnly {
 		q = q.Where("method_type < 0")
 	}
