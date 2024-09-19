@@ -107,7 +107,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	}
 
 	var transactionID string
-	config := cashMethodChannel.GetFinpayConfig()
+	config := cashMethodChannel.GetGatewayConfig()
 	switch cashMethodChannel.Gateway {
 	default:
 		err = errors.New("unsupported method")

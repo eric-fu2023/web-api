@@ -8,7 +8,7 @@ import (
 	"web-api/util"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +27,7 @@ func (s *FinpayTransferCallback) Handle(c *gin.Context) (err error) {
 		cashOrder, _err := cashout.CloseCashOutOrder(c, s.MerchantOrderNo, int64(s.Amount), 0, 0, util.JSON(s), "", true, model.DB)
 		if err == nil {
 			go func() {
-				pErr := on_cash_orders.Handle(c, cashOrder, models.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinpay, on_cash_orders.RequestModeCallback)
+				pErr := on_cash_orders.Handle(c, cashOrder, ploutos.TransactionTypeCashOut, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinpay, on_cash_orders.RequestModeCallback)
 				if pErr != nil {
 					util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
 				}
@@ -37,7 +37,7 @@ func (s *FinpayTransferCallback) Handle(c *gin.Context) (err error) {
 		}
 
 	} else if s.IsFailed() {
-		_, err = cashout.RevertCashOutOrder(c, s.MerchantOrderNo, util.JSON(s), "refund", models.CashOrderStatusFailed, model.DB)
+		_, err = cashout.RevertCashOutOrder(c, s.MerchantOrderNo, util.JSON(s), "refund", ploutos.CashOrderStatusFailed, model.DB)
 	}
 	if err != nil {
 		return

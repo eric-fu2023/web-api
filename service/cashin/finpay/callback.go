@@ -8,7 +8,7 @@ import (
 	"web-api/service/promotion/on_cash_orders"
 	"web-api/util"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
 	"github.com/gin-gonic/gin"
@@ -34,14 +34,14 @@ func (s *FinpayPaymentCallback) Handle(c *gin.Context) error {
 	// update user_sum
 	// create transaction history
 	// }
-	cashOrder, err := cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, models.TransactionTypeCashIn)
+	cashOrder, err := cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, ploutos.TransactionTypeCashIn)
 	if err != nil {
 		return err
 	}
 
 	// if err == nil {
 	go func() {
-		pErr := on_cash_orders.Handle(c.Copy(), cashOrder, models.TransactionTypeCashIn, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinpay, on_cash_orders.RequestModeCallback)
+		pErr := on_cash_orders.Handle(c.Copy(), cashOrder, ploutos.TransactionTypeCashIn, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinpay, on_cash_orders.RequestModeCallback)
 		if pErr != nil {
 			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
 		}

@@ -17,8 +17,8 @@ import (
 type CashOrder struct {
 	ploutos.CashOrder
 
-	CashMethod        ploutos.CashMethod        `gorm:"foreignKey:CashMethodId;references:ID"`
-	CashMethodChannel ploutos.CashMethodChannel `gorm:"foreignKey:CashMethodChannelId;references:ID"`
+	CashMethod        ploutos.CashMethod        `gorm:"foreignKey:ID;references:CashMethodId"`
+	CashMethodChannel ploutos.CashMethodChannel `gorm:"foreignKey:ID;references:CashMethodChannelId"`
 }
 
 func NewCashInOrder(userID, CashMethodId, CashMethodChannelId, amount, balanceBefore, wagerChange int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) ploutos.CashOrder {

@@ -7,7 +7,7 @@ import (
 	"web-api/model"
 	"web-api/service/common"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -19,19 +19,19 @@ import (
 func RevertCashOutOrder(c *gin.Context, orderNumber string, notes, remark string, newStatus int64, txDB *gorm.DB) (updatedCashOrder model.CashOrder, err error) {
 	var newCashOrderState model.CashOrder
 	switch newStatus {
-	case models.CashOrderStatusCancelled, models.CashOrderStatusRejected, models.CashOrderStatusFailed:
+	case ploutos.CashOrderStatusCancelled, ploutos.CashOrderStatusRejected, ploutos.CashOrderStatusFailed:
 	default:
 		err = errors.New("wrong status")
 		return
 	}
 	err = txDB.Clauses(dbresolver.Use("txConn")).WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id", orderNumber).
-			Where("status in ?", append(models.CashOrderStatusCollectionNonTerminal, models.CashOrderStatusFailed)).
+			Where("status in ?", append(ploutos.CashOrderStatusCollectionNonTerminal, ploutos.CashOrderStatusFailed)).
 			First(&newCashOrderState).Error
-		if err != nil || newCashOrderState.Status == models.CashOrderStatusFailed {
+		if err != nil || newCashOrderState.Status == ploutos.CashOrderStatusFailed {
 			return
 		}
-		newCashOrderState.Notes = models.EncryptedStr(notes)
+		newCashOrderState.Notes = ploutos.EncryptedStr(notes)
 		newCashOrderState.Remark += remark
 		newCashOrderState.Status = newStatus
 		// update cash order

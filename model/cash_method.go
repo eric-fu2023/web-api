@@ -11,8 +11,8 @@ import (
 type CashMethod struct {
 	ploutos.CashMethod
 
-	CashMethodChannels  []ploutos.CashMethodChannel  `gorm:"references:CashMethodId;foreignKey:ID"`
-	CashMethodPromotion *ploutos.CashMethodPromotion `json:"cash_method_promotion,omitempty" form:"-" gorm:"references:CashMethodId;foreignKey:ID"`
+	CashMethodChannels  []ploutos.CashMethodChannel  `gorm:"foreignKey:CashMethodId;references:ID"`
+	CashMethodPromotion *ploutos.CashMethodPromotion `json:"cash_method_promotion,omitempty" form:"-" gorm:"foreignKey:CashMethodId;references:ID"`
 }
 
 func (CashMethod) GetByID(c *gin.Context, id int64, brandID int) (item CashMethod, err error) {
