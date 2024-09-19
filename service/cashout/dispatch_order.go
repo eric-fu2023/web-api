@@ -19,7 +19,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 	if err != nil {
 		return
 	}
-	channel, nErr := model.GetNextChannel(model.FilterByAmount(c, updatedCashOrder.AppliedCashOutAmount, model.FilterChannelByVip(c, user, method.CashMethodChannel)))
+	channel, nErr := model.GetNextCashMethodChannel(model.FilterCashMethodChannelsByAmount(c, updatedCashOrder.AppliedCashOutAmount, model.FilterCashMethodChannelsByVip(c, user, method.CashMethodChannel)))
 	if nErr != nil {
 		err = nErr
 		return
@@ -54,7 +54,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			if data.IsFailed() {
 				result = "failed"
 			}
-			_ = model.IncrementStats(stats, result)
+			_ = model.IncrementCashMethodStats(stats, result)
 
 		}()
 
