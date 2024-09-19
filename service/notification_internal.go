@@ -146,6 +146,9 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 		common.SendNotification(455, notificationType, title, text, resp)                                                                      // DEBUG PURPOSE
 		common.SendTeamupGamePopupNotificationSocketMsg(455, int64(teamupId), int64(startTime), int64(amount)/100, providerName, providerIcon) // DEBUG PURPOSE
 
+		common.SendNotification(3621, notificationType, title, text, resp)                                                                      // DEBUG PURPOSE
+		common.SendTeamupGamePopupNotificationSocketMsg(3621, int64(teamupId), int64(startTime), int64(amount)/100, providerName, providerIcon) // DEBUG PURPOSE
+
 		common.SendTeamupGamePopupNotificationSocketMsg(p.UserID, int64(teamupId), int64(startTime), int64(amount)/100, providerName, providerIcon)
 	}
 	common.SendNotification(p.UserID, notificationType, title, text, resp)

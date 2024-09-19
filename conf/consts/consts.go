@@ -811,10 +811,10 @@ var (
 		"HS_SLOT":          "",
 		"JFI0000":          "",
 		"PLAYNGO_SLOT":     "",
-		"evolution":        "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
-		"Evolution":        "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
-		"IMOne Slot":       "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
-		"Mumbai":           "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
-		"9Wickets":         "https://cdn.tayalive.com/temp/aha/stream/7.jpg",
+		"evolution":        "https://static.tayalive.com/batace-img/icon/Evolution-min.png",
+		"Evolution":        "https://static.tayalive.com/batace-img/icon/Evolution-min.png",
+		"IMOne Slot":       "https://static.tayalive.com/batace-img/icon/IMOne-min.png",
+		"Mumbai":           "https://static.tayalive.com/batace-img/icon/Mumbai-min.png",
+		"9Wickets":         "https://static.tayalive.com/batace-img/icon/IMOne-min.png",
 	}
 )
