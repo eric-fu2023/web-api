@@ -6,37 +6,46 @@ import (
 	"web-api/conf/consts"
 
 	gameservicecommon "blgit.rfdev.tech/taya/game-service/common"
+	"blgit.rfdev.tech/taya/game-service/crownvalexy"
 	"blgit.rfdev.tech/taya/game-service/dc"
 	"blgit.rfdev.tech/taya/game-service/evo"
 	"blgit.rfdev.tech/taya/game-service/fb"
 	"blgit.rfdev.tech/taya/game-service/imone"
 	"blgit.rfdev.tech/taya/game-service/imsb"
+	"blgit.rfdev.tech/taya/game-service/mancala"
 	"blgit.rfdev.tech/taya/game-service/mumbai"
 	"blgit.rfdev.tech/taya/game-service/ninewickets"
 	"blgit.rfdev.tech/taya/game-service/saba"
 	"blgit.rfdev.tech/taya/game-service/ugs"
+
 	ploutosmodel "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 const (
-	IntegrationIdUGS        = ploutosmodel.GAME_INTEGRATION_UGS
-	IntegrationIdImOne      = ploutosmodel.GAME_INTEGRATION_IMONE
-	IntegrationIdEvo        = ploutosmodel.GAME_INTEGRATION_EVO
-	IntegrationIdNineWicket = ploutosmodel.GAME_INTEGRATION_NINEWICKETS
-	IntegrationIdMumbai     = ploutosmodel.GAME_INTEGRATION_MUMBAI
+	IntegrationIdUGS         = ploutosmodel.GAME_INTEGRATION_UGS
+	IntegrationIdImOne       = ploutosmodel.GAME_INTEGRATION_IMONE
+	IntegrationIdEvo         = ploutosmodel.GAME_INTEGRATION_EVO
+	IntegrationIdNineWicket  = ploutosmodel.GAME_INTEGRATION_NINEWICKETS
+	IntegrationIdMumbai      = ploutosmodel.GAME_INTEGRATION_MUMBAI
+	IntegrationIdCrownValexy = ploutosmodel.GAME_INTEGRATION_CROWN_VALEXY
+	IntegrationIdMancala     = ploutosmodel.GAME_INTEGRATION_MANCALA
 )
 
 var (
-	TayaFactory       fb.FB
-	FBFactory         fb.FB
-	SabaFactory       saba.Saba
-	DCFactory         dc.Dc
-	IMFactory         imsb.IM
-	UgsFactory        ugs.UGS
-	EvoFactory        evo.EVO
+	TayaFactory fb.FB
+	FBFactory   fb.FB
+	SabaFactory saba.Saba
+	DCFactory   dc.Dc
+	IMFactory   imsb.IM
+	UgsFactory  ugs.UGS
+	EvoFactory  evo.EVO
+
 	NineWicketFactory func() (ninewickets.ClientOperations, error)
 	ImOneFactory      func() imone.GeneralApi
 	MumbaiFactory     func() (mumbai.UserService, error)
+
+	CrownValexyFactory func() (*crownvalexy.Service, error)
+	MancalaFactory     func() (*mancala.Service, error)
 )
 
 var VendorIdToGameClient = make(map[int64]gameservicecommon.TransferWalletInterface)
@@ -135,5 +144,19 @@ func InitMumbaiFactory() {
 
 	MumbaiFactory = func() (mumbai.UserService, error) {
 		return mumbai.NewUserService(domain, merchantCode, agentCode, apiKey, modeName)
+	}
+}
+
+// TODO
+func InitCrownValexyFactory() {
+	CrownValexyFactory = func() (*crownvalexy.Service, error) {
+		return crownvalexy.New("", "", "")
+	}
+}
+
+// TODO
+func InitMancalaFactory() {
+	MancalaFactory = func() (*mancala.Service, error) {
+		return mancala.New("", "")
 	}
 }
