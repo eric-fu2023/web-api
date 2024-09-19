@@ -41,6 +41,7 @@ type TeamupService struct {
 type GetTeamupService struct {
 	OrderId    string `form:"order_id" json:"order_id"`
 	TeamupId   int64  `form:"teamup_id" json:"teamup_id"`
+	TeamupType int64  `form:"teamup_type" json:"teamup_type"`
 	MatchId    string `form:"match_id" json:"match_id"`
 	MatchTitle string `form:"match_title" json:"match_title"`
 	IsParlay   bool   `form:"is_parlay" json:"is_parlay"`
@@ -199,15 +200,16 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	}
 
 	user.Avatar = serializer.Url(user.Avatar)
-	gameType, _ := strconv.Atoi(s.GameType)
 
-	for j := range ploutos.TeamUpGameGameTypes {
-		if ploutos.TeamUpGameGameTypes[j] == gameType {
-			shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupGameHash(s.TeamupId, user))
+	if s.TeamupId != 0 {
+		for j := range ploutos.TeamUpGameGameTypes {
+			if ploutos.TeamupTypeGames == s.TeamupType {
+				shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupGameHash(s.TeamupId, user))
 
-			r, err = shareService.Create()
+				r, err = shareService.Create()
 
-			return
+				return
+			}
 		}
 	}
 
