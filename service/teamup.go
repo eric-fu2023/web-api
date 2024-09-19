@@ -68,7 +68,7 @@ type TeamupGamePopUpNotification struct {
 	Amount       int64  `json:"amount"`
 	Icon         string `json:"icon"`
 	ProviderName string `json:"provider_name"`
-	StartTime    int64  `json:"start_time"`
+	EndTime      int64  `json:"end_time"`
 	TeamupId     int64  `json:"teamup_id"`
 }
 
@@ -194,15 +194,26 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
+	if s.GameType == "0" {
+		s.GameType = "4"
+	}
+
 	user.Avatar = serializer.Url(user.Avatar)
+	gameType, _ := strconv.Atoi(s.GameType)
+
+	for j := range ploutos.TeamUpGameGameTypes {
+		if ploutos.TeamUpGameGameTypes[j] == gameType {
+			shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupGameHash(s.TeamupId, user))
+
+			r, err = shareService.Create()
+
+			return
+		}
+	}
 
 	if s.OrderId == "" {
 		r = serializer.Err(c, "", serializer.CustomTeamUpError, i18n.T("teamup_error"), err)
 		return
-	}
-
-	if s.GameType == "0" {
-		s.GameType = "4"
 	}
 
 	var teamup ploutos.Teamup
