@@ -3,6 +3,7 @@
 package tethered_rebate_promotion
 
 import (
+	"blgit.rfdev.tech/taya/ploutos-object/promotion_rewards"
 	"context"
 	"errors"
 	"time"
@@ -129,6 +130,8 @@ func (s *Service) AddRewardForClosedDeposit(ctx context.Context, referee UserFor
 	return nil, nil
 }
 
+var _ = promotion_rewards.TetheredRebatePromotionReward{}
+
 // TetheredRebatePromotion
 type TetheredRebatePromotion struct {
 	ReferrerId             int64
@@ -142,7 +145,7 @@ type TetheredRebatePromotion struct {
 }
 
 func (t *TetheredRebatePromotion) TableName() string {
-	return "tethered_rebate_promotions"
+	return promotion_rewards.TableNameTetheredRebatePromotionRewards
 }
 
 // GetRewardsFor
