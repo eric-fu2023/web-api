@@ -581,7 +581,6 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 				res[i].TeamupType = ploutos.TeamupTypeGames
 				res[i].LeagueName = consts.GameProviderNameMap[t.Provider]
 				res[i].LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
-				res[i].GameType = int64(teamupRes[i].BetReportGameType)
 
 				outgoingBet.LeagueName = consts.GameProviderNameMap[t.Provider]
 				outgoingBet.LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
