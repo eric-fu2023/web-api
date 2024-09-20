@@ -157,6 +157,10 @@ func InitCrownValexyFactory() {
 // TODO
 func InitMancalaFactory() {
 	MancalaFactory = func() (*mancala.Service, error) {
-		return mancala.New("", "")
+		var GAME_MANCALA_CLIENT_GUID = os.Getenv("GAME_MANCALA_CLIENT_GUID")
+		var GAME_MANCALA_API_KEY = os.Getenv("GAME_MANCALA_API_KEY")
+		var GAME_MANCALA_URl = os.Getenv("GAME_MANCALA_URL")
+
+		return mancala.New(GAME_MANCALA_API_KEY, GAME_MANCALA_CLIENT_GUID, GAME_MANCALA_URl)
 	}
 }
