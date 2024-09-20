@@ -29,7 +29,7 @@ var GameIntegration = map[int64]GameIntegrationInterface{
 
 	// TODO
 	//util.IntegrationIdCrownValexy: &CrownValexy{},
-	//util.IntegrationIdMancala:     &Mancala{},
+	util.IntegrationIdMancala: &Mancala{},
 }
 
 type CrownValexy struct{}
