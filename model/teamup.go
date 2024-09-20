@@ -288,7 +288,7 @@ func GetRecentCompletedSuccessTeamup(numMinutes int64) (res TeamupSuccess, err e
 
 func GetCurrentTermNum(gameType int) (maxTerm int64, err error) {
 
-	gameTypes := getGameTypeSlice(gameType)
+	gameTypes, _ := GetGameTypeSlice(gameType)
 
 	err = DB.Table("teamups").
 		Select("MAX(term)").
@@ -304,7 +304,7 @@ func GetCurrentTermNum(gameType int) (maxTerm int64, err error) {
 
 func FindExceedTargetByTerm(termId int64, gameType int) (teamups []ploutos.Teamup, err error) {
 
-	gameTypes := getGameTypeSlice(gameType)
+	gameTypes, _ := GetGameTypeSlice(gameType)
 
 	err = DB.Table("teamups").
 		Where("term = ?", termId).
@@ -328,7 +328,7 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 
-		gameTypes := getGameTypeSlice(teamup.BetReportGameType)
+		gameTypes, _ := GetGameTypeSlice(teamup.BetReportGameType)
 
 		// 如果该届/期已经有候选池里为成功的单子，不管砍单是否有成功都算成功
 		// 可看下面注释
@@ -397,20 +397,29 @@ func FlagStatusShortlisted(tx *gorm.DB, ids []int64) (err error) {
 	})
 }
 
-func getGameTypeSlice(gameType int) (res []int) {
+func GetGameTypeSlice(gameType int) (gameTypeIds []int, teamupType int) {
 
-	isSports := false
+	teamupType = 0
 
 	for i := range ploutos.TeamUpSportGameTypes {
 		if ploutos.TeamUpSportGameTypes[i] == gameType {
-			isSports = true
+			gameTypeIds = ploutos.TeamUpSportGameTypes
+			teamupType = int(ploutos.TeamupTypeSports)
 		}
 	}
 
-	if isSports {
-		res = ploutos.TeamUpSportGameTypes
-	} else {
-		res = ploutos.TeamUpGameGameTypes
+	for i := range ploutos.TeamUpGameGameTypes {
+		if ploutos.TeamUpGameGameTypes[i] == gameType {
+			gameTypeIds = ploutos.TeamUpGameGameTypes
+			teamupType = int(ploutos.TeamupTypeGames)
+		}
+	}
+
+	for i := range ploutos.TeamUpSpinGameTypes {
+		if ploutos.TeamUpSpinGameTypes[i] == gameType {
+			gameTypeIds = ploutos.TeamUpSpinGameTypes
+			teamupType = int(ploutos.TeamupTypeSpin)
+		}
 	}
 
 	return
