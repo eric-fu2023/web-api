@@ -3,7 +3,10 @@ package common
 import (
 	"context"
 	"errors"
+	"gorm.io/gorm/clause"
 	"os"
+	"strconv"
+	"time"
 
 	"web-api/model"
 	"web-api/service/evo"
@@ -63,13 +66,15 @@ func (c *CrownValexy) GetGameBalance(user model.User, s string, s2 string, extra
 
 type Mancala struct{}
 
+var TayaCurrencyToMancalaCurrency = map[string]api.Currency{
+	"INR": "INR",
+}
+
 func (m *Mancala) CreateWallet(user model.User, tayaCurrency string) error {
 	//TODO implement me
-	var currencyMancala api.Currency
-	if tayaCurrency == "INR" {
-		currencyMancala = "INR"
-	} else {
-		return errors.New("mancala invalid currency")
+	currency, ok := TayaCurrencyToMancalaCurrency[tayaCurrency]
+	if !ok {
+		return errors.New("mancala unknown currency mapping")
 	}
 
 	// FIXME password to be derived from user instead of default value
@@ -77,7 +82,7 @@ func (m *Mancala) CreateWallet(user model.User, tayaCurrency string) error {
 		// fire and forget. later calls should follow up with user creation, if needed.
 		service, err := util.MancalaFactory()
 		if err == nil {
-			_, _, _ = service.AddTransferWallet(context.TODO(), user.IdAsString(), currencyMancala)
+			_, _, _ = service.AddTransferWallet(context.TODO(), user.IdAsString(), currency)
 		}
 	}()
 
@@ -94,7 +99,7 @@ func (m *Mancala) CreateWallet(user model.User, tayaCurrency string) error {
 				GameVendorId:     gameVendor.ID,
 				UserId:           user.ID,
 				ExternalUserId:   user.IdAsString(),
-				ExternalCurrency: currencyMancala,
+				ExternalCurrency: currency,
 			}
 
 			err = tx.Create(&gvu).Error
@@ -106,9 +111,63 @@ func (m *Mancala) CreateWallet(user model.User, tayaCurrency string) error {
 	})
 }
 
-func (m *Mancala) TransferFrom(db *gorm.DB, user model.User, s string, s2 string, i int64, extra model.Extra) error {
+func (m *Mancala) TransferFrom(tx *gorm.DB, user model.User, tayaCurrency, gameCode string, gameVendorId int64, extra model.Extra) error {
+	currency, ok := TayaCurrencyToMancalaCurrency[tayaCurrency]
+	if !ok {
+		return errors.New("mancala unknown currency mapping")
+	}
+	userId := user.IdAsString()
+
 	//TODO implement me
-	return errors.New("todo")
+	client, err := util.MancalaFactory()
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+
+	balanceResponse, err := client.GetBalance(ctx, userId, currency)
+	if err != nil {
+		return err
+	}
+	toWithdraw := balanceResponse.Balance
+	switch {
+	case toWithdraw == 0:
+		return nil
+	case toWithdraw < 0:
+		return errors.New("manacala user balance is not positive")
+	}
+
+	withdrawTxId := userId + strconv.FormatInt(time.Now().UnixNano(), 10)
+
+	_, wErr := client.Withdraw(ctx, userId, currency, withdrawTxId, toWithdraw)
+	if wErr != nil {
+		return wErr
+	}
+
+	_withdrawn := toWithdraw
+	var sum ploutos.UserSum
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, user.ID).First(&sum).Error; err != nil {
+		return err
+	}
+	withdrawn := util.MoneyInt(_withdrawn)
+	transaction := ploutos.Transaction{
+		UserId:                user.ID,
+		Amount:                withdrawn,
+		BalanceBefore:         sum.Balance,
+		BalanceAfter:          sum.Balance + withdrawn,
+		TransactionType:       ploutos.TransactionTypeFromGameIntegration,
+		Wager:                 0,
+		WagerBefore:           sum.RemainingWager,
+		WagerAfter:            sum.RemainingWager,
+		ExternalTransactionId: withdrawTxId,
+		GameVendorId:          gameVendorId,
+	}
+	err = tx.Create(&transaction).Error
+	if err != nil {
+		return err
+	}
+	err = tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`balance`, gorm.Expr(`balance + ?`, withdrawn)).Error
+	return err
 }
 
 func (m *Mancala) TransferTo(db *gorm.DB, user model.User, sum ploutos.UserSum, s string, s2 string, i int64, extra model.Extra) (int64, error) {
