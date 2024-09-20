@@ -105,7 +105,7 @@ func GetPromotionSessionProgress(ctx context.Context, p ploutos.Promotion, s plo
 		return progress, nil
 	}
 
-	return 0, ErrPromotionSessionUnknownPromotionType
+	return 0, nil
 }
 
 func GetPromotionSessionClaimStatus(c context.Context, p ploutos.Promotion, s ploutos.PromotionSession, userID int64, now time.Time) (claim serializer.ClaimStatus) {
