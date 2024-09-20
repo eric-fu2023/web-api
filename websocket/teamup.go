@@ -12,7 +12,7 @@ type TeamupGameNotificationMessage struct {
 	Icon         string `json:"icon"`
 	Event        string `json:"event"`
 	ProviderName string `json:"provider_name"`
-	StartTime    int64  `json:"start_time"`
+	EndTime      int64  `json:"end_time"`
 	TeamupId     int64  `json:"teamup_id"`
 	TeamupType   int64  `json:"teamup_type"`
 }
