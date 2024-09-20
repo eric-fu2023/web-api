@@ -86,7 +86,6 @@ func GetPromotionSessionProgress(ctx context.Context, p ploutos.Promotion, s plo
 
 		orders, err := model.ScopedTopupExceptAllTimeFirst(ctx, userID, s.TopupStart, s.TopupEnd)
 		if err != nil {
-			log.Printf("model.ScopedTopupExceptAllTimeFirst err, %v", err)
 			return 0, err
 		}
 		return util.Reduce(orders, func(amount int64, input model.CashOrder) int64 {

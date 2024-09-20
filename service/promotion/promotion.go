@@ -160,22 +160,13 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			progress, err = GetPromotionSessionProgress(gCtx, promotion, activeSession, user.ID)
 			// FIXME
 			// to remove error suppression
-			if err != nil{
-				log.Printf("GetPromotionSessionProgress err, %v", err)
-			}
-			if !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
+			if err != nil && !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
+				log.Printf("!errors.Is(err, ErrPromotionSessionUnknownPromotionType) err, %v", err)
 				return r, err
 			}
-			log.Printf("GetPromotionSessionProgress success, %d", progress)
 			claimStatus = GetPromotionSessionClaimStatus(gCtx, promotion, activeSession, user.ID, now)
-			log.Printf("GetPromotionSessionClaimStatus success")
 			reward, _, _, err = GetPromotionRewards(gCtx, promotion, user.ID, progress, now, &user)
-			if err != nil {
-				log.Printf("GetPromotionRewards err, %v", err)
-			}
-			log.Printf("GetPromotionRewards success")
 			extra = GetPromotionExtraDetails(gCtx, promotion, user.ID, now)
-			log.Printf("GetPromotionExtraDetails success,")
 		}
 		if claimStatus.HasClaimed {
 			v, err := model.GetVoucherByUserAndPromotionSession(gCtx, user.ID, activeSession.ID)
