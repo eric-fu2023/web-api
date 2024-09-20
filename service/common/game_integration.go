@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"errors"
 	"os"
 
@@ -12,6 +13,7 @@ import (
 	"web-api/service/ugs"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/game-service/mancala/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
@@ -61,9 +63,47 @@ func (c *CrownValexy) GetGameBalance(user model.User, s string, s2 string, extra
 
 type Mancala struct{}
 
-func (m *Mancala) CreateWallet(user model.User, s string) error {
+func (m *Mancala) CreateWallet(user model.User, tayaCurrency string) error {
 	//TODO implement me
-	return errors.New("todo")
+	var currencyMancala api.Currency
+	if tayaCurrency == "INR" {
+		currencyMancala = "INR"
+	} else {
+		return errors.New("mancala invalid currency")
+	}
+
+	// FIXME password to be derived from user instead of default value
+	go func() {
+		// fire and forget. later calls should follow up with user creation, if needed.
+		service, err := util.MancalaFactory()
+		if err == nil {
+			_, _, _ = service.AddTransferWallet(context.TODO(), user.IdAsString(), currencyMancala)
+		}
+	}()
+
+	return model.DB.Transaction(func(tx *gorm.DB) (err error) {
+		var gameVendors []ploutos.GameVendor
+		err = tx.Model(ploutos.GameVendor{}).
+			Where(`game_vendor.game_integration_id`, util.IntegrationIdMancala).Find(&gameVendors).Error
+		if err != nil {
+			return
+		}
+
+		for _, gameVendor := range gameVendors {
+			gvu := ploutos.GameVendorUser{
+				GameVendorId:     gameVendor.ID,
+				UserId:           user.ID,
+				ExternalUserId:   user.IdAsString(),
+				ExternalCurrency: currencyMancala,
+			}
+
+			err = tx.Create(&gvu).Error
+			if err != nil && !errors.Is(err, gorm.ErrDuplicatedKey) {
+				return
+			}
+		}
+		return
+	})
 }
 
 func (m *Mancala) TransferFrom(db *gorm.DB, user model.User, s string, s2 string, i int64, extra model.Extra) error {
