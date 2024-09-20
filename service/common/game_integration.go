@@ -137,7 +137,7 @@ func (m *Mancala) TransferFrom(tx *gorm.DB, user model.User, tayaCurrency, gameC
 		return errors.New("manacala user balance is not positive")
 	}
 
-	withdrawTxId := userId + strconv.FormatInt(time.Now().UnixNano(), 10)
+	withdrawTxId := userId + strconv.FormatInt(time.Now().UnixNano(), 10) + "withdraw"
 
 	_, wErr := client.Withdraw(ctx, userId, currency, withdrawTxId, toWithdraw)
 	if wErr != nil {
@@ -170,9 +170,55 @@ func (m *Mancala) TransferFrom(tx *gorm.DB, user model.User, tayaCurrency, gameC
 	return err
 }
 
-func (m *Mancala) TransferTo(db *gorm.DB, user model.User, sum ploutos.UserSum, s string, s2 string, i int64, extra model.Extra) (int64, error) {
-	//TODO implement me
-	return 0, errors.New("todo")
+func (m *Mancala) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, tayaCurrency, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
+	switch {
+	case sum.Balance == 0:
+		return 0, nil
+	case sum.Balance < 0:
+		return 0, errors.New("rf user balance is not positive")
+	}
+
+	client, err := util.MancalaFactory()
+	if err != nil {
+		return 0, err
+	}
+	currency, ok := TayaCurrencyToMancalaCurrency[tayaCurrency]
+	if !ok {
+		return 0, errors.New("mancala unknown currency mapping")
+	}
+	ctx := context.Background()
+
+	userId := user.IdAsString()
+
+	depTxId := userId + strconv.FormatInt(time.Now().UnixNano(), 10) + "deposit"
+	_, wErr := client.Deposit(ctx, userId, currency, depTxId, util.MoneyFloat(sum.Balance))
+	if wErr != nil {
+		return 0, wErr
+	}
+
+	if depTxId != "" {
+		transaction := ploutos.Transaction{
+			UserId:                user.ID,
+			Amount:                -1 * sum.Balance,
+			BalanceBefore:         sum.Balance,
+			BalanceAfter:          0,
+			TransactionType:       ploutos.TransactionTypeToGameIntegration, /*ploutos.TransactionTypeToUGS*/
+			Wager:                 0,
+			WagerBefore:           sum.RemainingWager,
+			WagerAfter:            sum.RemainingWager,
+			ExternalTransactionId: depTxId,
+			GameVendorId:          gameVendorId,
+		}
+		err = tx.Create(&transaction).Error
+		if err != nil {
+			return 0, err
+		}
+		err = tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`balance`, 0).Error
+		if err != nil {
+			return 0, err
+		}
+	}
+	return sum.Balance, nil
 }
 
 func (m *Mancala) GetGameUrl(user model.User, s string, s2 string, s3 string, i int64, extra model.Extra) (string, error) {
