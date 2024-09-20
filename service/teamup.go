@@ -577,6 +577,8 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 		// TAKE NOTE PANDA
 		_, teamupType := model.GetGameTypeSlice(t.BetReportGameType)
 		res[i].TeamupType = int64(teamupType)
+		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
+		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
 
 		if res[i].TeamupType != ploutos.TeamupTypeSports {
 			res[i].LeagueName = consts.GameProviderNameMap[t.Provider]
@@ -591,8 +593,6 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 		}
 
 		// 体育解析
-		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
-		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
 
 		if t.MatchId == "" {
 			fmt.Print(t.MatchId)

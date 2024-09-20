@@ -803,7 +803,7 @@ var (
 		"Mumbai":           "Mumbai",
 		"9Wickets":         "9Wickets",
 
-		"Spin And Win Rewards": "Spin And Win Rewards",
+		"Spin And Win Rewards": "Cash Rewards",
 	}
 
 	GameProviderNameToImgMap = map[string]string{
