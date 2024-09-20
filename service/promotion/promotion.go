@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"web-api/model"
@@ -159,6 +160,9 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			progress, err = GetPromotionSessionProgress(gCtx, promotion, activeSession, user.ID)
 			// FIXME
 			// to remove error suppression
+			if err != nil{
+				log.Printf("GetPromotionSessionProgress err, %v", err)
+			}
 			if !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
 				return r, err
 			}
