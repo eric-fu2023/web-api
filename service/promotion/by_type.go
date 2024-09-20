@@ -51,6 +51,7 @@ func GetPromotionRewards(c context.Context, p ploutos.Promotion, userID, progres
 		var vip ploutos.VipRecord
 		vip, err = model.GetVipWithDefault(c, userID)
 		if err != nil {
+			log.Printf("GetVipWithDefault err, %v", err)
 			return
 		}
 		reward, vipMeetGapType, vipIncrementDetail = p.GetRewardDetails().GetReward(progress, vip.VipRule.VIPLevel)
@@ -85,6 +86,7 @@ func GetPromotionSessionProgress(ctx context.Context, p ploutos.Promotion, s plo
 
 		orders, err := model.ScopedTopupExceptAllTimeFirst(ctx, userID, s.TopupStart, s.TopupEnd)
 		if err != nil {
+			log.Printf("model.ScopedTopupExceptAllTimeFirst err, %v", err)
 			return 0, err
 		}
 		return util.Reduce(orders, func(amount int64, input model.CashOrder) int64 {
@@ -129,6 +131,9 @@ func GetPromotionSessionClaimStatus(c context.Context, p ploutos.Promotion, s pl
 		}
 	default:
 		v, err := model.GetVoucherByUserAndPromotionSession(c, userID, s.ID)
+		if err != nil {
+			log.Printf("GetVoucherByUserAndPromotionSession err, %v", err)
+		}
 		if err == nil && v.ID != 0 {
 			claim.HasClaimed = true
 		}

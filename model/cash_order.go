@@ -148,7 +148,7 @@ func FirstTopup(c context.Context, userID int64) (CashOrder, error) {
 }
 
 func ScopedTopupExceptAllTimeFirst(c context.Context, userID int64, start, end time.Time) (list []CashOrder, err error) {
-	err = DB.WithContext(c).Where("user_id", userID).Where("order_type", ploutos.CashOrderTypeCashIn).
+	err = DB.Debug().WithContext(c).Where("user_id", userID).Where("order_type", ploutos.CashOrderTypeCashIn).
 		Where("status", ploutos.CashOrderStatusSuccess).
 		Where("created_at > ?", start).Where("created_at < ?", end).
 		Where("id != (?)", DB.WithContext(c).Model(&CashOrder{}).Select("id").Where("user_id", userID).Where("order_type", ploutos.CashOrderTypeCashIn).
