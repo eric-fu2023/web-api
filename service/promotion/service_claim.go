@@ -39,9 +39,9 @@ func Claim(ctx context.Context, now time.Time, promotion models.Promotion, sessi
 	progress, err = GetPromotionSessionProgress(ctx, promotion, session, userID)
 	// FIXME
 	// to remove error suppression
-	if !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
-		return voucher, err
-	}
+	// if !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
+	// 	return voucher, err
+	// }
 	reward, meetGapType, vipIncrementDetail, err := GetPromotionRewards(ctx, promotion, userID, progress, now, user)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
