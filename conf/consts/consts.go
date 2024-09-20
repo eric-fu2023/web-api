@@ -802,19 +802,22 @@ var (
 		"IMOne Slot":       "IMOne Slot",
 		"Mumbai":           "Mumbai",
 		"9Wickets":         "9Wickets",
+
+		"Spin And Win Rewards": "Spin And Win Rewards",
 	}
 
 	GameProviderNameToImgMap = map[string]string{
-		"ba01inr":          "",
-		"SPRIBE_SLOT":      "",
-		"MICROGAMING_SLOT": "",
-		"HS_SLOT":          "",
-		"JFI0000":          "",
-		"PLAYNGO_SLOT":     "",
-		"evolution":        "https://static.tayalive.com/batace-img/icon/Evolution-min.png",
-		"Evolution":        "https://static.tayalive.com/batace-img/icon/Evolution-min.png",
-		"IMOne Slot":       "https://static.tayalive.com/batace-img/icon/IMOne-min.png",
-		"Mumbai":           "https://static.tayalive.com/batace-img/icon/Mumbai-min.png",
-		"9Wickets":         "https://static.tayalive.com/batace-img/icon/IMOne-min.png",
+		"ba01inr":              "",
+		"SPRIBE_SLOT":          "",
+		"MICROGAMING_SLOT":     "",
+		"HS_SLOT":              "",
+		"JFI0000":              "",
+		"PLAYNGO_SLOT":         "",
+		"evolution":            "https://static.tayalive.com/batace-img/icon/Evolution-min.jpg",
+		"Evolution":            "https://static.tayalive.com/batace-img/icon/Evolution-min.jpg",
+		"IMOne Slot":           "https://static.tayalive.com/batace-img/icon/IMOne-min.jpg",
+		"Mumbai":               "https://static.tayalive.com/batace-img/icon/Mumbai-min.jpg",
+		"9Wickets":             "https://static.tayalive.com/batace-img/icon/IMOne-min.jpg",
+		"Spin And Win Rewards": "https://static.tayalive.com/batace-img/icon/SpinRewards.jpg",
 	}
 )

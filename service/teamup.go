@@ -570,25 +570,24 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 	for i, t := range teamupRes {
 
-		res[i].TeamupType = ploutos.TeamupTypeSports
 		var outgoingBet model.OutgoingBet
 
 		// 游戏解析
 		// 如果是游戏
 		// TAKE NOTE PANDA
-		for j := range ploutos.TeamUpGameGameTypes {
-			if ploutos.TeamUpGameGameTypes[j] == teamupRes[i].BetReportGameType {
-				res[i].TeamupType = ploutos.TeamupTypeGames
-				res[i].LeagueName = consts.GameProviderNameMap[t.Provider]
-				res[i].LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
+		_, teamupType := model.GetGameTypeSlice(t.BetReportGameType)
+		res[i].TeamupType = int64(teamupType)
 
-				outgoingBet.LeagueName = consts.GameProviderNameMap[t.Provider]
-				outgoingBet.LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
+		if res[i].TeamupType != ploutos.TeamupTypeSports {
+			res[i].LeagueName = consts.GameProviderNameMap[t.Provider]
+			res[i].LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
 
-				res[i].Bet = outgoingBet
+			outgoingBet.LeagueName = consts.GameProviderNameMap[t.Provider]
+			outgoingBet.LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
 
-				continue
-			}
+			res[i].Bet = outgoingBet
+
+			continue
 		}
 
 		// 体育解析
