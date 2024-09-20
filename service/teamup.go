@@ -527,12 +527,12 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 			return
 		}
 
-		// SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+		SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 	}
 
 	if isSuccess {
 		teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
-		// SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+		SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 	}
 
 	if err != nil {
@@ -849,3 +849,56 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 	go common.SendNotification(userId, consts.Notification_Type_Teamup_Detail, notificationTitle, notificationMsg, resp)
 
 }
+
+// func (s TeamupService) CheckAndSpin(c *gin.Context) (r serializer.Response, err error) {
+// 	// i18n := c.MustGet("i18n").(i18n.I18n)
+// 	u, _ := c.Get("user")
+// 	user := u.(model.User)
+
+// 	var start, end int64
+// 	loc := c.MustGet("_tz").(*time.Location)
+// 	if s.Start != "" {
+// 		if v, e := time.ParseInLocation(time.DateOnly, s.Start, loc); e == nil {
+// 			start = v.UTC().Add(-10 * time.Minute).Unix()
+// 		}
+// 	}
+// 	if s.End != "" {
+// 		if v, e := time.ParseInLocation(time.DateOnly, s.End, loc); e == nil {
+// 			end = v.UTC().Add(24*time.Hour - 1*time.Second).Add(-10 * time.Minute).Unix()
+// 		}
+// 	}
+
+// 	teamupStatus := make([]int, 3)
+
+// 	switch s.Status {
+
+// 	// 进行中
+// 	case 1:
+// 		teamupStatus = []int{0}
+
+// 	// 结束（成功，失败）
+// 	case 2:
+// 		teamupStatus = []int{1, 2}
+
+// 	// 全部
+// 	case 0:
+// 		teamupStatus = []int{0, 1, 2}
+// 	}
+
+// 	teamupRes, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit, start, end)
+
+// 	// sort.SliceStable(teamupRes, func(i, j int) bool {
+// 	// 	// Move status 0, 1, and 2 to the front
+// 	// 	if teamupRes[i].Status == 0 || teamupRes[i].Status == 1 || teamupRes[i].Status == 2 {
+// 	// 		if teamupRes[j].Status == 0 || teamupRes[j].Status == 1 || teamupRes[j].Status == 2 {
+// 	// 			return teamupRes[i].Status < teamupRes[j].Status
+// 	// 		}
+// 	// 		return true
+// 	// 	}
+// 	// 	return false
+// 	// })
+
+// 	r.Data = parseBetReport(teamupRes)
+
+// 	return
+// }
