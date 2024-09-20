@@ -2,9 +2,7 @@ package promotion
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"web-api/model"
@@ -160,10 +158,10 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			progress, err = GetPromotionSessionProgress(gCtx, promotion, activeSession, user.ID)
 			// FIXME
 			// to remove error suppression
-			if err != nil && !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
-				log.Printf("!errors.Is(err, ErrPromotionSessionUnknownPromotionType) err, %v", err)
-				return r, err
-			}
+			// if err != nil && !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
+			// 	log.Printf("!errors.Is(err, ErrPromotionSessionUnknownPromotionType) err, %v", err)
+			// 	return r, err
+			// }
 			claimStatus = GetPromotionSessionClaimStatus(gCtx, promotion, activeSession, user.ID, now)
 			reward, _, _, err = GetPromotionRewards(gCtx, promotion, user.ID, progress, now, &user)
 			extra = GetPromotionExtraDetails(gCtx, promotion, user.ID, now)
