@@ -48,6 +48,7 @@ func Init() {
 	util.InitNineWicketsFactory()
 	util.InitMumbaiFactory()
 	util.InitFCMFactory()
+	util.InitMancalaFactory()
 	model.InitShengWang()
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
