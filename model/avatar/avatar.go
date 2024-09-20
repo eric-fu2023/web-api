@@ -19,7 +19,7 @@ func GetAvatarUrls() []string {
 	lName := os.Getenv("AVATAR_URL_LIST_NAME") // todo lift up to Init
 	switch lName {
 	case "2":
-		return urlList2
+		return bataceTeamupAvatarList
 	default:
 		return defaultUrlList
 	}
@@ -49,7 +49,7 @@ func GetRotatingAvatarPool(urls []string, poolSize int) (finalPool []string) {
 		idx, _ = strconv.Atoi(res.Val())
 	}
 
-	arrStart := idx 
+	arrStart := idx
 	arrEnd := arrStart + poolSize
 
 	if arrEnd <= len(urls) {
@@ -66,11 +66,11 @@ func GetRotatingAvatarPool(urls []string, poolSize int) (finalPool []string) {
 	_ = setRes
 
 	return finalPool
-} 
+}
 
 func GetRandomAvatarUrlForTeamup() string {
 	rand.Seed(time.Now().UnixNano())
-	if rand.Float64() < 0.8 {
+	if rand.Float64() < 0.5 {
 		return defaultBaAvatar
 	}
 	pool := GetRotatingAvatarPool(GetAvatarUrls(), 8)
