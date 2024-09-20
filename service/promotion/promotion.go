@@ -164,6 +164,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 				log.Printf("GetPromotionSessionProgress err, %v", err)
 			}
 			if !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
+				log.Printf("!errors.Is(err, ErrPromotionSessionUnknownPromotionType) err, %v", err)
 				return r, err
 			}
 			log.Printf("GetPromotionSessionProgress success, %d", progress)
