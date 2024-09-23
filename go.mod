@@ -10,7 +10,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240923020502-d94564f11340
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240913111721-620948d99167
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240920033758-bf5656a0a0a5
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240922232654-8150aa5324f5
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240703073351-55719e205f9b
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
@@ -40,15 +40,15 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	go.mongodb.org/mongo-driver v1.11.2
-	golang.org/x/crypto v0.27.0
+	golang.org/x/crypto v0.26.0
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
-	golang.org/x/sys v0.25.0
-	golang.org/x/text v0.18.0
+	golang.org/x/sys v0.24.0
+	golang.org/x/text v0.17.0
 	google.golang.org/api v0.156.0
 	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.9
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.25.11
 	gorm.io/plugin/dbresolver v1.5.0
 )
 
