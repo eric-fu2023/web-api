@@ -26,16 +26,13 @@ func (service *SpinService) Get(c *gin.Context) (r serializer.Response, err erro
 	spin_promotion_id := c.Query("id")
 	u, _ := c.Get("user")
 	user, _ := u.(model.User)
-	var spin ploutos.Spins
-	err = model.DB.Model(ploutos.Spins{}).Where("promotion_id = ?", spin_promotion_id).Find(&spin).Error
+	spin, err := model.GetSpinByPromotionId(spin_promotion_id)
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
 
-	var spin_items []ploutos.SpinItem
-	q := model.DB.Model(ploutos.SpinItem{}).Where("spin_id = ?", spin.ID).Order(`id DESC`)
-	err = q.Find(&spin_items).Error
+	spinItems, err := model.GetSpinItemsBySpinId(spin.ID)
 	if err != nil {
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
@@ -52,7 +49,7 @@ func (service *SpinService) Get(c *gin.Context) (r serializer.Response, err erro
 	spin_results_counts := len(spin_results)
 
 	var data serializer.Spin
-	data = serializer.BuildSpin(spin, spin_items, spin_results_counts)
+	data = serializer.BuildSpin(spin, spinItems, spin_results_counts)
 	r = serializer.Response{
 		Data: data,
 	}
@@ -76,7 +73,6 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 
 	var spin ploutos.Spins
 	err = model.DB.Model(ploutos.Spins{}).Where("id = ?", spin_id_int).Find(&spin).Error
-
 
 	var previous_spin_result []ploutos.SpinResult
 	err = model.DB.Model(ploutos.SpinResult{}).Where("user_id = ? AND spin_id = ?", user.ID, spin.ID).Where("created_at > ?", startOfToday).
@@ -140,7 +136,7 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 			SpinID:     spin.ID,
 		}
 		err = model.DB.Create(&SpinResult).Error
-		if err!=nil{
+		if err != nil {
 			fmt.Println("spin result insert err", err)
 		}
 
@@ -207,12 +203,11 @@ func (service *SpinService) GetSpinIdFromPromotionId(spin_promotion_id int) (spi
 func (service *SpinService) CheckIsSpinAlive(spin_promotion_id int) (isAlive bool) {
 	var promotion ploutos.Promotion
 	err := model.DB.Where("id", spin_promotion_id).First(&promotion).Error
-	if err!= nil{
+	if err != nil {
 		fmt.Println("get spin promotion error", err)
 	}
-	if promotion.EndAt.After(time.Now()) && promotion.StartAt.Before(time.Now()){
+	if promotion.EndAt.After(time.Now()) && promotion.StartAt.Before(time.Now()) {
 		return true
 	}
 	return false
 }
-

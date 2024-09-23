@@ -10,7 +10,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240923023856-7203edda5d7e
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240913111721-620948d99167
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240922232654-8150aa5324f5
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240923065603-59ca76f20c5b
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240703073351-55719e205f9b
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
@@ -53,7 +53,6 @@ require (
 )
 
 require (
-	blgit.rfdev.tech/taya/common-function v0.0.0-20240923022754-7f009bf6d41b // indirect
 	cloud.google.com/go v0.111.0 // indirect
 	cloud.google.com/go/compute v1.23.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -167,5 +166,4 @@ require (
 	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/ini.v1 v1.56.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/mysql v1.5.7 // indirect
 )

@@ -408,3 +408,45 @@ func SlashBeforeByUserId(userId int64) (isExisted bool) {
 
 	return
 }
+
+func ShouldPopRoulette(userId int64) (shouldPop bool) {
+
+	// condition1 := true
+	condition2 := true
+
+	// 1）新用户（没有注册过的ip和uuid）+ 超过某个时间点注册
+	// 2）砍单记录里没启动过轮盘砍单（发起过轮盘砍单就不可以再发起了）
+
+	// 新用户（没有注册过的ip和uuid）+ 超过某个时间点注册
+	// var countUsers int64
+	// _ = DB.Table("users").
+	// 	Where("id = ?", userId).
+	// 	Where("created_at > ?", "2024-09-20 00:00:00.000000").
+	// 	Count(&countUsers).Error
+
+	// if countUsers > 0 {
+	// 	isIPRegistered := IPExisted(ip)
+	// 	// IP 已注册过
+	// 	if isIPRegistered {
+	// 		condition1 = false
+	// 	}
+	// } else {
+	// 	// 老用户
+	// 	condition1 = false
+	// }
+
+	// 砍单记录里没启动过轮盘砍单（发起过轮盘砍单就不可以再发起了）
+	var countStartedSpin int64
+	_ = DB.Table("teamups").
+		Where("user_id = ?", userId).
+		Where("bet_report_game_type in ?", ploutos.TeamUpSpinGameTypes).
+		Count(&countStartedSpin).Error
+
+	if countStartedSpin > 1 {
+		// 已发起过轮盘砍单
+		condition2 = false
+	}
+
+	// return condition1 && condition2
+	return condition2
+}
