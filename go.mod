@@ -8,9 +8,9 @@ toolchain go1.21.1
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
-	blgit.rfdev.tech/taya/game-service v0.0.0-20240920080622-dfe6ac8e3b2c
+	blgit.rfdev.tech/taya/game-service v0.0.0-20240923020502-d94564f11340
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240913111721-620948d99167
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240920033758-bf5656a0a0a5
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240922232654-8150aa5324f5
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240703073351-55719e205f9b
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
@@ -53,6 +53,7 @@ require (
 )
 
 require (
+	blgit.rfdev.tech/taya/common-function v0.0.0-20240923022754-7f009bf6d41b // indirect
 	cloud.google.com/go v0.111.0 // indirect
 	cloud.google.com/go/compute v1.23.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
