@@ -147,14 +147,16 @@ func InitMumbaiFactory() {
 	}
 }
 
-// TODO
 func InitCrownValexyFactory() {
 	CrownValexyFactory = func() (*crownvalexy.Service, error) {
-		return crownvalexy.New("", "", "")
+		GAME_CROWN_VALEXY_ACCESS_KEY := os.Getenv("GAME_CROWN_VALEXY_ACCESS_KEY")
+		GAME_CROWN_VALEXY_SECRET_KEY := os.Getenv("GAME_CROWN_VALEXY_SECRET_KEY")
+		GAME_CROWN_VALEXY_URL := os.Getenv("GAME_CROWN_VALEXY_URL")
+
+		return crownvalexy.New(GAME_CROWN_VALEXY_ACCESS_KEY, GAME_CROWN_VALEXY_SECRET_KEY, GAME_CROWN_VALEXY_URL)
 	}
 }
 
-// TODO
 func InitMancalaFactory() {
 	MancalaFactory = func() (*mancala.Service, error) {
 		var GAME_MANCALA_CLIENT_GUID = os.Getenv("GAME_MANCALA_CLIENT_GUID")
