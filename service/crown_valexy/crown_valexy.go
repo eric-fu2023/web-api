@@ -31,7 +31,7 @@ func (c *CrownValexy) CreateWallet(user model.User, s string) error {
 	return model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
 		err = tx.Model(ploutos.GameVendor{}).
-			Where(`game_vendor.game_integration_id`, util.IntegrationIdMancala).Find(&gameVendors).Error
+			Where(`game_vendor.game_integration_id`, util.IntegrationIdCrownValexy).Find(&gameVendors).Error
 		if err != nil {
 			return
 		}
@@ -50,7 +50,6 @@ func (c *CrownValexy) CreateWallet(user model.User, s string) error {
 		}
 		return
 	})
-	return errors.New("todo")
 }
 
 type Remarks struct {
