@@ -49,6 +49,8 @@ func Init() {
 	util.InitMumbaiFactory()
 	util.InitFCMFactory()
 	util.InitMancalaFactory()
+	util.InitCrownValexyFactory()
+
 	model.InitShengWang()
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
