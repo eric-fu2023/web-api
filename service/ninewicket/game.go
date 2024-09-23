@@ -1,6 +1,7 @@
 package ninewicket
 
 import (
+	"context"
 	"log"
 
 	"web-api/model"
@@ -9,7 +10,7 @@ import (
 	"blgit.rfdev.tech/taya/game-service/ninewickets/api"
 )
 
-func (n *NineWicket) GetGameUrl(user model.User, currency, gameCode, subGameCode string, platform int64, extra model.Extra) (url string, err error) {
+func (n *NineWicket) GetGameUrl(ctx context.Context, user model.User, currency, gameCode, subGameCode string, platform int64, extra model.Extra) (url string, err error) {
 	client, err := util.NineWicketFactory()
 	if err != nil {
 		return "", err

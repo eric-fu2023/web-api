@@ -64,7 +64,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 		return
 	}
 	extra := model.Extra{Locale: locale, Ip: c.ClientIP()}
-	url, err := game.GetGameUrl(user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
+	url, err := game.GetGameUrl(rfCtx, user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
 
 	msgAfterGetGame := fmt.Sprintf("game.GetGameUrl url:%s err: %v user %v, gvu.ExternalCurrency %v, subGame.GameVendor.GameCode %v, subGame.GameCode %v, service.Platform %v, extra %+v", url, err, user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
 	rfCtx = rfcontext.AppendDescription(rfCtx, msgAfterGetGame)

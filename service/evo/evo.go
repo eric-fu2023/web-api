@@ -1,17 +1,19 @@
 package evo
 
 import (
-	"blgit.rfdev.tech/taya/game-service/evo/callback"
+	"context"
 	"errors"
+	"log"
 	"os"
 	"strconv"
 	"time"
+
+	"blgit.rfdev.tech/taya/game-service/evo/callback"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"web-api/model"
 	"web-api/util"
 
-	"log"
-
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -49,7 +51,7 @@ func (e EVO) CreateWallet(user model.User, currency string) (err error) {
 	return
 }
 
-func (e EVO) GetGameUrl(user model.User, currency, gameCode, subGameCode string, platform int64, extra model.Extra) (url string, err error) {
+func (e EVO) GetGameUrl(ctx context.Context, user model.User, currency, gameCode, subGameCode string, platform int64, extra model.Extra) (url string, err error) {
 	client := util.EvoFactory.NewClient()
 
 	uuid := uuid.NewString()
