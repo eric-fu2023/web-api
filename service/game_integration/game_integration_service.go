@@ -1,6 +1,7 @@
 package game_integration
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -11,6 +12,7 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +26,8 @@ type GetUrlService struct {
 }
 
 func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err error) {
+	rfCtx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "GetUrlService")
+
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	locale := c.MustGet("_locale").(string)
 	user := c.MustGet("user").(model.User)
@@ -40,16 +44,31 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
+	{ // debug
+		var gvid, giid int64
+		if subGame.GameVendor != nil {
+			gvid = subGame.GameVendor.ID
+			giid = subGame.GameVendor.GameIntegrationId
+		}
+		rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("\"subGame.game_vendor.id %d subGame.game_vendor.game_integration_id %d\",", gvid, giid))
+	}
 
 	game, ok := common.GameIntegration[subGame.GameVendor.GameIntegrationId]
 	if !ok {
-		log.Printf("error cannot find game integration for subd game %#v", subGame)
+		iErr := fmt.Errorf("error cannot find game integration for sub game %#v", subGame)
+		if iErr != nil {
+			rfCtx = rfcontext.AppendError(rfCtx, iErr, "binding gi interface")
+			log.Println(rfcontext.Fmt(rfCtx))
+		}
 		r = serializer.Err(c, service, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return
 	}
 	extra := model.Extra{Locale: locale, Ip: c.ClientIP()}
 	url, err := game.GetGameUrl(user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
-	log.Printf("game.GetGameUrl url:%s err: %v user %v, gvu.ExternalCurrency %v, subGame.GameVendor.GameCode %v, subGame.GameCode %v, service.Platform %v, extra %+v", url, err, user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
+
+	msgAfterGetGame := fmt.Sprintf("game.GetGameUrl url:%s err: %v user %v, gvu.ExternalCurrency %v, subGame.GameVendor.GameCode %v, subGame.GameCode %v, service.Platform %v, extra %+v", url, err, user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
+	rfCtx = rfcontext.AppendDescription(rfCtx, msgAfterGetGame)
+	log.Println(rfcontext.Fmt(rfCtx))
 	if err != nil {
 		return
 	}
