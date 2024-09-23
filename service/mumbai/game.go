@@ -1,6 +1,7 @@
 package mumbai
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -42,7 +43,7 @@ func (c *Mumbai) LoginWithCreateUser(mbUserName string, password string, clientI
 	}
 }
 
-func (c *Mumbai) GetGameUrl(user model.User, currency, tayaGameCode, tayaSubGameCode string, _ int64, extra model.Extra) (string, error) {
+func (c *Mumbai) GetGameUrl(ctx context.Context, user model.User, currency, tayaGameCode, tayaSubGameCode string, _ int64, extra model.Extra) (string, error) {
 	// creates the client so that we can call the login method.
 	client, err := util.MumbaiFactory()
 	if err != nil {

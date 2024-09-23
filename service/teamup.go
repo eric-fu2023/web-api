@@ -41,6 +41,7 @@ type TeamupService struct {
 type GetTeamupService struct {
 	OrderId    string `form:"order_id" json:"order_id"`
 	TeamupId   int64  `form:"teamup_id" json:"teamup_id"`
+	TeamupType int64  `form:"teamup_type" json:"teamup_type"`
 	MatchId    string `form:"match_id" json:"match_id"`
 	MatchTitle string `form:"match_title" json:"match_title"`
 	IsParlay   bool   `form:"is_parlay" json:"is_parlay"`
@@ -199,10 +200,9 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	}
 
 	user.Avatar = serializer.Url(user.Avatar)
-	gameType, _ := strconv.Atoi(s.GameType)
 
-	for j := range ploutos.TeamUpGameGameTypes {
-		if ploutos.TeamUpGameGameTypes[j] == gameType {
+	if s.TeamupId != 0 {
+		if ploutos.TeamupTypeGames == s.TeamupType {
 			shareService, _ := buildTeamupShareParamsService(serializer.BuildCustomTeamupGameHash(s.TeamupId, user))
 
 			r, err = shareService.Create()
@@ -527,12 +527,12 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 			return
 		}
 
-		// SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+		SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 	}
 
 	if isSuccess {
 		teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
-		// SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+		SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 	}
 
 	if err != nil {
@@ -570,30 +570,29 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 
 	for i, t := range teamupRes {
 
-		res[i].TeamupType = ploutos.TeamupTypeSports
 		var outgoingBet model.OutgoingBet
 
 		// 游戏解析
 		// 如果是游戏
 		// TAKE NOTE PANDA
-		for j := range ploutos.TeamUpGameGameTypes {
-			if ploutos.TeamUpGameGameTypes[j] == teamupRes[i].BetReportGameType {
-				res[i].TeamupType = ploutos.TeamupTypeGames
-				res[i].LeagueName = consts.GameProviderNameMap[t.Provider]
-				res[i].LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
+		_, teamupType := model.GetGameTypeSlice(t.BetReportGameType)
+		res[i].TeamupType = int64(teamupType)
+		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
+		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
 
-				outgoingBet.LeagueName = consts.GameProviderNameMap[t.Provider]
-				outgoingBet.LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
+		if res[i].TeamupType != ploutos.TeamupTypeSports {
+			res[i].LeagueName = consts.GameProviderNameMap[t.Provider]
+			res[i].LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
 
-				res[i].Bet = outgoingBet
+			outgoingBet.LeagueName = consts.GameProviderNameMap[t.Provider]
+			outgoingBet.LeagueIcon = consts.GameProviderNameToImgMap[t.Provider]
 
-				continue
-			}
+			res[i].Bet = outgoingBet
+
+			continue
 		}
 
 		// 体育解析
-		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
-		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
 
 		if t.MatchId == "" {
 			fmt.Print(t.MatchId)
@@ -837,7 +836,7 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 		if n != 1 {
 			pFloat64 := (float64(percentage) / float64(100))
 			notificationMsg = strings.ReplaceAll(notificationMsg, pString, "%s")
-			notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64))
+			notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64)+"%")
 		}
 	}
 
@@ -850,3 +849,56 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 	go common.SendNotification(userId, consts.Notification_Type_Teamup_Detail, notificationTitle, notificationMsg, resp)
 
 }
+
+// func (s TeamupService) CheckAndSpin(c *gin.Context) (r serializer.Response, err error) {
+// 	// i18n := c.MustGet("i18n").(i18n.I18n)
+// 	u, _ := c.Get("user")
+// 	user := u.(model.User)
+
+// 	var start, end int64
+// 	loc := c.MustGet("_tz").(*time.Location)
+// 	if s.Start != "" {
+// 		if v, e := time.ParseInLocation(time.DateOnly, s.Start, loc); e == nil {
+// 			start = v.UTC().Add(-10 * time.Minute).Unix()
+// 		}
+// 	}
+// 	if s.End != "" {
+// 		if v, e := time.ParseInLocation(time.DateOnly, s.End, loc); e == nil {
+// 			end = v.UTC().Add(24*time.Hour - 1*time.Second).Add(-10 * time.Minute).Unix()
+// 		}
+// 	}
+
+// 	teamupStatus := make([]int, 3)
+
+// 	switch s.Status {
+
+// 	// 进行中
+// 	case 1:
+// 		teamupStatus = []int{0}
+
+// 	// 结束（成功，失败）
+// 	case 2:
+// 		teamupStatus = []int{1, 2}
+
+// 	// 全部
+// 	case 0:
+// 		teamupStatus = []int{0, 1, 2}
+// 	}
+
+// 	teamupRes, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit, start, end)
+
+// 	// sort.SliceStable(teamupRes, func(i, j int) bool {
+// 	// 	// Move status 0, 1, and 2 to the front
+// 	// 	if teamupRes[i].Status == 0 || teamupRes[i].Status == 1 || teamupRes[i].Status == 2 {
+// 	// 		if teamupRes[j].Status == 0 || teamupRes[j].Status == 1 || teamupRes[j].Status == 2 {
+// 	// 			return teamupRes[i].Status < teamupRes[j].Status
+// 	// 		}
+// 	// 		return true
+// 	// 	}
+// 	// 	return false
+// 	// })
+
+// 	r.Data = parseBetReport(teamupRes)
+
+// 	return
+// }

@@ -27,7 +27,8 @@ type TeamUpPopupResponse struct {
 	Status  int    `json:"status"`
 	// TotalTeamupDeposit int64                   `json:"total_deposit"`
 	TotalTeamUpTarget float64                 `json:"total_target"`
-	Remaining         float64                 `json:"remaining"`
+	// Remaining         int64                   `json:"remaining"`
+	// Saved             int64                   `json:"saved"`
 	Progress          float64                 `json:"progress"`
 	Start             int64                   `json:"start"`
 	End               int64                   `json:"end"`
@@ -74,7 +75,9 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 		teamup_type = 2
 		members = GenerateMembersForTeamUpSuccess(user, team_up.TotalTeamUpTarget)
 	}
-
+	// follow 2 fields are only used in batace due to INR need to rounding
+	// saved:=int64(float64(team_up.TotalTeamUpTarget) / 100 * float64(team_up.TotalFakeProgress)/10000)
+	// remaining:=(team_up.TotalTeamUpTarget-saved) / 100
 	data = TeamUpPopupResponse{
 		Id:      team_up.ID,
 		OrderId: team_up.OrderId,
@@ -82,7 +85,8 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 		// TotalTeamupDeposit: team_up.TotalTeamupDeposit / 100,
 		TotalTeamUpTarget: float64(team_up.TotalTeamUpTarget) / 100,
 		Progress:          float64(team_up.TotalFakeProgress) / 100,
-		Remaining:         float64(team_up.TotalTeamUpTarget) / 100 * (1 - float64(team_up.TotalFakeProgress)/10000),
+		// Remaining:         remaining,
+		// Saved:             saved,
 		Start:             yesterdayStart.Unix(),
 		End:               yesterdayEnd.Unix(),
 		Type:              teamup_type,
