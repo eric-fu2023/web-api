@@ -1,6 +1,8 @@
 package ugs
 
 import (
+	"context"
+
 	"web-api/cache"
 	"web-api/model"
 	"web-api/util"
@@ -132,7 +134,7 @@ func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, curre
 	return
 }
 
-func (c UGS) GetGameUrl(user model.User, currency, gameCode, subGameCode string, platform int64, extra model.Extra) (url string, err error) {
+func (c UGS) GetGameUrl(ctx context.Context, user model.User, currency, gameCode, subGameCode string, platform int64, extra model.Extra) (url string, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true

@@ -1,8 +1,10 @@
 package common
 
 import (
+	"context"
 	"errors"
 	"os"
+
 	"web-api/model"
 	"web-api/service/evo"
 	"web-api/service/imone"
@@ -49,7 +51,7 @@ func (c *CrownValexy) TransferTo(db *gorm.DB, user model.User, sum ploutos.UserS
 	return 0, errors.New("todo")
 }
 
-func (c *CrownValexy) GetGameUrl(user model.User, s string, s2 string, s3 string, i int64, extra model.Extra) (string, error) {
+func (c *CrownValexy) GetGameUrl(ctx context.Context, user model.User, s string, s2 string, s3 string, i int64, extra model.Extra) (string, error) {
 	//TODO implement me
 	return "", errors.New("todo")
 }
@@ -63,6 +65,6 @@ type GameIntegrationInterface interface {
 	CreateWallet(model.User, string) error
 	TransferFrom(*gorm.DB, model.User, string, string, int64, model.Extra) error
 	TransferTo(*gorm.DB, model.User, ploutos.UserSum, string, string, int64, model.Extra) (int64, error)
-	GetGameUrl(model.User, string, string, string, int64, model.Extra) (string, error)
+	GetGameUrl(context.Context, model.User, string, string, string, int64, model.Extra) (string, error)
 	GetGameBalance(model.User, string, string, model.Extra) (int64, error)
 }

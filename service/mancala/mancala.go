@@ -170,20 +170,19 @@ func (m *Mancala) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, 
 	return sum.Balance, nil
 }
 
-func (m *Mancala) GetGameUrl(user model.User, tayaCurrency, _, tayaSubGameCode string, _ int64, extra model.Extra) (string, error) {
+func (m *Mancala) GetGameUrl(ctx context.Context, user model.User, tayaCurrency, _, subGameCode string, _ int64, extra model.Extra) (string, error) {
 	userId := user.IdAsString()
 	currency, ok := TayaCurrencyToMancalaCurrency[tayaCurrency]
 	if !ok {
 		return "", errors.New("mancala unknown currency mapping")
 	}
-	ctx := context.Background()
 
 	client, err := util.MancalaFactory()
 	if err != nil {
 		return "", err
 	}
 
-	gameId, err := strconv.Atoi(tayaSubGameCode)
+	gameId, err := strconv.Atoi(subGameCode)
 	if err != nil {
 		return "", err
 	}
@@ -194,7 +193,6 @@ func (m *Mancala) GetGameUrl(user model.User, tayaCurrency, _, tayaSubGameCode s
 	}
 
 	url := resp.IframeUrl
-
 	if url == "" {
 		return "", errors.New("no err but frame url empty")
 	}

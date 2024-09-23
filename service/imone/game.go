@@ -1,10 +1,13 @@
 package imone
 
 import (
-	"blgit.rfdev.tech/taya/game-service/imone"
+	"context"
 	"errors"
+
 	"web-api/model"
 	"web-api/util"
+
+	"blgit.rfdev.tech/taya/game-service/imone"
 )
 
 const (
@@ -15,7 +18,7 @@ const (
 	_argios
 )
 
-func (c *ImOne) GetGameUrl(user model.User, currency, tayaGameCode, tayaSubGameCode string, _ int64, extra model.Extra) (string, error) {
+func (c *ImOne) GetGameUrl(ctx context.Context, user model.User, currency, tayaGameCode, tayaSubGameCode string, _ int64, extra model.Extra) (string, error) {
 	productWalletCode, exist := tayaGameCodeToImOneWalletCodeMapping[tayaGameCode]
 	if !exist {
 		return "", ErrGameCodeMapping
