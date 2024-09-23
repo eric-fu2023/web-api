@@ -516,7 +516,7 @@ func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftNam
 	}()
 }
 
-func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, endTime, amount, teamupType int64, providerName, icon string) {
+func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, endTime, amount, teamupType int64, providerName, icon, orderId string) {
 	go func() {
 		conn := websocket.Connection{}
 		conn.Connect(os.Getenv("WS_NOTIFICATION_URL"), os.Getenv("WS_NOTIFICATION_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
@@ -526,6 +526,7 @@ func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, endTime, a
 					return
 				default:
 					msg := websocket.TeamupGameNotificationMessage{
+						Room:         serializer.UserSignature(userId),
 						UserId:       userId,
 						Event:        "teamup_game",
 						TeamupId:     teamupId,
@@ -534,6 +535,7 @@ func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, endTime, a
 						ProviderName: providerName,
 						Icon:         icon,
 						TeamupType:   teamupType,
+						OrderId:      orderId,
 					}
 					msg.Send(conn)
 				}
@@ -575,6 +577,7 @@ func TESTSENDNOTIFICATION(userId int64) {
 					return
 				default:
 					msg := websocket.TeamupGameNotificationMessage{
+						Room:         serializer.UserSignature(userId),
 						UserId:       userId,
 						Event:        "teamup_game",
 						TeamupId:     1,
@@ -582,6 +585,7 @@ func TESTSENDNOTIFICATION(userId int64) {
 						Amount:       123,
 						ProviderName: "ADAS",
 						Icon:         "SADASAAA",
+						OrderId:      "50001829001",
 					}
 					msg.Send(conn)
 				}

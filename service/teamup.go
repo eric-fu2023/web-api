@@ -75,6 +75,7 @@ type TeamupGamePopUpNotification struct {
 	ProviderName string `json:"provider_name"`
 	EndTime      int64  `json:"end_time"`
 	TeamupId     int64  `json:"teamup_id"`
+	OrderId      string `json:"order_id"`
 }
 
 type TeamupEntrySpinResp struct {
