@@ -581,10 +581,10 @@ func TESTSENDNOTIFICATION(userId int64) {
 						UserId:       userId,
 						Event:        "teamup_game",
 						TeamupId:     1,
-						EndTime:      12,
-						Amount:       123,
+						EndTime:      1727530027,
+						Amount:       68,
 						ProviderName: "ADAS",
-						Icon:         "SADASAAA",
+						Icon:         "",
 						OrderId:      "50001829001",
 					}
 					msg.Send(conn)
