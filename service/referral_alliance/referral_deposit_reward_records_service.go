@@ -42,7 +42,7 @@ func (service *ReferralDepositRewardRecordsService) List(c *gin.Context) (r seri
 		HasBeenClaimed: []bool{true},
 	}
 	if service.RecordTimeStart > 0 {
-		monthStartStr, err := service.getMonthString(time.Unix(service.RecordTimeStart, 0))
+		monthStartStr, err := service.getDateString(time.Unix(service.RecordTimeStart, 0))
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("getMonthString start error: %s", err.Error())
 			return serializer.GeneralErr(c, err), err
@@ -50,7 +50,7 @@ func (service *ReferralDepositRewardRecordsService) List(c *gin.Context) (r seri
 		cond.RewardMonthStart = monthStartStr
 	}
 	if service.RecordTimeEnd > 0 {
-		monthEndStr, err := service.getMonthString(time.Unix(service.RecordTimeEnd, 0))
+		monthEndStr, err := service.getDateString(time.Unix(service.RecordTimeEnd, 0))
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("getMonthString end error: %s", err.Error())
 			return serializer.GeneralErr(c, err), err
@@ -72,7 +72,7 @@ func (service *ReferralDepositRewardRecordsService) List(c *gin.Context) (r seri
 	}, nil
 }
 
-func (service *ReferralDepositRewardRecordsService) getMonthString(t time.Time) (string, error) {
+func (service *ReferralDepositRewardRecordsService) getDateString(t time.Time) (string, error) {
 	tzOffsetStr, err := model.GetAppConfigWithCache("timezone", "offset_seconds")
 	if err != nil {
 		return "", fmt.Errorf("failed to get tz offset config: %w", err)
@@ -82,5 +82,5 @@ func (service *ReferralDepositRewardRecordsService) getMonthString(t time.Time) 
 		return "", fmt.Errorf("failed to parse tz offset config: %w", err)
 	}
 
-	return t.In(time.FixedZone("", tzOffset)).Format(consts.StdMonthFormat), nil
+	return t.In(time.FixedZone("", tzOffset)).Format(consts.StdDateFormat), nil
 }
