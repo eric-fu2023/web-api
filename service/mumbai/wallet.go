@@ -1,6 +1,7 @@
 package mumbai
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -24,7 +25,7 @@ const (
 func generateTransactionNo(user model.User, mode api.TransferCheckType) string {
 	return os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + string(mode) + user.IdAsString() + fmt.Sprintf("x%x", time.Now().Unix())
 }
-func (c *Mumbai) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) error {
+func (c *Mumbai) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, currency string, gameCode string, gameVendorId int64, extra model.Extra) error {
 	// get the balance from mumbai and update the db
 	client, err := util.MumbaiFactory()
 	if err != nil {

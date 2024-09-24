@@ -1,17 +1,21 @@
 package ninewicket
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"time"
+
+	"web-api/model"
+	"web-api/util"
+
 	"blgit.rfdev.tech/taya/game-service/ninewickets"
 	"blgit.rfdev.tech/taya/game-service/ninewickets/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"errors"
-	"fmt"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"log"
-	"time"
-	"web-api/model"
-	"web-api/util"
 )
 
 func (n *NineWicket) CreateWallet(user model.User, currency string) error {
@@ -79,7 +83,7 @@ func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSu
 	return sum.Balance, nil
 }
 
-func (n *NineWicket) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
+func (n *NineWicket) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, currency string, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
 	client, err := util.NineWicketFactory()
 	if err != nil {
 		return err

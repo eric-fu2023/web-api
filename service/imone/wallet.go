@@ -1,6 +1,8 @@
 package imone
 
 import (
+	"context"
+
 	"web-api/model"
 	"web-api/util"
 
@@ -11,7 +13,7 @@ import (
 )
 
 // TransferFrom
-func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) error {
+func (c *ImOne) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, currency string, gameCode string, gameVendorId int64, extra model.Extra) error {
 	client := util.ImOneFactory()
 
 	productWallet, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]

@@ -61,7 +61,7 @@ func (m *Mancala) CreateWallet(user model.User, tayaCurrency string) error {
 	})
 }
 
-func (m *Mancala) TransferFrom(tx *gorm.DB, user model.User, tayaCurrency, gameCode string, gameVendorId int64, extra model.Extra) error {
+func (m *Mancala) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, tayaCurrency string, gameCode string, gameVendorId int64, extra model.Extra) error {
 	currency, ok := TayaCurrencyToMancalaCurrency[tayaCurrency]
 	if !ok {
 		return errors.New("mancala unknown currency mapping")
@@ -72,7 +72,6 @@ func (m *Mancala) TransferFrom(tx *gorm.DB, user model.User, tayaCurrency, gameC
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
 
 	balanceResponse, err := client.GetBalance(ctx, userId, currency)
 	if err != nil {
@@ -83,7 +82,7 @@ func (m *Mancala) TransferFrom(tx *gorm.DB, user model.User, tayaCurrency, gameC
 	case toWithdraw == 0:
 		return nil
 	case toWithdraw < 0:
-		return errors.New("manacala user balance is not positive")
+		return errors.New("mancala user balance is not positive")
 	}
 
 	withdrawTxId := userId + strconv.FormatInt(time.Now().UnixNano(), 10) + "withdraw"
