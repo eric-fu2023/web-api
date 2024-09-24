@@ -442,7 +442,7 @@ func ShouldPopRoulette(userId int64) (shouldPop bool) {
 		Where("bet_report_game_type in ?", ploutos.TeamUpSpinGameTypes).
 		Count(&countStartedSpin).Error
 
-	if countStartedSpin > 1 {
+	if countStartedSpin > 0 {
 		// 已发起过轮盘砍单
 		condition2 = false
 	}
