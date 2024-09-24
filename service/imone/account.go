@@ -1,6 +1,7 @@
 package imone
 
 import (
+	"context"
 	"errors"
 
 	"web-api/model"
@@ -11,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (c *ImOne) CreateWallet(user model.User, currency string) error {
+func (c *ImOne) CreateWallet(ctx context.Context, user model.User, currency string) error {
 	return c.createImOneUserAndDbWallet(user, currency)
 }
 
@@ -50,7 +51,7 @@ func (c *ImOne) createImOneUserAndDbWallet(user model.User, currency string) err
 	})
 }
 
-func (c *ImOne) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, _err error) {
+func (c *ImOne) GetGameBalance(ctx context.Context, user model.User, currency string, gameCode string, extra model.Extra) (balance int64, _err error) {
 	productWalletCode, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
 	if !exist {
 		return 0, ErrGameCodeMapping

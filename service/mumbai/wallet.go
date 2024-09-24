@@ -82,7 +82,7 @@ func (c *Mumbai) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User,
 	return err
 }
 
-func (c *Mumbai) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
+func (c *Mumbai) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency string, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
 	if sum.Balance == 0 {
 		return 0, nil
 	}

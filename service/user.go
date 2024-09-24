@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -163,7 +164,7 @@ func CreateUserWithDB(user *model.User, tx *gorm.DB) (err error) {
 			return errors.New(fmt.Sprintf("integrated game id %d not found", gi.ID))
 		}
 
-		err = integratedGame.CreateWallet(*user, currency)
+		err = integratedGame.CreateWallet(context.TODO(), *user, currency)
 		if err != nil {
 			tx2.Rollback()
 			return
@@ -249,7 +250,6 @@ func (service *MeService) Get(c *gin.Context) serializer.Response {
 }
 
 type HeartbeatService struct {
-
 }
 
 func (service *HeartbeatService) UserHeartbeat(c *gin.Context) error {
@@ -261,6 +261,6 @@ func (service *HeartbeatService) UserHeartbeat(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	
-	return nil 
+
+	return nil
 }

@@ -22,7 +22,7 @@ var TayaCurrencyToMancalaCurrency = map[string]api.Currency{
 	"INR": "INR",
 }
 
-func (m *Mancala) CreateWallet(user model.User, tayaCurrency string) error {
+func (m *Mancala) CreateWallet(ctx context.Context, user model.User, tayaCurrency string) error {
 	currency, ok := TayaCurrencyToMancalaCurrency[tayaCurrency]
 	if !ok {
 		return errors.New("mancala unknown currency mapping")
@@ -118,7 +118,7 @@ func (m *Mancala) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User
 	return err
 }
 
-func (m *Mancala) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, tayaCurrency, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
+func (m *Mancala) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum ploutos.UserSum, tayaCurrency string, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
 	switch {
 	case sum.Balance == 0:
 		return 0, nil
@@ -134,7 +134,6 @@ func (m *Mancala) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, 
 	if !ok {
 		return 0, errors.New("mancala unknown currency mapping")
 	}
-	ctx := context.Background()
 
 	userId := user.IdAsString()
 
@@ -198,7 +197,7 @@ func (m *Mancala) GetGameUrl(ctx context.Context, user model.User, tayaCurrency,
 	return url, nil
 }
 
-func (m *Mancala) GetGameBalance(user model.User, tayaCurrency string, _ string, extra model.Extra) (int64, error) {
+func (m *Mancala) GetGameBalance(ctx context.Context, user model.User, tayaCurrency string, _ string, extra model.Extra) (int64, error) {
 	currency, ok := TayaCurrencyToMancalaCurrency[tayaCurrency]
 	if !ok {
 		return 0, errors.New("mancala unknown currency mapping")
@@ -209,7 +208,6 @@ func (m *Mancala) GetGameBalance(user model.User, tayaCurrency string, _ string,
 	if err != nil {
 		return 0, err
 	}
-	ctx := context.Background()
 	balanceResponse, err := client.GetBalance(ctx, userId, currency)
 	if err != nil {
 		return 0, err

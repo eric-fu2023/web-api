@@ -18,12 +18,12 @@ import (
 
 type CrownValexy struct{}
 
-func (c *CrownValexy) CreateWallet(user model.User, s string) error {
+func (c *CrownValexy) CreateWallet(ctx context.Context, user model.User, s string) error {
 	go func() {
 		// fire and forget. later calls should follow up with user creation, if needed.
 		service, err := util.CrownValexyFactory(context.TODO())
 		if err == nil {
-			_, _ = service.Login(context.TODO(), user.IdAsString())
+			_, _ = service.Login(ctx, user.IdAsString())
 		}
 	}()
 
@@ -108,7 +108,7 @@ func (c *CrownValexy) TransferFrom(ctx context.Context, tx *gorm.DB, user model.
 	return err
 }
 
-func (c *CrownValexy) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, s string, s2 string, gameVendorId int64, extra model.Extra) (int64, error) {
+func (c *CrownValexy) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum ploutos.UserSum, s string, s2 string, gameVendorId int64, extra model.Extra) (int64, error) {
 	switch {
 	case sum.Balance == 0:
 		return 0, nil
@@ -121,7 +121,6 @@ func (c *CrownValexy) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserS
 		return 0, err
 	}
 
-	ctx := context.Background()
 	userId := user.IdAsString()
 	depTxId := userId + strconv.FormatInt(time.Now().UnixNano(), 10) + "deposit"
 	_, wErr := client.WalletDeposit(ctx, userId, util.MoneyFloat(sum.Balance), Remarks{
@@ -171,8 +170,7 @@ func (c *CrownValexy) GetGameUrl(ctx context.Context, user model.User, s string,
 	return url, nil
 }
 
-func (c *CrownValexy) GetGameBalance(user model.User, s string, s2 string, extra model.Extra) (int64, error) {
-	ctx := context.Background()
+func (c *CrownValexy) GetGameBalance(ctx context.Context, user model.User, s string, s2 string, extra model.Extra) (int64, error) {
 	userId := user.IdAsString()
 
 	client, err := util.CrownValexyFactory(ctx)
