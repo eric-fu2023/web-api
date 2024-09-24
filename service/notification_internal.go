@@ -41,6 +41,7 @@ type InternalNotificationPushAllRequest struct {
 func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Response) {
 	var notificationType, title, text string
 	var resp serializer.Response
+	brand := c.MustGet(`_brand`).(int)
 
 	lang := model.GetUserLang(p.UserID)
 
@@ -123,7 +124,7 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 		providerName := consts.GameProviderNameMap[p.Params["provider"]]
 		providerIcon := consts.GameProviderNameToImgMap[p.Params["provider"]]
 
-		_, teamupType := model.GetGameTypeSlice(int(gameType))
+		_, teamupType := model.GetGameTypeSlice(brand, int(gameType))
 
 		resp.Data = TeamupGamePopUpNotification{
 			TeamupId:     int64(teamupId),

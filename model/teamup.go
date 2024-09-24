@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"sort"
 	"strconv"
 	"time"
@@ -139,14 +138,11 @@ func GetTeamUp(orderId string) (teamup ploutos.Teamup, err error) {
 	return
 }
 
-// teamups.match_id as match_id, teamups.match_time as match_time, teamups.total_fake_progress as total_fake_progress,
-// tx = tx.Table("teamups").Select("teamups.league_name, teamups.option_name, teamups.bet_report_game_type, teamups.market_name, teamups.option_name, teamups.is_parlay, teamups.match_title, teamups.match_id, teamups.match_time, teamups.status, teamups.league_icon, teamups.home_icon, teamups.away_icon, teamups.total_fake_progress, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, bet_report.business_id as order_id, bet_report.info as info_json, bet_report.game_type, bet_report.is_parlay, bet_report.bet_type").
 func GetAllTeamUps(userId int64, status []int, page, limit int, start, end int64) (res TeamupCustomRes, err error) {
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 		tx = tx.Table("teamups").Select("teamups.provider, teamups.bet_report_game_type as bet_report_game_type, teamups.match_id as match_id, teamups.match_time as match_time, teamups.total_fake_progress as total_fake_progress, teamups.match_title as match_title, teamups.league_icon as league_icon, teamups.home_icon as home_icon, teamups.away_icon as away_icon, teamups.status as status, teamups.league_name as league_name, teamups.option_name as option_name, teamups.market_name as market_name, teamups.is_parlay as is_parlay, teamups.id as teamup_id, teamups.user_id as user_id, teamups.total_teamup_deposit, teamups.total_teamup_target, teamups.teamup_end_time, teamups.teamup_completed_time, teamups.order_id as order_id, teamups.is_parlay as is_parlay, teamups.match_title as bet_type")
 
 		tx = tx.Where("teamups.user_id = ?", userId)
-		// Where("teamups.bet_report_game_type in ?", consts.TeamUpSportGameTypes)
 
 		if len(status) > 0 {
 			tx = tx.Where("teamups.status in ?", status)
@@ -221,33 +217,6 @@ func GetTeamUpByTeamUpId(teamupId int64) (res ploutos.Teamup, err error) {
 	return
 }
 
-func GetTeamupProgressToUpdate(userId, amount, slashProgress int64) (err error) {
-	err = DB.Transaction(func(tx *gorm.DB) (err error) {
-		teamupEntry, err := FindOngoingTeamupEntriesByUserId(userId)
-		if err != nil {
-			err = fmt.Errorf("fail to get teamup err - %v", err)
-			return
-		}
-
-		err = UpdateFirstTeamupEntryProgress(tx, teamupEntry.ID, amount, slashProgress)
-
-		if err != nil {
-			err = fmt.Errorf("fail to update teamup entry err - %v", err)
-			return
-		}
-
-		err = UpdateTeamupProgress(tx, teamupEntry.TeamupId, amount, slashProgress)
-
-		if err != nil {
-			err = fmt.Errorf("fail to update teamup err - %v", err)
-			return
-		}
-		return
-	})
-
-	return
-}
-
 func UpdateTeamupProgress(tx *gorm.DB, teamupId, amount, slashAmount int64) error {
 	return tx.Transaction(func(tx2 *gorm.DB) error {
 
@@ -274,7 +243,10 @@ func GetRecentCompletedSuccessTeamup(numMinutes int64) (res TeamupSuccess, err e
 		tx = tx.Table("teamups").Select("users.nickname, teamups.teamup_completed_time as time, users.avatar, teamups.total_teamup_target as amount").
 			Joins("left join users on teamups.user_id = users.id")
 
-		tx = tx.Where("teamups.status = 1").Where("teamups.teamup_completed_time >= ?", time.Now().UTC().Unix()-int64(recentMinutes.Seconds())).Where("teamups.bet_report_game_type in ?", ploutos.TeamUpSportGameTypes)
+		// tx = tx.Where("teamups.status = 1").Where("teamups.teamup_completed_time >= ?", time.Now().UTC().Unix()-int64(recentMinutes.Seconds())).
+		// 	Where("teamups.bet_report_game_type in ?", ploutos.TeamUpSportGameTypes)
+
+		tx = tx.Where("teamups.status = 1").Where("teamups.teamup_completed_time >= ?", time.Now().UTC().Unix()-int64(recentMinutes.Seconds()))
 
 		err = tx.Scan(&res).Error
 		return
@@ -286,13 +258,13 @@ func GetRecentCompletedSuccessTeamup(numMinutes int64) (res TeamupSuccess, err e
 	return
 }
 
-func GetCurrentTermNum(gameType int) (maxTerm int64, err error) {
+func GetCurrentTermNum(brandId, gameType int) (maxTerm int64, err error) {
 
-	gameTypes, _ := GetGameTypeSlice(gameType)
+	gameTypes, _ := GetGameTypeSlice(brandId, gameType)
 
 	err = DB.Table("teamups").
 		Select("MAX(term)").
-		Where("bet_report_game_type IN ?", gameTypes). // SPORTS TYPE
+		Where("bet_report_game_type IN ?", gameTypes).
 		Scan(&maxTerm).Error
 
 	if err == nil && maxTerm == 0 {
@@ -302,20 +274,20 @@ func GetCurrentTermNum(gameType int) (maxTerm int64, err error) {
 	return
 }
 
-func FindExceedTargetByTerm(termId int64, gameType int) (teamups []ploutos.Teamup, err error) {
+func FindExceedTargetByTerm(brandId int, termId int64, gameType int) (teamups []ploutos.Teamup, err error) {
 
-	gameTypes, _ := GetGameTypeSlice(gameType)
+	gameTypes, _ := GetGameTypeSlice(brandId, gameType)
 
 	err = DB.Table("teamups").
 		Where("term = ?", termId).
-		Where("bet_report_game_type IN ?", gameTypes). // SPORTS TYPE
+		Where("bet_report_game_type IN ?", gameTypes).
 		Find(&teamups).Error
 
 	return
 }
 
 // 如果一个成功，同一届的候选池里其他砍单都自动失败，只有一个成功
-func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int64, finalSlashUserId int64) (isSuccess bool, err error) {
+func SuccessShortlisted(brandId int, teamup ploutos.Teamup, teamupEntriesCurrentProgress int64, finalSlashUserId int64) (isSuccess bool, err error) {
 
 	maxPercentage := int64(10000)
 	isSuccess = false
@@ -328,7 +300,7 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 
 	err = DB.Transaction(func(tx *gorm.DB) (err error) {
 
-		gameTypes, _ := GetGameTypeSlice(teamup.BetReportGameType)
+		gameTypes, _ := GetGameTypeSlice(brandId, teamup.BetReportGameType)
 
 		// 如果该届/期已经有候选池里为成功的单子，不管砍单是否有成功都算成功
 		// 可看下面注释
@@ -336,7 +308,7 @@ func SuccessShortlisted(teamup ploutos.Teamup, teamupEntriesCurrentProgress int6
 		err = tx.Model(ploutos.Teamup{}).
 			Where("term = ?", teamup.Term).
 			Where("shortlist_status = ?", ploutos.ShortlistStatusShortlistWin).
-			Where("bet_report_game_type IN ?", gameTypes). // SPORTS TYPE
+			Where("bet_report_game_type IN ?", gameTypes).
 			Find(&wonTeamups).Error
 
 		if len(wonTeamups) > 0 {
@@ -397,29 +369,81 @@ func FlagStatusShortlisted(tx *gorm.DB, ids []int64) (err error) {
 	})
 }
 
-func GetGameTypeSlice(gameType int) (gameTypeIds []int, teamupType int) {
+func GetGameTypeSlice(brandId, gameType int) (gameTypeIds []int, teamupType int) {
 
 	teamupType = 0
 
-	for i := range ploutos.TeamUpSportGameTypes {
-		if ploutos.TeamUpSportGameTypes[i] == gameType {
-			gameTypeIds = ploutos.TeamUpSportGameTypes
-			teamupType = int(ploutos.TeamupTypeSports)
-		}
+	if brandId != int(BrandIdAha) && brandId != int(BrandIdBatace) {
+		brandId = int(BrandIdBatace)
 	}
 
-	for i := range ploutos.TeamUpGameGameTypes {
-		if ploutos.TeamUpGameGameTypes[i] == gameType {
-			gameTypeIds = ploutos.TeamUpGameGameTypes
-			teamupType = int(ploutos.TeamupTypeGames)
+	switch brandId {
+	case int(BrandIdBatace):
+		for i := range ploutos.TeamUpBASportGameTypes {
+			if ploutos.TeamUpSportGameTypes[i] == gameType {
+				gameTypeIds = ploutos.TeamUpBASportGameTypes
+				teamupType = int(ploutos.TeamupTypeSports)
+			}
 		}
+
+		for i := range ploutos.TeamUpBAGameGameTypes {
+			if ploutos.TeamUpGameGameTypes[i] == gameType {
+				gameTypeIds = ploutos.TeamUpBAGameGameTypes
+				teamupType = int(ploutos.TeamupTypeGames)
+			}
+		}
+
+		for i := range ploutos.TeamUpBASpinGameTypes {
+			if ploutos.TeamUpSpinGameTypes[i] == gameType {
+				gameTypeIds = ploutos.TeamUpBASpinGameTypes
+				teamupType = int(ploutos.TeamupTypeSpin)
+			}
+		}
+
+		return
+	case int(BrandIdAha):
+		for i := range ploutos.TeamUpSportGameTypes {
+			if ploutos.TeamUpSportGameTypes[i] == gameType {
+				gameTypeIds = ploutos.TeamUpSportGameTypes
+				teamupType = int(ploutos.TeamupTypeSports)
+			}
+		}
+
+		for i := range ploutos.TeamUpGameGameTypes {
+			if ploutos.TeamUpGameGameTypes[i] == gameType {
+				gameTypeIds = ploutos.TeamUpGameGameTypes
+				teamupType = int(ploutos.TeamupTypeGames)
+			}
+		}
+
+		for i := range ploutos.TeamUpSpinGameTypes {
+			if ploutos.TeamUpSpinGameTypes[i] == gameType {
+				gameTypeIds = ploutos.TeamUpSpinGameTypes
+				teamupType = int(ploutos.TeamupTypeSpin)
+			}
+		}
+
+		return
 	}
 
-	for i := range ploutos.TeamUpSpinGameTypes {
-		if ploutos.TeamUpSpinGameTypes[i] == gameType {
-			gameTypeIds = ploutos.TeamUpSpinGameTypes
-			teamupType = int(ploutos.TeamupTypeSpin)
-		}
+	return
+}
+
+func GetTeamUpGameTypeSliceByBrand(brand int) (sports, games, spins []int) {
+
+	if brand != int(BrandIdAha) && brand != int(BrandIdBatace) {
+		brand = int(BrandIdBatace)
+	}
+
+	switch brand {
+	case int(BrandIdBatace):
+		sports = ploutos.TeamUpBASportGameTypes
+		games = ploutos.TeamUpBAGameGameTypes
+		spins = ploutos.TeamUpBASpinGameTypes
+	case int(BrandIdAha):
+		sports = ploutos.TeamUpSportGameTypes
+		games = ploutos.TeamUpGameGameTypes
+		spins = ploutos.TeamUpSpinGameTypes
 	}
 
 	return

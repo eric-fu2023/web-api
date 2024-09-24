@@ -12,6 +12,11 @@ const (
 )
 
 const (
+	BrandBatAce = 1002
+	BrandAha    = 3001
+)
+
+const (
 	KycStatusPending   = 1
 	KycStatusCompleted = 2
 	KycStatusRejected  = 3
@@ -713,7 +718,7 @@ const (
 	CorrelationKey                              = "correlation_id"
 	StdTimeFormat                               = "2006-01-02 15:04:05"
 	StdMonthFormat                              = "2006-01"
-	StdDateFormat                              = "2006-01-02"
+	StdDateFormat                               = "2006-01-02"
 	OrderTypeTopup                              = "top-up"
 	OrderTypeWithdraw                           = "withdraw"
 	OrderTypeDepositBonus                       = "deposit_bonus"

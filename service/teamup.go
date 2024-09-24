@@ -92,6 +92,7 @@ type TeamupEntrySpinResultResp struct {
 
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	// i18n := c.MustGet("i18n").(i18n.I18n)
+	brand := c.MustGet(`_brand`).(int)
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
@@ -138,7 +139,7 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	// 	return false
 	// })
 
-	r.Data = parseBetReport(teamupRes)
+	r.Data = parseBetReport(brand, teamupRes)
 
 	return
 }
@@ -173,6 +174,7 @@ func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Respo
 
 func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error) {
 	u, _ := c.Get("user")
+	brand := c.MustGet(`_brand`).(int)
 	var user model.User
 	if u != nil {
 		user = u.(model.User)
@@ -184,7 +186,7 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 	}
 	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
-	outgoingRes := parseBetReport(teamupRes)
+	outgoingRes := parseBetReport(brand, teamupRes)
 	if len(outgoingRes) > 0 {
 		if outgoingRes[0].TeamupEndTime != 0 && loc != nil {
 			t := time.Unix(outgoingRes[0].TeamupEndTime, 0).UTC()
@@ -586,7 +588,7 @@ func buildTeamupShareParamsService(teamup serializer.OutgoingTeamupHash) (res Cr
 	return
 }
 
-func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCustomRes) {
+func parseBetReport(brandId int, teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCustomRes) {
 
 	copier.Copy(&res, teamupRes)
 
@@ -597,7 +599,7 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 		// 游戏解析
 		// 如果是游戏
 		// TAKE NOTE PANDA
-		_, teamupType := model.GetGameTypeSlice(t.BetReportGameType)
+		_, teamupType := model.GetGameTypeSlice(brandId, t.BetReportGameType)
 		res[i].TeamupType = int64(teamupType)
 		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
 		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
@@ -811,17 +813,6 @@ func getImsbMatchDetails(betMatchId string) (leagueIcon, leagueName, homeIcon, a
 
 func (s TestDepositService) TestDeposit(c *gin.Context) (r serializer.Response, err error) {
 
-	slashMultiplierString, _ := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
-	slashMultiplier, _ := strconv.Atoi(slashMultiplierString)
-
-	// Convert cash amount into slash progress by dividing multiplier
-	contributedSlashProgress := s.DepositAmount / int64(slashMultiplier)
-
-	err = model.GetTeamupProgressToUpdate(s.UserId, s.DepositAmount, contributedSlashProgress)
-	if err != nil {
-		log.Print(err.Error())
-	}
-
 	return
 }
 
@@ -877,10 +868,11 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 
 func (s TeamupCheckSpinService) CheckSpinPopup(c *gin.Context) (r serializer.Response, err error) {
 	// i18n := c.MustGet("i18n").(i18n.I18n)
+	brand := c.MustGet(`_brand`).(int)
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	shouldPop := model.ShouldPopRoulette(user.ID)
+	shouldPop := model.ShouldPopRoulette(brand, user.ID)
 
 	spinRes := TeamupEntrySpinResp{
 		HasSpin: shouldPop,
@@ -913,8 +905,9 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
+	brand := c.MustGet(`_brand`).(int)
 
-	shouldPop := model.ShouldPopRoulette(user.ID)
+	shouldPop := model.ShouldPopRoulette(brand, user.ID)
 
 	if !shouldPop {
 		r.Data = TeamupEntrySpinResultResp{
