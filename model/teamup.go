@@ -380,21 +380,21 @@ func GetGameTypeSlice(brandId, gameType int) (gameTypeIds []int, teamupType int)
 	switch brandId {
 	case int(BrandIdBatace):
 		for i := range ploutos.TeamUpBASportGameTypes {
-			if ploutos.TeamUpSportGameTypes[i] == gameType {
+			if ploutos.TeamUpBASportGameTypes[i] == gameType {
 				gameTypeIds = ploutos.TeamUpBASportGameTypes
 				teamupType = int(ploutos.TeamupTypeSports)
 			}
 		}
 
 		for i := range ploutos.TeamUpBAGameGameTypes {
-			if ploutos.TeamUpGameGameTypes[i] == gameType {
+			if ploutos.TeamUpBAGameGameTypes[i] == gameType {
 				gameTypeIds = ploutos.TeamUpBAGameGameTypes
 				teamupType = int(ploutos.TeamupTypeGames)
 			}
 		}
 
 		for i := range ploutos.TeamUpBASpinGameTypes {
-			if ploutos.TeamUpSpinGameTypes[i] == gameType {
+			if ploutos.TeamUpBASpinGameTypes[i] == gameType {
 				gameTypeIds = ploutos.TeamUpBASpinGameTypes
 				teamupType = int(ploutos.TeamupTypeSpin)
 			}
