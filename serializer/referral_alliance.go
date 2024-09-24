@@ -111,7 +111,7 @@ func BuildReferralAllianceReferrals(
 			continue
 		}
 
-		referrerReward := util.Max(rs.TotalReward, 0)
+		referrerReward := util.Max(rs.ClaimableReward, 0)
 
 		resp = append(resp, ReferralAllianceReferral{
 			Id:             rd.Referral.ID,
