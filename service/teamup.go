@@ -88,6 +88,7 @@ type TeamupEntrySpinResultResp struct {
 	IsSuccess       bool  `json:"is_success"`
 	ID              int64 `json:"id"`
 	RemainingCounts int   `json:"remaining_counts"`
+	TeamupId        int64 `json:"teamup_id"`
 }
 
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
@@ -985,7 +986,7 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 		teamup.Status = int(ploutos.TeamupStatusInvalidAmount)
 	}
 
-	_, err = model.SaveTeamup(teamup)
+	t, err := model.SaveTeamup(teamup)
 
 	if err != nil {
 		fmt.Println("create teamup insert err", err)
@@ -996,6 +997,7 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 		IsSuccess:       true,
 		ID:              data.ID,
 		RemainingCounts: data.RemainingCounts,
+		TeamupId:        t.ID,
 	}
 
 	return
