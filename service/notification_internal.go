@@ -132,6 +132,7 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 			ProviderName: consts.GameProviderNameMap[p.Params["provider"]],
 			Icon:         consts.GameProviderNameToImgMap[p.Params["provider"]],
 			OrderId:      teamup.OrderId,
+			TeamupType:   int64(teamupType),
 		}
 
 		title = conf.GetI18N(lang).T("notification_teamup_start_game_title")

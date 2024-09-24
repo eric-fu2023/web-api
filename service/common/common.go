@@ -106,6 +106,16 @@ type CallbackInterface interface {
 	ApplyInsuranceVoucher(int64, int64, bool) error
 }
 
+type TestTeamupGamePopUpNotification struct {
+	Amount       int64  `json:"amount"`
+	Icon         string `json:"icon"`
+	ProviderName string `json:"provider_name"`
+	EndTime      int64  `json:"end_time"`
+	TeamupId     int64  `json:"teamup_id"`
+	OrderId      string `json:"order_id"`
+	TeamupType   int64  `json:"teamup_type"`
+}
+
 func GetUserAndSum(tx *gorm.DB, gameVendor int64, externalUserId string) (gameVendorUser ploutos.GameVendorUser, balance int64, remainingWager int64, maxWithdrawable int64, err error) {
 	gameVendorUser, err = GetGameVendorUser(gameVendor, externalUserId)
 	if err != nil {
@@ -592,4 +602,18 @@ func TESTSENDNOTIFICATION(userId int64) {
 			},
 		})
 	}()
+}
+
+func TESTSENDPUSHNOTIFICATION(userId int64) {
+	var resp serializer.Response
+	resp.Data = TestTeamupGamePopUpNotification{
+		TeamupId:     1,
+		EndTime:      1727530027,
+		Amount:       68,
+		ProviderName: "ADAS",
+		Icon:         "",
+		OrderId:      "50001829001",
+		TeamupType:   3,
+	}
+	SendNotification(userId, "popup_teamup_game", "HEHEHEH", "HAHAHHAHAHHA", resp)
 }
