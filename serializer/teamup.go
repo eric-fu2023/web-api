@@ -107,7 +107,7 @@ func GenerateOtherTeamups(nicknames []string, successTeamups model.TeamupSuccess
 			Nickname: nicknames[i],
 			Time:     time.Now().UTC().Unix() - (int64(rand.Intn(1799)) + 1),
 			Amount:   50 + float64(rand.Intn(449)+1),
-			Avatar:   avatar.GetRandomAvatarUrlForTeamup(),
+			Avatar:   avatar.GetRandomAvatarUrl(),
 			IsReal:   false,
 		}
 		res = append(res, item)
@@ -133,4 +133,3 @@ func GenerateOtherTeamups(nicknames []string, successTeamups model.TeamupSuccess
 
 	return
 }
-
