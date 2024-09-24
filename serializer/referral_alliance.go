@@ -18,7 +18,7 @@ type ReferralAllianceReferralSummary struct {
 }
 
 func BuildReferralAllianceReferralSummary(referral model.User, vip ploutos.VipRecord, rewardSummary model.ReferralAllianceSummary) ReferralAllianceReferralSummary {
-	totalReward := util.Max(rewardSummary.TotalReward, 0)
+	claimable_reward := util.Max(rewardSummary.ClaimableReward, 0)
 
 	return ReferralAllianceReferralSummary{
 		ReferralId:  referral.ID,
@@ -26,7 +26,7 @@ func BuildReferralAllianceReferralSummary(referral model.User, vip ploutos.VipRe
 		Avatar:      Url(referral.Avatar),
 		VipId:       vip.VipRule.ID,
 		JoinTime:    referral.CreatedAt.Unix(),
-		TotalReward: float64(totalReward) / 100,
+		TotalReward: float64(claimable_reward) / 100,
 	}
 }
 
