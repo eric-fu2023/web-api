@@ -379,22 +379,22 @@ func GetGameTypeSlice(brandId, gameType int) (gameTypeIds []int, teamupType int)
 
 	switch brandId {
 	case int(BrandIdBatace):
-		for i := range ploutos.TeamUpBASportGameTypes {
-			if ploutos.TeamUpBASportGameTypes[i] == gameType {
+		for _, t := range ploutos.TeamUpBASportGameTypes {
+			if t == gameType {
 				gameTypeIds = ploutos.TeamUpBASportGameTypes
 				teamupType = int(ploutos.TeamupTypeSports)
 			}
 		}
 
-		for i := range ploutos.TeamUpBAGameGameTypes {
-			if ploutos.TeamUpBAGameGameTypes[i] == gameType {
+		for _, t := range ploutos.TeamUpBAGameGameTypes {
+			if t == gameType {
 				gameTypeIds = ploutos.TeamUpBAGameGameTypes
 				teamupType = int(ploutos.TeamupTypeGames)
 			}
 		}
 
-		for i := range ploutos.TeamUpBASpinGameTypes {
-			if ploutos.TeamUpBASpinGameTypes[i] == gameType {
+		for _, t := range ploutos.TeamUpBASpinGameTypes {
+			if t == gameType {
 				gameTypeIds = ploutos.TeamUpBASpinGameTypes
 				teamupType = int(ploutos.TeamupTypeSpin)
 			}
@@ -402,22 +402,22 @@ func GetGameTypeSlice(brandId, gameType int) (gameTypeIds []int, teamupType int)
 
 		return
 	case int(BrandIdAha):
-		for i := range ploutos.TeamUpSportGameTypes {
-			if ploutos.TeamUpSportGameTypes[i] == gameType {
+		for _, t := range ploutos.TeamUpSportGameTypes {
+			if t == gameType {
 				gameTypeIds = ploutos.TeamUpSportGameTypes
 				teamupType = int(ploutos.TeamupTypeSports)
 			}
 		}
 
-		for i := range ploutos.TeamUpGameGameTypes {
-			if ploutos.TeamUpGameGameTypes[i] == gameType {
+		for _, t := range ploutos.TeamUpGameGameTypes {
+			if t == gameType {
 				gameTypeIds = ploutos.TeamUpGameGameTypes
 				teamupType = int(ploutos.TeamupTypeGames)
 			}
 		}
 
-		for i := range ploutos.TeamUpSpinGameTypes {
-			if ploutos.TeamUpSpinGameTypes[i] == gameType {
+		for _, t := range ploutos.TeamUpSpinGameTypes {
+			if t == gameType {
 				gameTypeIds = ploutos.TeamUpSpinGameTypes
 				teamupType = int(ploutos.TeamupTypeSpin)
 			}
