@@ -1,6 +1,8 @@
 module web-api
 
-go 1.22.3
+go 1.21
+
+toolchain go1.21.1
 
 // replace blgit.rfdev.tech/taya/ploutos-object => /Users/carl/Projects/taya/ploutos-object
 
