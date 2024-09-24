@@ -1,12 +1,11 @@
 package referral_alliance
 
 import (
+	"github.com/gin-gonic/gin"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
-
-	"github.com/gin-gonic/gin"
 )
 
 type SummaryService struct{}
@@ -33,7 +32,7 @@ func (service *SummaryService) Get(c *gin.Context) (r serializer.Response, err e
 	if len(summaries) > 0 {
 		summary = summaries[0]
 	}
-	claimable_reward := util.Max(summary.ClaimableReward, 0)
+	totalReward := util.Max(summary.TotalReward, 0)
 
 	type Response struct {
 		ReferralCount     int64   `json:"referral_count"`
@@ -44,7 +43,7 @@ func (service *SummaryService) Get(c *gin.Context) (r serializer.Response, err e
 	respData := Response{
 		ReferralCount:     referralCount,
 		RewardRecordCount: summary.RecordCount,
-		TotalReward:       float64(claimable_reward) / 100,
+		TotalReward:       float64(totalReward) / 100,
 	}
 
 	return serializer.Response{
