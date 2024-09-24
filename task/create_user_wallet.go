@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"sync"
@@ -76,7 +77,7 @@ func CreateUserWallet(gameVendorIds []int64, gameIntegrationId int64) {
 func CreateImOneUsersForExistingTayaUsers() {
 	currency := "INR"
 	var userIds []int64
-	tx := model.DB.Raw(fmt.Sprintf("select user_id from user_sums where user_id  not in (select user_id from game_vendor_users gvu, game_vendor gv, game_integrations gi where gvu.game_vendor_id = gv.id and gv.game_integration_id = gi.id and gi.name = 'IMONE');")).Find(&userIds)
+	tx := model.DB.Raw(fmt.Sprintf("SELECT user_id FROM user_sums WHERE user_id  NOT IN (SELECT user_id FROM game_vendor_users gvu, game_vendor gv, game_integrations gi WHERE gvu.game_vendor_id = gv.id AND gv.game_integration_id = gi.id AND gi.name = 'IMONE');")).Find(&userIds)
 	if tx.Error != nil {
 		fmt.Println(tx.Error)
 		return
@@ -90,7 +91,7 @@ func CreateImOneUsersForExistingTayaUsers() {
 		wg.Add(1)
 		go func(userId int64) {
 			defer wg.Done()
-			err := service.CreateWallet(model.User{
+			err := service.CreateWallet(context.TODO(), model.User{
 				User: ploutos.User{
 					BASE: ploutos.BASE{
 						ID: userId,

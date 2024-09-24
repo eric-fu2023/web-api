@@ -67,7 +67,7 @@ func (c *ImOne) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, 
 	return err
 }
 
-func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
+func (c *ImOne) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency string, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
 	switch {
 	case sum.Balance == 0:
 		return 0, nil

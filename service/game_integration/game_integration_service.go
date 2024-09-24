@@ -66,7 +66,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 	extra := model.Extra{Locale: locale, Ip: c.ClientIP()}
 	url, err := game.GetGameUrl(rfCtx, user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
 
-	msgAfterGetGame := fmt.Sprintf("game.GetGameUrl url:%s err: %v user %v, gvu.ExternalCurrency %v, subGame.GameVendor.GameCode %v, subGame.GameCode %v, service.Platform %v, extra %+v", url, err, user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
+	msgAfterGetGame := fmt.Sprintf("game.GetGameUrl url:%s err: %v username %v, gvu.ExternalCurrency %v, subGame.GameVendor.GameCode %v, subGame.GameCode %v, service.Platform %v, extra %+v", url, err, user.IdAsString(), gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
 	rfCtx = rfcontext.AppendDescription(rfCtx, msgAfterGetGame)
 	log.Println(rfcontext.Fmt(rfCtx))
 	if err != nil {
@@ -76,9 +76,9 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 	go func(rfCtx context.Context, user model.User, lang string, subGame ploutos.SubGameC, game common.GameIntegrationInterface, gvu ploutos.GameVendorUser) {
 		rfCtx = rfcontext.AppendCallDesc(rfCtx, "週轉")
 		rfCtx = rfcontext.AppendParams(rfCtx, "週轉", map[string]interface{}{
-			"target_sub_game":    subGame,
-			"target_sub_game_id": subGame.GameVendor.ID,
-			"gvu":                gvu,
+			"target_sub_game":           subGame,
+			"target_sub_vendor_game_id": subGame.GameVendor.ID,
+			"gvu":                       gvu,
 		})
 		model.GlobalWaitGroup.Add(1)
 		defer model.GlobalWaitGroup.Done()
@@ -128,7 +128,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 
 			var transferToBalance int64
 			if sum.Balance > 0 { // transfer in to the game is needed
-				transferToBalance, err = game.TransferTo(tx, user, sum, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameVendor.ID, extra)
+				transferToBalance, err = game.TransferTo(rfCtx, tx, user, sum, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameVendor.ID, extra)
 				if err != nil {
 					return
 				}

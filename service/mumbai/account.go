@@ -1,6 +1,7 @@
 package mumbai
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"web-api/model"
@@ -10,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (c *Mumbai) CreateWallet(user model.User, currency string) error {
+func (c *Mumbai) CreateWallet(ctx context.Context, user model.User, currency string) error {
 	// create a record for the user for mumbai game.
 	return model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
@@ -41,7 +42,7 @@ func (c *Mumbai) CreateWallet(user model.User, currency string) error {
 
 }
 
-func (c *Mumbai) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, _err error) {
+func (c *Mumbai) GetGameBalance(ctx context.Context, user model.User, currency string, gameCode string, extra model.Extra) (balance int64, _err error) {
 	// create the client to call the web-service.
 	client, err := util.MumbaiFactory()
 	if err != nil {

@@ -62,7 +62,7 @@ func (service *SyncWalletService) Update(c *gin.Context) (r serializer.Response,
 		return
 	}
 	extra := model.Extra{Locale: locale, Ip: c.ClientIP()}
-	balance, err := common.GameIntegration[gvu.GameVendor.GameIntegrationId].GetGameBalance(user, gvu.ExternalCurrency, gvu.GameVendor.GameCode, extra)
+	balance, err := common.GameIntegration[gvu.GameVendor.GameIntegrationId].GetGameBalance(context.TODO(), user, gvu.ExternalCurrency, gvu.GameVendor.GameCode, extra)
 	if gvu.Balance != balance {
 		err = model.DB.Model(ploutos.GameVendorUser{}).Where(`id`, gvu.ID).Update(`balance`, balance).Error
 		if err != nil {

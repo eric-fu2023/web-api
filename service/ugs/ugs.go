@@ -28,7 +28,7 @@ var PlatformMapping = map[int64]int64{
 
 type UGS struct{}
 
-func (c UGS) CreateWallet(user model.User, currency string) (err error) {
+func (c UGS) CreateWallet(ctx context.Context, user model.User, currency string) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
 		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id`).
@@ -97,7 +97,7 @@ func (c UGS) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, cur
 	return
 }
 
-func (c UGS) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
+func (c UGS) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum ploutos.UserSum, currency string, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
@@ -144,7 +144,7 @@ func (c UGS) GetGameUrl(ctx context.Context, user model.User, currency, gameCode
 	return
 }
 
-func (c UGS) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, err error) {
+func (c UGS) GetGameBalance(ctx context.Context, user model.User, currency string, gameCode string, extra model.Extra) (balance int64, err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true
