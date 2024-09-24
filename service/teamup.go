@@ -89,6 +89,7 @@ type TeamupEntrySpinResultResp struct {
 	ID              int64 `json:"id"`
 	RemainingCounts int   `json:"remaining_counts"`
 	TeamupId        int64 `json:"teamup_id"`
+	TeamupType      int64 `json:"teamup_type"`
 }
 
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
@@ -993,11 +994,14 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 		return
 	}
 
+	_, teamupType := model.GetGameTypeSlice(brand, t.BetReportGameType)
+
 	r.Data = TeamupEntrySpinResultResp{
 		IsSuccess:       true,
 		ID:              data.ID,
 		RemainingCounts: data.RemainingCounts,
 		TeamupId:        t.ID,
+		TeamupType:      int64(teamupType),
 	}
 
 	return
