@@ -134,7 +134,7 @@ func ResetWager (user_id int64){
 	tsx := models.Transaction{
 		Amount:               0,
 		Wager:                -usData.RemainingWager,
-		TransactionType:      40001,
+		TransactionType:      models.TransactionTypeClearWager,
 		GameVendorId:         0,
 		ForeignTransactionId: 0,
 		IsAdjustment:         false,
