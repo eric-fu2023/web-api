@@ -21,7 +21,7 @@ type CrownValexy struct{}
 func (c *CrownValexy) CreateWallet(user model.User, s string) error {
 	go func() {
 		// fire and forget. later calls should follow up with user creation, if needed.
-		service, err := util.CrownValexyFactory()
+		service, err := util.CrownValexyFactory(context.TODO())
 		if err == nil {
 			_, _ = service.Login(context.TODO(), user.IdAsString())
 		}
@@ -61,10 +61,9 @@ func (r Remarks) String() string {
 	return string(bb)
 }
 
-func (c *CrownValexy) TransferFrom(tx *gorm.DB, user model.User, _curr string, _gameVendorCode string, gameVendorId int64, extra model.Extra) error {
-	ctx := context.TODO()
+func (c *CrownValexy) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, _curr string, _gameVendorCode string, gameVendorId int64, extra model.Extra) error {
 	userId := user.IdAsString()
-	client, err := util.CrownValexyFactory()
+	client, err := util.CrownValexyFactory(ctx)
 	if err != nil {
 		return err
 	}
@@ -117,7 +116,7 @@ func (c *CrownValexy) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserS
 		return 0, errors.New("rf user balance is not positive")
 	}
 
-	client, err := util.CrownValexyFactory()
+	client, err := util.CrownValexyFactory(context.TODO())
 	if err != nil {
 		return 0, err
 	}
@@ -159,7 +158,7 @@ func (c *CrownValexy) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserS
 }
 
 func (c *CrownValexy) GetGameUrl(ctx context.Context, user model.User, s string, s2 string, s3 string, i int64, extra model.Extra) (string, error) {
-	client, err := util.CrownValexyFactory()
+	client, err := util.CrownValexyFactory(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -176,7 +175,7 @@ func (c *CrownValexy) GetGameBalance(user model.User, s string, s2 string, extra
 	ctx := context.Background()
 	userId := user.IdAsString()
 
-	client, err := util.CrownValexyFactory()
+	client, err := util.CrownValexyFactory(ctx)
 	if err != nil {
 		return 0, err
 	}

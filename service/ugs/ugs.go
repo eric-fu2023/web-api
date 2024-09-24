@@ -55,7 +55,7 @@ func (c UGS) CreateWallet(user model.User, currency string) (err error) {
 	return
 }
 
-func (c UGS) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
+func (c UGS) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, currency string, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
 	var isTestUser bool
 	if user.Role == 2 {
 		isTestUser = true

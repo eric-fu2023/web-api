@@ -1,18 +1,22 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/go-redsync/redsync/v4"
 	"sync"
 	"time"
+
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-redsync/redsync/v4"
 )
 
 const (
@@ -139,7 +143,7 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 				defer wg.Done()
 				tx := model.DB.Begin()
 				extra := model.Extra{Locale: locale, Ip: ip}
-				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(tx, user, g.ExternalCurrency, g.GameVendor.GameCode, g.GameVendorId, extra)
+				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(context.TODO(), tx, user, g.ExternalCurrency, g.GameVendor.GameCode, g.GameVendorId, extra)
 				if err != nil {
 					util.Log().Error("`GAME INTEGRATION RECALL ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error())
 					return

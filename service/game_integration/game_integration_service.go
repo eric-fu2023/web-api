@@ -95,7 +95,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 
 			if lastPlayed.ID != 0 && lastPlayed.GameVendorId != int64(subGame.VendorId) { // transfer out from the game is needed
 				gameFrom := common.GameIntegration[lastPlayed.GameVendor.GameIntegrationId]
-				err = gameFrom.TransferFrom(_tx, user, lastPlayed.ExternalCurrency, lastPlayed.GameVendor.GameCode, lastPlayed.GameVendorId, extra)
+				err = gameFrom.TransferFrom(rfCtx, _tx, user, lastPlayed.ExternalCurrency, lastPlayed.GameVendor.GameCode, lastPlayed.GameVendorId, extra)
 				if err != nil {
 					_ctx := rfcontext.AppendError(rfCtx, err, "withdraw from last played game vendor wallet")
 					log.Println(rfcontext.Fmt(_ctx))
