@@ -85,8 +85,9 @@ type TeamupEntrySpinResp struct {
 }
 
 type TeamupEntrySpinResultResp struct {
-	IsSuccess  bool                  `json:"is_success"`
-	SpinResult serializer.SpinResult `json:"spin_result"`
+	IsSuccess       bool  `json:"is_success"`
+	ID              int64 `json:"id"`
+	RemainingCounts int   `json:"remaining_counts"`
 }
 
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
@@ -999,8 +1000,9 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 	}
 
 	r.Data = TeamupEntrySpinResultResp{
-		IsSuccess:  true,
-		SpinResult: data,
+		IsSuccess:       true,
+		ID:              data.ID,
+		RemainingCounts: data.RemainingCounts,
 	}
 
 	return
