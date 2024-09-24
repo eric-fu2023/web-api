@@ -19,7 +19,6 @@ import (
 type CrownValexy struct{}
 
 func (c *CrownValexy) CreateWallet(user model.User, s string) error {
-	//TODO implement me
 	go func() {
 		// fire and forget. later calls should follow up with user creation, if needed.
 		service, err := util.CrownValexyFactory()
