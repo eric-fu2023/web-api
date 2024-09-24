@@ -2,7 +2,6 @@ package referral_alliance
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
 	"web-api/conf/consts"
@@ -10,15 +9,17 @@ import (
 	"web-api/serializer"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	"github.com/gin-gonic/gin"
 )
 
-type ReferralRewardRecordsService struct {
+type ReferralDepositRewardRecordsService struct {
 	ReferralId      int64 `form:"referral_id"  binding:"required"`
 	RecordTimeStart int64 `form:"record_time_start"`
 	RecordTimeEnd   int64 `form:"record_time_end"`
 }
 
-func (service *ReferralRewardRecordsService) List(c *gin.Context) (r serializer.Response, err error) {
+func (service *ReferralDepositRewardRecordsService) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
@@ -65,13 +66,13 @@ func (service *ReferralRewardRecordsService) List(c *gin.Context) (r serializer.
 
 	return serializer.Response{
 		Data: map[string]any{
-			"reward_records_month": serializer.BuildReferralAllianceRewards(c, rewardRecords),
+			"reward_records_month": serializer.BuildReferralDepositAllianceRewards(c, rewardRecords),
 		},
 		Msg: i18n.T("success"),
 	}, nil
 }
 
-func (service *ReferralRewardRecordsService) getMonthString(t time.Time) (string, error) {
+func (service *ReferralDepositRewardRecordsService) getMonthString(t time.Time) (string, error) {
 	tzOffsetStr, err := model.GetAppConfigWithCache("timezone", "offset_seconds")
 	if err != nil {
 		return "", fmt.Errorf("failed to get tz offset config: %w", err)

@@ -1,14 +1,12 @@
 module web-api
 
-go 1.21
-
-toolchain go1.21.1
+go 1.22.3
 
 // replace blgit.rfdev.tech/taya/ploutos-object => /Users/carl/Projects/taya/ploutos-object
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
-	blgit.rfdev.tech/taya/common-function v0.0.0-20240923071359-536e6655f3f1
+	blgit.rfdev.tech/taya/common-function v0.0.0-20240924025514-19de7f5bef06
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240923043525-fc3e0e05ac19
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240923101144-4c0720135d33
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240923065603-59ca76f20c5b
