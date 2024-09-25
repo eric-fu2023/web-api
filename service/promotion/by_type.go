@@ -266,15 +266,16 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 		// TODO move the cash order to here as well 
 		var spin_items []ploutos.SpinItem
 
-		// Building the GORM query
+		// Build the GORM query
 		model.DB.
-			Table("spin_results sr").
-			Joins("INNER JOIN spin_items si ON si.id = sr.spin_result").
+			Table("spin_items si").
 			Joins("INNER JOIN spins sp ON si.spin_id = sp.id").
-			Where("sp.promotion_id = ?", p.ID).
-			Where("sr.user_id = ?", userID).
+			Joins("INNER JOIN spin_results sr ON si.id = sr.spin_result").
+			Where("sp.promotion_id = ?", 1).
+			Where("sr.user_id = ?", 2489).
 			Where("sr.redeemed = ?", false).
 			Find(&spin_items)
+		
 
 		for _,spin_item:=range spin_items{
 			voucher.Amount = int64(spin_item.Amount)
