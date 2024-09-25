@@ -251,6 +251,28 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 			}
 			return nil
 		})
+	case ploutos.PromotionTypeSpinWheel:
+		// TODO move the cash order to here as well 
+		var spin_items []ploutos.SpinItem
+
+		// Building the GORM query
+		model.DB.
+			Table("spin_results sr").
+			Joins("INNER JOIN spin_items si ON si.id = sr.spin_result").
+			Joins("INNER JOIN spins sp ON si.spin_id = sp.id").
+			Where("sp.promotion_id = ?", p.ID).
+			Where("sr.user_id = ?", userID).
+			Where("sr.redeemed = ?", false).
+			Find(&spin_items)
+
+		for _,spin_item:=range spin_items{
+			voucher.Amount = int64(spin_item.Amount)
+			voucher.WagerMultiplier = spin_item.Wager
+			err = model.DB.Create(&voucher).Error
+			if err != nil {
+				return 
+			}
+		}
 	}
 	return
 }
@@ -550,13 +572,15 @@ func buildSuffixByType(c context.Context, p ploutos.Promotion, userID int64) str
 	suffix := ""
 	vip, _ := model.GetVipWithDefault(c, userID)
 	switch p.Type {
-	case ploutos.PromotionTypeVipRebate:
+	case ploutos.PromotionTypeVipRebate, ploutos.PromotionTypeVipReferral:
 		suffix = fmt.Sprintf("date-%s", today.Format(time.DateOnly))
 	case ploutos.PromotionTypeVipWeeklyB:
 	case ploutos.PromotionTypeVipBirthdayB:
 		suffix = fmt.Sprintf("year-%d", today.Year())
 	case ploutos.PromotionTypeVipPromotionB:
 		suffix = fmt.Sprintf("vip-%d", vip.VipRule.VIPLevel)
+	case ploutos.PromotionTypeSpinWheel:
+		suffix = fmt.Sprintf("time-%d", today.Format("2006-01-02 15:04:05"))
 	}
 	return suffix
 }
