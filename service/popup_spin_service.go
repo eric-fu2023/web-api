@@ -136,7 +136,8 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 		SpinResult := ploutos.SpinResult{
 			UserID:     user.ID,
 			SpinResult: data.ID,
-			Redeemed:   false,
+			// spin item type 4 means "others" which means no rewards in this case, if it is other type, we treat it as redeemed.
+			Redeemed:   resultSpinItem.Type == 4,
 			SpinID:     spin.ID,
 		}
 		err = model.DB.Create(&SpinResult).Error
