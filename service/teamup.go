@@ -215,9 +215,17 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
+	brand := c.MustGet(`_brand`).(int)
 
-	if s.GameType == "0" {
+	if s.GameType == "0" || s.GameType == "" {
 		s.GameType = "4"
+	}
+	incomingGameType, _ := strconv.Atoi(s.GameType)
+	_, teamupType := model.GetGameTypeSlice(brand, incomingGameType)
+
+	if teamupType == 0 {
+		r = serializer.Err(c, "", serializer.CustomTeamUpError, i18n.T("teamup_error"), err)
+		return
 	}
 
 	user.Avatar = serializer.Url(user.Avatar)
