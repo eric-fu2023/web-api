@@ -47,6 +47,16 @@ func GetPromotionRewards(c context.Context, p ploutos.Promotion, userID, progres
 		reward = r.Amount
 	case ploutos.PromotionTypeVipReferral:
 		reward = rewardVipReferral(c, userID, now)
+	case ploutos.PromotionTypeSpinWheel:
+		var vip ploutos.VipRecord
+		vip, err = model.GetVipWithDefault(c, userID)
+		if err != nil {
+			log.Printf("GetVipWithDefault err, %v", err)
+			return
+		}
+		reward, vipMeetGapType, vipIncrementDetail = p.GetRewardDetails().GetReward(progress, vip.VipRule.VIPLevel)
+		// need to return a non-zore rewards for voucher to be insert.
+		reward = 100
 	default:
 		var vip ploutos.VipRecord
 		vip, err = model.GetVipWithDefault(c, userID)
