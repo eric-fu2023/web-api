@@ -105,9 +105,9 @@ func GenerateOtherTeamups(nicknames []string, successTeamups model.TeamupSuccess
 
 	pool := make([]string, len(nicknames))
 	if brand == consts.BrandBatAce {
-		pool = avatar.GetAvatarPoolWithPercentDefault(0.7, len(nicknames))
+		pool = avatar.GetAvatarPoolWithMaxReal(2, len(nicknames), false)
 	} else {
-		pool = avatar.GetAvatarPoolWithPercentDefault(0, len(nicknames)) // no defaults 
+		pool = avatar.GetAvatarPoolWithMaxReal(2, len(nicknames), true) // force all to use image, no defaults 
 	}
 
 	for i := 0; i < len(nicknames); i++ {

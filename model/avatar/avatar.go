@@ -106,3 +106,27 @@ func GetAvatarPoolWithPercentDefault(percentDefault float64, poolSize int) []str
 	})
 	return poolCopy
 }
+
+func GetAvatarPoolWithMaxReal(maxReal, poolSize int, allReal bool) []string {
+	numReal := poolSize
+	if !allReal {
+		numReal = rand.Intn(maxReal + 1)
+	}
+
+	if numReal > poolSize {
+		numReal = poolSize
+	}
+
+	pool := GetRotatingAvatarPool(GetAvatarUrlListTeamup(), numReal)
+	poolCopy := make([]string, len(pool))
+	copy(poolCopy, pool)
+
+	for i := 0; i < poolSize - numReal; i++ {
+		poolCopy = append(poolCopy, defaultBaAvatar) // TODO : move defaultBaAvatar up to params
+	}
+
+	rand.Shuffle(len(poolCopy), func(i, j int) {
+		poolCopy[i], poolCopy[j] = poolCopy[j], poolCopy[i]
+	})
+	return poolCopy
+}
