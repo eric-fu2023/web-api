@@ -280,6 +280,7 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 		for _,spin_item:=range spin_items{
 			voucher.Amount = int64(spin_item.Amount)
 			voucher.WagerMultiplier = spin_item.Wager
+			voucher.ReferenceID = strconv.FormatInt(spin_item.ID, 10)
 			err = model.DB.Create(&voucher).Error
 			if err != nil {
 				fmt.Println("promotion.PromotionTypeSpinWheel creation failed")
