@@ -584,7 +584,7 @@ func getBirtdayReward(c context.Context, date time.Time, userID int64) (reward i
 }
 
 func buildSuffixByType(c context.Context, p ploutos.Promotion, userID int64) string {
-	today := Today0am()
+	today := time.Now()
 	suffix := ""
 	vip, _ := model.GetVipWithDefault(c, userID)
 	switch p.Type {
