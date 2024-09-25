@@ -572,14 +572,14 @@ func buildSuffixByType(c context.Context, p ploutos.Promotion, userID int64) str
 	suffix := ""
 	vip, _ := model.GetVipWithDefault(c, userID)
 	switch p.Type {
-	case ploutos.PromotionTypeVipRebate, ploutos.PromotionTypeVipReferral:
+	case ploutos.PromotionTypeVipRebate:
 		suffix = fmt.Sprintf("date-%s", today.Format(time.DateOnly))
 	case ploutos.PromotionTypeVipWeeklyB:
 	case ploutos.PromotionTypeVipBirthdayB:
 		suffix = fmt.Sprintf("year-%d", today.Year())
 	case ploutos.PromotionTypeVipPromotionB:
 		suffix = fmt.Sprintf("vip-%d", vip.VipRule.VIPLevel)
-	case ploutos.PromotionTypeSpinWheel:
+	case ploutos.PromotionTypeSpinWheel, ploutos.PromotionTypeVipReferral:
 		suffix = fmt.Sprintf("time-%d", today.Format("2006-01-02 15:04:05"))
 	}
 	return suffix
