@@ -580,7 +580,7 @@ func buildSuffixByType(c context.Context, p ploutos.Promotion, userID int64) str
 	case ploutos.PromotionTypeVipPromotionB:
 		suffix = fmt.Sprintf("vip-%d", vip.VipRule.VIPLevel)
 	case ploutos.PromotionTypeSpinWheel, ploutos.PromotionTypeVipReferral:
-		suffix = fmt.Sprintf("time-%d", today.Format("2006-01-02 15:04:05"))
+		suffix = fmt.Sprintf("time-%s", today.Format("2006-01-02 15:04:05"))
 	}
 	return suffix
 }
