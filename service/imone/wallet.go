@@ -98,7 +98,7 @@ func (c *ImOne) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, su
 			Amount:                -1 * sum.Balance,
 			BalanceBefore:         sum.Balance,
 			BalanceAfter:          0,
-			TransactionType:       ploutos.TransactionTypeToGameIntegration, /*ploutos.TransactionTypeToUGS*/
+			TransactionType:       ploutos.TransactionTypeToGameIntegration,
 			Wager:                 0,
 			WagerBefore:           sum.RemainingWager,
 			WagerAfter:            sum.RemainingWager,
