@@ -252,6 +252,7 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 			return nil
 		})
 	case ploutos.PromotionTypeSpinWheel:
+		fmt.Println("promotion.PromotionTypeSpinWheel ")
 		// TODO move the cash order to here as well 
 		var spin_items []ploutos.SpinItem
 
@@ -270,9 +271,11 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 			voucher.WagerMultiplier = spin_item.Wager
 			err = model.DB.Create(&voucher).Error
 			if err != nil {
+				fmt.Println("promotion.PromotionTypeSpinWheel creation failed")
 				return 
 			}
 		}
+		fmt.Println("promotion.PromotionTypeSpinWheel creation ends")
 	}
 	return
 }
