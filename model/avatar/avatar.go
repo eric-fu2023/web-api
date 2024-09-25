@@ -2,6 +2,7 @@ package avatar
 
 import (
 	"context"
+	"math"
 	"math/rand"
 	"os"
 	"strconv"
@@ -81,9 +82,27 @@ func GetRotatingAvatarPool(urls []string, poolSize int) (finalPool []string) {
 func GetRandomAvatarUrlForTeamup() string {
 	rand.Seed(time.Now().UnixNano())
 	if rand.Float64() < 0.5 {
-		return defaultBaAvatar
+		return defaultBaAvatar // TODO : move defaultBaAvatar up to params
 	}
 	pool := GetRotatingAvatarPool(GetAvatarUrlListTeamup(), 8)
 	rndIdx := rand.Intn(8)
 	return pool[rndIdx]
+}
+
+func GetAvatarPoolWithPercentDefault(percentDefault float64, poolSize int) []string {
+	percentNonDefault := float64(1.0) - percentDefault
+	numRealImages := math.Floor(float64(poolSize) * percentNonDefault)
+
+	pool := GetRotatingAvatarPool(GetAvatarUrlListTeamup(), int(numRealImages))
+	poolCopy := make([]string, len(pool))
+	copy(poolCopy, pool)
+	
+	for i := 0; i < poolSize - int(numRealImages); i++ {
+		poolCopy = append(poolCopy, defaultBaAvatar) // TODO : move defaultBaAvatar up to params
+	}
+	
+	rand.Shuffle(len(poolCopy), func(i, j int) {
+		poolCopy[i], poolCopy[j] = poolCopy[j], poolCopy[i]
+	})
+	return poolCopy
 }
