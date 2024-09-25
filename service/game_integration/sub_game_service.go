@@ -71,7 +71,7 @@ func (service *SubGameService) List(c *gin.Context) (serializer.Response, error)
 	}
 
 	var brandSubGames []SubGameBrand
-	tx := model.DB.Debug().Model(SubGameBrand{}).Preload("GameVendorBrand").
+	tx := model.DB.Model(SubGameBrand{}).Preload("GameVendorBrand").
 		Joins(fmt.Sprintf(`LEFT JOIN game_vendor_brand gvb on gvb.id = %s.vendor_brand_id`, SubGameBrand{}.TableName())).
 		Preload("SubGame").
 		Joins(fmt.Sprintf(`LEFT JOIN sub_game sg on sg.id = %s.sub_game_id`, SubGameBrand{}.TableName())).
