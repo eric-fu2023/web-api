@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"sort"
 	"time"
+	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/model/avatar"
 
@@ -100,14 +101,21 @@ func BuildCustomTeamupGameHash(teamupId int64, u model.User) (res OutgoingTeamup
 	return
 }
 
-func GenerateOtherTeamups(nicknames []string, successTeamups model.TeamupSuccess) (res []OtherTeamupContribution) {
+func GenerateOtherTeamups(nicknames []string, successTeamups model.TeamupSuccess, brand int) (res []OtherTeamupContribution) {
+
+	pool := make([]string, len(nicknames))
+	if brand == consts.BrandBatAce {
+		pool = avatar.GetAvatarPoolWithMaxReal(2, len(nicknames), false)
+	} else {
+		pool = avatar.GetAvatarPoolWithMaxReal(2, len(nicknames), true) // force all to use image, no defaults 
+	}
 
 	for i := 0; i < len(nicknames); i++ {
 		item := OtherTeamupContribution{
 			Nickname: nicknames[i],
 			Time:     time.Now().UTC().Unix() - (int64(rand.Intn(1799)) + 1),
 			Amount:   50 + float64(rand.Intn(449)+1),
-			Avatar:   avatar.GetRandomAvatarUrlForTeamup(),
+			Avatar:   pool[i],
 			IsReal:   false,
 		}
 		res = append(res, item)
