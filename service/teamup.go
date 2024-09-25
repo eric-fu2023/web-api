@@ -895,7 +895,7 @@ func (s TeamupCheckSpinService) CheckSpinPopup(c *gin.Context) (r serializer.Res
 			return
 		}
 
-		spinRes.Spin = serializer.BuildSpin(spin, spinItems, 1)
+		spinRes.Spin = serializer.BuildSpin(spin, spinItems, 1, true)
 	}
 
 	r.Data = spinRes

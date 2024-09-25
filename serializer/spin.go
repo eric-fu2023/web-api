@@ -45,12 +45,13 @@ type SpinSqlHistory struct {
 	Redeemed       bool      `json:"redeemed"`
 }
 
-func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_counts int) (spin_resp Spin) {
+func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_counts int, isHardcodeResultCount ...bool) (spin_resp Spin) {
 
 	var spin_items_resp []SpinItem
 	for _, item := range spin_items {
 		spin_items_resp = append(spin_items_resp, BuildSpinItem(item))
 	}
+
 	spin_resp = Spin{
 		ID:              spin.ID,
 		Name:            spin.Name,
@@ -61,6 +62,12 @@ func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_co
 		PromotionId:     spin.PromotionId,
 		SpinItems:       spin_items_resp,
 	}
+
+	if len(isHardcodeResultCount) > 0 && isHardcodeResultCount[0] {
+		spin_resp.Counts = spin_result_counts
+		spin_resp.RemainingCounts = spin_result_counts
+	}
+
 	return
 }
 
