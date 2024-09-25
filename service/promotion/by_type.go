@@ -138,8 +138,9 @@ func GetPromotionSessionClaimStatus(c context.Context, p ploutos.Promotion, s pl
 				claim.ClaimEnd = order.CreatedAt.Add(7 * 24 * time.Hour).Unix()
 			}
 		}
-	case ploutos.PromotionTypeVipReferral:
+	case ploutos.PromotionTypeVipReferral, ploutos.PromotionTypeSpinWheel:
 		// since this promotion is able to claim multiple times, thus, we need to treat it as not claimed.
+		// and both of the promotion has their own management for has_claimed
 		claim.HasClaimed = false
 	default:
 		v, err := model.GetVoucherByUserAndPromotionSession(c, userID, s.ID)
