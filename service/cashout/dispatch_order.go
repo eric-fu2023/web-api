@@ -19,12 +19,10 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 	if err != nil {
 		return
 	}
-	channel, nErr := model.GetNextCashMethodChannel(model.FilterCashMethodChannelsByAmount(c, updatedCashOrder.AppliedCashOutAmount, model.FilterCashMethodChannelsByVip(c, user, method.CashMethodChannels)))
-	if nErr != nil {
-		err = nErr
+	channel, err := model.GetNextCashMethodChannel(model.FilterCashMethodChannelsByAmount(c, updatedCashOrder.AppliedCashOutAmount, model.FilterCashMethodChannelsByVip(c, user, method.CashMethodChannels)))
+	if err != nil {
 		return
 	}
-	stats := channel.Stats
 	err = processCashOutMethod(method)
 	if err != nil {
 		return
@@ -42,9 +40,9 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 		cashoutAmount = (cashoutAmount / 100) * 100
 	}
 
+	config := channel.GetGatewayConfig()
 	switch channel.Gateway {
 	case "finpay":
-		config := channel.GetGatewayConfig()
 		var data finpay.TransferOrderResponse
 		defer func() {
 			result := "success"
@@ -54,8 +52,7 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 			if data.IsFailed() {
 				result = "failed"
 			}
-			_ = model.IncrementCashMethodStats(stats, result)
-
+			_ = model.IncrementCashMethodStats(channel.Stats, result)
 		}()
 
 		switch config.Type {
@@ -105,6 +102,8 @@ func DispatchOrder(c *gin.Context, cashOrder model.CashOrder, user model.User, a
 		if err != nil {
 			return
 		}
+	case "foray":
+		return
 	}
 	return
 }
