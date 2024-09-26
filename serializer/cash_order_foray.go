@@ -3,11 +3,11 @@ package serializer
 import (
 	"os"
 
-	foray "blgit.rfdev.tech/taya/payment-service/foray/dto"
+	forayDto "blgit.rfdev.tech/taya/payment-service/foray/dto"
 	"github.com/shopspring/decimal"
 )
 
-func BuildPaymentOrderFromForay(p foray.PaymentOrderResponseData, paymentType string, fromCurrency string, fromAmount decimal.Decimal, fromExchangeRate float64, toCurrency string, toAmount decimal.Decimal, toExchangeRate float64) TopupOrder {
+func BuildPaymentOrderFromForay(p forayDto.DepositOrderResponseData, paymentType string, fromCurrency string, fromAmount decimal.Decimal, fromExchangeRate float64, toCurrency string, toAmount decimal.Decimal, toExchangeRate float64) TopupOrder {
 	dataType := retrievePaymentDataType(paymentType)
 
 	return TopupOrder{

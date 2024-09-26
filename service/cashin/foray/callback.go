@@ -9,13 +9,13 @@ import (
 
 	"web-api/service/promotion/on_cash_orders"
 
-	foray "blgit.rfdev.tech/taya/payment-service/foray/dto"
+	forayDto "blgit.rfdev.tech/taya/payment-service/foray/dto"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
 type ForayPaymentCallback struct {
-	foray.PaymentOrderCallbackRequest
+	forayDto.DepositOrderCallbackRequest
 }
 
 func (s *ForayPaymentCallback) Handle(c *gin.Context) error {

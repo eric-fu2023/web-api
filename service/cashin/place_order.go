@@ -171,7 +171,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		cashOrder.Status = ploutos.CashOrderStatusPending
 	/** foray (法拉利) **/
 	case "foray":
-		var data forayDto.PaymentOrderResponseData
+		var data forayDto.DepositOrderResponseData
 		defer func() {
 			result := "success"
 			if errors.Is(err, foray.ErrorGateway) {
