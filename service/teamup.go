@@ -987,8 +987,8 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 	teamup.UserId = user.ID
 	teamup.OrderId = fmt.Sprint(spinRes.ID)
 	teamup.TotalTeamUpTarget += int64(resultSpinItem.Amount)
-	teamup.TeamupEndTime = currTime.Add(7 * 24 * time.Hour).Unix()
-	teamup.TeamupCompletedTime = currTime.Add(7 * 24 * time.Hour).Unix()
+	teamup.TeamupEndTime = currTime.Add(1 * 24 * time.Hour).Unix()
+	teamup.TeamupCompletedTime = currTime.Add(1 * 24 * time.Hour).Unix()
 	teamup.Provider = "Spin And Win Rewards"
 	teamup.BetReportGameType = ploutos.TeamupSpinWheelId
 	teamup.Status = int(ploutos.TeamupStatusPending)
