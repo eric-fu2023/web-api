@@ -1,6 +1,7 @@
 package internalclaim
 
 import (
+	"fmt"
 	"time"
 
 	"web-api/model"
@@ -38,10 +39,13 @@ func (p VipBatchClaimRequest) Handle(c *gin.Context) (r serializer.Response, err
 		return
 	}
 	for _, uid := range p.UserIDList {
+		fmt.Println("iterate user id ", uid)
 		voucher, err := promotion.Claim(c, now, promo, session, uid, nil)
 		if err != nil {
+			fmt.Println("promotion.Claim err ", err)
 			util.GetLoggerEntry(c).Error(err)
 		}
+		fmt.Println("promotion.Claim finished ", uid)
 		util.GetLoggerEntry(c).Infof("Generated voucher: %#v", voucher)
 	}
 	r.Data = "success"

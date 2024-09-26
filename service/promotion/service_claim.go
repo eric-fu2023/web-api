@@ -25,6 +25,7 @@ func Claim(ctx context.Context, now time.Time, promotion models.Promotion, sessi
 		claimStatus     serializer.ClaimStatus
 		voucherTemplate models.VoucherTemplate
 	)
+	fmt.Println("promotion.GetPromotionSessionClaimStatus ")
 	claimStatus = GetPromotionSessionClaimStatus(ctx, promotion, session, userID, now)
 	if claimStatus.HasClaimed {
 		err = errors.New("double_claim")
@@ -36,17 +37,20 @@ func Claim(ctx context.Context, now time.Time, promotion models.Promotion, sessi
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "Unavailable for now", err)
 		return
 	}
+	fmt.Println("promotion.GetPromotionSessionProgress ")
 	progress, err = GetPromotionSessionProgress(ctx, promotion, session, userID)
 	// FIXME
 	// to remove error suppression
 	// if !errors.Is(err, ErrPromotionSessionUnknownPromotionType) {
 	// 	return voucher, err
 	// }
+	fmt.Println("promotion.GetPromotionRewards ")
 	reward, meetGapType, vipIncrementDetail, err := GetPromotionRewards(ctx, promotion, userID, progress, now, user)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
+	fmt.Println("promotion.GetPromotionVoucherTemplateByPromotionId ")
 	voucherTemplate, err = model.GetPromotionVoucherTemplateByPromotionId(ctx, promotion.ID)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -57,6 +61,8 @@ func Claim(ctx context.Context, now time.Time, promotion models.Promotion, sessi
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("nothing_to_claim"), err)
 		return
 	}
+
+	fmt.Println("promotion.ClaimVoucherByType ")
 	voucher, err = ClaimVoucherByType(ctx, promotion, session, voucherTemplate, userID, 0, reward, now, meetGapType, vipIncrementDetail)
 	if err != nil {
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)

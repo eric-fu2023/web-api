@@ -148,6 +148,8 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 
 func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Response, err error) {
 	// Generate a random number between 1 and 8
+	brand := c.MustGet(`_brand`).(int)
+
 	nicknameSlice := make([]string, rand.Intn(8)+1)
 	for i := 0; i < len(nicknameSlice); i++ {
 		nicknameSlice[i] = GetRandNickname()
@@ -166,7 +168,7 @@ func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Respo
 	}
 
 	if err != nil && errors.Is(err, persist.ErrCacheMiss) || len(successTeamups) != cacheRealUserCount {
-		otherTeamups = serializer.GenerateOtherTeamups(nicknameSlice, successTeamups)
+		otherTeamups = serializer.GenerateOtherTeamups(nicknameSlice, successTeamups, brand)
 		err = cache.RedisStore.Set("otherteamuplist", otherTeamups, 30*time.Minute)
 	}
 	r.Data = otherTeamups
