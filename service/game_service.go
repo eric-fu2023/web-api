@@ -121,6 +121,10 @@ func (service *GameByStreamerService) Get(c *gin.Context) (r serializer.Response
 		return
 	}
 
+
+	game.WebIcon = serializer.Url(game.WebIcon)
+	game.AppIcon = serializer.Url(game.AppIcon)
+	fmt.Println(game.AppIcon)
 	r = serializer.Response{
 		Data: game,
 	}
