@@ -10,7 +10,7 @@ require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/common-function v0.0.0-20240924053657-229db7a71591
 	blgit.rfdev.tech/taya/game-service v0.0.0-20240925070100-9f77ba0c8b48
-	blgit.rfdev.tech/taya/payment-service v0.0.0-20240923101144-4c0720135d33
+	blgit.rfdev.tech/taya/payment-service v0.0.0-20240926073517-f844eb400801
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20240925055713-0043103eafe2
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240703073351-55719e205f9b
 	firebase.google.com/go/v4 v4.12.1
