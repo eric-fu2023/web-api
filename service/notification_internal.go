@@ -120,7 +120,6 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 
 		teamup, _ := model.GetTeamUpByTeamUpId(teamupId)
 
-		var resp serializer.Response
 		providerName := consts.GameProviderNameMap[p.Params["provider"]]
 		providerIcon := consts.GameProviderNameToImgMap[p.Params["provider"]]
 
