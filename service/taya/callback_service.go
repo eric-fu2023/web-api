@@ -55,7 +55,6 @@ func (c *Callback) GetGameVendorId() int64 {
 func (c *Callback) GetGameTransactionId() int64 {
 	return c.Transaction.ID
 }
-
 func (c *Callback) GetExternalUserId() string {
 	return c.Request.MerchantUserId
 }
@@ -72,6 +71,9 @@ func (c *Callback) GetAmount() int64 {
 	return c.Transaction.Amount
 }
 
+func (c *Callback) GetBetAmountOnly() int64 {
+	return 0
+}
 func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
 	var txn model.TayaTransaction
 	rows := model.DB.Clauses(dbresolver.Use("txConn")). // for re-settle without rollback

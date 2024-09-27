@@ -33,6 +33,9 @@ func (c *CancelWager) GetAmount() int64 {
 	}
 	return multiplier * c.Transaction.Amount
 }
+func (c *CancelWager) GetBetAmountOnly() int64 {
+	return 0
+}
 
 func (c *CancelWager) GetExternalUserId() string {
 	return c.Request.BrandUid

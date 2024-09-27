@@ -25,7 +25,9 @@ func (c *PromoPayout) NewCallback(userId int64) {
 func (c *PromoPayout) GetAmount() int64 {
 	return c.Transaction.Amount
 }
-
+func (c *PromoPayout) GetBetAmountOnly() int64 {
+	return 0
+}
 func (c *PromoPayout) GetExternalUserId() string {
 	return c.Request.BrandUid
 }

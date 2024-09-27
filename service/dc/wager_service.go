@@ -27,6 +27,9 @@ func (c *Wager) GetAmount() int64 {
 	return -1 * c.Transaction.Amount
 }
 
+func (c *Wager) GetBetAmountOnly() int64 {
+	return 0
+}
 func (c *Wager) GetExternalUserId() string {
 	return c.Request.BrandUid
 }
