@@ -825,7 +825,7 @@ var (
 		"IMOne Slot":           "https://static.tayalive.com/batace-img/icon/IMOne.png",
 		"Mumbai":               "https://static.tayalive.com/batace-img/icon/Mumbai.png",
 		"9Wickets":             "https://static.tayalive.com/batace-img/icon/IMOne.png",
-		"Mancala":              "https://static.tayalive.com/batace-img/icon/IMOne.png",
+		"Mancala":              "https://cdn.tayalive.com/batace-img/icon/Mancala-min.png",
 		"Spin And Win Rewards": "https://static.tayalive.com/batace-img/icon/Cash_rewards.png",
 	}
 )
