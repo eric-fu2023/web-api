@@ -1,6 +1,7 @@
 package model
 
 import (
+	models "blgit.rfdev.tech/taya/ploutos-object"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
@@ -23,17 +24,27 @@ func UpdateDbUserSumAndCreateTransaction(txDB *gorm.DB, userID, amount, wagerCha
 		if err != nil {
 			return
 		}
+
+		// only update deposit wager when it is a deposit transaction or make up deposit transaction
+		deposit_wager_change := int64(0)
+		if transactionType == models.TransactionTypeCashIn || transactionType == models.TransactionTypeMakeUpCashOrder{
+			deposit_wager_change = wagerChange
+		}
+		
 		transaction := Transaction{
 			ploutos.Transaction{
-				UserId:          userID,
-				Amount:          amount,
-				BalanceBefore:   sum.Balance,
-				BalanceAfter:    sum.Balance + amount,
-				TransactionType: transactionType,
-				Wager:           wagerChange,
-				WagerBefore:     sum.RemainingWager,
-				WagerAfter:      sum.RemainingWager + wagerChange,
-				CashOrderID:     cashOrderID,
+				UserId:             userID,
+				Amount:             amount,
+				BalanceBefore:      sum.Balance,
+				BalanceAfter:       sum.Balance + amount,
+				TransactionType:    transactionType,
+				Wager:              wagerChange,
+				WagerBefore:        sum.RemainingWager,
+				WagerAfter:         sum.RemainingWager + wagerChange,
+				DepositWager:       deposit_wager_change,
+				DepositWagerBefore: sum.DepositRemainingWager,
+				DepositWagerAfter:  sum.DepositRemainingWager + deposit_wager_change,
+				CashOrderID:        cashOrderID,
 			},
 		}
 		err = tx.Create(&transaction).Error
@@ -42,6 +53,7 @@ func UpdateDbUserSumAndCreateTransaction(txDB *gorm.DB, userID, amount, wagerCha
 		}
 		sum.Balance += amount
 		sum.RemainingWager += wagerChange
+		sum.DepositRemainingWager += deposit_wager_change
 		sum.MaxWithdrawable += withdrawableChange
 		err = tx.Save(&sum).Error
 		if err != nil {
