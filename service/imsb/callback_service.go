@@ -61,6 +61,9 @@ func (c *Callback) GetAmount() int64 {
 	return c.Transaction.TransactionAmount
 }
 
+func (c *Callback) GetBetAmountOnly() int64 {
+	return 0
+}
 func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
 	return -1, true
 }

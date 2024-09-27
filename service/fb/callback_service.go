@@ -73,6 +73,9 @@ func (c *Callback) GetAmount() int64 {
 	return c.Transaction.Amount
 }
 
+func (c *Callback) GetBetAmountOnly() int64 {
+	return 0
+}
 func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
 	var txn ploutos.FbTransaction
 	rows := model.DB.Clauses(dbresolver.Use("txConn")). // for re-settle without rollback

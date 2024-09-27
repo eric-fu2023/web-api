@@ -1,12 +1,13 @@
 package saba
 
 import (
-	"blgit.rfdev.tech/taya/game-service/saba/callback"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 	"time"
 	"web-api/service/common"
+
+	"blgit.rfdev.tech/taya/game-service/saba/callback"
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
 )
 
 type PlaceBetParlay struct {
@@ -42,7 +43,9 @@ func (c *PlaceBetParlay) NewCallback(userId int64) {
 func (c *PlaceBetParlay) GetExternalUserId() string {
 	return c.Request.Message.UserId
 }
-
+func (c *PlaceBetParlay) GetBetAmountOnly() int64 {
+	return 0
+}
 func PlaceBetParlayCallback(c *gin.Context, req callback.PlaceBetParlayRequest) (res any, err error) {
 	go common.LogGameCallbackRequest("placebetparlay", req)
 	var r []callback.PlaceBetParlayResponseTxns

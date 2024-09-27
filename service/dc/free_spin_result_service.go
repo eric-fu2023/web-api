@@ -25,7 +25,9 @@ func (c *FreeSpinResult) NewCallback(userId int64) {
 func (c *FreeSpinResult) GetAmount() int64 {
 	return c.Transaction.Amount
 }
-
+func (c *FreeSpinResult) GetBetAmountOnly() int64 {
+	return 0
+}
 func (c *FreeSpinResult) GetExternalUserId() string {
 	return c.Request.BrandUid
 }

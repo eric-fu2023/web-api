@@ -1,14 +1,15 @@
 package saba
 
 import (
-	"blgit.rfdev.tech/taya/game-service/saba/callback"
-	models "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+
+	"blgit.rfdev.tech/taya/game-service/saba/callback"
+	models "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
 )
 
 type ConfirmBetParlay struct {
@@ -60,7 +61,9 @@ func (c *ConfirmBetParlay) ShouldProceed() bool {
 func (c *ConfirmBetParlay) GetAmount() int64 {
 	return c.ChangedAmount
 }
-
+func (c *ConfirmBetParlay) GetBetAmountOnly() int64 {
+	return 0
+}
 func (c *ConfirmBetParlay) GetBetAmount() (amount int64, exists bool) {
 	return
 }
