@@ -100,6 +100,7 @@ type CallbackInterface interface {
 	SaveGameTransaction(*gorm.DB) error
 	ShouldProceed() bool
 	GetAmount() int64
+	GetBetAmountOnly() (int64)
 	GetWagerMultiplier() (int64, bool)
 	GetBetAmount() (int64, bool)
 	IsAdjustment() bool
@@ -434,18 +435,18 @@ func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betE
 func calWagerBatace(obj CallbackInterface, originalWager int64, originalDepositWager int64) (betAmount int64, betExists bool, newWager int64, newDepositWager int64, wagerChange int64, depositWagerChange int64, err error) {
 	newWager = originalWager
 	newDepositWager = originalDepositWager
-	betAmount, betExists = obj.GetBetAmount()
+	betAmount = obj.GetBetAmountOnly()
 	if !betExists {
 		return
 	}
-	wagerChange = betAmount
-	newWager = newWager - wagerChange
+	wagerChange = - betAmount
+	newWager = newWager + wagerChange
 	if newWager < 0 {
 		newWager = 0
 	}
 
-	depositWagerChange = betAmount
-	newDepositWager = newDepositWager - depositWagerChange
+	depositWagerChange = - betAmount
+	newDepositWager = newDepositWager + depositWagerChange
 	if newDepositWager < 0 {
 		newDepositWager = 0
 	}
