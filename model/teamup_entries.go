@@ -30,11 +30,12 @@ const (
 )
 
 type TeamupEntryCustomRes []struct {
-	ContributedAmount float64   `json:"contributed_amount"`
-	ContributedTime   time.Time `json:"contributed_time"`
-	Nickname          string    `json:"nickname"`
-	Avatar            string    `json:"avatar"`
-	Progress          int64     `json:"progress"`
+	ContributedAmount    float64   `json:"contributed_amount"`
+	ContributedTime      time.Time `json:"contributed_time"`
+	Nickname             string    `json:"nickname"`
+	Avatar               string    `json:"avatar"`
+	Progress             int64     `json:"progress"`
+	AdjustedFiatProgress float64   `json:"adjusted_fiat_progress"`
 }
 
 func FindTeamupEntryByTeamupId(teamupId int64) (res []ploutos.TeamupEntry, err error) {
@@ -49,7 +50,12 @@ func FindTeamupEntryByTeamupId(teamupId int64) (res []ploutos.TeamupEntry, err e
 	return
 }
 
-func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustomRes, err error) {
+func GetAllTeamUpEntries(brand int, teamupId int64, page, limit int) (res TeamupEntryCustomRes, err error) {
+
+	teamup, err := GetTeamUpByTeamUpId(teamupId)
+	if err != nil {
+		return
+	}
 
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		tx = tx.Table("teamup_entries").
@@ -65,6 +71,21 @@ func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustom
 		}
 		return nil
 	})
+
+	partialTotalProgress := 0.00
+	for i := len(res) - 1; i >= 0; i-- {
+
+		floorFiatProgress := math.Floor((float64(res[i].Progress) * float64(teamup.TotalTeamUpTarget)) / 10000)
+		res[i].AdjustedFiatProgress = floorFiatProgress
+
+		if i != 0 {
+			partialTotalProgress += floorFiatProgress
+		}
+	}
+
+	if teamup.TotalFakeProgress >= 10000 {
+		res[0].AdjustedFiatProgress = (float64(teamup.TotalTeamUpTarget) - float64(partialTotalProgress)) / 100
+	}
 
 	return
 }

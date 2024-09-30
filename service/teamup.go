@@ -480,7 +480,10 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 }
 
 func (s GetTeamupService) ContributedUserList(c *gin.Context) (r serializer.Response, err error) {
-	entries, err := model.GetAllTeamUpEntries(s.TeamupId, s.Page, s.Limit)
+	brand := c.MustGet(`_brand`).(int)
+
+	s.Limit = 30
+	entries, err := model.GetAllTeamUpEntries(brand, s.TeamupId, s.Page, s.Limit)
 
 	for i := range entries {
 		entries[i].Avatar = serializer.Url(entries[i].Avatar)
