@@ -3,12 +3,14 @@ package mancala
 import (
 	"context"
 	"errors"
+	"log"
 	"strconv"
 	"time"
 
 	"web-api/model"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"blgit.rfdev.tech/taya/game-service/mancala/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
@@ -169,6 +171,11 @@ func (m *Mancala) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, 
 }
 
 func (m *Mancala) GetGameUrl(ctx context.Context, user model.User, tayaCurrency, _, subGameCode string, _ int64, extra model.Extra) (string, error) {
+	ctx = rfcontext.AppendParams(ctx, "GetGameUrl", map[string]interface{}{
+		"user":         user,
+		"subGameCode":  subGameCode,
+		"tayaCurrency": tayaCurrency,
+	})
 	userId := user.IdAsString()
 	currency, ok := TayaCurrencyToMancalaCurrency[tayaCurrency]
 	if !ok {
@@ -178,6 +185,20 @@ func (m *Mancala) GetGameUrl(ctx context.Context, user model.User, tayaCurrency,
 	client, err := util.MancalaFactory()
 	if err != nil {
 		return "", err
+	}
+
+	_, exists, aErr := client.AddTransferWallet(ctx, user.IdAsString(), TayaCurrencyToMancalaCurrency[tayaCurrency])
+	if aErr != nil {
+		ctx = rfcontext.AppendError(ctx, aErr, "AddTransferWallet.a")
+		log.Printf(rfcontext.Fmt(ctx))
+		return "", aErr
+	}
+
+	if !exists {
+		_err := errors.New("mancala account missing after create if not exists")
+		ctx = rfcontext.AppendError(ctx, aErr, "AddTransferWallet.e")
+		log.Printf(rfcontext.Fmt(ctx))
+		return "", _err
 	}
 
 	gameId, err := strconv.Atoi(subGameCode)
