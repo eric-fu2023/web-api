@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"time"
+	"web-api/conf/consts"
 
 	"web-api/util"
 	"web-api/util/i18n"
@@ -72,19 +73,22 @@ func GetAllTeamUpEntries(brand int, teamupId int64, page, limit int) (res Teamup
 		return nil
 	})
 
-	partialTotalProgress := 0.00
-	for i := len(res) - 1; i >= 0; i-- {
+	switch brand {
+	case consts.BrandBatAce:
+		partialTotalProgress := 0.00
+		for i := len(res) - 1; i >= 0; i-- {
 
-		floorFiatProgress := math.Floor((float64(res[i].Progress) * float64(teamup.TotalTeamUpTarget)) / 10000)
-		res[i].AdjustedFiatProgress = floorFiatProgress
+			floorFiatProgress := math.Floor((float64(res[i].Progress)/10000)*float64(teamup.TotalTeamUpTarget)/100*100) / 100
+			res[i].AdjustedFiatProgress = floorFiatProgress
 
-		if i != 0 {
-			partialTotalProgress += floorFiatProgress
+			if i != 0 {
+				partialTotalProgress += floorFiatProgress
+			}
 		}
-	}
 
-	if teamup.TotalFakeProgress >= 10000 {
-		res[0].AdjustedFiatProgress = (float64(teamup.TotalTeamUpTarget) - float64(partialTotalProgress)) / 100
+		if teamup.TotalFakeProgress >= 10000 {
+			res[0].AdjustedFiatProgress = math.Floor((float64(teamup.TotalTeamUpTarget)/100-float64(partialTotalProgress))*100) / 100
+		}
 	}
 
 	return
