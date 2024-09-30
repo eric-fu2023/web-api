@@ -5,6 +5,7 @@ import (
 	"time"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/util"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,6 +38,8 @@ func (service *DomainWebConfigService) InitRoute(c *gin.Context) (res serializer
 }
 
 func (service *DomainConfigService) InitWeb(c *gin.Context) (res serializer.Response, err error) {
+	util.Log().Info("Initializing domain web configs for origin=%s, ip=%s", c.Request.Header.Get("ori"), c.ClientIP())
+
 	// TODO: check if the request comes from countries that should be blocked
 	// 1. find redirect
 	if redirect := retrieveRandomRedirect(c); len(redirect) > 0 {
