@@ -47,6 +47,16 @@ func GetPromotionRewards(c context.Context, p ploutos.Promotion, userID, progres
 		reward = r.Amount
 	case ploutos.PromotionTypeVipReferral:
 		reward = rewardVipReferral(c, userID, now)
+	case ploutos.PromotionTypeSpinWheel:
+		var vip ploutos.VipRecord
+		vip, err = model.GetVipWithDefault(c, userID)
+		if err != nil {
+			log.Printf("GetVipWithDefault err, %v", err)
+			return
+		}
+		reward, vipMeetGapType, vipIncrementDetail = p.GetRewardDetails().GetReward(progress, vip.VipRule.VIPLevel)
+		// need to return a non-zore rewards for voucher to be insert.
+		reward = 100
 	default:
 		var vip ploutos.VipRecord
 		vip, err = model.GetVipWithDefault(c, userID)
@@ -128,6 +138,10 @@ func GetPromotionSessionClaimStatus(c context.Context, p ploutos.Promotion, s pl
 				claim.ClaimEnd = order.CreatedAt.Add(7 * 24 * time.Hour).Unix()
 			}
 		}
+	case ploutos.PromotionTypeVipReferral, ploutos.PromotionTypeSpinWheel:
+		// since this promotion is able to claim multiple times, thus, we need to treat it as not claimed.
+		// and both of the promotion has their own management for has_claimed
+		claim.HasClaimed = false
 	default:
 		v, err := model.GetVoucherByUserAndPromotionSession(c, userID, s.ID)
 		if err != nil {
@@ -248,6 +262,34 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 			}
 			return nil
 		})
+	case ploutos.PromotionTypeSpinWheel:
+		fmt.Println("promotion.PromotionTypeSpinWheel ")
+		// TODO move the cash order to here as well 
+		var spin_items []ploutos.SpinItem
+
+		// Build the GORM query
+		model.DB.
+			Table("spin_items si").
+			Joins("INNER JOIN spins sp ON si.spin_id = sp.id").
+			Joins("INNER JOIN spin_results sr ON si.id = sr.spin_result").
+			Where("sp.promotion_id = ?", p.ID).
+			Where("sr.user_id = ?", userID).
+			Where("sr.redeemed = ?", false).
+			Find(&spin_items)
+		
+
+		for _,spin_item:=range spin_items{
+			voucher.Amount = int64(spin_item.Amount)
+			voucher.WagerMultiplier = spin_item.Wager
+			voucher.ReferenceID = strconv.FormatInt(spin_item.ID, 10)
+			voucher.Status = ploutos.VoucherStatusRedeemed
+			err = model.DB.Create(&voucher).Error
+			if err != nil {
+				fmt.Println("promotion.PromotionTypeSpinWheel creation failed")
+				return 
+			}
+		}
+		fmt.Println("promotion.PromotionTypeSpinWheel creation ends")
 	}
 	return
 }
@@ -543,7 +585,7 @@ func getBirtdayReward(c context.Context, date time.Time, userID int64) (reward i
 }
 
 func buildSuffixByType(c context.Context, p ploutos.Promotion, userID int64) string {
-	today := Today0am()
+	today := time.Now()
 	suffix := ""
 	vip, _ := model.GetVipWithDefault(c, userID)
 	switch p.Type {
@@ -554,6 +596,8 @@ func buildSuffixByType(c context.Context, p ploutos.Promotion, userID int64) str
 		suffix = fmt.Sprintf("year-%d", today.Year())
 	case ploutos.PromotionTypeVipPromotionB:
 		suffix = fmt.Sprintf("vip-%d", vip.VipRule.VIPLevel)
+	case ploutos.PromotionTypeSpinWheel, ploutos.PromotionTypeVipReferral:
+		suffix = fmt.Sprintf("time-%s", today.Format("2006-01-02 15:04:05"))
 	}
 	return suffix
 }

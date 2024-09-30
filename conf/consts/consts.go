@@ -12,6 +12,11 @@ const (
 )
 
 const (
+	BrandBatAce = 1002
+	BrandAha    = 3001
+)
+
+const (
 	KycStatusPending   = 1
 	KycStatusCompleted = 2
 	KycStatusRejected  = 3
@@ -713,6 +718,7 @@ const (
 	CorrelationKey                              = "correlation_id"
 	StdTimeFormat                               = "2006-01-02 15:04:05"
 	StdMonthFormat                              = "2006-01"
+	StdDateFormat                               = "2006-01-02"
 	OrderTypeTopup                              = "top-up"
 	OrderTypeWithdraw                           = "withdraw"
 	OrderTypeDepositBonus                       = "deposit_bonus"
@@ -802,6 +808,7 @@ var (
 		"IMOne Slot":       "IMOne Slot",
 		"Mumbai":           "Mumbai",
 		"9Wickets":         "9Wickets",
+		"Mancala":          "Mancala",
 
 		"Spin And Win Rewards": "Cash Rewards",
 	}
@@ -813,11 +820,12 @@ var (
 		"HS_SLOT":              "",
 		"JFI0000":              "",
 		"PLAYNGO_SLOT":         "",
-		"evolution":            "https://static.tayalive.com/batace-img/icon/Evolution-min.jpg",
-		"Evolution":            "https://static.tayalive.com/batace-img/icon/Evolution-min.jpg",
-		"IMOne Slot":           "https://static.tayalive.com/batace-img/icon/IMOne-min.jpg",
-		"Mumbai":               "https://static.tayalive.com/batace-img/icon/Mumbai-min.jpg",
-		"9Wickets":             "https://static.tayalive.com/batace-img/icon/IMOne-min.jpg",
-		"Spin And Win Rewards": "https://static.tayalive.com/batace-img/icon/SpinRewards.jpg",
+		"evolution":            "https://static.tayalive.com/batace-img/icon/Evolution.png",
+		"Evolution":            "https://static.tayalive.com/batace-img/icon/Evolution.png",
+		"IMOne Slot":           "https://static.tayalive.com/batace-img/icon/IMOne.png",
+		"Mumbai":               "https://static.tayalive.com/batace-img/icon/Mumbai.png",
+		"9Wickets":             "https://static.tayalive.com/batace-img/icon/IMOne.png",
+		"Mancala":              "https://cdn.tayalive.com/batace-img/icon/Mancala-min.png",
+		"Spin And Win Rewards": "https://static.tayalive.com/batace-img/icon/Cash_rewards.png",
 	}
 )

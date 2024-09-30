@@ -1,18 +1,19 @@
 package saba
 
 import (
-	"blgit.rfdev.tech/taya/game-service/saba/callback"
-	models "blgit.rfdev.tech/taya/ploutos-object"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 	"time"
 	"web-api/cache"
 	"web-api/model"
 	"web-api/service/common"
 	"web-api/util"
+
+	"blgit.rfdev.tech/taya/game-service/saba/callback"
+	models "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
 )
 
 type Settle struct {
@@ -52,6 +53,9 @@ func (c *Settle) ShouldProceed() bool {
 	return true
 }
 
+func (c *Settle) GetBetAmountOnly() int64 {
+	return 0
+}
 type SettleRedis struct {
 	OpId string
 	Txn  callback.SettleTxns

@@ -71,6 +71,7 @@ func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustom
 
 func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18n i18n.I18n) (teamup ploutos.Teamup, isTeamupSuccess, isSuccess bool, err error) {
 
+	brand := c.MustGet(`_brand`).(int)
 	// First entry - 85% ~ 92%
 	// Second entry onwards until N - 1 - 0.01% ~ 1%
 	// Capped at 99.99% if deposit not fulfilled
@@ -122,7 +123,7 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	if teamup.Term != 0 && teamup.ShortlistStatus != ploutos.ShortlistStatusNotShortlist {
 		// 如果有Term，如果这单是成功 / 入选
 		if isValidSlash {
-			isSuccessShortlisted, _ := SuccessShortlisted(teamup, currentTotalProgress, userId)
+			isSuccessShortlisted, _ := SuccessShortlisted(brand, teamup, currentTotalProgress, userId)
 
 			// No matter got error or not, need to return
 			// No error = success = return
@@ -204,10 +205,10 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 			teamup.TotalFakeProgress = afterProgress
 
 			// 获得该期
-			currentTerm, _ := GetCurrentTermNum(teamup.BetReportGameType)
+			currentTerm, _ := GetCurrentTermNum(brand, teamup.BetReportGameType)
 			teamupTermSizeString, _ := GetAppConfigWithCache("teamup", "term_size")
 			termSize, _ := strconv.Atoi(teamupTermSizeString)
-			termTeamups, _ := FindExceedTargetByTerm(currentTerm, teamup.BetReportGameType)
+			termTeamups, _ := FindExceedTargetByTerm(brand, currentTerm, teamup.BetReportGameType)
 			// 默认该单为这一期
 			teamup.Term = currentTerm
 
@@ -265,27 +266,6 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 	})
 
 	isSuccess = true
-
-	return
-}
-
-func FindOngoingTeamupEntriesByUserId(userId int64) (res ploutos.TeamupEntry, err error) {
-	err = DB.Transaction(func(tx *gorm.DB) error {
-		tx = tx.Table("teamup_entries").
-			Select("teamup_entries.*"). // Select fields from the teamup_entries table
-			Joins("JOIN teamups ON teamups.id = teamup_entries.teamup_id").
-			Where("teamup_entries.user_id = ?", userId).
-			Where("teamups.status = 0").
-			Where("teamups.bet_report_game_type in ?", ploutos.TeamUpSportGameTypes).
-			Order("teamup_entries.created_at ASC").
-			First(&res) // Fetch the first matching record
-
-		if err := tx.Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
 
 	return
 }
@@ -407,4 +387,48 @@ func SlashBeforeByUserId(userId int64) (isExisted bool) {
 	}
 
 	return
+}
+
+func ShouldPopRoulette(brandId int, userId int64) (shouldPop bool) {
+
+	_, _, spinGameTypes := GetTeamUpGameTypeSliceByBrand(brandId)
+
+	// condition1 := true
+	condition2 := true
+
+	// 1）新用户（没有注册过的ip和uuid）+ 超过某个时间点注册
+	// 2）砍单记录里没启动过轮盘砍单（发起过轮盘砍单就不可以再发起了）
+
+	// 新用户（没有注册过的ip和uuid）+ 超过某个时间点注册
+	// var countUsers int64
+	// _ = DB.Table("users").
+	// 	Where("id = ?", userId).
+	// 	Where("created_at > ?", "2024-09-20 00:00:00.000000").
+	// 	Count(&countUsers).Error
+
+	// if countUsers > 0 {
+	// 	isIPRegistered := IPExisted(ip)
+	// 	// IP 已注册过
+	// 	if isIPRegistered {
+	// 		condition1 = false
+	// 	}
+	// } else {
+	// 	// 老用户
+	// 	condition1 = false
+	// }
+
+	// 砍单记录里没启动过轮盘砍单（发起过轮盘砍单就不可以再发起了）
+	var countStartedSpin int64
+	_ = DB.Table("teamups").
+		Where("user_id = ?", userId).
+		Where("bet_report_game_type in ?", spinGameTypes).
+		Count(&countStartedSpin).Error
+
+	if countStartedSpin > 0 {
+		// 已发起过轮盘砍单
+		condition2 = false
+	}
+
+	// return condition1 && condition2
+	return condition2
 }

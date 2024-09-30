@@ -1,18 +1,22 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/go-redsync/redsync/v4"
 	"sync"
 	"time"
+
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-redsync/redsync/v4"
 )
 
 const (
@@ -58,7 +62,7 @@ func (service *SyncWalletService) Update(c *gin.Context) (r serializer.Response,
 		return
 	}
 	extra := model.Extra{Locale: locale, Ip: c.ClientIP()}
-	balance, err := common.GameIntegration[gvu.GameVendor.GameIntegrationId].GetGameBalance(user, gvu.ExternalCurrency, gvu.GameVendor.GameCode, extra)
+	balance, err := common.GameIntegration[gvu.GameVendor.GameIntegrationId].GetGameBalance(context.TODO(), user, gvu.ExternalCurrency, gvu.GameVendor.GameCode, extra)
 	if gvu.Balance != balance {
 		err = model.DB.Model(ploutos.GameVendorUser{}).Where(`id`, gvu.ID).Update(`balance`, balance).Error
 		if err != nil {
@@ -139,7 +143,7 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 				defer wg.Done()
 				tx := model.DB.Begin()
 				extra := model.Extra{Locale: locale, Ip: ip}
-				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(tx, user, g.ExternalCurrency, g.GameVendor.GameCode, g.GameVendorId, extra)
+				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(context.TODO(), tx, user, g.ExternalCurrency, g.GameVendor.GameCode, g.GameVendorId, extra)
 				if err != nil {
 					util.Log().Error("`GAME INTEGRATION RECALL ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error())
 					return

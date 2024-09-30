@@ -25,7 +25,9 @@ func (c *EndWager) NewCallback(userId int64) {
 func (c *EndWager) GetAmount() int64 {
 	return c.Transaction.Amount
 }
-
+func (c *EndWager) GetBetAmountOnly() int64 {
+	return 0
+}
 func (c *EndWager) GetExternalUserId() string {
 	return c.Request.BrandUid
 }

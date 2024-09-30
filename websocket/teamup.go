@@ -7,6 +7,7 @@ import (
 )
 
 type TeamupGameNotificationMessage struct {
+	Room         string `json:"room"`
 	UserId       int64  `json:"user_id"`
 	Amount       int64  `json:"amount"`
 	Icon         string `json:"icon"`
@@ -15,6 +16,7 @@ type TeamupGameNotificationMessage struct {
 	EndTime      int64  `json:"end_time"`
 	TeamupId     int64  `json:"teamup_id"`
 	TeamupType   int64  `json:"teamup_type"`
+	OrderId      string `json:"order_id"`
 }
 
 func (msg TeamupGameNotificationMessage) Send(conn *Connection) (err error) {

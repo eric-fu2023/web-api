@@ -1,9 +1,10 @@
 package referral_alliance
 
 import (
-	"github.com/gin-gonic/gin"
 	"web-api/api"
 	"web-api/service/referral_alliance"
+
+	"github.com/gin-gonic/gin"
 )
 
 func GetSummary(c *gin.Context) {
@@ -46,7 +47,7 @@ func GetReferralSummary(c *gin.Context) {
 }
 
 func GetReferralRewardRecords(c *gin.Context) {
-	var service referral_alliance.ReferralRewardRecordsService
+	var service referral_alliance.ReferralDepositRewardRecordsService
 	if err := c.ShouldBind(&service); err == nil {
 		res, e := service.List(c)
 		c.JSON(200, res)

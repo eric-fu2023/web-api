@@ -38,6 +38,10 @@ type TeamupService struct {
 	common.Page
 }
 
+type TeamupCheckSpinService struct {
+	SpinId int64 `json:"spin_id"`
+}
+
 type GetTeamupService struct {
 	OrderId    string `form:"order_id" json:"order_id"`
 	TeamupId   int64  `form:"teamup_id" json:"teamup_id"`
@@ -71,10 +75,26 @@ type TeamupGamePopUpNotification struct {
 	ProviderName string `json:"provider_name"`
 	EndTime      int64  `json:"end_time"`
 	TeamupId     int64  `json:"teamup_id"`
+	OrderId      string `json:"order_id"`
+	TeamupType   int64  `json:"teamup_type"`
+}
+
+type TeamupEntrySpinResp struct {
+	HasSpin bool            `json:"has_spin"`
+	Spin    serializer.Spin `json:"spin"`
+}
+
+type TeamupEntrySpinResultResp struct {
+	IsSuccess       bool  `json:"is_success"`
+	ID              int64 `json:"id"`
+	RemainingCounts int   `json:"remaining_counts"`
+	TeamupId        int64 `json:"teamup_id"`
+	TeamupType      int64 `json:"teamup_type"`
 }
 
 func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	// i18n := c.MustGet("i18n").(i18n.I18n)
+	brand := c.MustGet(`_brand`).(int)
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
@@ -121,13 +141,15 @@ func (s TeamupService) List(c *gin.Context) (r serializer.Response, err error) {
 	// 	return false
 	// })
 
-	r.Data = parseBetReport(teamupRes)
+	r.Data = parseBetReport(brand, teamupRes)
 
 	return
 }
 
 func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Response, err error) {
 	// Generate a random number between 1 and 8
+	brand := c.MustGet(`_brand`).(int)
+
 	nicknameSlice := make([]string, rand.Intn(8)+1)
 	for i := 0; i < len(nicknameSlice); i++ {
 		nicknameSlice[i] = GetRandNickname()
@@ -146,7 +168,7 @@ func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Respo
 	}
 
 	if err != nil && errors.Is(err, persist.ErrCacheMiss) || len(successTeamups) != cacheRealUserCount {
-		otherTeamups = serializer.GenerateOtherTeamups(nicknameSlice, successTeamups)
+		otherTeamups = serializer.GenerateOtherTeamups(nicknameSlice, successTeamups, brand)
 		err = cache.RedisStore.Set("otherteamuplist", otherTeamups, 30*time.Minute)
 	}
 	r.Data = otherTeamups
@@ -156,6 +178,7 @@ func (s DummyTeamupsService) OtherTeamupList(c *gin.Context) (r serializer.Respo
 
 func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error) {
 	u, _ := c.Get("user")
+	brand := c.MustGet(`_brand`).(int)
 	var user model.User
 	if u != nil {
 		user = u.(model.User)
@@ -167,7 +190,7 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 	}
 	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
-	outgoingRes := parseBetReport(teamupRes)
+	outgoingRes := parseBetReport(brand, teamupRes)
 	if len(outgoingRes) > 0 {
 		if outgoingRes[0].TeamupEndTime != 0 && loc != nil {
 			t := time.Unix(outgoingRes[0].TeamupEndTime, 0).UTC()
@@ -194,9 +217,17 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
+	brand := c.MustGet(`_brand`).(int)
 
-	if s.GameType == "0" {
+	if s.GameType == "0" || s.GameType == "" {
 		s.GameType = "4"
+	}
+	incomingGameType, _ := strconv.Atoi(s.GameType)
+	_, teamupType := model.GetGameTypeSlice(brand, incomingGameType)
+
+	if teamupType == 0 {
+		r = serializer.Err(c, "", serializer.CustomTeamUpError, i18n.T("teamup_error"), err)
+		return
 	}
 
 	user.Avatar = serializer.Url(user.Avatar)
@@ -469,6 +500,8 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
 	teamup, isTeamupSuccess, isSuccess, err := model.CreateSlashBetRecord(c, s.TeamupId, user.User, i18n)
 
+	alreadyPushTeamupNotification := false
+
 	if isTeamupSuccess {
 
 		// SUCCESS -> UPDATE USER SUM
@@ -527,12 +560,15 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 			return
 		}
 
+		alreadyPushTeamupNotification = true
 		SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 	}
 
 	if isSuccess {
 		teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
-		SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+		if !alreadyPushTeamupNotification {
+			SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+		}
 	}
 
 	if err != nil {
@@ -564,7 +600,7 @@ func buildTeamupShareParamsService(teamup serializer.OutgoingTeamupHash) (res Cr
 	return
 }
 
-func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCustomRes) {
+func parseBetReport(brandId int, teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCustomRes) {
 
 	copier.Copy(&res, teamupRes)
 
@@ -575,7 +611,7 @@ func parseBetReport(teamupRes model.TeamupCustomRes) (res model.OutgoingTeamupCu
 		// 游戏解析
 		// 如果是游戏
 		// TAKE NOTE PANDA
-		_, teamupType := model.GetGameTypeSlice(t.BetReportGameType)
+		_, teamupType := model.GetGameTypeSlice(brandId, t.BetReportGameType)
 		res[i].TeamupType = int64(teamupType)
 		res[i].TotalTeamupDeposit = res[i].TotalTeamupDeposit / 100
 		res[i].TotalTeamupTarget = res[i].TotalTeamupTarget / 100
@@ -789,17 +825,6 @@ func getImsbMatchDetails(betMatchId string) (leagueIcon, leagueName, homeIcon, a
 
 func (s TestDepositService) TestDeposit(c *gin.Context) (r serializer.Response, err error) {
 
-	slashMultiplierString, _ := model.GetAppConfigWithCache("teamup", "teamup_slash_multiplier")
-	slashMultiplier, _ := strconv.Atoi(slashMultiplierString)
-
-	// Convert cash amount into slash progress by dividing multiplier
-	contributedSlashProgress := s.DepositAmount / int64(slashMultiplier)
-
-	err = model.GetTeamupProgressToUpdate(s.UserId, s.DepositAmount, contributedSlashProgress)
-	if err != nil {
-		log.Print(err.Error())
-	}
-
 	return
 }
 
@@ -830,14 +855,17 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 	notificationTitle := titles[n]
 	notificationMsg := contents[n]
 	if strings.Contains(notificationMsg, "%s") {
-		pString := fmt.Sprintf("%.2f", (float64(percentage)/float64(10000))*(float64(totalTarget)/float64(100)))
-		notificationMsg = fmt.Sprintf(notificationMsg, pString)
+		// pString := fmt.Sprintf("%.2f", (float64(percentage)/float64(10000))*(float64(totalTarget)/float64(100)))
+		// notificationMsg = fmt.Sprintf(notificationMsg, pString)
 
-		if n != 1 {
-			pFloat64 := (float64(percentage) / float64(100))
-			notificationMsg = strings.ReplaceAll(notificationMsg, pString, "%s")
-			notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64)+"%")
-		}
+		// if n != 1 {
+		// 	pFloat64 := (float64(percentage) / float64(100))
+		// 	notificationMsg = strings.ReplaceAll(notificationMsg, pString, "%s")
+		// 	notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64)+"%")
+		// }
+
+		pFloat64 := (float64(percentage) / float64(100))
+		notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64)+"%")
 	}
 
 	var resp serializer.Response
@@ -850,55 +878,141 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 
 }
 
-// func (s TeamupService) CheckAndSpin(c *gin.Context) (r serializer.Response, err error) {
-// 	// i18n := c.MustGet("i18n").(i18n.I18n)
-// 	u, _ := c.Get("user")
-// 	user := u.(model.User)
+func (s TeamupCheckSpinService) CheckSpinPopup(c *gin.Context) (r serializer.Response, err error) {
+	// i18n := c.MustGet("i18n").(i18n.I18n)
+	brand := c.MustGet(`_brand`).(int)
+	u, _ := c.Get("user")
+	user := u.(model.User)
 
-// 	var start, end int64
-// 	loc := c.MustGet("_tz").(*time.Location)
-// 	if s.Start != "" {
-// 		if v, e := time.ParseInLocation(time.DateOnly, s.Start, loc); e == nil {
-// 			start = v.UTC().Add(-10 * time.Minute).Unix()
-// 		}
-// 	}
-// 	if s.End != "" {
-// 		if v, e := time.ParseInLocation(time.DateOnly, s.End, loc); e == nil {
-// 			end = v.UTC().Add(24*time.Hour - 1*time.Second).Add(-10 * time.Minute).Unix()
-// 		}
-// 	}
+	shouldPop := model.ShouldPopRoulette(brand, user.ID)
 
-// 	teamupStatus := make([]int, 3)
+	spinRes := TeamupEntrySpinResp{
+		HasSpin: shouldPop,
+	}
 
-// 	switch s.Status {
+	if shouldPop {
+		teamUpSpinPromotionIdString, _ := model.GetAppConfigWithCache("teamup", "teamup_spin_promotion_id")
 
-// 	// 进行中
-// 	case 1:
-// 		teamupStatus = []int{0}
+		spin, getSpinErr := model.GetSpinByPromotionId(teamUpSpinPromotionIdString)
+		if getSpinErr != nil {
+			err = getSpinErr
+			return
+		}
 
-// 	// 结束（成功，失败）
-// 	case 2:
-// 		teamupStatus = []int{1, 2}
+		spinItems, getSpinErr := model.GetSpinItemsBySpinId(spin.ID)
+		if getSpinErr != nil {
+			err = getSpinErr
+			return
+		}
 
-// 	// 全部
-// 	case 0:
-// 		teamupStatus = []int{0, 1, 2}
-// 	}
+		spinRes.Spin = serializer.BuildSpin(spin, spinItems, 1, true)
+	}
 
-// 	teamupRes, err := model.GetAllTeamUps(user.ID, teamupStatus, s.Page.Page, s.Limit, start, end)
+	r.Data = spinRes
 
-// 	// sort.SliceStable(teamupRes, func(i, j int) bool {
-// 	// 	// Move status 0, 1, and 2 to the front
-// 	// 	if teamupRes[i].Status == 0 || teamupRes[i].Status == 1 || teamupRes[i].Status == 2 {
-// 	// 		if teamupRes[j].Status == 0 || teamupRes[j].Status == 1 || teamupRes[j].Status == 2 {
-// 	// 			return teamupRes[i].Status < teamupRes[j].Status
-// 	// 		}
-// 	// 		return true
-// 	// 	}
-// 	// 	return false
-// 	// })
+	return
+}
 
-// 	r.Data = parseBetReport(teamupRes)
+func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.Response, err error) {
+	i18n := c.MustGet("i18n").(i18n.I18n)
+	u, _ := c.Get("user")
+	user := u.(model.User)
+	brand := c.MustGet(`_brand`).(int)
 
-// 	return
-// }
+	shouldPop := model.ShouldPopRoulette(brand, user.ID)
+
+	if !shouldPop {
+		r.Data = TeamupEntrySpinResultResp{
+			IsSuccess: false,
+		}
+
+		return
+	}
+
+	teamUpSpinPromotionIdString, _ := model.GetAppConfigWithCache("teamup", "teamup_spin_promotion_id")
+	spin, err := model.GetSpinByPromotionId(teamUpSpinPromotionIdString)
+	if err != nil {
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+
+	spinItems, err := model.GetSpinItemsBySpinId(spin.ID)
+
+	if err != nil {
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return
+	}
+
+	//------------------------------------- choose the spin item based on the probability
+	var resultSpinItem ploutos.SpinItem
+	var totalProbability float64
+	for _, item := range spinItems {
+		totalProbability += item.Probability
+	}
+	// Normalize the probabilities so they sum to 1.
+	normalizedProbabilities := make([]float64, len(spinItems))
+	for i, item := range spinItems {
+		normalizedProbabilities[i] = item.Probability / totalProbability
+	}
+	// Generate a random number between 0 and 1.
+	randomValue := rand.Float64()
+	// Use the random number to select an item.
+	var cumulativeProbability float64
+	for i, probability := range normalizedProbabilities {
+		cumulativeProbability += probability
+		if randomValue < cumulativeProbability {
+			resultSpinItem = spinItems[i]
+			break
+		}
+	}
+	// ------------------------------------- end of choose the spin item based on the probability
+
+	data := serializer.BuildSpinResult(resultSpinItem, 0)
+
+	spinRes := ploutos.SpinResult{
+		UserID:     user.ID,
+		SpinResult: data.ID,
+		Redeemed:   true,
+		SpinID:     spin.ID,
+	}
+	err = model.DB.Create(&spinRes).Error
+	if err != nil {
+		fmt.Println("spin result insert err", err)
+		return
+	}
+
+	var teamup ploutos.Teamup
+	currTime := time.Now().UTC()
+
+	teamup.UserId = user.ID
+	teamup.OrderId = fmt.Sprint(spinRes.ID)
+	teamup.TotalTeamUpTarget += int64(resultSpinItem.Amount)
+	teamup.TeamupEndTime = currTime.Add(1 * 24 * time.Hour).Unix()
+	teamup.TeamupCompletedTime = currTime.Add(1 * 24 * time.Hour).Unix()
+	teamup.Provider = "Spin And Win Rewards"
+	teamup.BetReportGameType = ploutos.TeamupSpinWheelId
+	teamup.Status = int(ploutos.TeamupStatusPending)
+
+	if resultSpinItem.Amount == 0 {
+		teamup.Status = int(ploutos.TeamupStatusInvalidAmount)
+	}
+
+	t, err := model.SaveTeamup(teamup)
+
+	if err != nil {
+		fmt.Println("create teamup insert err", err)
+		return
+	}
+
+	_, teamupType := model.GetGameTypeSlice(brand, t.BetReportGameType)
+
+	r.Data = TeamupEntrySpinResultResp{
+		IsSuccess:       true,
+		ID:              data.ID,
+		RemainingCounts: data.RemainingCounts,
+		TeamupId:        t.ID,
+		TeamupType:      int64(teamupType),
+	}
+
+	return
+}

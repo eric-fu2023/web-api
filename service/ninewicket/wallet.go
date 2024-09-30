@@ -1,20 +1,24 @@
 package ninewicket
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"time"
+
+	"web-api/model"
+	"web-api/util"
+
 	"blgit.rfdev.tech/taya/game-service/ninewickets"
 	"blgit.rfdev.tech/taya/game-service/ninewickets/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"errors"
-	"fmt"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"log"
-	"time"
-	"web-api/model"
-	"web-api/util"
 )
 
-func (n *NineWicket) CreateWallet(user model.User, currency string) error {
+func (n *NineWicket) CreateWallet(ctx context.Context, user model.User, currency string) error {
 	return model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
 		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id`).
@@ -38,7 +42,7 @@ func (n *NineWicket) CreateWallet(user model.User, currency string) error {
 	})
 }
 
-func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
+func (n *NineWicket) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum ploutos.UserSum, currency string, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
 	switch {
 	case sum.Balance == 0:
 		return 0, nil
@@ -79,7 +83,7 @@ func (n *NineWicket) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSu
 	return sum.Balance, nil
 }
 
-func (n *NineWicket) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
+func (n *NineWicket) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, currency string, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
 	client, err := util.NineWicketFactory()
 	if err != nil {
 		return err
@@ -151,7 +155,7 @@ func handleFailedTransaction(tx *gorm.DB, user model.User, userBalance float64, 
 	}
 }
 
-func (n *NineWicket) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, _err error) {
+func (n *NineWicket) GetGameBalance(ctx context.Context, user model.User, currency string, gameCode string, extra model.Extra) (balance int64, _err error) {
 	client, err := util.NineWicketFactory()
 	if err != nil {
 		return 0, err

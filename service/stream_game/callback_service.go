@@ -1,12 +1,10 @@
 package stream_game
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"os"
 	"time"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -14,6 +12,10 @@ import (
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 var GameMultiple = map[int64]map[int64]float64{
@@ -115,7 +117,9 @@ func (c *PlaceOrder) GetWagerMultiplier() (value int64, exists bool) {
 func (c *PlaceOrder) GetBetAmount() (amount int64, exists bool) {
 	return 0, false
 }
-
+func (c *PlaceOrder) GetBetAmountOnly() (amount int64) {
+	return 0
+}
 type SettleOrder struct {
 	Callback
 	Amount     *float64 `json:"amount" form:"amount" binding:"required"`
@@ -139,6 +143,10 @@ func (c *SettleOrder) SaveGameTransaction(tx *gorm.DB) error {
 
 func (c *SettleOrder) GetAmount() int64 {
 	return util.MoneyInt(*c.Amount)
+}
+
+func (c *SettleOrder) GetBetAmountOnly() int64 {
+	return util.MoneyInt(float64(c.BetAmount))
 }
 
 func (c *SettleOrder) GetWagerMultiplier() (value int64, exists bool) {
@@ -212,7 +220,11 @@ func Settle(c *gin.Context, req SettleOrder) (res serializer.Response, err error
 	}
 	req.DrawId = br.GameId
 	req.BetAmount = br.Bet
-	err = common.ProcessTransaction(&req)
+	if os.Getenv("PRODUCT") == "batace"{
+		err = common.ProcessTransactionBatace(&req)
+	} else {
+		err = common.ProcessTransaction(&req)
+	}
 	if err != nil {
 		res = serializer.Err(c, req, serializer.CodeGeneralError, "stream game settle error", err)
 		return

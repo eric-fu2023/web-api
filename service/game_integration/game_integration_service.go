@@ -66,13 +66,20 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 	extra := model.Extra{Locale: locale, Ip: c.ClientIP()}
 	url, err := game.GetGameUrl(rfCtx, user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
 
-	msgAfterGetGame := fmt.Sprintf("game.GetGameUrl url:%s err: %v user %v, gvu.ExternalCurrency %v, subGame.GameVendor.GameCode %v, subGame.GameCode %v, service.Platform %v, extra %+v", url, err, user, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
+	msgAfterGetGame := fmt.Sprintf("game.GetGameUrl url:%s err: %v username %v, gvu.ExternalCurrency %v, subGame.GameVendor.GameCode %v, subGame.GameCode %v, service.Platform %v, extra %+v", url, err, user.IdAsString(), gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameCode, service.Platform, extra)
 	rfCtx = rfcontext.AppendDescription(rfCtx, msgAfterGetGame)
 	log.Println(rfcontext.Fmt(rfCtx))
 	if err != nil {
 		return
 	}
-	go func(user model.User, lang string, subGame ploutos.SubGameC, game common.GameIntegrationInterface, gvu ploutos.GameVendorUser) {
+
+	go func(rfCtx context.Context, user model.User, lang string, subGame ploutos.SubGameC, game common.GameIntegrationInterface, gvu ploutos.GameVendorUser) {
+		rfCtx = rfcontext.AppendCallDesc(rfCtx, "週轉")
+		rfCtx = rfcontext.AppendParams(rfCtx, "週轉", map[string]interface{}{
+			"target_sub_game":           subGame,
+			"target_sub_vendor_game_id": subGame.GameVendor.ID,
+			"gvu":                       gvu,
+		})
 		model.GlobalWaitGroup.Add(1)
 		defer model.GlobalWaitGroup.Done()
 
@@ -81,27 +88,35 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 			err = _tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload(`GameVendor`).Where(`user_id`, user.ID).Where(`is_last_played`, true).
 				Order(`updated_at DESC`).Limit(1).Find(&lastPlayed).Error
 			if err != nil {
+				_ctx := rfcontext.AppendError(rfCtx, err, "select last played")
+				log.Println(rfcontext.Fmt(_ctx))
 				return
 			}
 
 			if lastPlayed.ID != 0 && lastPlayed.GameVendorId != int64(subGame.VendorId) { // transfer out from the game is needed
 				gameFrom := common.GameIntegration[lastPlayed.GameVendor.GameIntegrationId]
-				err = gameFrom.TransferFrom(_tx, user, lastPlayed.ExternalCurrency, lastPlayed.GameVendor.GameCode, lastPlayed.GameVendorId, extra)
+				err = gameFrom.TransferFrom(rfCtx, _tx, user, lastPlayed.ExternalCurrency, lastPlayed.GameVendor.GameCode, lastPlayed.GameVendorId, extra)
 				if err != nil {
+					_ctx := rfcontext.AppendError(rfCtx, err, "withdraw from last played game vendor wallet")
+					log.Println(rfcontext.Fmt(_ctx))
 					return
 				}
 				err = _tx.Model(ploutos.GameVendorUser{}).Where(`id`, lastPlayed.ID).Updates(map[string]interface{}{"balance": 0, "is_last_played": false}).Error
 				if err != nil {
+					_ctx := rfcontext.AppendError(rfCtx, err, "remove last played flag from game vendor")
+					log.Println(rfcontext.Fmt(_ctx))
 					return
 				}
 			}
 			return
 		})
 		if err != nil {
-			util.Log().Error(`GAME INTEGRATION TRANSFER OUT ERROR: %v`, err)
+			_ctx := rfcontext.AppendError(rfCtx, err, "GAME INTEGRATION TRANSFER OUT ERROR")
+			util.Log().Error(rfcontext.Fmt(_ctx))
 			return
 		} else {
-			util.Log().Info(`GAME INTEGRATION TRANSFER OUT OK`)
+			rfCtx = rfcontext.AppendDescription(rfCtx, "GAME INTEGRATION TRANSFER OUT OK")
+			util.Log().Info(rfcontext.Fmt(rfCtx))
 		}
 
 		err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
@@ -113,7 +128,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 
 			var transferToBalance int64
 			if sum.Balance > 0 { // transfer in to the game is needed
-				transferToBalance, err = game.TransferTo(tx, user, sum, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameVendor.ID, extra)
+				transferToBalance, err = game.TransferTo(rfCtx, tx, user, sum, gvu.ExternalCurrency, subGame.GameVendor.GameCode, subGame.GameVendor.ID, extra)
 				if err != nil {
 					return
 				}
@@ -127,7 +142,11 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 			return err
 		})
 		if err != nil {
-			util.Log().Error(`GAME INTEGRATION TRANSFER IN ERROR user_id: %d, game_code: %s, %v`, user.ID, subGame.GameVendor.GameCode, err)
+			_ctx := rfcontext.AppendError(rfCtx, err, "GAME INTEGRATION TRANSFER IN")
+			util.Log().Error(rfcontext.Fmt(_ctx))
+		} else {
+			rfCtx = rfcontext.AppendDescription(rfCtx, "GAME INTEGRATION TRANSFER OUT OK")
+			util.Log().Info(rfcontext.Fmt(rfCtx))
 		}
 		defer func() {
 			go func() {
@@ -135,7 +154,7 @@ func (service *GetUrlService) Get(c *gin.Context) (r serializer.Response, err er
 				common.SendUserSumSocketMsg(user.ID, userSum.UserSum, "enter_game", 0)
 			}()
 		}()
-	}(user, locale, subGame, game, gvu)
+	}(rfCtx, user, locale, subGame, game, gvu)
 
 	r = serializer.Response{
 		Data: url,

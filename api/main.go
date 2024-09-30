@@ -24,8 +24,9 @@ func Ping(c *gin.Context) {
 	// common.SendTeamupGamePopupNotificationSocketMsg(3621, int64(188), int64(1727320740), int64(60000)/100, "IMOne Slot", "https://static.tayalive.com/batace-img/icon/IMOne-min.png") // DEBUG PURPOSE
 	// common.SendTeamupGamePopupNotificationSocketMsg(3671, int64(188), int64(1727320740), int64(60000)/100, "IMOne Slot", "https://static.tayalive.com/batace-img/icon/IMOne-min.png") // DEBUG PURPOSE
 
-	common.TESTSENDNOTIFICATION(3671)
-	common.TESTSENDCHAT(3671)
+	common.TESTSENDNOTIFICATION(455)
+	common.TESTSENDPUSHNOTIFICATION(455)
+	common.TESTSENDCHAT(455)
 	country, _ := c.Get("_country")
 	city, _ := c.Get("_city")
 	c.JSON(200, serializer.Response{

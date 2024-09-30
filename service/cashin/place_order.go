@@ -11,7 +11,9 @@ import (
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
-	"blgit.rfdev.tech/taya/payment-service/foray"
+	foray "blgit.rfdev.tech/taya/payment-service/foray"
+	forayDto "blgit.rfdev.tech/taya/payment-service/foray/dto"
+	forayService "blgit.rfdev.tech/taya/payment-service/foray/service"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -169,7 +171,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		cashOrder.Status = ploutos.CashOrderStatusPending
 	/** foray (法拉利) **/
 	case "foray":
-		var data foray.PaymentOrderRespData
+		var data forayDto.DepositOrderResponseData
 		defer func() {
 			result := "success"
 			if errors.Is(err, foray.ErrorGateway) {
@@ -183,7 +185,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 
 		switch config.Type {
 		default:
-			data, err = foray.ForayClient{}.PlaceDefaultOrderV1(c, cashinAmount, 1, user.ID, cashOrder.ID, config.Type, user.Username)
+			data, err = forayService.ForayDepositService{}.PlaceDefaultOrderV1(c, cashinAmount, 1, user.ID, cashOrder.ID, config.Type, user.Username)
 			if err != nil {
 				_ = MarkOrderFailed(c, cashOrder.ID, util.JSON(data), data.OrderNumber)
 				r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)

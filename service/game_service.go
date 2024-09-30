@@ -97,14 +97,23 @@ func (service *GameByStreamerService) Get(c *gin.Context) (r serializer.Response
 	Table("stream_game_users").
 	Where("user_id = ?", service.StreamerId).
 	Where("game_type = ?", consts.ExternalGame).
+	Where("is_active = ?", true).
 	Where("deleted_at is null").
 	Order("created_at desc").
 	Limit(1).
 	Find(&game_id).Error
-	if err!=nil{
+	if err != nil{
 		fmt.Println("get game_id in stream_gae_user failed, ", err)
 		return
 	}
+	// no available game
+	if game_id == 0{
+		r = serializer.Response{
+			Data: nil,
+		}
+		return
+	}
+
 	var game ploutos.SubGameBrand
 	if err = model.DB.Model(ploutos.SubGameBrand{}).Preload(`GameVendorBrand`).
 		Where("id", game_id).Find(&game).Error; err != nil {
@@ -112,6 +121,10 @@ func (service *GameByStreamerService) Get(c *gin.Context) (r serializer.Response
 		return
 	}
 
+
+	game.WebIcon = serializer.Url(game.WebIcon)
+	game.AppIcon = serializer.Url(game.AppIcon)
+	fmt.Println(game.AppIcon)
 	r = serializer.Response{
 		Data: game,
 	}

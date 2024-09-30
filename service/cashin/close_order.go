@@ -54,7 +54,12 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		if err != nil {
 			return
 		}
-
+		// only if the cash orders has been settled, then we start adding the rewards
+		// err = cash_orders.CreateReferralRewardRecord(txDB, newCashOrderState.UserId, orderNumber)
+		// if err != nil {
+		// 	util.GetLoggerEntry(c).Error("CreateReferralRewardRecord error", err)
+		// 	return
+		// }
 		return
 	})
 

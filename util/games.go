@@ -1,10 +1,13 @@
 package util
 
 import (
+	"context"
+	"log"
 	"os"
 
 	"web-api/conf/consts"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	gameservicecommon "blgit.rfdev.tech/taya/game-service/common"
 	"blgit.rfdev.tech/taya/game-service/crownvalexy"
 	"blgit.rfdev.tech/taya/game-service/dc"
@@ -44,7 +47,7 @@ var (
 	ImOneFactory      func() imone.GeneralApi
 	MumbaiFactory     func() (mumbai.UserService, error)
 
-	CrownValexyFactory func() (*crownvalexy.Service, error)
+	CrownValexyFactory func(ctx context.Context) (*crownvalexy.Service, error)
 	MancalaFactory     func() (*mancala.Service, error)
 )
 
@@ -147,14 +150,22 @@ func InitMumbaiFactory() {
 	}
 }
 
-// TODO
 func InitCrownValexyFactory() {
-	CrownValexyFactory = func() (*crownvalexy.Service, error) {
-		return crownvalexy.New("", "", "")
+	CrownValexyFactory = func(ctx context.Context) (*crownvalexy.Service, error) {
+		GAME_CROWN_VALEXY_ACCESS_KEY := os.Getenv("GAME_CROWN_VALEXY_ACCESS_KEY")
+		GAME_CROWN_VALEXY_SECRET_KEY := os.Getenv("GAME_CROWN_VALEXY_SECRET_KEY")
+		GAME_CROWN_VALEXY_URL := os.Getenv("GAME_CROWN_VALEXY_URL")
+		ctx = rfcontext.AppendParams(ctx, "InitCrownValexyFactory", map[string]interface{}{
+			"GAME_CROWN_VALEXY_ACCESS_KEY": GAME_CROWN_VALEXY_ACCESS_KEY,
+			"GAME_CROWN_VALEXY_SECRET_KEY": GAME_CROWN_VALEXY_SECRET_KEY,
+			"GAME_CROWN_VALEXY_URL":        GAME_CROWN_VALEXY_URL,
+		})
+
+		log.Printf(rfcontext.Fmt(ctx))
+		return crownvalexy.New(GAME_CROWN_VALEXY_ACCESS_KEY, GAME_CROWN_VALEXY_SECRET_KEY, GAME_CROWN_VALEXY_URL)
 	}
 }
 
-// TODO
 func InitMancalaFactory() {
 	MancalaFactory = func() (*mancala.Service, error) {
 		var GAME_MANCALA_CLIENT_GUID = os.Getenv("GAME_MANCALA_CLIENT_GUID")

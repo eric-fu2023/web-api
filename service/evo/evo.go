@@ -22,7 +22,7 @@ import (
 type EVO struct {
 }
 
-func (e EVO) CreateWallet(user model.User, currency string) (err error) {
+func (e EVO) CreateWallet(ctx context.Context, user model.User, currency string) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
 		err = tx.Model(ploutos.GameVendor{}).Joins(`INNER JOIN game_vendor_brand gvb ON gvb.game_vendor_id = game_vendor.id`).
@@ -72,11 +72,11 @@ func (e EVO) GetGameUrl(ctx context.Context, user model.User, currency, gameCode
 	return url, err
 }
 
-func (e EVO) GetGameBalance(user model.User, currency, gameCode string, extra model.Extra) (balance int64, err error) {
+func (e EVO) GetGameBalance(ctx context.Context, user model.User, currency string, gameCode string, extra model.Extra) (balance int64, err error) {
 	return 0, nil
 }
 
-func (e EVO) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
+func (e EVO) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, currency string, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
 	client := util.EvoFactory.NewClient()
 
 	userBalance, err := client.GetGameBalance(user.IdAsString())
@@ -172,7 +172,7 @@ func updateUserBalance(tx *gorm.DB, user model.User, TBalance float64, transID s
 	return nil
 }
 
-func (e EVO) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, currency, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
+func (e EVO) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum ploutos.UserSum, currency string, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
 	switch {
 	case sum.Balance == 0:
 		return 0, nil

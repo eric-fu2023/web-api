@@ -100,10 +100,21 @@ type CallbackInterface interface {
 	SaveGameTransaction(*gorm.DB) error
 	ShouldProceed() bool
 	GetAmount() int64
+	GetBetAmountOnly() (int64)
 	GetWagerMultiplier() (int64, bool)
 	GetBetAmount() (int64, bool)
 	IsAdjustment() bool
 	ApplyInsuranceVoucher(int64, int64, bool) error
+}
+
+type TestTeamupGamePopUpNotification struct {
+	Amount       int64  `json:"amount"`
+	Icon         string `json:"icon"`
+	ProviderName string `json:"provider_name"`
+	EndTime      int64  `json:"end_time"`
+	TeamupId     int64  `json:"teamup_id"`
+	OrderId      string `json:"order_id"`
+	TeamupType   int64  `json:"teamup_type"`
 }
 
 func GetUserAndSum(tx *gorm.DB, gameVendor int64, externalUserId string) (gameVendorUser ploutos.GameVendorUser, balance int64, remainingWager int64, maxWithdrawable int64, err error) {
@@ -214,6 +225,114 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	return
 }
 
+// batace ProcessTransaction
+func GetUserAndSumBatace(tx *gorm.DB, gameVendor int64, externalUserId string) (gameVendorUser ploutos.GameVendorUser, balance int64, remainingWager int64, depositRemainingWager int64, maxWithdrawable int64, err error) {
+	gameVendorUser, err = GetGameVendorUser(gameVendor, externalUserId)
+	if err != nil {
+		return
+	}
+	balance, remainingWager, depositRemainingWager, maxWithdrawable, err = GetSumsBatace(tx, gameVendorUser)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func GetSumsBatace(tx *gorm.DB, gpu ploutos.GameVendorUser) (balance int64, remainingWager int64, depositRemainingWager int64, maxWithdrawable int64, err error) {
+	var userSum ploutos.UserSum
+	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, gpu.UserId).First(&userSum).Error
+	if err != nil {
+		return
+	}
+	balance = userSum.Balance
+	remainingWager = userSum.RemainingWager
+	depositRemainingWager = userSum.DepositRemainingWager
+	maxWithdrawable = userSum.MaxWithdrawable
+	return
+}
+
+func ProcessTransactionBatace(obj CallbackInterface) (err error) {
+	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelSerializable})
+	if tx.Error != nil {
+		err = tx.Error
+		return
+	}
+
+	gpu, balance, remainingWager, depositRemainingWager, maxWithdrawable, err := GetUserAndSumBatace(tx, obj.GetGameVendorId(), obj.GetExternalUserId())
+	if err != nil {
+		err = fmt.Errorf("%w: %w", ErrGameVendorUserInvalid, err)
+		tx.Rollback()
+		return
+	}
+	obj.NewCallback(gpu.UserId)
+	if !obj.ShouldProceed() {
+		tx.Rollback()
+		return
+	}
+	newBalance := balance + obj.GetAmount()
+	if newBalance < 0 {
+		err = ErrInsuffientBalance
+		tx.Rollback()
+		return
+	}
+
+	newRemainingWager := remainingWager
+	newDepositRemainingWager := depositRemainingWager
+	_, _, w, dw, wc, dwc, e := calWagerBatace(obj, remainingWager, depositRemainingWager)
+	if e == nil {
+		newRemainingWager = w
+		newDepositRemainingWager = dw
+	}
+
+	newWithdrawable := maxWithdrawable
+	if w, e := calMaxWithdrawable(obj, newBalance, newRemainingWager, maxWithdrawable); e == nil {
+		newWithdrawable = w
+	}
+
+	userSum := ploutos.UserSum{
+		Balance:               newBalance,
+		RemainingWager:        newRemainingWager,
+		DepositRemainingWager: newDepositRemainingWager,
+		MaxWithdrawable:       newWithdrawable,
+	}
+	rows := tx.Select(`balance`, `remaining_wager`, `deposit_remaining_wager`, `max_withdrawable`).Where(`user_id`, gpu.UserId).Updates(userSum).RowsAffected
+	if rows == 0 {
+		err = ErrInsuffientBalance
+		tx.Rollback()
+		return
+	}
+	err = obj.SaveGameTransaction(tx)
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+	transaction := ploutos.Transaction{
+		UserId:               gpu.UserId,
+		Amount:               obj.GetAmount(),
+		BalanceBefore:        balance,
+		BalanceAfter:         newBalance,
+		ForeignTransactionId: obj.GetGameTransactionId(),
+		Wager:                wc,
+		WagerBefore:          remainingWager,
+		WagerAfter:           userSum.RemainingWager,
+		DepositWager:         dwc,
+		DepositWagerBefore:   userSum.DepositRemainingWager,
+		DepositWagerAfter:    newDepositRemainingWager,
+		IsAdjustment:         obj.IsAdjustment(),
+		GameVendorId:         obj.GetGameVendorId(),
+	}
+	err = tx.Save(&transaction).Error
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+	tx.Commit()
+
+	//SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
+	SendUserSumSocketMsg(gpu.UserId, userSum, "bet", float64(obj.GetAmount())/100)
+	return
+}
+
 // ProcessImUpdateBalanceTransaction im update balance callbacks and allows negative user sum balance
 func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
 	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelRepeatableRead})
@@ -309,6 +428,27 @@ func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betE
 
 	if newWager < 0 {
 		newWager = 0
+	}
+	return
+}
+
+func calWagerBatace(obj CallbackInterface, originalWager int64, originalDepositWager int64) (betAmount int64, betExists bool, newWager int64, newDepositWager int64, wagerChange int64, depositWagerChange int64, err error) {
+	newWager = originalWager
+	newDepositWager = originalDepositWager
+	betAmount = obj.GetBetAmountOnly()
+	if !betExists {
+		return
+	}
+	wagerChange = - betAmount
+	newWager = newWager + wagerChange
+	if newWager < 0 {
+		newWager = 0
+	}
+
+	depositWagerChange = - betAmount
+	newDepositWager = newDepositWager + depositWagerChange
+	if newDepositWager < 0 {
+		newDepositWager = 0
 	}
 	return
 }
@@ -516,7 +656,7 @@ func SendGiftSocketMessage(userId int64, giftId int64, giftQuantity int, giftNam
 	}()
 }
 
-func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, endTime, amount, teamupType int64, providerName, icon string) {
+func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, endTime, amount, teamupType int64, providerName, icon, orderId string) {
 	go func() {
 		conn := websocket.Connection{}
 		conn.Connect(os.Getenv("WS_NOTIFICATION_URL"), os.Getenv("WS_NOTIFICATION_TOKEN"), []func(*websocket.Connection, context.Context, context.CancelFunc){
@@ -526,6 +666,7 @@ func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, endTime, a
 					return
 				default:
 					msg := websocket.TeamupGameNotificationMessage{
+						Room:         serializer.UserSignature(userId),
 						UserId:       userId,
 						Event:        "teamup_game",
 						TeamupId:     teamupId,
@@ -534,6 +675,7 @@ func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, endTime, a
 						ProviderName: providerName,
 						Icon:         icon,
 						TeamupType:   teamupType,
+						OrderId:      orderId,
 					}
 					msg.Send(conn)
 				}
@@ -575,17 +717,33 @@ func TESTSENDNOTIFICATION(userId int64) {
 					return
 				default:
 					msg := websocket.TeamupGameNotificationMessage{
+						Room:         serializer.UserSignature(userId),
 						UserId:       userId,
 						Event:        "teamup_game",
 						TeamupId:     1,
-						EndTime:      12,
-						Amount:       123,
+						EndTime:      1727530027,
+						Amount:       68,
 						ProviderName: "ADAS",
-						Icon:         "SADASAAA",
+						Icon:         "",
+						OrderId:      "50001829001",
 					}
 					msg.Send(conn)
 				}
 			},
 		})
 	}()
+}
+
+func TESTSENDPUSHNOTIFICATION(userId int64) {
+	var resp serializer.Response
+	resp.Data = TestTeamupGamePopUpNotification{
+		TeamupId:     1,
+		EndTime:      1727530027,
+		Amount:       68,
+		ProviderName: "ADAS",
+		Icon:         "",
+		OrderId:      "50001829001",
+		TeamupType:   3,
+	}
+	SendNotification(userId, "popup_teamup_game", "HEHEHEH", "HAHAHHAHAHHA", resp)
 }

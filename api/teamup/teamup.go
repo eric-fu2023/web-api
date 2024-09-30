@@ -68,6 +68,26 @@ func SlashBet(c *gin.Context) {
 	}
 }
 
+func TeamupSpin(c *gin.Context) {
+	var service service.TeamupCheckSpinService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.CheckSpinPopup(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
+
+func TeamupSpinResult(c *gin.Context) {
+	var service service.TeamupCheckSpinService
+	if err := c.ShouldBind(&service); err == nil {
+		res, _ := service.TeamupSpinResult(c)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, api.ErrorResponse(c, service, err))
+	}
+}
+
 func TestDeposit(c *gin.Context) {
 	var service service.TestDepositService
 	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {

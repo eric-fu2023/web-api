@@ -1,6 +1,8 @@
 package imone
 
 import (
+	"context"
+
 	"web-api/model"
 	"web-api/util"
 
@@ -11,7 +13,7 @@ import (
 )
 
 // TransferFrom
-func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode string, gameVendorId int64, extra model.Extra) error {
+func (c *ImOne) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, currency string, gameCode string, gameVendorId int64, extra model.Extra) error {
 	client := util.ImOneFactory()
 
 	productWallet, exist := tayaGameCodeToImOneWalletCodeMapping[gameCode]
@@ -65,7 +67,7 @@ func (c *ImOne) TransferFrom(tx *gorm.DB, user model.User, currency, gameCode st
 	return err
 }
 
-func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
+func (c *ImOne) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum ploutos.UserSum, _currency string, gameCode string, gameVendorId int64, extra model.Extra) (_transferredBalance int64, _err error) {
 	switch {
 	case sum.Balance == 0:
 		return 0, nil
@@ -96,7 +98,7 @@ func (c *ImOne) TransferTo(tx *gorm.DB, user model.User, sum ploutos.UserSum, _c
 			Amount:                -1 * sum.Balance,
 			BalanceBefore:         sum.Balance,
 			BalanceAfter:          0,
-			TransactionType:       ploutos.TransactionTypeToGameIntegration, /*ploutos.TransactionTypeToUGS*/
+			TransactionType:       ploutos.TransactionTypeToGameIntegration,
 			Wager:                 0,
 			WagerBefore:           sum.RemainingWager,
 			WagerAfter:            sum.RemainingWager,
