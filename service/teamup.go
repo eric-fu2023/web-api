@@ -896,6 +896,11 @@ func (s TeamupCheckSpinService) CheckSpinPopup(c *gin.Context) (r serializer.Res
 	if shouldPop {
 		teamUpSpinPromotionIdString, _ := model.GetAppConfigWithCache("teamup", "teamup_spin_promotion_id")
 
+		// if teamUpSpinPromotionIdString == "" {
+		// 	spinRes.HasSpin = false
+		// 	return
+		// }
+
 		spin, getSpinErr := model.GetSpinByPromotionId(teamUpSpinPromotionIdString)
 		if getSpinErr != nil {
 			err = getSpinErr
@@ -933,6 +938,14 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 	}
 
 	teamUpSpinPromotionIdString, _ := model.GetAppConfigWithCache("teamup", "teamup_spin_promotion_id")
+
+	// if teamUpSpinPromotionIdString == "" {
+	// 	if err != nil {
+	// 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+	// 		return
+	// 	}
+	// }
+
 	spin, err := model.GetSpinByPromotionId(teamUpSpinPromotionIdString)
 	if err != nil {
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
