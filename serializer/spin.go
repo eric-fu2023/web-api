@@ -58,7 +58,7 @@ func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_co
 		Description:     spin.Description,
 		Button:          spin.Button,
 		Counts:          spin.Counts,
-		RemainingCounts: spin.Counts - spin_result_counts,
+		RemainingCounts: max(spin.Counts - spin_result_counts, 0),
 		PromotionId:     spin.PromotionId,
 		SpinItems:       spin_items_resp,
 	}
