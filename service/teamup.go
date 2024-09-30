@@ -480,7 +480,10 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 }
 
 func (s GetTeamupService) ContributedUserList(c *gin.Context) (r serializer.Response, err error) {
-	entries, err := model.GetAllTeamUpEntries(s.TeamupId, s.Page, s.Limit)
+	brand := c.MustGet(`_brand`).(int)
+
+	s.Limit = 30
+	entries, err := model.GetAllTeamUpEntries(brand, s.TeamupId, s.Page, s.Limit)
 
 	for i := range entries {
 		entries[i].Avatar = serializer.Url(entries[i].Avatar)
@@ -893,6 +896,11 @@ func (s TeamupCheckSpinService) CheckSpinPopup(c *gin.Context) (r serializer.Res
 	if shouldPop {
 		teamUpSpinPromotionIdString, _ := model.GetAppConfigWithCache("teamup", "teamup_spin_promotion_id")
 
+		// if teamUpSpinPromotionIdString == "" {
+		// 	spinRes.HasSpin = false
+		// 	return
+		// }
+
 		spin, getSpinErr := model.GetSpinByPromotionId(teamUpSpinPromotionIdString)
 		if getSpinErr != nil {
 			err = getSpinErr
@@ -930,6 +938,14 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 	}
 
 	teamUpSpinPromotionIdString, _ := model.GetAppConfigWithCache("teamup", "teamup_spin_promotion_id")
+
+	// if teamUpSpinPromotionIdString == "" {
+	// 	if err != nil {
+	// 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+	// 		return
+	// 	}
+	// }
+
 	spin, err := model.GetSpinByPromotionId(teamUpSpinPromotionIdString)
 	if err != nil {
 		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)

@@ -90,6 +90,11 @@ func (c *CrownValexy) TransferFrom(ctx context.Context, tx *gorm.DB, user model.
 		return err
 	}
 	toWithdraw := cvUser.Balance
+
+	if toWithdraw == 0 {
+		return nil
+	}
+
 	withdrawTxId := userId + strconv.FormatInt(time.Now().UnixNano(), 10) + "withdraw"
 
 	_, wErr := client.WalletWithdraw(ctx, user.IdAsString(), toWithdraw, Remarks{

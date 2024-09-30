@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"time"
+	"web-api/conf/consts"
 
 	"web-api/util"
 	"web-api/util/i18n"
@@ -30,11 +31,12 @@ const (
 )
 
 type TeamupEntryCustomRes []struct {
-	ContributedAmount float64   `json:"contributed_amount"`
-	ContributedTime   time.Time `json:"contributed_time"`
-	Nickname          string    `json:"nickname"`
-	Avatar            string    `json:"avatar"`
-	Progress          int64     `json:"progress"`
+	ContributedAmount    float64   `json:"contributed_amount"`
+	ContributedTime      time.Time `json:"contributed_time"`
+	Nickname             string    `json:"nickname"`
+	Avatar               string    `json:"avatar"`
+	Progress             int64     `json:"progress"`
+	AdjustedFiatProgress float64   `json:"adjusted_fiat_progress"`
 }
 
 func FindTeamupEntryByTeamupId(teamupId int64) (res []ploutos.TeamupEntry, err error) {
@@ -49,7 +51,12 @@ func FindTeamupEntryByTeamupId(teamupId int64) (res []ploutos.TeamupEntry, err e
 	return
 }
 
-func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustomRes, err error) {
+func GetAllTeamUpEntries(brand int, teamupId int64, page, limit int) (res TeamupEntryCustomRes, err error) {
+
+	teamup, err := GetTeamUpByTeamUpId(teamupId)
+	if err != nil {
+		return
+	}
 
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		tx = tx.Table("teamup_entries").
@@ -65,6 +72,8 @@ func GetAllTeamUpEntries(teamupId int64, page, limit int) (res TeamupEntryCustom
 		}
 		return nil
 	})
+
+	res, _ = FormatAdjustedFiatProgress(brand, res, teamup)
 
 	return
 }
@@ -431,4 +440,28 @@ func ShouldPopRoulette(brandId int, userId int64) (shouldPop bool) {
 
 	// return condition1 && condition2
 	return condition2
+}
+
+func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, teamup ploutos.Teamup) (res TeamupEntryCustomRes, totalFiatProgress float64) {
+	switch brand {
+	case consts.BrandAha:
+		partialTotalProgress := 0.00
+		for i := len(teamupEntries) - 1; i >= 0; i-- {
+
+			floorFiatProgress := math.Floor((float64(teamupEntries[i].Progress)/10000)*float64(teamup.TotalTeamUpTarget)/100*100) / 100
+			teamupEntries[i].AdjustedFiatProgress = floorFiatProgress
+
+			if i != 0 {
+				partialTotalProgress += floorFiatProgress
+			}
+		}
+
+		if teamup.TotalFakeProgress >= 10000 {
+			teamupEntries[0].AdjustedFiatProgress = math.Floor((float64(teamup.TotalTeamUpTarget)/100-float64(partialTotalProgress))*100) / 100
+		}
+	}
+
+	res = teamupEntries
+
+	return
 }
