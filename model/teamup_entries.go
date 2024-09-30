@@ -73,23 +73,7 @@ func GetAllTeamUpEntries(brand int, teamupId int64, page, limit int) (res Teamup
 		return nil
 	})
 
-	switch brand {
-	case consts.BrandBatAce:
-		partialTotalProgress := 0.00
-		for i := len(res) - 1; i >= 0; i-- {
-
-			floorFiatProgress := math.Floor((float64(res[i].Progress)/10000)*float64(teamup.TotalTeamUpTarget)/100*100) / 100
-			res[i].AdjustedFiatProgress = floorFiatProgress
-
-			if i != 0 {
-				partialTotalProgress += floorFiatProgress
-			}
-		}
-
-		if teamup.TotalFakeProgress >= 10000 {
-			res[0].AdjustedFiatProgress = math.Floor((float64(teamup.TotalTeamUpTarget)/100-float64(partialTotalProgress))*100) / 100
-		}
-	}
+	res, _ = FormatAdjustedFiatProgress(brand, res, teamup)
 
 	return
 }
@@ -456,4 +440,28 @@ func ShouldPopRoulette(brandId int, userId int64) (shouldPop bool) {
 
 	// return condition1 && condition2
 	return condition2
+}
+
+func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, teamup ploutos.Teamup) (res TeamupEntryCustomRes, totalFiatProgress float64) {
+	switch brand {
+	case consts.BrandAha:
+		partialTotalProgress := 0.00
+		for i := len(teamupEntries) - 1; i >= 0; i-- {
+
+			floorFiatProgress := math.Floor((float64(teamupEntries[i].Progress)/10000)*float64(teamup.TotalTeamUpTarget)/100*100) / 100
+			teamupEntries[i].AdjustedFiatProgress = floorFiatProgress
+
+			if i != 0 {
+				partialTotalProgress += floorFiatProgress
+			}
+		}
+
+		if teamup.TotalFakeProgress >= 10000 {
+			teamupEntries[0].AdjustedFiatProgress = math.Floor((float64(teamup.TotalTeamUpTarget)/100-float64(partialTotalProgress))*100) / 100
+		}
+	}
+
+	res = teamupEntries
+
+	return
 }
