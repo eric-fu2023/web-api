@@ -95,7 +95,8 @@ func NewRouter() *gin.Engine {
 		v1.GET("/categories", middleware.Cache(1*time.Minute, false), api.CategoryList)
 		v1.GET("/vendors", middleware.Cache(1*time.Minute, false), api.VendorList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute, true), api.StreamList)
-		v1.GET("/stream-announcements", middleware.Cache(1*time.Minute, false), api.StreamAnnouncementList)
+		// this one can not have cache, because notification will need instant refresh
+		v1.GET("/stream-announcements", api.StreamAnnouncementList)
 		// v1.GET("/streamer", middleware.Cache(1*time.Minute, false), api.Streamer)
 		v1.GET("/streamer", api.Streamer) // remove cache due to has_jackpot needs real time updates
 		v1.GET("/topup-methods", middleware.CheckAuth(), api.TopupMethodList)
