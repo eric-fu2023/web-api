@@ -23,7 +23,7 @@ func GetStreamDetail(streamId int64) (s Stream, err error) {
 
 func StreamsOnlineSorted(categoryOrder string, categoryTypeOrder string, includeUpcoming bool) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		order := `sort_factor DESC, schedule_time DESC`
+		order := `status DESC, sort_factor DESC, schedule_time DESC`
 		if len(categoryOrder) > 0 {
 			order = `(stream_category_id in ` + categoryOrder + `) DESC, (stream_category_type_id in ` + categoryTypeOrder + `) DESC, ` + order
 		}
