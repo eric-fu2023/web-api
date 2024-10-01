@@ -482,7 +482,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 func (s GetTeamupService) ContributedUserList(c *gin.Context) (r serializer.Response, err error) {
 	brand := c.MustGet(`_brand`).(int)
 
-	s.Limit = 30
+	s.Limit = 50
 	entries, err := model.GetAllTeamUpEntries(brand, s.TeamupId, s.Page, s.Limit)
 
 	for i := range entries {

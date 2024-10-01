@@ -446,15 +446,26 @@ func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, t
 	switch brand {
 	case consts.BrandAha:
 		partialTotalProgress := 0.00
-		for i := len(teamupEntries) - 1; i >= 0; i-- {
 
-			floorFiatProgress := math.Floor((float64(teamupEntries[i].Progress)/10000)*float64(teamup.TotalTeamUpTarget)/100*100) / 100
-			teamupEntries[i].AdjustedFiatProgress = floorFiatProgress
+		// teamupEntries = mapFormatAdjustedFiatProgress(teamupEntries, func(entry any) any {
+		// 	floorFiatProgress := math.Floor((float64(teamupEntries[i].Progress)/10000)*float64(teamup.TotalTeamUpTarget)/100*100) / 100
+		// 	entry.AdjustedFiatProgress = floorFiatProgress
+		// })
 
-			if i != 0 {
-				partialTotalProgress += floorFiatProgress
+		teamupEntries = mapFormatAdjustedFiatProgress(teamupEntries, func(entries TeamupEntryCustomRes) TeamupEntryCustomRes {
+			for i := len(teamupEntries) - 1; i >= 0; i-- {
+
+				floorFiatProgress := math.Floor((float64(teamupEntries[i].Progress)/10000)*float64(teamup.TotalTeamUpTarget)/100*100) / 100
+				teamupEntries[i].AdjustedFiatProgress = floorFiatProgress
+
+				if i != 0 {
+					partialTotalProgress += floorFiatProgress
+				}
 			}
-		}
+
+			return teamupEntries
+
+		})
 
 		if teamup.TotalFakeProgress >= 10000 {
 			teamupEntries[0].AdjustedFiatProgress = math.Floor((float64(teamup.TotalTeamUpTarget)/100-float64(partialTotalProgress))*100) / 100
@@ -464,4 +475,8 @@ func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, t
 	res = teamupEntries
 
 	return
+}
+
+func mapFormatAdjustedFiatProgress[T any](t T, f func(T) T) T {
+	return f(t)
 }
