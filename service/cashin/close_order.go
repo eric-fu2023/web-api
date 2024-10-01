@@ -9,6 +9,7 @@ import (
 	"web-api/service/social_media_pixel"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/common-function/cash_orders"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
@@ -55,11 +56,11 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 			return
 		}
 		// only if the cash orders has been settled, then we start adding the rewards
-		// err = cash_orders.CreateReferralRewardRecord(txDB, newCashOrderState.UserId, orderNumber)
-		// if err != nil {
-		// 	util.GetLoggerEntry(c).Error("CreateReferralRewardRecord error", err)
-		// 	return
-		// }
+		err = cash_orders.CreateReferralRewardRecord(txDB, newCashOrderState.UserId, orderNumber)
+		if err != nil {
+			util.GetLoggerEntry(c).Error("CreateReferralRewardRecord error", err)
+			return
+		}
 		return
 	})
 
