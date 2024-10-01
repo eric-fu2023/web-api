@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ServiceWager struct {}
+type ServiceWager struct{}
 type CheckGameWalletStruct struct {
 	GameBalance int64 `json:"game_balance"`
 	UserId      int64 `json:"user_id"`
@@ -22,7 +22,7 @@ type MainWalletStruct struct {
 	UserId  int64 `json:"user_id"`
 }
 
-func (service_wager *ServiceWager) WagerClear(c *gin.Context) (serializer.Response ){
+func (service_wager *ServiceWager) WagerClear(c *gin.Context) serializer.Response {
 
 	min_bet_string := os.Getenv("MIN_BET_VALUE")
 	min_bet_int, err := strconv.ParseInt(min_bet_string, 10, 64)
@@ -36,7 +36,7 @@ func (service_wager *ServiceWager) WagerClear(c *gin.Context) (serializer.Respon
 	// check if user total balance is below threshold
 	balance_below_threshold := CheckWallet(user.ID, min_bet_int)
 
-	if balance_below_threshold{
+	if balance_below_threshold {
 		// check if there are pending bet_report
 		should_clear := CheckBetReport(user.ID)
 
@@ -62,7 +62,7 @@ func CheckWallet(user_id int64, min_bet_value int64) (should_clear_wager bool) {
 		return false
 	}
 
-	if main_wallet.UserId==0{
+	if main_wallet.UserId == 0 {
 		return false
 	}
 
@@ -84,9 +84,6 @@ func CheckWallet(user_id int64, min_bet_value int64) (should_clear_wager bool) {
 	return false
 }
 
-
-
-
 func CheckBetReport(user_id int64) (should_clear bool) {
 	var users_bet_reports []models.BetReport
 	terminated_status := []int64{2, 3, 4, 5, 6}
@@ -105,15 +102,15 @@ func CheckBetReport(user_id int64) (should_clear bool) {
 	// 	5: "Settled",
 	// 	6: "EarlySettled",
 	// }
-	
-	if len(users_bet_reports) != 0{
+
+	if len(users_bet_reports) != 0 {
 		return false
 	}
 	util.Log().Info("should clear wager for user :", user_id)
 	return true
 }
 
-func ResetWager (user_id int64){
+func ResetWager(user_id int64) {
 	//
 	tx := model.DB.Begin()
 
@@ -134,6 +131,7 @@ func ResetWager (user_id int64){
 	tsx := models.Transaction{
 		Amount:               0,
 		Wager:                -usData.RemainingWager,
+		DepositWager:         -usData.DepositRemainingWager,
 		TransactionType:      models.TransactionTypeClearWager,
 		GameVendorId:         0,
 		ForeignTransactionId: 0,
@@ -142,6 +140,8 @@ func ResetWager (user_id int64){
 		BalanceAfter:         usData.Balance,
 		WagerBefore:          usData.RemainingWager,
 		WagerAfter:           0,
+		DepositWagerBefore:   usData.DepositRemainingWager,
+		DepositWagerAfter:    0,
 		UserId:               user_id,
 	}
 
@@ -153,7 +153,7 @@ func ResetWager (user_id int64){
 	fmt.Println("insert into transaction table for user ", user_id)
 
 	// update user_sum table's balance and remaining_wager for that particular userId.
-	if err := tx.Model(&models.UserSum{}).Where("user_id = ?", user_id).UpdateColumn("remaining_wager",0).Error; err != nil {
+	if err := tx.Model(&models.UserSum{}).Where("user_id = ?", user_id).UpdateColumn("remaining_wager", 0).UpdateColumn("deposit_remaining_wager", 0).Error; err != nil {
 		util.Log().Error("Err update remaining wager", err.Error())
 		tx.Rollback()
 	}
@@ -161,13 +161,13 @@ func ResetWager (user_id int64){
 
 	risk_tag_id_string := os.Getenv("WAGER_AUTO_CLEAR_RISK_TAG_ID")
 	risk_tag_id, read_env_err := strconv.ParseInt(risk_tag_id_string, 10, 64)
-	if read_env_err!=nil{
+	if read_env_err != nil {
 		util.Log().Error("Err parse risk tag id", read_env_err.Error())
 	}
 	// add user risk tag
 	risk_tag := models.UserTagConn{
-		UserId:               user_id,
-		UserTagId:            risk_tag_id,
+		UserId:    user_id,
+		UserTagId: risk_tag_id,
 	}
 	if err := tx.Where("user_id = ? AND user_tag_id = ?", user_id, risk_tag_id).FirstOrCreate(&risk_tag).Error; err != nil {
 		util.Log().Error("Err inserting or finding user risk tag", err.Error())
@@ -175,7 +175,7 @@ func ResetWager (user_id int64){
 	}
 
 	err := tx.Commit().Error
-	if err!=nil{
+	if err != nil {
 		util.Log().Error("Err tx commit error", err.Error())
 		tx.Rollback()
 	}
