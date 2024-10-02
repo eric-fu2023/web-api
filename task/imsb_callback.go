@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -16,6 +17,7 @@ import (
 )
 
 func ProcessImUpdateBalance(ctx context.Context) {
+	skipWagerCalc := os.Getenv("GAME_IMSB_SKIP_WAGER_CALCULATION_AND_SETTLEMENT") == "TRUE"
 	for {
 		iter := cache.RedisSyncTransactionClient.Scan(ctx, 0, "im:*", 0).Iterator()
 		keys := make(map[string][]string)
@@ -53,7 +55,12 @@ func ProcessImUpdateBalance(ctx context.Context) {
 					fmt.Println("DebugLog1234: Request.TransactionAmount", data.TransactionAmount)
 					fmt.Println("DebugLog1234: Request.SourceWallet", data.SourceWallet)
 
-					err = common.ProcessImUpdateBalanceTransaction(ctx, &imsb.TransactionBuilder{Request: data})
+					if skipWagerCalc {
+						err = common.ProcessImUpdateBalanceTransactionWithoutWagerCalculation(ctx, &imsb.TransactionBuilder{Request: data})
+					} else {
+						err = common.ProcessImUpdateBalanceTransaction(ctx, &imsb.TransactionBuilder{Request: data})
+					}
+
 					if err != nil {
 						util.Log().Error("Task:ProcessImUpdateBalance error", err, data)
 						return
