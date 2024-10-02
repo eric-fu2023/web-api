@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"web-api/model"
 	"web-api/util"
 
@@ -15,6 +16,7 @@ import (
 
 // ProcessImUpdateBalanceTransaction imsb update balance callbacks and allows negative user sum balance
 // see ProcessImUpdateBalanceTransactionWithoutWagerCalculation for the version without wager calc.
+// oct 2 2024 wager calculation migrated to use bet report.
 func ProcessImUpdateBalanceTransaction(ctx context.Context, transactionRequest CallbackInterface) (err error) {
 	ctx = rfcontext.AppendCallDesc(ctx, "ProcessImUpdateBalanceTransaction")
 
@@ -153,6 +155,8 @@ func ProcessImUpdateBalanceTransactionWithoutWagerCalculation(ctx context.Contex
 	}
 	err = transactionRequest.SaveGameTransaction(tx)
 	if err != nil {
+		ctx = rfcontext.AppendError(ctx, err, "save game transactionRequest")
+		log.Println(rfcontext.Fmt(ctx))
 		tx.Rollback()
 		return
 	}
@@ -171,8 +175,10 @@ func ProcessImUpdateBalanceTransactionWithoutWagerCalculation(ctx context.Contex
 		//DepositWagerAfter:    userSum.DepositRemainingWager,
 		GameVendorId: transactionRequest.GetGameVendorId(),
 	}
-	err = tx.Save(&transaction).Error
+	err = tx.Debug().Save(&transaction).Error
 	if err != nil {
+		ctx = rfcontext.AppendError(ctx, err, "save transaction")
+		log.Println(rfcontext.Fmt(ctx))
 		tx.Rollback()
 		return
 	}
