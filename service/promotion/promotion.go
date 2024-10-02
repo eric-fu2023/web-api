@@ -137,9 +137,19 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 
 		customData any
 		newbieData any
+		missions   []models.PromotionMission
 	)
 
 	switch promotion.Type {
+
+	case models.PromotionTypeDepositEarnMoreMission:
+		promotionMissions, getMissionErr := model.GetMissionByPromotionId(gCtx, brand, 192)
+		if getMissionErr != nil {
+			err = getMissionErr
+			return
+		}
+
+		missions = promotionMissions
 
 	case models.PromotionTypeCustomTemplate:
 		customData = "anything"
@@ -181,7 +191,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		}
 	}
 
-	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, activeSession, voucherView, claimStatus, extra, customData, newbieData)
+	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, activeSession, voucherView, claimStatus, extra, customData, newbieData, missions)
 	return
 }
 

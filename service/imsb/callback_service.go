@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"strings"
 	"time"
+
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -16,20 +18,24 @@ import (
 	"blgit.rfdev.tech/taya/game-service/imsb"
 	"blgit.rfdev.tech/taya/game-service/imsb/callback"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 )
 
-type Callback struct {
-	Request     callback.WagerDetail
+// TransactionBuilder
+// consist both request input and resultant transaction
+type TransactionBuilder struct {
+	Request callback.WagerDetail
+
+	// db layer
 	Transaction ploutos.ImTransaction
 }
 
-func (c *Callback) NewCallback(userId int64) {
+func (c *TransactionBuilder) NewCallback(userId int64) {
 	c.Transaction.UserId = userId
 	c.Transaction.ActionId = c.Request.ActionId
 	c.Transaction.ExternalUserId = c.Request.MemberCode
@@ -37,56 +43,56 @@ func (c *Callback) NewCallback(userId int64) {
 	c.Transaction.TransactionAmount = int64(c.Request.TransactionAmount * 100)
 }
 
-func (c *Callback) GetGameVendorId() int64 {
+func (c *TransactionBuilder) GetGameVendorId() int64 {
 	return consts.GameVendor["imsb"]
 }
 
-func (c *Callback) GetGameTransactionId() int64 {
+func (c *TransactionBuilder) GetGameTransactionId() int64 {
 	return c.Transaction.ID
 }
 
-func (c *Callback) GetExternalUserId() string {
+func (c *TransactionBuilder) GetExternalUserId() string {
 	return c.Request.MemberCode
 }
 
-func (c *Callback) SaveGameTransaction(tx *gorm.DB) error {
+func (c *TransactionBuilder) SaveGameTransaction(tx *gorm.DB) error {
 	return tx.Save(&c.Transaction).Error
 }
 
-func (c *Callback) ShouldProceed() bool {
+func (c *TransactionBuilder) ShouldProceed() bool {
 	return true // imsb tx should always proceed
 }
 
-func (c *Callback) GetAmount() int64 {
+func (c *TransactionBuilder) GetAmount() int64 {
 	return c.Transaction.TransactionAmount
 }
 
-func (c *Callback) GetBetAmountOnly() int64 {
+func (c *TransactionBuilder) GetBetAmountOnly() int64 {
 	return 0
 }
-func (c *Callback) GetWagerMultiplier() (value int64, exists bool) {
+func (c *TransactionBuilder) GetWagerMultiplier() (value int64, exists bool) {
 	return -1, true
 }
 
-func (c *Callback) GetBetAmount() (amount int64, exists bool) {
+func (c *TransactionBuilder) GetBetAmount() (amount int64, exists bool) {
 	actionId := 1003
 	if c.Request.ActionId == 1003 {
 		actionId = 0
 	}
 
-	e := model.DB.Clauses(dbresolver.Use("txConn")).Model(ploutos.ImTransaction{}).Select(`transaction_amount`).
+	err := model.DB.Clauses(dbresolver.Use("txConn")).Model(ploutos.ImTransaction{}).Select(`transaction_amount`).
 		Where(`wager_no`, c.Transaction.WagerNo).Where(`action_id`, actionId).Order(`id`).First(&amount).Error
-	if e == nil {
+	if err == nil {
 		exists = true
 	}
 	return
 }
 
-func (c *Callback) IsAdjustment() bool {
+func (c *TransactionBuilder) IsAdjustment() bool {
 	return false
 }
 
-func (c *Callback) ApplyInsuranceVoucher(userId int64, betAmount int64, betExists bool) (err error) {
+func (c *TransactionBuilder) ApplyInsuranceVoucher(userId int64, betAmount int64, betExists bool) (err error) {
 	settleActionIds := []int64{4001, 4002, 4003}
 	if !slices.Contains(settleActionIds, c.Transaction.ActionId) || !betExists || betAmount <= c.Transaction.TransactionAmount {
 		return
@@ -170,7 +176,12 @@ func GetBalanceCallback(c *gin.Context, req callback.GetBalanceRequest, enc call
 	return
 }
 
-func DeductBalanceCallback(c *gin.Context, req callback.WagerDetail, enc callback.EncryptedRequest) (res callback.CommonWalletBaseResponse, err error) {
+// FIXME 1 Oct 2024: may need to update for wager computation,
+// the reference to the new calculate can be found @ calculateWagerBatace().
+// imsb.BalanceDeduction invokers ProcessTransaction to update user sum / transaction related data.
+// ProcessTransaction does not use calculateWagerBatace().
+// imsb.BalanceUpdate use ProcessImUpdateBalanceTransaction
+func OnBalanceDeduction(c *gin.Context, req callback.WagerDetail, enc callback.EncryptedRequest) (res callback.CommonWalletBaseResponse, err error) {
 	go common.LogGameCallbackRequest("DeductBalance", req)
 	_, balance, _, _, err := common.GetUserAndSum(model.DB, consts.GameVendor["imsb"], req.MemberCode)
 	if err != nil {
@@ -178,7 +189,7 @@ func DeductBalanceCallback(c *gin.Context, req callback.WagerDetail, enc callbac
 	}
 	duplicate := CheckDuplicate(req.WagerNo)
 	if !duplicate {
-		err = common.ProcessTransaction(&Callback{Request: req})
+		err = common.ProcessTransaction(&TransactionBuilder{Request: req})
 		if err != nil {
 			return
 		}
@@ -219,8 +230,5 @@ func UpdateBalanceCallback(c *gin.Context, req callback.UpdateBalanceRequest, en
 func CheckDuplicate(wagerNo string) bool {
 	var imTx ploutos.ImTransaction
 	rows := model.DB.Model(ploutos.ImTransaction{}).Where(`wager_no`, wagerNo).First(&imTx).RowsAffected
-	if rows > 0 {
-		return true
-	}
-	return false
+	return rows > 0
 }

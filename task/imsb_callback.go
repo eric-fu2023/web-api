@@ -15,9 +15,8 @@ import (
 	"web-api/util"
 )
 
-func ProcessImUpdateBalance() {
+func ProcessImUpdateBalance(ctx context.Context) {
 	for {
-		ctx := context.TODO()
 		iter := cache.RedisSyncTransactionClient.Scan(ctx, 0, "im:*", 0).Iterator()
 		keys := make(map[string][]string)
 		for iter.Next(ctx) {
@@ -54,7 +53,7 @@ func ProcessImUpdateBalance() {
 					fmt.Println("DebugLog1234: Request.TransactionAmount", data.TransactionAmount)
 					fmt.Println("DebugLog1234: Request.SourceWallet", data.SourceWallet)
 
-					err = common.ProcessImUpdateBalanceTransaction(&imsb.Callback{Request: data})
+					err = common.ProcessImUpdateBalanceTransaction(ctx, &imsb.TransactionBuilder{Request: data})
 					if err != nil {
 						util.Log().Error("Task:ProcessImUpdateBalance error", err, data)
 						return

@@ -2,12 +2,42 @@ package serializer
 
 import (
 	"encoding/json"
+	"math/rand"
 	"strconv"
 
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 )
+
+type OutgoingEarnMoreMissionTier struct {
+	MissionId     int64  `json:"mission_id"`
+	MissionAmount int64  `json:"mission_amount"`
+	Label         string `json:"label"`
+	RewardAmount  int64  `json:"reward_amount"`
+	Status        int64  `json:"status"` // go = 0, claim = 1, complete = 2
+	CurrentAmount int64  `json:"current_amount"`
+}
+
+type OutgoingEarnMoreCardDetail struct {
+	Title string `json:"title"`
+	Icon  string `json:"icon_url"`
+}
+
+type OutgoingEarnMoreMission struct {
+	Name                      string                        `json:"name"`
+	Desc                      string                        `json:"desc"`
+	BackgroundImgUrl          string                        `json:"bg_url"`
+	Tooltip                   string                        `json:"tooltip_text"`
+	TotalDepositAmount        int64                         `json:"deposit_amount"`
+	Card                      OutgoingEarnMoreCardDetail    `json:"card"`
+	Label                     string                        `json:"label"`
+	DepositStartDate          int64                         `json:"deposit_start_ts"`
+	DepositEndDate            int64                         `json:"deposit_end_ts"`
+	PromotionDisplayStartDate int64                         `json:"promotion_start_ts"`
+	PromotionDisplayEndDate   int64                         `json:"promotion_end_ts"`
+	Missions                  []OutgoingEarnMoreMissionTier `json:"missions"`
+}
 
 type PromotionCover struct {
 	ID                     int64           `json:"id"`
@@ -32,28 +62,29 @@ type PromotionCover struct {
 }
 
 type PromotionDetail struct {
-	ID                     int64             `json:"id"`
-	Name                   string            `json:"name"`
-	Description            json.RawMessage   `json:"description"`
-	Image                  string            `json:"image"`
-	StartAt                int64             `json:"start_at"`
-	EndAt                  int64             `json:"end_at"`
-	RecurringDay           int64             `json:"recurring_day"`
-	ResetAt                int64             `json:"reset_at"`
-	Type                   int64             `json:"type"`
-	RewardType             int64             `json:"reward_type"`
-	RewardDistributionType int64             `json:"reward_distribution_type"`
-	Category               int64             `json:"category"`
-	Label                  int64             `json:"label"`
-	PromotionProgress      PromotionProgress `json:"promotion_progress"`
-	Reward                 float64           `json:"reward"`
-	ClaimStatus            ClaimStatus       `json:"claim_status"`
-	Voucher                Voucher           `json:"voucher"`
-	IsVipAssociated        bool              `json:"is_vip_associated"`
-	DisplayOnly            bool              `json:"display_only"`
-	Extra                  any               `json:"extra"`
-	CustomTemplateData     json.RawMessage   `json:"custom_template_data"`
-	NewbieData             interface{}       `json:"newbie_data"` // TODO : to be updated
+	ID                     int64                   `json:"id"`
+	Name                   string                  `json:"name"`
+	Description            json.RawMessage         `json:"description"`
+	Image                  string                  `json:"image"`
+	StartAt                int64                   `json:"start_at"`
+	EndAt                  int64                   `json:"end_at"`
+	RecurringDay           int64                   `json:"recurring_day"`
+	ResetAt                int64                   `json:"reset_at"`
+	Type                   int64                   `json:"type"`
+	RewardType             int64                   `json:"reward_type"`
+	RewardDistributionType int64                   `json:"reward_distribution_type"`
+	Category               int64                   `json:"category"`
+	Label                  int64                   `json:"label"`
+	PromotionProgress      PromotionProgress       `json:"promotion_progress"`
+	Reward                 float64                 `json:"reward"`
+	ClaimStatus            ClaimStatus             `json:"claim_status"`
+	Voucher                Voucher                 `json:"voucher"`
+	IsVipAssociated        bool                    `json:"is_vip_associated"`
+	DisplayOnly            bool                    `json:"display_only"`
+	Extra                  any                     `json:"extra"`
+	CustomTemplateData     json.RawMessage         `json:"custom_template_data"`
+	NewbieData             interface{}             `json:"newbie_data"` // TODO : to be updated
+	EarnMoreData           OutgoingEarnMoreMission `json:"earn_more_promotion_data"`
 
 	IsCustom bool `json:"is_custom"`
 }
@@ -120,13 +151,52 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, voucher Voucher, cl ClaimStatus, extra any, customData any, newbieData any) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, voucher Voucher, cl ClaimStatus, extra any, customData any, newbieData any, missions []models.PromotionMission) PromotionDetail {
 	raw := json.RawMessage(p.Image)
 	m := make(map[string]string)
 	json.Unmarshal(raw, &m)
 	image := m[platform]
 	if len(image) == 0 {
 		image = m["h5"]
+	}
+
+	var earnMoreData OutgoingEarnMoreMission
+
+	if len(missions) > 0 {
+
+		card := OutgoingEarnMoreCardDetail{
+			Title: "Deposit Insights",
+			Icon:  "https://static.tayalive.com/batace-img/icon/Evolution.png",
+		}
+
+		var earnMoreMissionTiers []OutgoingEarnMoreMissionTier
+
+		for _, mission := range missions {
+			m := OutgoingEarnMoreMissionTier{
+				MissionId:     mission.ID,
+				MissionAmount: mission.MissionAmount,
+				RewardAmount:  mission.RewardAmount,
+				Label:         mission.Label,
+				Status:        models.PromotionMissionPendingStatus,
+				CurrentAmount: int64(rand.Intn(int(mission.MissionAmount))),
+			}
+
+			earnMoreMissionTiers = append(earnMoreMissionTiers, m)
+		}
+
+		earnMoreData = OutgoingEarnMoreMission{
+			Name:                      p.Name,
+			Tooltip:                   "TOOLTIP",
+			TotalDepositAmount:        2130000,
+			Label:                     "Deposit",
+			DepositStartDate:          1727782019,
+			DepositEndDate:            1730287619,
+			PromotionDisplayStartDate: 1727782019,
+			PromotionDisplayEndDate:   1730287619,
+			Card:                      card,
+			Desc:                      "Boost your deposit, unlock bigger rewards!",
+			Missions:                  earnMoreMissionTiers,
+		}
 	}
 
 	return PromotionDetail{
@@ -150,7 +220,8 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		DisplayOnly:            p.DisplayOnly,
 		Extra:                  extra,
 		// CustomTemplateData: 	json.RawMessage(customData),
-		NewbieData: newbieData,
+		NewbieData:   newbieData,
+		EarnMoreData: earnMoreData,
 	}
 }
 

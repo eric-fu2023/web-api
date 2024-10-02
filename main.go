@@ -17,6 +17,8 @@ import (
 	"web-api/util"
 	"web-api/websocket"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+
 	"github.com/gin-contrib/pprof"
 )
 
@@ -43,7 +45,10 @@ func main() {
 		go task.ProcessFbSyncTransaction()
 		go task.ProcessTayaSyncTransaction()
 		go task.ProcessSabaSettle()
-		go task.ProcessImUpdateBalance()
+		go func() {
+			ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "task")
+			task.ProcessImUpdateBalance(ctx)
+		}()
 		go task.ConsumeMgStreams()
 		go task.ConsumeMgStreamsHot()
 		if os.Getenv("MQTT_ADDRESS") != "" { // mqtt tasks
