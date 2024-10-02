@@ -47,33 +47,39 @@ var (
 
 func CreateNewUser(user *model.User, referralCode string) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
-		err = CreateNewUserWithDB(user, referralCode, tx)
+		_, _, err = CreateNewUserWithDB(user, referralCode, tx)
 		return
 	})
 	return
 }
 
-func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (err error) {
-
+func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (referrer_nickname string, is_join_success bool, err error) {
+	referrer_nickname = ""
+	is_join_success = false
 	// FIXME this is a substitute for the unique constraint with partial index. note that this does not prevent race condition.
 	if user.Username != "" {
 		var existed model.User
 		rows := model.DB.Where(`username`, user.Username).First(&existed).RowsAffected
 		if rows > 0 {
-			return fmt.Errorf("username existed: %s %w", user.Username, err)
+			return referrer_nickname, is_join_success, fmt.Errorf("username existed: %s %w", user.Username, err)
 		}
 	}
 
 	err = user.CreateWithDB(tx)
 	if err != nil {
-		return fmt.Errorf("create with db: %w", err)
+		return referrer_nickname, is_join_success, fmt.Errorf("create with db: %w", err)
 	}
 
 	if referralCode != "" {
 		referrer, err := model.LinkReferralWithDB(tx, user.ID, referralCode)
 		if err != nil {
-			return fmt.Errorf("link referral with db: %w", err)
+			return referrer_nickname, is_join_success, fmt.Errorf("link referral with db: %w", err)
 		}
+		// referer and referral should have diff ip and uuid
+		if user.RegistrationIp == referrer.RegistrationIp || user.RegistrationDeviceUuid == referrer.RegistrationDeviceUuid {
+			return referrer_nickname, is_join_success, fmt.Errorf("referer and referral, the device uuid and ip should not be the same", err)
+		}
+
 		// Overwrite user's channel with referrer's channel
 		// Set to empty if referrer's channel is empty
 		user.Channel = referrer.Channel
@@ -84,11 +90,13 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (er
 			Channel: user.Channel,
 		}}).Error
 		if err != nil {
-			return fmt.Errorf("update user channel: %w", err)
+			return referrer_nickname, is_join_success, fmt.Errorf("update user channel: %w", err)
 		}
+		is_join_success = true
+		referrer_nickname = referrer.Nickname
 	}
 
-	return nil
+	return referrer_nickname, is_join_success, nil
 }
 
 func CreateUser(user *model.User) (err error) {
