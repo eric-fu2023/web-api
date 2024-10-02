@@ -470,6 +470,33 @@ func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, t
 		if teamup.TotalFakeProgress >= 10000 {
 			teamupEntries[0].AdjustedFiatProgress = math.Floor((float64(teamup.TotalTeamUpTarget)/100-float64(partialTotalProgress))*100) / 100
 		}
+
+	case consts.BrandBatAce:
+		partialTotalProgress := 0.00
+
+		// teamupEntries = mapFormatAdjustedFiatProgress(teamupEntries, func(entry any) any {
+		// 	floorFiatProgress := math.Floor((float64(teamupEntries[i].Progress)/10000)*float64(teamup.TotalTeamUpTarget)/100*100) / 100
+		// 	entry.AdjustedFiatProgress = floorFiatProgress
+		// })
+
+		teamupEntries = mapFormatAdjustedFiatProgress(teamupEntries, func(entries TeamupEntryCustomRes) TeamupEntryCustomRes {
+			for i := len(teamupEntries) - 1; i >= 0; i-- {
+
+				floorFiatProgress := math.Floor((float64(teamupEntries[i].Progress)/10000)*float64(teamup.TotalTeamUpTarget)/100*100) / 100
+				teamupEntries[i].AdjustedFiatProgress = floorFiatProgress
+
+				if i != 0 {
+					partialTotalProgress += floorFiatProgress
+				}
+			}
+
+			return teamupEntries
+
+		})
+
+		if teamup.TotalFakeProgress >= 10000 {
+			teamupEntries[0].AdjustedFiatProgress = math.Floor((float64(teamup.TotalTeamUpTarget)/100-float64(partialTotalProgress))*100) / 100
+		}
 	}
 
 	res = teamupEntries
