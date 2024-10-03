@@ -3,6 +3,7 @@ package serializer
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 
@@ -115,6 +116,12 @@ type SysDictionaryDetail struct {
 	Sort  int    `json:"sort" form:"sort" gorm:"column:sort;comment:排序标记"`   // 排序标记
 }
 
+type MissionDO struct {
+	Missions           []models.PromotionMission `json:"missions"`
+	CompletedMissions  []models.Voucher          `json:"completed_missions"`
+	TotalDepositAmount int64                     `json:"total_deposit_amount"`
+}
+
 func BuildSysDictionaryDetail(s models.SysDictionaryDetail) SysDictionaryDetail {
 	return SysDictionaryDetail{
 		ID:    s.ID,
@@ -152,7 +159,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, voucher Voucher, cl ClaimStatus, extra any, customData any, newbieData any, missions []models.PromotionMission, completedMissions []models.Voucher) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, voucher Voucher, cl ClaimStatus, extra any, customData any, newbieData any, mDo MissionDO) PromotionDetail {
 	raw := json.RawMessage(p.Image)
 	m := make(map[string]string)
 	json.Unmarshal(raw, &m)
@@ -163,7 +170,10 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 
 	var earnMoreData OutgoingEarnMoreMission
 
-	if len(missions) > 0 {
+	if len(mDo.Missions) > 0 {
+
+		// totalDepositedAmount := mDo.TotalDepositAmount / 100
+		totalDepositedAmount := int64(rand.Intn(1000000)) / 100
 
 		card := OutgoingEarnMoreCardDetail{
 			Title: "Deposit Insights",
@@ -172,17 +182,21 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 
 		var earnMoreMissionTiers []OutgoingEarnMoreMissionTier
 
-		for _, mission := range missions {
+		for _, mission := range mDo.Missions {
 			m := OutgoingEarnMoreMissionTier{
 				MissionId:     mission.ID,
 				MissionAmount: mission.MissionAmount / 100,
 				RewardAmount:  mission.RewardAmount / 100,
 				Label:         mission.Label,
 				Status:        models.PromotionMissionPendingStatus,
-				CurrentAmount: int64(rand.Intn(int(mission.MissionAmount))) / 100,
+				CurrentAmount: int64(math.Min(float64(totalDepositedAmount), float64(mission.MissionAmount/100))),
 			}
 
-			for _, completed := range completedMissions {
+			if m.CurrentAmount == m.MissionAmount {
+				m.Status = models.PromotionMissionReadyStatus
+			}
+
+			for _, completed := range mDo.CompletedMissions {
 				if completed.ReferenceID == fmt.Sprint(m.MissionId) {
 					m.Status = models.PromotionMissionCompletedStatus
 					break
@@ -195,7 +209,7 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		earnMoreData = OutgoingEarnMoreMission{
 			Name:                      p.Name,
 			Tooltip:                   "TOOLTIP",
-			TotalDepositAmount:        2130000,
+			TotalDepositAmount:        totalDepositedAmount,
 			Label:                     "Deposit",
 			DepositStartDate:          1727782019,
 			DepositEndDate:            1730287619,

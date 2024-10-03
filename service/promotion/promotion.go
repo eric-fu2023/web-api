@@ -135,16 +135,25 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		extra         any
 		activeSession models.PromotionSession
 
-		customData        any
-		newbieData        any
-		missions          []models.PromotionMission
-		completedMissions []models.Voucher
+		customData any
+		newbieData any
+		mDo        serializer.MissionDO
 	)
 
 	switch promotion.Type {
 
 	case models.PromotionTypeDepositEarnMoreMission:
-		promotionMissions, getMissionErr := model.GetMissionByPromotionId(gCtx, brand, 192)
+		topupRecords, getTopupsErr := model.TopupsByDateRange(gCtx, user.ID, promotion.StartAt, promotion.EndAt)
+		if getTopupsErr != nil {
+			err = getTopupsErr
+			return
+		}
+
+		totalDepositedAmount := util.Sum(topupRecords, func(co model.CashOrder) int64 {
+			return co.ActualCashInAmount
+		})
+
+		promotionMissions, getMissionErr := model.GetMissionByPromotionId(gCtx, brand, promotion.ID)
 		if getMissionErr != nil {
 			err = getMissionErr
 			return
@@ -156,8 +165,9 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			return
 		}
 
-		missions = promotionMissions
-		completedMissions = claimedVouchers
+		mDo.Missions = promotionMissions
+		mDo.CompletedMissions = claimedVouchers
+		mDo.TotalDepositAmount = totalDepositedAmount
 
 	case models.PromotionTypeCustomTemplate:
 		customData = "anything"
@@ -199,7 +209,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		}
 	}
 
-	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, activeSession, voucherView, claimStatus, extra, customData, newbieData, missions, completedMissions)
+	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, activeSession, voucherView, claimStatus, extra, customData, newbieData, mDo)
 	return
 }
 
