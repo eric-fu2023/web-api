@@ -491,13 +491,17 @@ func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, t
 
 				teamupEntries[i].AdjustedFiatProgress = float64(int(teamupEntries[i].AdjustedFiatProgress))
 
+				if len(teamupEntries) == 1 {
+					break
+				}
+
 				// fmt.Println(teamupEntries[i].AdjustedFiatProgress)
 
 				if i != 0 {
 					partialTotalProgress += teamupEntries[i].AdjustedFiatProgress
 				} else {
 
-					if teamup.Status == int(ploutos.TeamupStatusPending) || teamup.Status == int(ploutos.TeamupStatusFail) && partialTotalProgress >= float64(int(teamup.TotalTeamUpTarget/100)-1) {
+					if (teamup.Status == int(ploutos.TeamupStatusPending) || teamup.Status == int(ploutos.TeamupStatusFail)) && partialTotalProgress >= float64(int(teamup.TotalTeamUpTarget/100)-1) {
 						teamupEntries[i].AdjustedFiatProgress = 0
 					}
 				}

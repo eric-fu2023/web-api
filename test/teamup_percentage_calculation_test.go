@@ -12,8 +12,9 @@ import (
 const (
 	TEAMUP_TARGET_1 = 1200
 	TEAMUP_TARGET_2 = 5000
-	TEAMUP_TARGET_3 = 10000
-	TEAMUP_TARGET_4 = 100000
+	TEAMUP_TARGET_3 = 50000
+	TEAMUP_TARGET_4 = 10000
+	TEAMUP_TARGET_5 = 100000
 
 	TEAMUP_TARGET_11 = 1771
 )
@@ -36,13 +37,18 @@ type TeamupEntryCustomRes []struct {
 // 	{Progress: 6621},
 // }
 
+// var customRes1 = TeamupEntryCustomRes{
+// 	{Progress: 0},
+// 	{Progress: 0},
+// 	{Progress: 0},
+// 	{Progress: 0},
+// 	{Progress: 79},
+// 	{Progress: 9920},
+// }
+
 var customRes1 = TeamupEntryCustomRes{
-	{Progress: 0},
-	{Progress: 0},
-	{Progress: 0},
-	{Progress: 0},
-	{Progress: 79},
-	{Progress: 9920},
+	{Progress: 1065},
+	{Progress: 6852},
 }
 
 func TestPercentageCalculation(t *testing.T) {
@@ -50,7 +56,7 @@ func TestPercentageCalculation(t *testing.T) {
 	teamupEntries := customRes1
 	partialTotalProgress := 0.00
 	teamup := ploutos.Teamup{
-		TotalTeamUpTarget: TEAMUP_TARGET_4,
+		TotalTeamUpTarget: TEAMUP_TARGET_2,
 		// Status:            int(ploutos.TeamupStatusPending),
 		// Status: int(ploutos.TeamupStatusFail),
 		Status: int(ploutos.TeamupStatusSuccess),
@@ -68,13 +74,17 @@ func TestPercentageCalculation(t *testing.T) {
 
 			teamupEntries[i].AdjustedFiatProgress = float64(int(teamupEntries[i].AdjustedFiatProgress))
 
+			if len(teamupEntries) == 1 {
+				break
+			}
+
 			// fmt.Println(teamupEntries[i].AdjustedFiatProgress)
 
 			if i != 0 {
 				partialTotalProgress += teamupEntries[i].AdjustedFiatProgress
 			} else {
 
-				if teamup.Status == int(ploutos.TeamupStatusPending) || teamup.Status == int(ploutos.TeamupStatusFail) && partialTotalProgress >= float64(int(teamup.TotalTeamUpTarget/100)-1) {
+				if (teamup.Status == int(ploutos.TeamupStatusPending) || teamup.Status == int(ploutos.TeamupStatusFail)) && partialTotalProgress >= float64(int(teamup.TotalTeamUpTarget/100)-1) {
 					teamupEntries[i].AdjustedFiatProgress = 0
 				}
 			}
