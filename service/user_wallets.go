@@ -1,6 +1,7 @@
 package service
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"fmt"
 	"sync"
@@ -120,6 +121,8 @@ func (service *InternalRecallFundService) Recall(c *gin.Context) (r serializer.R
 }
 
 func recall(user model.User, force bool, locale, ip string) (userSum ploutos.UserSum, err error) {
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "game recall")
+
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userWalletRecallKey, user.ID), redsync.WithExpiry(50*time.Second))
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -143,9 +146,11 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 				defer wg.Done()
 				tx := model.DB.Begin()
 				extra := model.Extra{Locale: locale, Ip: ip}
-				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(context.TODO(), tx, user, g.ExternalCurrency, g.GameVendor.GameCode, g.GameVendorId, extra)
+				rCtx := rfcontext.AppendCallDesc(ctx, "game recall")
+				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(rCtx, tx, user, g.ExternalCurrency, g.GameVendor.GameCode, g.GameVendorId, extra)
 				if err != nil {
-					util.Log().Error("`GAME INTEGRATION RECALL ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error())
+					rCtx = rfcontext.AppendError(rCtx, err, fmt.Sprintf("`GAME INTEGRATION RECALL ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID))
+					util.Log().Error(rfcontext.Fmt(rCtx))
 					return
 				}
 				var maxRetries = 3

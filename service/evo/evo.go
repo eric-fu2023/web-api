@@ -1,6 +1,7 @@
 package evo
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"errors"
 	"log"
@@ -77,35 +78,40 @@ func (e EVO) GetGameBalance(ctx context.Context, user model.User, currency strin
 }
 
 func (e EVO) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, currency string, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
+	ctx = rfcontext.AppendCallDesc(ctx, "(e EVO) TransferFrom")
 	client := util.EvoFactory.NewClient()
 
 	userBalance, err := client.GetGameBalance(user.IdAsString())
-	util.Log().Info("EVO GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, check balance: %.4f, err: %v", util.IntegrationIdEvo, user.ID, userBalance, err)
+	userId := user.IdAsString()
+	ctx = rfcontext.AppendParams(ctx, "", map[string]interface{}{
+		"userBalance.TBalance": userBalance.TBalance,
+		"userId":               userId,
+	})
 
 	if err != nil {
-		log.Printf("Error getting evo user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
+		ctx = rfcontext.AppendError(ctx, err, "get game balance")
+		log.Printf(rfcontext.Fmt(ctx))
 		return
 	}
 
 	if userBalance.TBalance <= 0 {
-		log.Printf("This user balance is smaller than / equal to 0, user: %v, balance: %v", user.IdAsString(), userBalance.TBalance)
-		return
+		return nil
 	}
+
 	currentTimeMillis := time.Now().UnixNano() / int64(time.Millisecond)
 	currentTimeMillisString := strconv.FormatInt(currentTimeMillis, 10)
 
-	res, err := client.TransferOut(user.IdAsString(), userBalance.TBalance, user.IdAsString()+"_"+currentTimeMillisString)
-	util.Log().Info("EVO GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, status: %d, tx_id: %s", util.IntegrationIdEvo, user.ID, res.Balance, res.Result, res.TransID)
-
+	res, err := client.TransferOut(userId, userBalance.TBalance, userId+"_"+currentTimeMillisString)
 	if err != nil {
-		log.Printf("Error transfer evo user balance from error,userID: %v ,err: %v ", user.IdAsString(), err.Error())
+		ctx = rfcontext.AppendError(ctx, err, "transferring out of game provider wallet")
+		log.Printf(rfcontext.Fmt(ctx))
 		return
 	}
 
 	if res.Result == "N" {
-		log.Printf("Error transfer evo user balance,userID: %v ,err: %v ", user.IdAsString(), res.ErrorMsg)
+		log.Printf("Error transfer evo user balance,userID: %v ,err: %v ", userId, res.ErrorMsg)
 		// need to call another routine to fetch transactions details.
-		go handleFailedTransaction(tx, user, userBalance.TBalance, user.IdAsString()+"_"+currentTimeMillisString, gameVendorId)
+		go handleFailedTransaction(tx, user, userBalance.TBalance, userId+"_"+currentTimeMillisString, gameVendorId)
 		return
 	}
 	err = updateUserBalance(tx, user, userBalance.TBalance, res.TransID, gameVendorId)
