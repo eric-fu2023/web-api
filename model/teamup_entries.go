@@ -489,15 +489,24 @@ func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, t
 					teamupEntries[i].AdjustedFiatProgress = 1
 				}
 
+				teamupEntries[i].AdjustedFiatProgress = float64(int(teamupEntries[i].AdjustedFiatProgress))
+
+				// fmt.Println(teamupEntries[i].AdjustedFiatProgress)
+
 				if i != 0 {
 					partialTotalProgress += teamupEntries[i].AdjustedFiatProgress
+				} else {
+
+					if teamup.Status == int(ploutos.TeamupStatusPending) || teamup.Status == int(ploutos.TeamupStatusFail) && partialTotalProgress >= float64(int(teamup.TotalTeamUpTarget/100)-1) {
+						teamupEntries[i].AdjustedFiatProgress = 0
+					}
 				}
 
-				if teamup.Status == int(ploutos.TeamupStatusPending) && int(partialTotalProgress) >= int(teamup.TotalTeamUpTarget/100) {
-					partialTotalProgress = float64(int(partialTotalProgress) - int(teamup.TotalTeamUpTarget/100) - 1)
-					teamupEntries[i].AdjustedFiatProgress = math.Max(float64(int(partialTotalProgress)-(int(teamup.TotalTeamUpTarget/100)-1)), 0)
+				// fmt.Println(fmt.Sprint(partialTotalProgress) + " - " + fmt.Sprint(teamupEntries[i].AdjustedFiatProgress))
 
-					teamupEntries[i].AdjustedFiatProgress = float64((int(teamup.TotalTeamUpTarget/100) - 1) - (int(partialTotalProgress) - int(teamupEntries[i].AdjustedFiatProgress)))
+				if int(partialTotalProgress) >= int(teamup.TotalTeamUpTarget/100) {
+					prev := partialTotalProgress - teamupEntries[i].AdjustedFiatProgress
+					teamupEntries[i].AdjustedFiatProgress = float64(teamup.TotalTeamUpTarget/100-1) - float64(prev)
 					partialTotalProgress = float64(int(teamup.TotalTeamUpTarget/100) - 1)
 				}
 
@@ -506,10 +515,6 @@ func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, t
 			return teamupEntries
 
 		})
-
-		if teamup.TotalFakeProgress >= 10000 {
-			teamupEntries[0].AdjustedFiatProgress = math.Floor((float64(teamup.TotalTeamUpTarget)/100-float64(partialTotalProgress))*100) / 100
-		}
 	}
 
 	res = teamupEntries
