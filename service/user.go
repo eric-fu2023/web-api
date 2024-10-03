@@ -71,16 +71,29 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (re
 	}
 
 	if referralCode != "" {
-		referrer, err := model.LinkReferralWithDB(tx, user.ID, referralCode)
-		if err != nil {
-			return referrer_nickname, is_join_success, fmt.Errorf("link referral with db: %w", err)
-		}
 		// referer and referral should have diff ip and uuid
+
+		// 1. get the referrer from referral_code
+		var referrer model.User
+		err := tx.Table(referrer.TableName()).Where("referral_code = ?", referralCode).First(&referrer).Error
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			fmt.Println("did not find referrer with provided referral_code")
+			return referrer_nickname, is_join_success, nil
+		} else if err != nil {
+			fmt.Println("find referrer with provided referral_code, ", err)
+			return referrer_nickname, is_join_success, nil
+		}
+		// 2. if same ip or uuid 
 		if user.RegistrationIp == referrer.RegistrationIp || user.RegistrationDeviceUuid == referrer.RegistrationDeviceUuid {
 			fmt.Println("referer and referral, the device uuid and ip should not be the same")
 			return referrer_nickname, is_join_success, nil
 		}
 
+
+		referrer, err = model.LinkReferralWithDB(tx, user.ID, referralCode)
+		if err != nil {
+			return referrer_nickname, is_join_success, fmt.Errorf("link referral with db: %w", err)
+		}
 		// Overwrite user's channel with referrer's channel
 		// Set to empty if referrer's channel is empty
 		user.Channel = referrer.Channel
