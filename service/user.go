@@ -77,7 +77,8 @@ func CreateNewUserWithDB(user *model.User, referralCode string, tx *gorm.DB) (re
 		}
 		// referer and referral should have diff ip and uuid
 		if user.RegistrationIp == referrer.RegistrationIp || user.RegistrationDeviceUuid == referrer.RegistrationDeviceUuid {
-			return referrer_nickname, is_join_success, fmt.Errorf("referer and referral, the device uuid and ip should not be the same", err)
+			fmt.Println("referer and referral, the device uuid and ip should not be the same")
+			return referrer_nickname, is_join_success, nil
 		}
 
 		// Overwrite user's channel with referrer's channel
