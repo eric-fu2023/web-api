@@ -535,23 +535,23 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 				return err
 			}
 
-			transaction := ploutos.Transaction{
-				UserId:                teamup.UserId,
-				Amount:                amount,
-				BalanceBefore:         sum.Balance - amount,
-				BalanceAfter:          sum.Balance,
-				TransactionType:       ploutos.TransactionTypeTeamupPromotion,
-				Wager:                 0,
-				WagerBefore:           sum.RemainingWager,
-				WagerAfter:            sum.RemainingWager + amount,
-				ExternalTransactionId: strconv.Itoa(int(teamup.ID)),
-				GameVendorId:          0,
-			}
-			err = tx.Create(&transaction).Error
-			if err != nil {
-				log.Printf("Error creating teamup transaction, err: %v", err)
-				return err
-			}
+			// transaction := ploutos.Transaction{
+			// 	UserId:                teamup.UserId,
+			// 	Amount:                amount,
+			// 	BalanceBefore:         sum.Balance - amount,
+			// 	BalanceAfter:          sum.Balance,
+			// 	TransactionType:       ploutos.TransactionTypeTeamupPromotion,
+			// 	Wager:                 0,
+			// 	WagerBefore:           sum.RemainingWager,
+			// 	WagerAfter:            sum.RemainingWager + amount,
+			// 	ExternalTransactionId: strconv.Itoa(int(teamup.ID)),
+			// 	GameVendorId:          0,
+			// }
+			// err = tx.Create(&transaction).Error
+			// if err != nil {
+			// 	log.Printf("Error creating teamup transaction, err: %v", err)
+			// 	return err
+			// }
 
 			util.GetLoggerEntry(c).Info("Team Up Cash Order", coId, teamup.ID)
 			common.SendUserSumSocketMsg(teamup.UserId, sum.UserSum, "teamup_success", float64(amount)/100)

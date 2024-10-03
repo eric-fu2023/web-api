@@ -2,6 +2,7 @@ package serializer
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"strconv"
 
@@ -151,7 +152,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, voucher Voucher, cl ClaimStatus, extra any, customData any, newbieData any, missions []models.PromotionMission) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, voucher Voucher, cl ClaimStatus, extra any, customData any, newbieData any, missions []models.PromotionMission, completedMissions []models.Voucher) PromotionDetail {
 	raw := json.RawMessage(p.Image)
 	m := make(map[string]string)
 	json.Unmarshal(raw, &m)
@@ -174,11 +175,18 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		for _, mission := range missions {
 			m := OutgoingEarnMoreMissionTier{
 				MissionId:     mission.ID,
-				MissionAmount: mission.MissionAmount,
-				RewardAmount:  mission.RewardAmount,
+				MissionAmount: mission.MissionAmount / 100,
+				RewardAmount:  mission.RewardAmount / 100,
 				Label:         mission.Label,
 				Status:        models.PromotionMissionPendingStatus,
-				CurrentAmount: int64(rand.Intn(int(mission.MissionAmount))),
+				CurrentAmount: int64(rand.Intn(int(mission.MissionAmount))) / 100,
+			}
+
+			for _, completed := range completedMissions {
+				if completed.ReferenceID == fmt.Sprint(m.MissionId) {
+					m.Status = models.PromotionMissionCompletedStatus
+					break
+				}
 			}
 
 			earnMoreMissionTiers = append(earnMoreMissionTiers, m)

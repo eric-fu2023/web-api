@@ -1,6 +1,7 @@
 package promotion
 
 import (
+	"fmt"
 	"time"
 
 	"web-api/model"
@@ -8,7 +9,12 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
+	"gorm.io/plugin/dbresolver"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 const (
@@ -16,7 +22,8 @@ const (
 )
 
 type PromotionClaim struct {
-	ID int64 `form:"id" json:"id"`
+	ID        int64 `form:"id" json:"id"`
+	MissionId int64 `form:"mission_id" json:"mission_id"`
 }
 
 func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error) {
@@ -31,6 +38,68 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 		return
 	}
+
+	if p.MissionId != 0 {
+		mission, _ := model.GetMissionById(c, brand, p.MissionId)
+		if mission.ID == 0 {
+			if err != nil {
+				r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+				return
+			}
+		}
+		voucher, _ := model.GetVoucherByUserAndPromotionAndReference(c, user.ID, promotion.ID, p.MissionId)
+		if voucher.ID == 0 {
+
+			coId := uuid.NewString()
+			err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
+				sum, err := model.UpdateDbUserSumAndCreateTransaction(tx, user.ID, mission.RewardAmount, mission.RewardAmount, 0, ploutos.TransactionTypeDepB, coId)
+				if err != nil {
+					return err
+				}
+				notes := fmt.Sprintf("UserId, PromotionId, MissionId - %v, %v, %v", user.ID, promotion.ID, mission.ID)
+
+				teamupCashOrder := ploutos.CashOrder{
+					ID:                    coId,
+					UserId:                user.ID,
+					OrderType:             ploutos.CashOrderTypeDepB,
+					Status:                ploutos.CashOrderStatusSuccess,
+					Notes:                 ploutos.EncryptedStr(notes),
+					AppliedCashInAmount:   mission.RewardAmount,
+					ActualCashInAmount:    mission.RewardAmount,
+					EffectiveCashInAmount: mission.RewardAmount,
+					BalanceBefore:         sum.Balance - mission.RewardAmount,
+					WagerChange:           mission.RewardAmount,
+				}
+				err = tx.Create(&teamupCashOrder).Error
+				if err != nil {
+					return
+				}
+
+				// Create a voucher
+				voucher = ploutos.Voucher{
+					UserID:             user.ID,
+					Status:             ploutos.VoucherStatusRedeemed,
+					Amount:             mission.RewardAmount,
+					BrandID:            int64(brand),
+					VoucherTemplateID:  0,
+					ReferenceID:        fmt.Sprint(mission.ID),
+					WagerMultiplier:    1,
+					PromotionType:      promotion.Type,
+					PromotionID:        promotion.ID,
+					Name:               promotion.Name,
+					PromotionSessionID: 0,
+					UniqueID:           fmt.Sprint(time.Now().Unix()) + fmt.Sprint(user.ID),
+				}
+				err = tx.Save(&voucher).Error
+
+				return
+			})
+		}
+
+		r.Data = serializer.BuildVoucher(voucher, deviceInfo.Platform)
+		return
+	}
+
 	// tz := time.FixedZone("local", int(promotion.Timezone))
 	// now = now.In(tz)
 	session, err := model.GetActivePromotionSessionByPromotionId(c, p.ID, now)

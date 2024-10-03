@@ -135,9 +135,10 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		extra         any
 		activeSession models.PromotionSession
 
-		customData any
-		newbieData any
-		missions   []models.PromotionMission
+		customData        any
+		newbieData        any
+		missions          []models.PromotionMission
+		completedMissions []models.Voucher
 	)
 
 	switch promotion.Type {
@@ -149,7 +150,14 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			return
 		}
 
+		claimedVouchers, getVouchersErr := model.GetVouchersByUserAndPromotion(gCtx, user.ID, promotion.ID)
+		if getMissionErr != nil {
+			err = getVouchersErr
+			return
+		}
+
 		missions = promotionMissions
+		completedMissions = claimedVouchers
 
 	case models.PromotionTypeCustomTemplate:
 		customData = "anything"
@@ -191,7 +199,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		}
 	}
 
-	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, activeSession, voucherView, claimStatus, extra, customData, newbieData, missions)
+	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, activeSession, voucherView, claimStatus, extra, customData, newbieData, missions, completedMissions)
 	return
 }
 

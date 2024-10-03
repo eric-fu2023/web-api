@@ -66,3 +66,13 @@ func VoucherPendingGetByIDUserWithDBNoTime(c context.Context, userID int64, ID i
 func InvalidFilter() error {
 	return errors.New("invalid_filter")
 }
+
+func GetVoucherByUserAndPromotionAndReference(c context.Context, userId, promotionId, referenceId int64) (v models.Voucher, err error) {
+	err = DB.Debug().WithContext(c).Where("user_id", userId).Where("promotion_id", promotionId).Where("reference_id", referenceId).First(&v).Error
+	return
+}
+
+func GetVouchersByUserAndPromotion(c context.Context, userId, promotionId int64) (v []models.Voucher, err error) {
+	err = DB.Debug().WithContext(c).Where("user_id", userId).Where("promotion_id", promotionId).Find(&v).Error
+	return
+}
