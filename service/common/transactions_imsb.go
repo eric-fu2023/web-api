@@ -35,12 +35,15 @@ func ProcessImUpdateBalanceTransaction(ctx context.Context, transactionRequest C
 		return
 	}
 	newBalance := balance + transactionRequest.GetAmount()
+	fmt.Printf("DebugLog1234: GameVendorId=%d, newBalance=%d\n", transactionRequest.GetGameVendorId(), newBalance)
 	reducedRemainingWager := remainingWager
 	reducedDepositRemainingWager := depositRemainingWager
 	//betAmount, betExists, w, depositWager, e := calculateWagerBatace(transactionRequest, remainingWager, reducedDepositRemainingWager)
 
-	// FIXME calculateWagerBatace doesnt calculate wager correctly, need a new method calculateWagerBatace IMSB
-	betAmount, betExists, w, depositWager, wagerChange, depositWagerChange, e := calculateWagerBatace(transactionRequest, remainingWager, depositRemainingWager)
+	// FIXME
+	// [x] calculateWagerBatace doesnt calculate wager correctly, need a new method calculateWagerBatace IMSB
+	// [ ] deprecate this turnover calc, to derive turnover from bet report
+	betAmount, betExists, w, depositWager, wagerChange, depositWagerChange, e := calculateWagerImsb(transactionRequest, remainingWager)
 	_, _ = wagerChange, depositWagerChange // not used. for wager data in `transaction` table, wager changes to update as before minus after
 	if e == nil {
 		reducedRemainingWager = w

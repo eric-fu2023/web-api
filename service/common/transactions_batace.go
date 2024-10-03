@@ -142,3 +142,28 @@ func calculateWagerBatace(transaction CallbackInterface, originalWager int64, or
 	}
 	return
 }
+
+// calculateWagerBatace dollar jackpot, stream games, imsb,  ...
+func calculateWagerImsb(transaction CallbackInterface, remainingTurnover int64) (betAmount int64, betExists bool, remainingTurnover2 int64, newDepositWager int64, wagerChange int64, depositWagerChange int64, err error) {
+	remainingTurnover2 = remainingTurnover
+
+	multiplier, exists := transaction.GetWagerMultiplier()
+	betAmount, betExists = transaction.GetBetAmount()
+	if !exists || !betExists {
+		return
+	}
+
+	betAmount = abs(betAmount)
+	turnoverToReduce := abs(betAmount - abs(transaction.GetAmount()))
+
+	if turnoverToReduce > betAmount {
+		turnoverToReduce = betAmount
+	}
+	remainingTurnover2 = remainingTurnover + (multiplier * turnoverToReduce)
+
+	if remainingTurnover2 < 0 {
+		remainingTurnover2 = 0
+	}
+
+	return
+}
