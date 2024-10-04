@@ -878,7 +878,7 @@ func SendTeamupNotification(brand, teamupType int, userId, percentage, totalTarg
 		}
 
 		if strings.Contains(notificationMsg, "%s") {
-			notificationMsg = fmt.Sprintf(notificationMsg, totalFiatProgress)
+			notificationMsg = fmt.Sprintf(notificationMsg, "₹"+fmt.Sprint(totalFiatProgress))
 		}
 
 		go common.SendNotification(userId, consts.Notification_Type_Teamup_Detail, notificationTitle, notificationMsg, resp)
