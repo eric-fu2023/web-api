@@ -47,6 +47,20 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 				return
 			}
 		}
+		topupRecords, getTopupsErr := model.TopupsByDateRange(c, user.ID, promotion.StartAt, promotion.EndAt)
+		if getTopupsErr != nil {
+			err = getTopupsErr
+			return
+		}
+		totalDepositedAmount := util.Sum(topupRecords, func(co model.CashOrder) int64 {
+			return co.ActualCashInAmount
+		})
+
+		if totalDepositedAmount < mission.MissionAmount {
+			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+			return
+		}
+
 		voucher, _ := model.GetVoucherByUserAndPromotionAndReference(c, user.ID, promotion.ID, p.MissionId)
 		if voucher.ID == 0 {
 
