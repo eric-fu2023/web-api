@@ -96,7 +96,7 @@ func (n *NineWicket) TransferFrom(ctx context.Context, tx *gorm.DB, user model.U
 	}
 
 	if userBalance <= 0 {
-		util.Log().Info("This user balance is smaller than / equal to 0, user: %v, balance: %v", user.IdAsString(), userBalance)
+		util.Log().Info("nw This user balance is smaller than / equal to 0, user: %v, balance: %v", user.IdAsString(), userBalance)
 		return
 	}
 
@@ -162,12 +162,12 @@ func (n *NineWicket) GetGameBalance(ctx context.Context, user model.User, curren
 	}
 	userBalance, err := client.GetBalanceOneUser(api.UserId(user.ID))
 	if err != nil {
-		util.Log().Info("Error getting 9wicket user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
+		util.Log().Info("nw Error getting 9wicket user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
 	}
 
 	if userBalance <= 0 {
-		util.Log().Info("This user balance is smaller than / equal to 0, user: %v, balance: %v", user.IdAsString(), userBalance)
+		util.Log().Info("nw This user balance is smaller than / equal to 0, user: %v, balance: %v", user.IdAsString(), userBalance)
 		return
 	}
 

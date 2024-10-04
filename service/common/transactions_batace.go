@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"web-api/model"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -85,6 +86,24 @@ func ProcessTransactionBatace(obj CallbackInterface) (err error) {
 		GameVendorId:         obj.GetGameVendorId(),
 	}
 	err = tx.Save(&transaction).Error
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+
+	wagerAudit := ploutos.WagerAudit{
+		SourceId:            string(obj.GetGameTransactionId()),
+		UserId:              gpu.UserId,
+		BeforeWager:         remainingWager,
+		AfterWager:          userSum.RemainingWager,
+		WagerChanges:        wc,
+		DepositBeforeWager:  userSum.DepositRemainingWager,
+		DepositAfterWager:   newDepositRemainingWager,
+		DepositWagerChanges: dwc,
+		SourceType:          ploutos.SourceTypeInternalGame,
+	}
+
+	err = tx.Create(&wagerAudit).Error
 	if err != nil {
 		tx.Rollback()
 		return

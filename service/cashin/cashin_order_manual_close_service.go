@@ -6,6 +6,7 @@ import (
 	"web-api/service/promotion/on_cash_orders"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/common-function/cash_orders"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,6 +31,13 @@ func (s ManualCloseService) Do(c *gin.Context) (r serializer.Response, err error
 		pErr := on_cash_orders.Handle(c.Copy(), closedCashInOrder, s.TransactionType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayDefault, on_cash_orders.RequestModeManual)
 		if pErr != nil {
 			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
+		}
+
+		// only if the cash orders has been settled, then we start adding the rewards
+		err = cash_orders.CreateReferralRewardRecord(model.DB, s.OrderNumber)
+		if err != nil {
+			util.GetLoggerEntry(c).Error("CreateReferralRewardRecord error", err)
+			return
 		}
 	}()
 
