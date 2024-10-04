@@ -7,6 +7,7 @@ import (
 	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/promotion/cash_method_promotion"
 	"web-api/util"
 	"web-api/util/i18n"
 
@@ -30,7 +31,7 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}
 
-	weeklyAmountRecords, dailyAmountRecords, err := model.GetWeeklyAndDailyCashMethodPromotionRecord(c, 0, user.ID)
+	weeklyAmountRecords, dailyAmountRecords, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c, 0, user.ID)
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}
@@ -49,7 +50,7 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 			return b.CashMethodId == a.CashMethod.ID
 		}).Amount
 
-		maxAmount, err := model.GetMaxCashMethodPromotionAmount(c, weeklyAmount, dailyAmount, *a.CashMethod.CashMethodPromotion, user.ID, 0, true)
+		maxAmount, err := cash_method_promotion.FinalPayout(c, weeklyAmount, dailyAmount, *a.CashMethod.CashMethodPromotion, 0, true)
 		if err != nil {
 			util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetMaxAmountPayment", err)
 		}

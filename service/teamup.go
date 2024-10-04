@@ -499,6 +499,7 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
+	brand := c.MustGet(`_brand`).(int)
 
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
 	teamup, isTeamupSuccess, isSuccess, err := model.CreateSlashBetRecord(c, s.TeamupId, user.User, i18n)
@@ -564,13 +565,13 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 		}
 
 		alreadyPushTeamupNotification = true
-		SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+		SendTeamupNotification(brand, 2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 	}
 
 	if isSuccess {
 		teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
 		if !alreadyPushTeamupNotification {
-			SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+			SendTeamupNotification(brand, 1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 		}
 	}
 
@@ -831,7 +832,7 @@ func (s TestDepositService) TestDeposit(c *gin.Context) (r serializer.Response, 
 	return
 }
 
-func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, teamupId int64, i18n i18n.I18n) {
+func SendTeamupNotification(brand, teamupType int, userId, percentage, totalTarget, teamupId int64, i18n i18n.I18n) {
 
 	// TYPE 1 = PROGRESS
 	// TYPE 2 = SUCCESS
@@ -840,41 +841,55 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 		teamupType = 1
 	}
 
-	n := rand.Intn(3)
+	n := 0
 
 	titles := []string{}
 	contents := []string{}
 
 	switch {
 	case teamupType == 1:
-		titles = []string{i18n.T("notification_slash_teamup_progress_title1"), i18n.T("notification_slash_teamup_progress_title2"), i18n.T("notification_slash_teamup_progress_title3")}
-		contents = []string{i18n.T("notification_slash_teamup_progress_content1"), i18n.T("notification_slash_teamup_progress_content2"), i18n.T("notification_slash_teamup_progress_content3")}
+		n = rand.Intn(5)
+		titles = []string{i18n.T("notification_slash_teamup_progress_title1"), i18n.T("notification_slash_teamup_progress_title2"), i18n.T("notification_slash_teamup_progress_title3"), i18n.T("notification_slash_teamup_progress_title4"), i18n.T("notification_slash_teamup_progress_title5")}
+		contents = []string{i18n.T("notification_slash_teamup_progress_content1"), i18n.T("notification_slash_teamup_progress_content2"), i18n.T("notification_slash_teamup_progress_content3"), i18n.T("notification_slash_teamup_progress_content4"), i18n.T("notification_slash_teamup_progress_content5")}
 
 	case teamupType == 2:
+		n = rand.Intn(3)
 		titles = []string{i18n.T("notification_slash_teamup_success_title1"), i18n.T("notification_slash_teamup_success_title2"), i18n.T("notification_slash_teamup_success_title3")}
 		contents = []string{i18n.T("notification_slash_teamup_success_content1"), i18n.T("notification_slash_teamup_success_content2"), i18n.T("notification_slash_teamup_success_content3")}
 	}
 
 	notificationTitle := titles[n]
 	notificationMsg := contents[n]
-	if strings.Contains(notificationMsg, "%s") {
-		// pString := fmt.Sprintf("%.2f", (float64(percentage)/float64(10000))*(float64(totalTarget)/float64(100)))
-		// notificationMsg = fmt.Sprintf(notificationMsg, pString)
-
-		// if n != 1 {
-		// 	pFloat64 := (float64(percentage) / float64(100))
-		// 	notificationMsg = strings.ReplaceAll(notificationMsg, pString, "%s")
-		// 	notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64)+"%")
-		// }
-
-		pFloat64 := (float64(percentage) / float64(100))
-		notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64)+"%")
-	}
 
 	var resp serializer.Response
 
 	resp.Data = TeamupNotificationResp{
 		TeamupId: teamupId,
+	}
+
+	if strings.Contains(notificationMsg, "%s") && teamupType == 1 && n > 2 {
+
+		teamupCustomRes, _ := model.GetAllTeamUpEntries(brand, teamupId, 1, 50)
+		totalFiatProgress := 0
+		if len(teamupCustomRes) != 0 {
+			for _, r := range teamupCustomRes {
+				totalFiatProgress += int(r.AdjustedFiatProgress)
+			}
+		}
+
+		if strings.Contains(notificationMsg, "%s") {
+			notificationMsg = fmt.Sprintf(notificationMsg, totalFiatProgress)
+		}
+
+		go common.SendNotification(userId, consts.Notification_Type_Teamup_Detail, notificationTitle, notificationMsg, resp)
+
+		return
+	}
+
+	if strings.Contains(notificationMsg, "%s") {
+
+		pFloat64 := (float64(percentage) / float64(100))
+		notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64)+"%")
 	}
 
 	go common.SendNotification(userId, consts.Notification_Type_Teamup_Detail, notificationTitle, notificationMsg, resp)
