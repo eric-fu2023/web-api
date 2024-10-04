@@ -46,7 +46,7 @@ func ProcessImUpdateBalanceTransaction(ctx context.Context, transactionRequest C
 	// [x] calculateWagerBatace doesnt calculate wager correctly, need a new method calculateWagerBatace IMSB
 	//			calculateWagerImsb the calculation is still incorrect as new requirement need to derive turover from odds which is not visible in this routine.
 	// [ ] deprecate this turnover calc, to derive turnover from bet report
-	betAmount, betExists, w, depositWager, wagerChange, depositWagerChange, e := calculateWagerImsb(transactionRequest, remainingWager)
+	betAmount, betExists, w, depositWager, wagerChange, depositWagerChange, e := calculateWagerImsb(transactionRequest, remainingWager, reducedDepositRemainingWager)
 	_, _ = wagerChange, depositWagerChange // not used. for wager data in `transaction` table, wager changes to update as before minus after
 	if e == nil {
 		reducedRemainingWager = w
