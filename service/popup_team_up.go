@@ -29,11 +29,17 @@ type TeamUpPopupResponse struct {
 	TotalTeamUpTarget float64                 `json:"total_target"`
 	// Remaining         int64                   `json:"remaining"`
 	// Saved             int64                   `json:"saved"`
-	Progress          float64                 `json:"progress"`
-	Start             int64                   `json:"start"`
-	End               int64                   `json:"end"`
-	Type              int                     `json:"type"`
-	Members           []TeamUpPopupMemberInfo `json:"members"`
+	Progress float64                 `json:"progress"`
+	Start    int64                   `json:"start"`
+	End      int64                   `json:"end"`
+	Type     int                     `json:"type"`
+	Members  []TeamUpPopupMemberInfo `json:"members"`
+
+	// NEW ADDED FOR PERCENTAGE TALLY
+	AdjustedCurrentProgress             float64 `json:"adjusted_current_progress"`
+	AdjustedRemainingProgress           float64 `json:"adjusted_remaining_progress"`
+	AdjustedCurrentProgressPercentage   float64 `json:"adjusted_current_progress_percentage"`
+	AdjustedRemainingProgressPercentage float64 `json:"adjusted_remaining_progress_percentage"`
 }
 type TeamUpPopupMemberInfo struct {
 	TotalTeamUpTarget float64 `json:"total_target"`
