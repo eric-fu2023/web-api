@@ -516,6 +516,10 @@ func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, t
 
 			}
 
+			if teamup.TotalFakeProgress >= 10000 {
+				teamupEntries[0].AdjustedFiatProgress = math.Floor((float64(teamup.TotalTeamUpTarget)/100-float64(partialTotalProgress))*100) / 100
+			}
+
 			return teamupEntries
 
 		})
