@@ -22,8 +22,9 @@ const (
 )
 
 type PromotionClaim struct {
-	ID        int64 `form:"id" json:"id"`
-	MissionId int64 `form:"mission_id" json:"mission_id"`
+	ID           int64 `form:"id" json:"id"`
+	ClaimMission bool  `form:"claim_mission" json:"claim_mission"`
+	MissionId    int64 `form:"mission_id" json:"mission_id"`
 }
 
 func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error) {
@@ -39,14 +40,17 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		return
 	}
 
-	if p.MissionId != 0 {
-		mission, _ := model.GetMissionById(c, brand, p.MissionId)
-		if mission.ID == 0 {
-			if err != nil {
-				r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
-				return
-			}
+	if p.ClaimMission {
+
+		missionTiers := GetPromotionMissionTiers(promotion.RewardDetails)
+
+		if int(p.MissionId) >= len(missionTiers) {
+			r = serializer.Err(c, p, serializer.CodeGeneralError, "Invalid Mission Tier", err)
+			return
 		}
+
+		selectedMissionTierToClaim := missionTiers[p.MissionId]
+
 		topupRecords, getTopupsErr := model.TopupsByDateRange(c, user.ID, promotion.StartAt, promotion.EndAt)
 		if getTopupsErr != nil {
 			err = getTopupsErr
@@ -56,7 +60,7 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 			return co.ActualCashInAmount
 		})
 
-		if totalDepositedAmount < mission.MissionAmount {
+		if totalDepositedAmount < selectedMissionTierToClaim.MissionAmount {
 			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
 			return
 		}
@@ -66,11 +70,11 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 
 			coId := uuid.NewString()
 			err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
-				sum, err := model.UpdateDbUserSumAndCreateTransaction(tx, user.ID, mission.RewardAmount, mission.RewardAmount, 0, ploutos.TransactionTypeDepB, coId)
+				sum, err := model.UpdateDbUserSumAndCreateTransaction(tx, user.ID, selectedMissionTierToClaim.RewardAmount, selectedMissionTierToClaim.RewardAmount, 0, ploutos.TransactionTypeDepB, coId)
 				if err != nil {
 					return err
 				}
-				notes := fmt.Sprintf("UserId, PromotionId, MissionId - %v, %v, %v", user.ID, promotion.ID, mission.ID)
+				notes := fmt.Sprintf("UserId, PromotionId, MissionAmount, MissionRewardAmount - %v, %v, %v, %v", user.ID, promotion.ID, selectedMissionTierToClaim.MissionAmount, selectedMissionTierToClaim.RewardAmount)
 
 				teamupCashOrder := ploutos.CashOrder{
 					ID:                    coId,
@@ -78,11 +82,11 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 					OrderType:             ploutos.CashOrderTypeDepB,
 					Status:                ploutos.CashOrderStatusSuccess,
 					Notes:                 ploutos.EncryptedStr(notes),
-					AppliedCashInAmount:   mission.RewardAmount,
-					ActualCashInAmount:    mission.RewardAmount,
-					EffectiveCashInAmount: mission.RewardAmount,
-					BalanceBefore:         sum.Balance - mission.RewardAmount,
-					WagerChange:           mission.RewardAmount,
+					AppliedCashInAmount:   selectedMissionTierToClaim.RewardAmount,
+					ActualCashInAmount:    selectedMissionTierToClaim.RewardAmount,
+					EffectiveCashInAmount: selectedMissionTierToClaim.RewardAmount,
+					BalanceBefore:         sum.Balance - selectedMissionTierToClaim.RewardAmount,
+					WagerChange:           selectedMissionTierToClaim.RewardAmount,
 				}
 				err = tx.Create(&teamupCashOrder).Error
 				if err != nil {
@@ -93,10 +97,10 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 				voucher = ploutos.Voucher{
 					UserID:             user.ID,
 					Status:             ploutos.VoucherStatusRedeemed,
-					Amount:             mission.RewardAmount,
+					Amount:             selectedMissionTierToClaim.RewardAmount,
 					BrandID:            int64(brand),
 					VoucherTemplateID:  0,
-					ReferenceID:        fmt.Sprint(mission.ID),
+					ReferenceID:        fmt.Sprint(p.MissionId),
 					WagerMultiplier:    1,
 					PromotionType:      promotion.Type,
 					PromotionID:        promotion.ID,

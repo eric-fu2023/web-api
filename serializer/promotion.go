@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+	"web-api/model"
 
 	"web-api/util"
 
@@ -117,9 +118,9 @@ type SysDictionaryDetail struct {
 }
 
 type MissionDO struct {
-	Missions           []models.PromotionMission `json:"missions"`
-	CompletedMissions  []models.Voucher          `json:"completed_missions"`
-	TotalDepositAmount int64                     `json:"total_deposit_amount"`
+	Missions           []model.MissionTier `json:"missions"`
+	CompletedMissions  []models.Voucher    `json:"completed_missions"`
+	TotalDepositAmount int64               `json:"total_deposit_amount"`
 }
 
 func BuildSysDictionaryDetail(s models.SysDictionaryDetail) SysDictionaryDetail {
@@ -182,12 +183,12 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 
 		var earnMoreMissionTiers []OutgoingEarnMoreMissionTier
 
-		for _, mission := range mDo.Missions {
+		for i, mission := range mDo.Missions {
 			m := OutgoingEarnMoreMissionTier{
-				MissionId:     mission.ID,
+				MissionId:     int64(i),
 				MissionAmount: mission.MissionAmount / 100,
 				RewardAmount:  mission.RewardAmount / 100,
-				Label:         mission.Label,
+				Label:         "Deposit ₹" + fmt.Sprint(int(mission.MissionAmount/100)),
 				Status:        models.PromotionMissionPendingStatus,
 				CurrentAmount: int64(math.Min(float64(totalDepositedAmount), float64(mission.MissionAmount/100))),
 			}

@@ -3,6 +3,8 @@ package promotion
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
+	"strconv"
 	"time"
 
 	"web-api/model"
@@ -153,19 +155,23 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			return co.ActualCashInAmount
 		})
 
-		promotionMissions, getMissionErr := model.GetMissionByPromotionId(gCtx, brand, promotion.ID)
-		if getMissionErr != nil {
-			err = getMissionErr
+		var promotionRewardDetails model.PromotionReward
+		err = json.Unmarshal(promotion.RewardDetails, &promotionRewardDetails)
+
+		if len(promotionRewardDetails.Rewards) <= 0 {
+			r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", err)
 			return
 		}
 
+		missionTiers := GetPromotionMissionTiers(promotion.RewardDetails)
+
 		claimedVouchers, getVouchersErr := model.GetVouchersByUserAndPromotion(gCtx, user.ID, promotion.ID)
-		if getMissionErr != nil {
+		if getVouchersErr != nil {
 			err = getVouchersErr
 			return
 		}
 
-		mDo.Missions = promotionMissions
+		mDo.Missions = missionTiers
 		mDo.CompletedMissions = claimedVouchers
 		mDo.TotalDepositAmount = totalDepositedAmount
 
@@ -358,5 +364,40 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 	}
 
 	r.Data = outgoingRes
+	return
+}
+
+func GetPromotionMissionTiers(rewardDetails []byte) (missions []model.MissionTier) {
+
+	var promotionRewardDetails model.PromotionReward
+	_ = json.Unmarshal(rewardDetails, &promotionRewardDetails)
+
+	if len(promotionRewardDetails.Rewards) <= 0 {
+		return
+	}
+
+	missionTiers := make([]model.MissionTier, len(promotionRewardDetails.Rewards))
+	for _, r := range promotionRewardDetails.Rewards {
+		if len(r.Rewards) > 0 {
+			missionTiers[0].RewardAmount = r.Rewards[0].Value
+		}
+
+		if len(r.Conditions) > 0 {
+			value, _ := strconv.Atoi(r.Conditions[0].Value)
+			missionTiers[0].MissionAmount = int64(value)
+		}
+	}
+
+	slices.SortFunc(missionTiers, func(a, b model.MissionTier) int {
+		if a.MissionAmount > b.MissionAmount {
+			return 1
+		} else if a.MissionAmount < b.MissionAmount {
+			return -1
+		}
+		return 0
+	})
+
+	missions = missionTiers
+
 	return
 }
