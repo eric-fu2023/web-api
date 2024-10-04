@@ -20,6 +20,7 @@ type PopupService struct {
 }
 type PopupSpinId struct {
 	SpinId int `json:"spin_id"`
+	UserId int64 `json:"user_id"`
 }
 type PopupResponse struct {
 	Type  int          `json:"type"`
@@ -85,6 +86,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if shouldPopupWinLose && WinLoseAvailable(PopupTypes) {
 			var service WinLoseService
 			data, err := service.Get(c)
+			data.UserId = user.ID
 			r.Data = PopupResponse{
 				Type:  1,
 				Float: floats,
@@ -101,6 +103,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if shouldPopupTeamUp && TeamUpAvailable(PopupTypes) {
 			var service TeamUpService
 			data, err := service.Get(c)
+			data.UserId = user.ID
 			r.Data = PopupResponse{
 				Type:  data.Type,
 				Float: floats,
@@ -117,6 +120,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if ShouldVIP && VIPAvailable(PopupTypes) {
 			var service VipService
 			data, err := service.Get(c)
+			data["UserId"] = user.ID
 			if err != nil {
 				return r, err
 			}
@@ -139,6 +143,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if ShouldPopupSpin && should_spin {
 			spin_id_data := PopupSpinId{
 				SpinId: spin_promotion_id,
+				UserId: user.ID,
 			}
 			r.Data = PopupResponse{
 				Type:  5,
@@ -161,6 +166,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if shouldPopupWinLose && WinLoseAvailable(PopupTypes) {
 				var service WinLoseService
 				data, err := service.Get(c)
+				data.UserId = user.ID
 				r.Data = PopupResponse{
 					Type:  1,
 					Float: floats,
@@ -178,6 +184,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if should_popup && TeamUpAvailable(PopupTypes) {
 				var service TeamUpService
 				data, err := service.Get(c)
+				data.UserId = user.ID
 				r.Data = PopupResponse{
 					Type:  data.Type,
 					Float: floats,
@@ -194,6 +201,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if ShouldVIP && VIPAvailable(PopupTypes) {
 				var service VipService
 				data, err := service.Get(c)
+				data["UserId"] = user.ID
 				r.Data = PopupResponse{
 					Type:  4,
 					Float: floats,
@@ -211,6 +219,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if ShouldPopupSpin && should_spin {
 				spin_id_data := PopupSpinId{
 					SpinId: spin_promotion_id,
+					UserId: user.ID,
 				}
 				r.Data = PopupResponse{
 					Type:  5,

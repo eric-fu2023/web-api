@@ -26,6 +26,7 @@ type WinLosePopupResponse struct {
 	Start          int64             `json:"start"`
 	End            int64             `json:"end"`
 	Member         []WinLosePopupGGR `json:"members"`
+	UserId int64 `json:"user_id"`
 }
 type WinLosePopupGGR struct {
 	GGR     float64 `json:"win_lose"`
