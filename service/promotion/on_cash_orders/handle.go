@@ -1,12 +1,14 @@
 package on_cash_orders
 
 import (
-	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"fmt"
 	"log"
-	"web-api/model"
 
+	"web-api/model"
+	"web-api/service/promotion/cash_method_promotion"
+
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
@@ -65,15 +67,12 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 		OneTimeBonusPromotion(ctx, order)
 	}
 	// handle cash method promotion
+	// future can add feature flag or runtime control via app_config to toggle.
 	{
 		shouldHandleCashMethodPromotion := false
 		switch {
 		case ploutos.TransactionTypeCashIn == transactionType:
 			shouldHandleCashMethodPromotion = true
-		case ploutos.TransactionTypeCashOut == transactionType && RequestModeCallback == requestMode:
-			shouldHandleCashMethodPromotion = true
-		default:
-			return fmt.Errorf("unknown transaction type for shouldHandleCashMethodPromotion %d", transactionType)
 		}
 
 		ctx = rfcontext.AppendParams(ctx, "cash_method_promo", map[string]interface{}{
@@ -83,7 +82,7 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 		log.Printf(rfcontext.Fmt(ctx))
 
 		if shouldHandleCashMethodPromotion {
-			ValidateAndClaimCashMethodPromotion(ctx, order)
+			go cash_method_promotion.ValidateAndClaim(ctx, order)
 		}
 	}
 

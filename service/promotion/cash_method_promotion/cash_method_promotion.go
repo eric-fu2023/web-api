@@ -1,22 +1,23 @@
-package model
+package cash_method_promotion
 
 import (
 	"context"
 	"time"
+	"web-api/model"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 )
 
-func FindActiveCashMethodPromotionByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Time, cashInAmount *int64, tx *gorm.DB) (cashMethodPromotion models.CashMethodPromotion, err error) {
+func PromoByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Time, cashInAmount *int64, tx *gorm.DB) (cashMethodPromotion models.CashMethodPromotion, err error) {
 	if promotionAt == nil {
 		now := time.Now().UTC()
 		promotionAt = &now
 	}
 
 	if tx == nil {
-		tx = DB
+		tx = model.DB
 	}
 
 	tx = tx.
@@ -36,13 +37,13 @@ func FindActiveCashMethodPromotionByCashMethodIdAndVipId(cashMethodId, vipId int
 	return
 }
 
-func GetCashMethodPromotionFinalPayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion models.CashMethodPromotion, cashAmount int64, dryRun bool) (amount int64, err error) {
+func FinalPayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion models.CashMethodPromotion, cashAmount int64, dryRun bool) (amount int64, err error) {
 	if claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout {
-		util.GetLoggerEntry(c).Info("GetCashMethodPromotionFinalPayout claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout", claimedPast7Days, cashMethodPromotion.WeeklyMaxPayout)
+		util.GetLoggerEntry(c).Info("FinalPayout claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout", claimedPast7Days, cashMethodPromotion.WeeklyMaxPayout)
 		return
 	}
 	if claimedPast1Day >= cashMethodPromotion.DailyMaxPayout {
-		util.GetLoggerEntry(c).Info("GetCashMethodPromotionFinalPayout claimedPast1Day >= cashMethodPromotion.DailyMaxPayout", claimedPast1Day, cashMethodPromotion.DailyMaxPayout)
+		util.GetLoggerEntry(c).Info("FinalPayout claimedPast1Day >= cashMethodPromotion.DailyMaxPayout", claimedPast1Day, cashMethodPromotion.DailyMaxPayout)
 		return
 	}
 

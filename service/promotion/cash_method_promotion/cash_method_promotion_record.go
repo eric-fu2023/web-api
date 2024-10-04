@@ -1,17 +1,19 @@
-package model
+package cash_method_promotion
 
 import (
 	"context"
 	"time"
+
+	"web-api/model"
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 )
 
-func FindCashMethodPromotionRecordByCashOrderId(cashOrderId string, tx *gorm.DB) (cashMethodPromotionRecord models.CashMethodPromotionRecord, err error) {
+func PromotionRecordByCashOrderId(cashOrderId string, tx *gorm.DB) (cashMethodPromotionRecord models.CashMethodPromotionRecord, err error) {
 	if tx == nil {
-		tx = DB
+		tx = model.DB
 	}
 	err = tx.Where("cash_order_id", cashOrderId).Find(&cashMethodPromotionRecord).Error
 	if err != nil {
@@ -24,7 +26,7 @@ func FindCashMethodPromotionRecordByCashOrderId(cashOrderId string, tx *gorm.DB)
 // FIXME this query returns a single aggregate tuple, not CashMethodPromotionRecord(s).
 func TotalClaimedByUserInPeriod(cashMethodId, userId int64, startAt, endAt time.Time, tx *gorm.DB) (cashMethodPromotionRecords []models.CashMethodPromotionRecord, err error) {
 	if tx == nil {
-		tx = DB
+		tx = model.DB
 	}
 
 	tx = tx.
