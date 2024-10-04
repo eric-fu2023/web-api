@@ -1,10 +1,13 @@
 package model
 
 import (
+	"context"
 	"time"
+
 	"web-api/util"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,12 +28,9 @@ func (CashMethod) GetByIDWithChannel(c *gin.Context, id int64) (item CashMethod,
 	return
 }
 
-func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform string, brandID, vipID int) (list []CashMethod, err error) {
-	u, _ := c.Get("user")
-	user, _ := u.(User)
-
-	var t []CashMethod
-	q := DB.Debug().Preload("CashMethodChannels", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandID)
+func (CashMethod) List(c context.Context, withdrawOnly, topupOnly bool, platform string, brandId, vipId int, user User) ([]CashMethod, error) {
+	var cashMethods []CashMethod
+	q := DB.Debug().Preload("CashMethodChannels", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandId)
 	if withdrawOnly {
 		q = q.Where("method_type < 0")
 	}
@@ -43,19 +43,24 @@ func (CashMethod) List(c *gin.Context, withdrawOnly, topupOnly bool, platform st
 	}
 
 	now := time.Now().UTC()
-	q = q.Joins("CashMethodPromotion", DB.Where("\"CashMethodPromotion\".start_at < ? and \"CashMethodPromotion\".end_at > ?", now, now).Where("\"CashMethodPromotion\".status = ?", 1).Where("\"CashMethodPromotion\".vip_id = ?", vipID))
+	q = q.Joins("CashMethodPromotion", DB.Where("\"CashMethodPromotion\".start_at < ? and \"CashMethodPromotion\".end_at > ?", now, now).Where("\"CashMethodPromotion\".status = ?", 1).Where("\"CashMethodPromotion\".vip_id = ?", vipId))
 
-	err = q.Order("sort desc").Find(&t).Error
-	for i := range t {
-		chns := FilterCashMethodChannelsByVip(c, user, t[i].CashMethodChannels)
+	err := q.Order("sort desc").Find(&cashMethods).Error
+	if err != nil {
+		return []CashMethod{}, err
+	}
+
+	var filteredCashMethods []CashMethod
+	for i := range cashMethods {
+		chns := FilterCashMethodChannelsByVip(c, user, cashMethods[i].CashMethodChannels)
 		if len(chns) == 0 {
 			continue
 		}
-		if t[i].IsSupportedPlatform(platform) {
-			list = append(list, t[i])
+		if cashMethods[i].IsSupportedPlatform(platform) {
+			filteredCashMethods = append(filteredCashMethods, cashMethods[i])
 		}
 	}
-	return
+	return filteredCashMethods, err
 }
 
 func (a *CashMethod) IsSupportedPlatform(platform string) bool {

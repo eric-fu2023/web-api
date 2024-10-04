@@ -20,10 +20,13 @@ func FindCashMethodPromotionRecordByCashOrderId(cashOrderId string, tx *gorm.DB)
 	return
 }
 
-func AggreCashMethodPromotionRecordAmountByCashMethodIdAndUserId(cashMethodId, userId int64, startAt, endAt time.Time, tx *gorm.DB) (cashMethodPromotionRecords []models.CashMethodPromotionRecord, err error) {
+// TotalClaimedByUserInPeriod
+// FIXME this query returns a single aggregate tuple, not CashMethodPromotionRecord(s).
+func TotalClaimedByUserInPeriod(cashMethodId, userId int64, startAt, endAt time.Time, tx *gorm.DB) (cashMethodPromotionRecords []models.CashMethodPromotionRecord, err error) {
 	if tx == nil {
 		tx = DB
 	}
+
 	tx = tx.
 		Select("SUM(amount) as amount, cash_method_id, user_id").
 		Group("cash_method_id").
@@ -51,19 +54,19 @@ func AggreCashMethodPromotionRecordAmountByCashMethodIdAndUserId(cashMethodId, u
 	return
 }
 
-func GetWeeklyAndDailyCashMethodPromotionRecord(c context.Context, cashMethodId, userId int64) (weeklyAmountRecords, dailyAmountRecords []models.CashMethodPromotionRecord, err error) {
+func GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c context.Context, cashMethodId, userId int64) (weeklyAmountRecords []models.CashMethodPromotionRecord, dailyAmountRecords []models.CashMethodPromotionRecord, err error) {
 	now := time.Now()
-	weeklyAmountRecords, err = AggreCashMethodPromotionRecordAmountByCashMethodIdAndUserId(cashMethodId, userId, now.AddDate(0, 0, -7), now, nil)
+	weeklyAmountRecords, err = TotalClaimedByUserInPeriod(cashMethodId, userId, now.AddDate(0, 0, -7), now, nil)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("GetWeeklyAndDailyCashMethodPromotionRecord AggreCashMethodPromotionRecordAmountByCashMethodIdAndUserId", cashMethodId, userId)
+		util.GetLoggerEntry(c).Error("GetAccumulatedClaimedCashMethodPromotionPast7And1Days TotalClaimedByUserInPeriod", cashMethodId, userId)
 		return
 	}
-	dailyAmountRecords, err = AggreCashMethodPromotionRecordAmountByCashMethodIdAndUserId(cashMethodId, userId, now.AddDate(0, 0, -1), now, nil)
+	dailyAmountRecords, err = TotalClaimedByUserInPeriod(cashMethodId, userId, now.AddDate(0, 0, -1), now, nil)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("GetWeeklyAndDailyCashMethodPromotionRecord AggreCashMethodPromotionRecordAmountByCashMethodIdAndUserId", cashMethodId, userId)
+		util.GetLoggerEntry(c).Error("GetAccumulatedClaimedCashMethodPromotionPast7And1Days TotalClaimedByUserInPeriod", cashMethodId, userId)
 		return
 	}
-	util.GetLoggerEntry(c).Info("GetWeeklyAndDailyCashMethodPromotionRecord weeklyAmountRecords", weeklyAmountRecords, cashMethodId, userId, now.AddDate(0, 0, -7), now) // wl: for staging debug
-	util.GetLoggerEntry(c).Info("GetWeeklyAndDailyCashMethodPromotionRecord dailyAmountRecords", dailyAmountRecords, cashMethodId, userId, now.AddDate(0, 0, -1), now)   // wl: for staging debug
+	util.GetLoggerEntry(c).Info("GetAccumulatedClaimedCashMethodPromotionPast7And1Days weeklyAmountRecords", weeklyAmountRecords, cashMethodId, userId, now.AddDate(0, 0, -7), now) // wl: for staging debug
+	util.GetLoggerEntry(c).Info("GetAccumulatedClaimedCashMethodPromotionPast7And1Days dailyAmountRecords", dailyAmountRecords, cashMethodId, userId, now.AddDate(0, 0, -1), now)   // wl: for staging debug
 	return
 }

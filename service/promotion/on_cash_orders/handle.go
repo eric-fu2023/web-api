@@ -1,9 +1,10 @@
 package on_cash_orders
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"fmt"
-
+	"log"
 	"web-api/model"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -37,9 +38,16 @@ const (
 )
 
 // Handle
-// Note: take awareness on the trigger conditions and also the sequence of process~ these will change as requirement comes in
-// See also: [Note: Work in progress]
 func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.TransactionType, eventType CashOrderEventType, gateway PaymentGateway, requestMode RequestIngressMode) error {
+	ctx = rfcontext.AppendCallDesc(ctx, "on_cash_order.Handle()")
+	ctx = rfcontext.AppendParams(ctx, "on_cash_order.Handle()", map[string]interface{}{
+		"transactionType": transactionType,
+		"eventType":       eventType,
+		"gateway":         gateway,
+		"requestMode":     requestMode,
+		"order":           order,
+	})
+
 	// validate eventType
 	switch eventType {
 	case CashOrderEventTypeClose:
@@ -56,7 +64,7 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 	if transactionType == ploutos.TransactionTypeCashIn {
 		OneTimeBonusPromotion(ctx, order)
 	}
-	// handle
+	// handle cash method promotion
 	{
 		shouldHandleCashMethodPromotion := false
 		switch {
@@ -68,26 +76,16 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 			return fmt.Errorf("unknown transaction type for shouldHandleCashMethodPromotion %d", transactionType)
 		}
 
+		ctx = rfcontext.AppendParams(ctx, "cash_method_promo", map[string]interface{}{
+			"shouldHandleCashMethodPromotion": shouldHandleCashMethodPromotion,
+		})
+
+		log.Printf(rfcontext.Fmt(ctx))
+
 		if shouldHandleCashMethodPromotion {
-			CashMethodPromotion(ctx, order)
+			ValidateAndClaimCashMethodPromotion(ctx, order)
 		}
 	}
 
-	{
-		shouldHandleTetheredRebatePromotion := false
-		_ = shouldHandleTetheredRebatePromotion
-		// trpService, err := tethered_rebate_promotion.NewService(model.DB, nil, nil)
-		// if err != nil {
-		// 	util.Log().Error("tethered_rebate_promotion.NewService failed", err)
-		// }
-		// cashOrder := order.CashOrder
-		// _ = cashOrder
-		// reward, err := trpService.AddRewardForClosedDeposit(context.TODO(), tethered_rebate_promotion.UserForm{
-		// 	Id: 0,
-		// }, nil)
-
-		// _ = reward
-
-	}
 	return nil
 }

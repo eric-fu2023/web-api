@@ -2,139 +2,171 @@ package on_cash_orders
 
 import (
 	"context"
+	"fmt"
+	"log"
 
 	"web-api/model"
 	"web-api/service/common"
 	"web-api/util"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 )
 
-func CashMethodPromotion(c context.Context, order model.CashOrder) {
-	if order.CashMethodId == 0 {
-		util.GetLoggerEntry(c).Info("CashMethodPromotion order.CashMethodId == 0", order.ID)
+// ValidateAndClaimCashMethodPromotion
+// validates applicable rules and net payout
+// reward exist in table == claimed
+func ValidateAndClaimCashMethodPromotion(ctx context.Context, order model.CashOrder) {
+	callDesc := "ValidateAndClaimCashMethodPromotion"
+
+	orderId := order.ID
+	orderUserId := order.UserId
+	orderCashMethodId := order.CashMethodId
+
+	ctx = rfcontext.AppendParams(ctx, callDesc, map[string]any{
+		"orderId":           orderId,
+		"orderUserId":       orderUserId,
+		"orderCashMethodId": orderCashMethodId,
+	})
+
+	if orderCashMethodId == 0 {
+		util.GetLoggerEntry(ctx).Info("ValidateAndClaimCashMethodPromotion orderCashMethodId == 0", orderId)
 		return
 	}
-	// check claim before or not
-	cashMethodPromotionRecord, err := model.FindCashMethodPromotionRecordByCashOrderId(order.ID, nil)
+	{
+		// check claim before or not
+		cashMethodPromotionRecord, err := model.FindCashMethodPromotionRecordByCashOrderId(orderId, nil)
+		if err != nil {
+			util.GetLoggerEntry(ctx).Error("ValidateAndClaimCashMethodPromotion FindCashMethodPromotionRecordByCashOrderId", err, orderId)
+			return
+		}
+
+		if cashMethodPromotionRecord.ID != 0 {
+			util.GetLoggerEntry(ctx).Info("ValidateAndClaimCashMethodPromotion FindCashMethodPromotionRecordByCashOrderId order has been claimed", orderId)
+			return
+		}
+	}
+
+	vipRecord, err := model.GetVipWithDefault(ctx, orderUserId)
+	vipRecordVipRuleId := vipRecord.VipRule.ID
+
+	ctx = rfcontext.AppendParams(ctx, callDesc, map[string]any{
+		"vipRecordVipRuleId": vipRecordVipRuleId,
+	})
 	if err != nil {
-		util.GetLoggerEntry(c).Error("CashMethodPromotion FindCashMethodPromotionRecordByCashOrderId", err, order.ID)
-		return
-	}
-	if cashMethodPromotionRecord.ID != 0 {
-		util.GetLoggerEntry(c).Info("CashMethodPromotion FindCashMethodPromotionRecordByCashOrderId order has been claimed", order.ID)
+		util.GetLoggerEntry(ctx).Error(rfcontext.Fmt(rfcontext.AppendDescription(ctx, fmt.Sprintf("ValidateAndClaimCashMethodPromotion GetVipWithDefault %v %v", err, orderId))))
 		return
 	}
 
-	vipRecord, err := model.GetVipWithDefault(c, order.UserId)
-	if err != nil {
-		util.GetLoggerEntry(c).Error("CashMethodPromotion GetVipWithDefault", err, order.ID)
-		return
-	}
-	util.GetLoggerEntry(c).Info("CashMethodPromotion vipRecord.VipRule.ID", vipRecord.VipRule.ID, order.ID) // wl: for staging debug
+	util.GetLoggerEntry(ctx).Info("ValidateAndClaimCashMethodPromotion vipRecordVipRuleId", vipRecordVipRuleId, orderId) // wl: for staging debug
 
 	// check cash method and vip combination has promotion or not
-	cashMethodPromotion, err := model.FindActiveCashMethodPromotionByCashMethodIdAndVipId(order.CashMethodId, vipRecord.VipRule.ID, &order.CreatedAt, nil)
+	cashMethodPromotion, err := model.FindActiveCashMethodPromotionByCashMethodIdAndVipId(orderCashMethodId, vipRecordVipRuleId, &order.CreatedAt, &order.AppliedCashInAmount, model.DB)
+	cashMethodPromotionId := cashMethodPromotion.ID
+	ctx = rfcontext.AppendParams(ctx, callDesc, map[string]any{
+		"cashMethodPromotionId": cashMethodPromotionId,
+	})
+
 	if err != nil {
-		util.GetLoggerEntry(c).Error("CashMethodPromotion Find CashMethodPromotion", err, order.ID)
+		util.GetLoggerEntry(ctx).Error("ValidateAndClaimCashMethodPromotion Find ValidateAndClaimCashMethodPromotion", err, orderId)
 		return
 	}
-	if cashMethodPromotion.ID == 0 {
-		util.GetLoggerEntry(c).Error("CashMethodPromotion no CashMethodPromotion", order.ID)
+	if cashMethodPromotionId == 0 {
+		util.GetLoggerEntry(ctx).Error("ValidateAndClaimCashMethodPromotion no ValidateAndClaimCashMethodPromotion", orderId)
 		return
 	}
 
-	util.GetLoggerEntry(c).Info("CashMethodPromotion cashMethodPromotion.ID", cashMethodPromotion.ID, order.ID) // wl: for staging debug
+	util.GetLoggerEntry(ctx).Info("ValidateAndClaimCashMethodPromotion cashMethodPromotionId", cashMethodPromotionId, orderId) // wl: for staging debug
 
 	// check over payout limit or not
-	weeklyAmountRecord, dailyAmountRecord, err := model.GetWeeklyAndDailyCashMethodPromotionRecord(c, order.CashMethodId, order.UserId)
+	claimedPast7DaysL, claimedPast1DayL, err := model.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(ctx, orderCashMethodId, orderUserId)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("CashMethodPromotion GetWeeklyAndDailyCashMethodPromotionRecord", err, order.ID)
+		util.GetLoggerEntry(ctx).Error("ValidateAndClaimCashMethodPromotion GetAccumulatedClaimedCashMethodPromotionPast7And1Days", err, orderId)
 		return
 	}
-	if cashMethodPromotion.ID == 0 {
-		util.GetLoggerEntry(c).Error("CashMethodPromotion no CashMethodPromotion", order.ID)
-		return
-	}
+
 	var weeklyAmount int64
-	if len(weeklyAmountRecord) > 0 {
-		weeklyAmount = weeklyAmountRecord[0].Amount
+	if len(claimedPast7DaysL) > 0 {
+		weeklyAmount = claimedPast7DaysL[0].Amount // len(claimedPast7DaysL[0]) at most 1
 	}
 	var dailyAmount int64
-	if len(dailyAmountRecord) > 0 {
-		dailyAmount = dailyAmountRecord[0].Amount
+	if len(claimedPast1DayL) > 0 {
+		dailyAmount = claimedPast1DayL[0].Amount // len(claimedPast1DayL[0]) at most 1
 	}
 
-	coAmount := order.AppliedCashInAmount
-	if order.OrderType == -1 {
-		coAmount = order.AppliedCashOutAmount
+	cashOrderAmount := order.AppliedCashInAmount
+	if order.OrderType == ploutos.CashOrderTypeCashOut {
+		cashOrderAmount = order.AppliedCashOutAmount
 	}
 
-	if coAmount < cashMethodPromotion.MinPayout {
-		util.GetLoggerEntry(c).Error("Juicyy - MinPayout bigger than request amount, so no promotion", err, order.ID) // staging debug
+	// catch underflow
+	if cashOrderAmount < cashMethodPromotion.MinPayout {
+		util.GetLoggerEntry(ctx).Info(rfcontext.Fmt(rfcontext.AppendDescription(ctx, fmt.Sprintf("Juicyy - MinPayout bigger than dep/wd cashOrderAmount, so no promotion. orderId: %s ", orderId)))) // staging debug
 		return
 	}
 
-	amount, err := model.GetMaxCashMethodPromotionAmount(c, weeklyAmount, dailyAmount, cashMethodPromotion, order.UserId, coAmount, false)
+	finalPayout, err := model.GetCashMethodPromotionFinalPayout(ctx, weeklyAmount, dailyAmount, cashMethodPromotion, cashOrderAmount, false)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("CashMethodPromotion GetMaxAmountPayment", err, order.ID)
-	}
-
-	if amount == 0 {
-		util.GetLoggerEntry(c).Info("CashMethodPromotion amount == 0", order.ID)
+		util.GetLoggerEntry(ctx).Error("ValidateAndClaimCashMethodPromotion GetMaxAmountPayment", err, orderId)
 		return
 	}
 
-	// cashMethodPromotion start
-	err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
-		newCashMethodPromotionRecord := models.CashMethodPromotionRecord{
-			CashMethodPromotionId: cashMethodPromotion.ID,
+	if finalPayout == 0 {
+		util.GetLoggerEntry(ctx).Info("ValidateAndClaimCashMethodPromotion finalPayout == 0", orderId)
+		return
+	}
+
+	// claim start
+	err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(ctx).Transaction(func(tx *gorm.DB) (err error) {
+		newCashMethodPromotionRecord := ploutos.CashMethodPromotionRecord{
+			CashMethodPromotionId: cashMethodPromotionId,
 			CashMethodId:          cashMethodPromotion.CashMethodId,
-			VipId:                 vipRecord.VipRule.ID,
-			UserId:                order.UserId,
+			VipId:                 vipRecordVipRuleId,
+			UserId:                orderUserId,
 			PayoutRate:            cashMethodPromotion.PayoutRate,
-			CashOrderId:           order.ID,
-			Amount:                amount,
+			CashOrderId:           orderId,
+			Amount:                finalPayout,
 		}
 		err = tx.Create(&newCashMethodPromotionRecord).Error
 		if err != nil {
 			return err
 		}
-
-		sum, err := model.UpdateDbUserSumAndCreateTransaction(tx, order.UserId, amount, amount, 0, models.TransactionTypeCashMethodPromotion, "")
+		wagerChange := finalPayout
+		updatedSum, err := model.UpdateDbUserSumAndCreateTransaction(tx, orderUserId, finalPayout, wagerChange, 0, ploutos.TransactionTypeCashMethodPromotion, "")
 		if err != nil {
 			return err
 		}
-		notes := "dummy"
+		notes := "dummy" // is dummy important or not???
 
-		coId := uuid.NewString()
-		dummyOrder := models.CashOrder{
-			ID:                    coId,
-			UserId:                order.UserId,
-			OrderType:             models.CashOrderTypeCashMethodPromotion,
-			Status:                models.CashOrderStatusSuccess,
-			Notes:                 models.EncryptedStr(notes),
-			AppliedCashInAmount:   amount,
-			ActualCashInAmount:    amount,
-			EffectiveCashInAmount: amount,
-			BalanceBefore:         sum.Balance - amount,
-			WagerChange:           amount,
+		cashOrderId := uuid.NewString()
+		dummyOrder := ploutos.CashOrder{
+			ID:                    cashOrderId,
+			UserId:                orderUserId,
+			OrderType:             ploutos.CashOrderTypeCashMethodPromotion,
+			Status:                ploutos.CashOrderStatusSuccess,
+			Notes:                 ploutos.EncryptedStr(notes),
+			AppliedCashInAmount:   finalPayout,
+			ActualCashInAmount:    finalPayout,
+			EffectiveCashInAmount: finalPayout,
+			BalanceBefore:         updatedSum.Balance - finalPayout,
+			WagerChange:           finalPayout,
 		}
 		err = tx.Create(&dummyOrder).Error
 		if err != nil {
 			return err
 		}
-		util.GetLoggerEntry(c).Info("CashMethodPromotion new co", coId, order.ID) // wl: for staging debug
-		common.SendUserSumSocketMsg(order.UserId, sum.UserSum, "promotion", float64(amount)/100)
-
+		util.GetLoggerEntry(ctx).Info("ValidateAndClaimCashMethodPromotion new cash order ", cashOrderId, orderId) // wl: for staging debug
+		common.SendUserSumSocketMsg(orderUserId, updatedSum.UserSum, "promotion", float64(finalPayout)/100)
 		return
 	})
 	if err != nil {
-		util.GetLoggerEntry(c).Error("CashMethodPromotion start", err, order.ID)
+		ctx = rfcontext.AppendError(ctx, err, "ValidateAndClaimCashMethodPromotion")
+		log.Printf(rfcontext.Fmt(ctx))
+		util.GetLoggerEntry(ctx).Error("ValidateAndClaimCashMethodPromotion", err, orderId)
 		return
 	}
 }

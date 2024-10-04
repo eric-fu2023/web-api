@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"math"
 	"time"
 	"web-api/util"
 
@@ -10,44 +9,50 @@ import (
 	"gorm.io/gorm"
 )
 
-func FindActiveCashMethodPromotionByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Time, tx *gorm.DB) (cashMethodPromotion models.CashMethodPromotion, err error) {
+func FindActiveCashMethodPromotionByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Time, cashInAmount *int64, tx *gorm.DB) (cashMethodPromotion models.CashMethodPromotion, err error) {
 	if promotionAt == nil {
 		now := time.Now().UTC()
 		promotionAt = &now
 	}
+
 	if tx == nil {
 		tx = DB
 	}
-	err = tx.
+
+	tx = tx.
 		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
-		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).Where("status = ?", 1).
-		Find(&cashMethodPromotion).Error
+		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).
+		Where("status = ?", 1)
+
+	// temporary guard for dev work, once stable can pass arg by value.
+	if cashInAmount == nil {
+		tx = tx.Where("? > floor_cash_in_amount", cashInAmount).Order("floor_cash_in_amount desc")
+	}
+
+	err = tx.First(&cashMethodPromotion).Error
 	if err != nil {
 		return
 	}
 	return
 }
 
-func GetMaxCashMethodPromotionAmount(c context.Context, weeklyAmount, dailyAmount int64, cashMethodPromotion models.CashMethodPromotion, userId, cashAmount int64, noCashAmount bool) (amount int64, err error) {
-	if weeklyAmount >= cashMethodPromotion.WeeklyMaxPayout {
-		util.GetLoggerEntry(c).Info("GetMaxCashMethodPromotionAmount weeklyAmount >= cashMethodPromotion.WeeklyMaxPayout", weeklyAmount, cashMethodPromotion.WeeklyMaxPayout)
+func GetCashMethodPromotionFinalPayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion models.CashMethodPromotion, cashAmount int64, dryRun bool) (amount int64, err error) {
+	if claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout {
+		util.GetLoggerEntry(c).Info("GetCashMethodPromotionFinalPayout claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout", claimedPast7Days, cashMethodPromotion.WeeklyMaxPayout)
 		return
 	}
-	if dailyAmount >= cashMethodPromotion.DailyMaxPayout {
-		util.GetLoggerEntry(c).Info("GetMaxCashMethodPromotionAmount dailyAmount >= cashMethodPromotion.DailyMaxPayout", dailyAmount, cashMethodPromotion.DailyMaxPayout)
+	if claimedPast1Day >= cashMethodPromotion.DailyMaxPayout {
+		util.GetLoggerEntry(c).Info("GetCashMethodPromotionFinalPayout claimedPast1Day >= cashMethodPromotion.DailyMaxPayout", claimedPast1Day, cashMethodPromotion.DailyMaxPayout)
 		return
 	}
 
-	oriAmount := cashMethodPromotion.PayoutRate * float64(cashAmount)
-	maxDailyPayoutRemaining := float64(cashMethodPromotion.DailyMaxPayout - dailyAmount)
-	maxWeeklyPayoutRemaining := float64(cashMethodPromotion.WeeklyMaxPayout - weeklyAmount)
+	ratedPayout := cashMethodPromotion.PayoutRate * float64(cashAmount)
+	dailyClaimableCeiling := float64(cashMethodPromotion.DailyMaxPayout - claimedPast1Day)
+	weeklyClaimableCeiling := float64(cashMethodPromotion.WeeklyMaxPayout - claimedPast7Days)
 
-	if !noCashAmount {
-		amount = int64(math.Min(oriAmount, maxDailyPayoutRemaining))
+	if dryRun {
+		return int64(min(dailyClaimableCeiling, weeklyClaimableCeiling)), nil
 	} else {
-		amount = int64(maxDailyPayoutRemaining)
+		return int64(min(ratedPayout, dailyClaimableCeiling, weeklyClaimableCeiling)), nil
 	}
-	amount = int64(math.Min(float64(amount), maxWeeklyPayoutRemaining))
-	util.GetLoggerEntry(c).Info("GetMaxCashMethodPromotionAmount get min amount", oriAmount, maxDailyPayoutRemaining, maxWeeklyPayoutRemaining, amount) // wl: for staging debug
-	return
 }
