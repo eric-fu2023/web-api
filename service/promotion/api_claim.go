@@ -1,6 +1,7 @@
 package promotion
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -11,7 +12,9 @@ import (
 
 	"gorm.io/plugin/dbresolver"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -66,7 +69,7 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 
 			coId := uuid.NewString()
 			err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
-				sum, err := model.UpdateDbUserSumAndCreateTransaction(tx, user.ID, mission.RewardAmount, mission.RewardAmount, 0, ploutos.TransactionTypeDepB, coId)
+				sum, err := model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "ValidateAndClaim"), tx, user.ID, mission.RewardAmount, mission.RewardAmount, 0, ploutos.TransactionTypeDepB, coId)
 				if err != nil {
 					return err
 				}

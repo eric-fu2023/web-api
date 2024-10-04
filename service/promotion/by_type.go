@@ -18,7 +18,9 @@ import (
 	"web-api/service/common"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/chenyahui/gin-cache/persist"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -264,7 +266,7 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 		})
 	case ploutos.PromotionTypeSpinWheel:
 		fmt.Println("promotion.PromotionTypeSpinWheel ")
-		// TODO move the cash order to here as well 
+		// TODO move the cash order to here as well
 		var spin_items []ploutos.SpinItem
 
 		// Build the GORM query
@@ -276,9 +278,8 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 			Where("sr.user_id = ?", userID).
 			Where("sr.redeemed = ?", false).
 			Find(&spin_items)
-		
 
-		for _,spin_item:=range spin_items{
+		for _, spin_item := range spin_items {
 			voucher.Amount = int64(spin_item.Amount)
 			voucher.WagerMultiplier = spin_item.Wager
 			voucher.ReferenceID = strconv.FormatInt(spin_item.ID, 10)
@@ -286,7 +287,7 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 			err = model.DB.Create(&voucher).Error
 			if err != nil {
 				fmt.Println("promotion.PromotionTypeSpinWheel creation failed")
-				return 
+				return
 			}
 		}
 		fmt.Println("promotion.PromotionTypeSpinWheel creation ends")
@@ -325,7 +326,7 @@ func GetPromotionExtraDetails(c context.Context, p ploutos.Promotion, userID int
 
 func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange int64, notes, name string) error {
 	txType := promotionTypeToTransactionTypeMapping[promoType]
-	sum, err := model.UpdateDbUserSumAndCreateTransaction(tx,
+	sum, err := model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "CreateCashOrder"), tx,
 		userId,
 		rewardAmount,
 		wagerChange,
