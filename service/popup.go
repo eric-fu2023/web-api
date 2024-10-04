@@ -20,12 +20,12 @@ type PopupService struct {
 }
 type PopupSpinId struct {
 	SpinId int `json:"spin_id"`
-	UserId int64 `json:"user_id"`
 }
 type PopupResponse struct {
-	Type  int          `json:"type"`
-	Float []PopupFloat `json:"float"`
-	Data  interface{}  `json:"data"`
+	UserId int64        `json:"user_id"`
+	Type   int          `json:"type"`
+	Float  []PopupFloat `json:"float"`
+	Data   interface{}  `json:"data"`
 }
 
 type PopupFloat struct {
@@ -36,7 +36,7 @@ type PopupFloat struct {
 func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, err error) {
 	// check what to popup
 	PopupTypes, err := model.GetPopupList(service.Condition)
-	if err!=nil{
+	if err != nil {
 		fmt.Println("get PopupTypes error", err)
 	}
 
@@ -58,11 +58,12 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				Type:  5,
 				Float: floats,
 				Data:  spin_id_data,
+				UserId: 0,
 			}
 			return r, err
 		}
 		r.Msg = "no popup available"
-		r.Data = PopupResponse{Type: -1, Float: floats}
+		r.Data = PopupResponse{Type: -1, Float: floats,	UserId: 0,}
 		return
 	}
 
@@ -86,11 +87,11 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if shouldPopupWinLose && WinLoseAvailable(PopupTypes) {
 			var service WinLoseService
 			data, err := service.Get(c)
-			data.UserId = user.ID
 			r.Data = PopupResponse{
 				Type:  1,
 				Float: floats,
 				Data:  data,
+				UserId: user.ID,
 			}
 			return r, err
 		}
@@ -103,11 +104,11 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if shouldPopupTeamUp && TeamUpAvailable(PopupTypes) {
 			var service TeamUpService
 			data, err := service.Get(c)
-			data.UserId = user.ID
 			r.Data = PopupResponse{
 				Type:  data.Type,
 				Float: floats,
 				Data:  data,
+				UserId: user.ID,
 			}
 			return r, err
 		}
@@ -120,7 +121,6 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if ShouldVIP && VIPAvailable(PopupTypes) {
 			var service VipService
 			data, err := service.Get(c)
-			data["UserId"] = user.ID
 			if err != nil {
 				return r, err
 			}
@@ -128,6 +128,7 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 				Type:  4,
 				Float: floats,
 				Data:  data,
+				UserId: user.ID,
 			}
 			return r, err
 		}
@@ -143,12 +144,12 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 		if ShouldPopupSpin && should_spin {
 			spin_id_data := PopupSpinId{
 				SpinId: spin_promotion_id,
-				UserId: user.ID,
 			}
 			r.Data = PopupResponse{
 				Type:  5,
 				Float: floats,
 				Data:  spin_id_data,
+				UserId: user.ID,
 			}
 			return r, err
 		}
@@ -166,11 +167,11 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if shouldPopupWinLose && WinLoseAvailable(PopupTypes) {
 				var service WinLoseService
 				data, err := service.Get(c)
-				data.UserId = user.ID
 				r.Data = PopupResponse{
 					Type:  1,
 					Float: floats,
 					Data:  data,
+					UserId: user.ID,
 				}
 				return r, err
 			}
@@ -184,11 +185,11 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if should_popup && TeamUpAvailable(PopupTypes) {
 				var service TeamUpService
 				data, err := service.Get(c)
-				data.UserId = user.ID
 				r.Data = PopupResponse{
 					Type:  data.Type,
 					Float: floats,
 					Data:  data,
+					UserId: user.ID,
 				}
 				return r, err
 			}
@@ -201,11 +202,11 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if ShouldVIP && VIPAvailable(PopupTypes) {
 				var service VipService
 				data, err := service.Get(c)
-				data["UserId"] = user.ID
 				r.Data = PopupResponse{
 					Type:  4,
 					Float: floats,
 					Data:  data,
+					UserId: user.ID,
 				}
 				return r, err
 			}
@@ -219,19 +220,19 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 			if ShouldPopupSpin && should_spin {
 				spin_id_data := PopupSpinId{
 					SpinId: spin_promotion_id,
-					UserId: user.ID,
 				}
 				r.Data = PopupResponse{
 					Type:  5,
 					Float: floats,
 					Data:  spin_id_data,
+					UserId: user.ID,
 				}
 				return r, err
 			}
 		}
 	}
 	r.Msg = "no popup available"
-	r.Data = PopupResponse{Type: -1, Float: floats}
+	r.Data = PopupResponse{Type: -1, Float: floats,	UserId: user.ID,}
 	ShownNothing(user)
 	return
 }
@@ -239,11 +240,11 @@ func (service *PopupService) ShowPopup(c *gin.Context) (r serializer.Response, e
 func GetFloatWindow(user model.User, popup_types []models.Popups) (floats []PopupFloat, err error) {
 	for _, popup_type := range popup_types {
 		if popup_type.CanFloat {
-			if popup_type.PopupType == 5 && popup_type.CanFloat{
+			if popup_type.PopupType == 5 && popup_type.CanFloat {
 				// spin popup float
 				var spin_service SpinService
 				spin_promotion_id_int, _ := strconv.Atoi(popup_type.Meta)
-				if spin_service.CheckIsSpinAlive(spin_promotion_id_int){
+				if spin_service.CheckIsSpinAlive(spin_promotion_id_int) {
 					// user still can spin, then we add the spin popup to float list.
 					floats = append(floats, PopupFloat{
 						Type: 5,
@@ -283,10 +284,10 @@ func VIPAvailable(popups []models.Popups) bool {
 }
 func SpinAvailable(popups []models.Popups) (bool, int) {
 	for _, popup := range popups {
-		if popup.PopupType == 5 && popup.CanFloat{
+		if popup.PopupType == 5 && popup.CanFloat {
 			var spin_service SpinService
 			spin_promotion_id_int, _ := strconv.Atoi(popup.Meta)
-			if spin_service.CheckIsSpinAlive(spin_promotion_id_int){
+			if spin_service.CheckIsSpinAlive(spin_promotion_id_int) {
 				return true, spin_promotion_id_int // Found a popup with PopupType == 4
 			}
 		}
@@ -328,7 +329,7 @@ func SpinFloat(popups []models.Popups) bool {
 	return false // No popup with PopupType == 4 was found
 }
 
-func ShownNothing(user model.User) ( err error) {
+func ShownNothing(user model.User) (err error) {
 	key := "popup/records/" + time.Now().Format("2006-01-02")
 	res := cache.RedisClient.HSet(context.Background(), key, user.ID, "6")
 	if res.Err() != nil {

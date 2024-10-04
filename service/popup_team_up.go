@@ -40,7 +40,6 @@ type TeamUpPopupResponse struct {
 	AdjustedRemainingProgress           float64 `json:"adjusted_remaining_progress"`
 	AdjustedCurrentProgressPercentage   float64 `json:"adjusted_current_progress_percentage"`
 	AdjustedRemainingProgressPercentage float64 `json:"adjusted_remaining_progress_percentage"`
-	UserId int64 `json:"user_id"`
 }
 type TeamUpPopupMemberInfo struct {
 	TotalTeamUpTarget float64 `json:"total_target"`
