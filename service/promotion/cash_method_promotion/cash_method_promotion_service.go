@@ -136,7 +136,7 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 			return err
 		}
 		wagerChange := finalPayout
-		updatedSum, err := model.UpdateDbUserSumAndCreateTransaction(tx, orderUserId, finalPayout, wagerChange, 0, ploutos.TransactionTypeCashMethodPromotion, "")
+		updatedSum, err := model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "ValidateAndClaim"), tx, orderUserId, finalPayout, wagerChange, 0, ploutos.TransactionTypeCashMethodPromotion, "")
 		if err != nil {
 			return err
 		}

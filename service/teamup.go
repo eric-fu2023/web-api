@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -18,17 +20,17 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
-	"github.com/chenyahui/gin-cache/persist"
-	"github.com/google/uuid"
-	"github.com/jinzhu/copier"
-	"gorm.io/gorm"
-	"gorm.io/plugin/dbresolver"
-
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	// fbService "blgit.rfdev.tech/taya/game-service/fb2/client/"
 
+	"github.com/chenyahui/gin-cache/persist"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/jinzhu/copier"
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 type TeamupService struct {
@@ -512,7 +514,7 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 
 		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 			amount := teamup.TotalTeamUpTarget
-			sum, err := model.UpdateDbUserSumAndCreateTransaction(tx, teamup.UserId, amount, amount, 0, ploutos.TransactionTypeTeamupPromotion, "")
+			sum, err := model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "SlashBet"), tx, teamup.UserId, amount, amount, 0, ploutos.TransactionTypeTeamupPromotion, "")
 			if err != nil {
 				return err
 			}
