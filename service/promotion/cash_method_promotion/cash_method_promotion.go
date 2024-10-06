@@ -3,14 +3,16 @@ package cash_method_promotion
 import (
 	"context"
 	"time"
+
 	"web-api/model"
 	"web-api/util"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"gorm.io/gorm"
 )
 
-func PromoByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Time, cashInAmount *int64, tx *gorm.DB) (cashMethodPromotion models.CashMethodPromotion, err error) {
+func PromoByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Time, cashInAmount *int64, tx *gorm.DB) (cashMethodPromotion ploutos.CashMethodPromotion, err error) {
 	if promotionAt == nil {
 		now := time.Now().UTC()
 		promotionAt = &now
@@ -20,7 +22,7 @@ func PromoByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Ti
 		tx = model.DB
 	}
 
-	tx = tx.
+	tx = tx.Debug().
 		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
 		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).
 		Where("status = ?", 1)
@@ -37,7 +39,7 @@ func PromoByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Ti
 	return
 }
 
-func FinalPayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion models.CashMethodPromotion, cashAmount int64, dryRun bool) (amount int64, err error) {
+func FinalPayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount int64, dryRun bool) (amount int64, err error) {
 	if claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout {
 		util.GetLoggerEntry(c).Info("FinalPayout claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout", claimedPast7Days, cashMethodPromotion.WeeklyMaxPayout)
 		return

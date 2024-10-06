@@ -62,7 +62,8 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 		return
 	}
 
-	util.GetLoggerEntry(ctx).Info("ValidateAndClaim vipRecordVipRuleId", vipRecordVipRuleId, orderId) // wl: for staging debug
+	ctx = rfcontext.AppendDescription(ctx, "GetVipWithDefault ok")
+	log.Printf(rfcontext.Fmt(ctx))
 
 	// check cash method and vip combination has promotion or not
 	cashMethodPromotion, err := PromoByCashMethodIdAndVipId(orderCashMethodId, vipRecordVipRuleId, &cashedInOrder.CreatedAt, &cashedInOrder.AppliedCashInAmount, model.DB)
@@ -80,22 +81,24 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 		return
 	}
 
-	util.GetLoggerEntry(ctx).Info("ValidateAndClaim cashMethodPromotionId", cashMethodPromotionId, orderId) // wl: for staging debug
+	ctx = rfcontext.AppendDescription(ctx, "Get promo ok")
+	log.Printf(rfcontext.Fmt(ctx))
 
 	// check over payout limit or not
 	claimedPast7DaysL, claimedPast1DayL, err := GetAccumulatedClaimedCashMethodPromotionPast7And1Days(ctx, orderCashMethodId, orderUserId)
 	if err != nil {
-		util.GetLoggerEntry(ctx).Error("ValidateAndClaim GetAccumulatedClaimedCashMethodPromotionPast7And1Days", err, orderId)
+		ctx = rfcontext.AppendError(ctx, err, "get user past claimed")
+		log.Printf(rfcontext.Fmt(ctx))
 		return
 	}
 
-	var weeklyAmount int64
+	var claimedPast7Days int64
 	if len(claimedPast7DaysL) > 0 {
-		weeklyAmount = claimedPast7DaysL[0].Amount // len(claimedPast7DaysL[0]) at most 1
+		claimedPast7Days = claimedPast7DaysL[0].Amount // len(claimedPast7DaysL[0]) at most 1
 	}
-	var dailyAmount int64
+	var claimedPast1Day int64
 	if len(claimedPast1DayL) > 0 {
-		dailyAmount = claimedPast1DayL[0].Amount // len(claimedPast1DayL[0]) at most 1
+		claimedPast1Day = claimedPast1DayL[0].Amount // len(claimedPast1DayL[0]) at most 1
 	}
 
 	cashOrderAmount := cashedInOrder.AppliedCashInAmount
@@ -105,18 +108,26 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 
 	// catch underflow
 	if cashOrderAmount < cashMethodPromotion.MinPayout {
-		util.GetLoggerEntry(ctx).Info(rfcontext.Fmt(rfcontext.AppendDescription(ctx, fmt.Sprintf("Juicyy - MinPayout bigger than dep/wd cashOrderAmount, so no promotion. orderId: %s ", orderId)))) // staging debug
+		ctx = rfcontext.AppendDescription(ctx, "cash order amount underflow")
+		log.Printf(rfcontext.Fmt(ctx))
 		return
 	}
 
-	finalPayout, err := FinalPayout(ctx, weeklyAmount, dailyAmount, cashMethodPromotion, cashOrderAmount, false)
+	ctx = rfcontext.AppendParams(ctx, callDesc, map[string]any{
+		"claimedPast7Days": claimedPast7Days,
+		"claimedPast1Day":  claimedPast1Day,
+	})
+
+	finalPayout, err := FinalPayout(ctx, claimedPast7Days, claimedPast1Day, cashMethodPromotion, cashOrderAmount, false)
 	if err != nil {
-		util.GetLoggerEntry(ctx).Error("ValidateAndClaim GetMaxAmountPayment", err, orderId)
+		ctx = rfcontext.AppendError(ctx, err, "final payout cal err")
+		log.Printf(rfcontext.Fmt(ctx))
 		return
 	}
 
 	if finalPayout == 0 {
-		util.GetLoggerEntry(ctx).Info("ValidateAndClaim finalPayout == 0", orderId)
+		ctx = rfcontext.AppendDescription(ctx, "final payout 0")
+		log.Printf(rfcontext.Fmt(ctx))
 		return
 	}
 
