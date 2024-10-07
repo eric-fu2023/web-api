@@ -160,8 +160,7 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, promotionRequestID, now, meetGapType, vipIncrementDetail)
 	lang, err := model.GetUserLang(userID)
 	if err != nil {
-		log.Printf("model.GetUserLang err, %v", err)
-		// continued. errors are designed to fallthrough in this routine.
+		return ploutos.Voucher{}, err
 	}
 
 	switch p.Type {

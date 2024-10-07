@@ -45,8 +45,7 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 
 	lang, err := model.GetUserLang(p.UserID)
 	if err != nil {
-		log.Println("cannot get local from .GetUserLang")
-		return
+		// fallthrough as per design
 	}
 
 	switch p.Type {
