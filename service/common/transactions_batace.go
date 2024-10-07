@@ -148,9 +148,6 @@ func calculateWagerBatace(transaction CallbackInterface, originalWager int64, or
 	newWager = originalWager
 	newDepositWager = originalDepositWager
 	betAmount = BetAmount
-	if !betExists {
-		return
-	}
 	wagerChange = betAmount
 	newWager = newWager - wagerChange
 	fmt.Println("wagerChange: ", wagerChange)
