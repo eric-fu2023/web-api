@@ -378,7 +378,11 @@ func SendCashNotification(userId int64, notificationType string, title string, t
 			return
 		}
 
-		lang := model.GetUserLang(userId)
+		lang, err := model.GetUserLang(userId)
+		if err != nil {
+			util.Log().Error("send cash notification error (GetUserLang fail): ", err.Error())
+			return
+		}
 		title = conf.GetI18N(lang).T(title)
 		text = conf.GetI18N(lang).T(text)
 		p := message.NewPrinter(message.MatchLanguage(lang))

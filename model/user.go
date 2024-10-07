@@ -127,10 +127,23 @@ func generateReferralCode(userId int64) string {
 	return referralCode
 }
 
-func GetUserLang(userId int64) string {
-	var user User
-	DB.First(&user)
-	return user.Locale[:2]
+// GetUserLang defaults to env config. see commented out for prev impl.
+func GetUserLang(_ int64) (string, error) {
+	v := os.Getenv("PLATFORM_LANGUAGE")
+	if v == "" {
+		return "", errors.New("platform.language default not set")
+	}
+	return v, nil
+	//var user User
+	//err := DB.First(&user).Error
+	//if err != nil {
+	//	return "", err
+	//}
+	//
+	//if len(user.Locale) < 2 {
+	//	return "", errors.New("invalid locale of minimum length 2")
+	//}
+	//return user.Locale[:2], nil
 }
 
 func GetUserByMobileOrEmailOld(countryCode, mobile, email string) (User, error) {
