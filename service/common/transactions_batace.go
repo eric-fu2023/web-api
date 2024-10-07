@@ -91,6 +91,7 @@ func ProcessTransactionBatace(obj CallbackInterface) (err error) {
 		return
 	}
 
+	fmt.Println("wagerAudit, sourceId: ", string(obj.GetGameTransactionId()))
 	wagerAudit := ploutos.WagerAudit{
 		SourceId:            string(obj.GetGameTransactionId()),
 		UserId:              gpu.UserId,
