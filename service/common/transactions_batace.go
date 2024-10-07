@@ -41,7 +41,10 @@ func ProcessTransactionBatace(obj CallbackInterface, bet_report_uuid string, Bet
 
 	newRemainingWager := remainingWager
 	newDepositRemainingWager := depositRemainingWager
+	fmt.Println("BetAmount: ", BetAmount)
 	_, _, w, dw, wc, dwc, e := calculateWagerBatace(obj, remainingWager, depositRemainingWager, BetAmount)
+	fmt.Println("calculateWagerBatace wc, ",wc)
+	fmt.Println("calculateWagerBatace dwc, ",dwc)
 	if e == nil {
 		newRemainingWager = w
 		newDepositRemainingWager = dw
@@ -150,12 +153,14 @@ func calculateWagerBatace(transaction CallbackInterface, originalWager int64, or
 	}
 	wagerChange = betAmount
 	newWager = newWager - wagerChange
+	fmt.Println("wagerChange: ", wagerChange)
 	if newWager < 0 {
 		newWager = 0
 	}
 
 	depositWagerChange = betAmount
 	newDepositWager = newDepositWager - depositWagerChange
+	fmt.Println("depositWagerChange: ", depositWagerChange)
 	if newDepositWager < 0 {
 		newDepositWager = 0
 	}
