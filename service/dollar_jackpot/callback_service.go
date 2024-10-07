@@ -252,7 +252,7 @@ func Settle(c *gin.Context, req SettleOrder) (res serializer.Response, err error
 	req.DrawId = br.GameId
 	req.BetAmount = br.Bet
 	if os.Getenv("PRODUCT") == "batace"{
-		err = common.ProcessTransactionBatace(&req)
+		err = common.ProcessTransactionBatace(&req, *br.ID)
 	} else {
 		err = common.ProcessTransaction(&req)
 	}

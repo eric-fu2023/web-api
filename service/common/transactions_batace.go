@@ -14,7 +14,7 @@ import (
 )
 
 // ProcessTransactionBatace dollar jackpot, stream games, etc
-func ProcessTransactionBatace(obj CallbackInterface) (err error) {
+func ProcessTransactionBatace(obj CallbackInterface, bet_report_uuid string) (err error) {
 	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelSerializable})
 	if tx.Error != nil {
 		err = tx.Error
@@ -93,7 +93,7 @@ func ProcessTransactionBatace(obj CallbackInterface) (err error) {
 
 	fmt.Println("wagerAudit, sourceId: ", string(obj.GetGameTransactionId()))
 	wagerAudit := ploutos.WagerAudit{
-		SourceId:            string(obj.GetGameTransactionId()),
+		SourceId:            bet_report_uuid,
 		UserId:              gpu.UserId,
 		BeforeWager:         remainingWager,
 		AfterWager:          userSum.RemainingWager,
