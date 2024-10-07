@@ -12,6 +12,7 @@ import (
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 )
@@ -151,7 +152,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 			return
 		}
 
-		totalDepositedAmount := util.Sum(topupRecords, func(co model.CashOrder) int64 {
+		totalDepositedAmount := util.Sum(topupRecords, func(co ploutos.CashOrder) int64 {
 			return co.ActualCashInAmount
 		})
 
@@ -377,14 +378,14 @@ func GetPromotionMissionTiers(rewardDetails []byte) (missions []model.MissionTie
 	}
 
 	missionTiers := make([]model.MissionTier, len(promotionRewardDetails.Rewards))
-	for _, r := range promotionRewardDetails.Rewards {
+	for i, r := range promotionRewardDetails.Rewards {
 		if len(r.Rewards) > 0 {
-			missionTiers[0].RewardAmount = r.Rewards[0].Value
+			missionTiers[i].RewardAmount = r.Rewards[0].Value
 		}
 
 		if len(r.Conditions) > 0 {
 			value, _ := strconv.Atoi(r.Conditions[0].Value)
-			missionTiers[0].MissionAmount = int64(value)
+			missionTiers[i].MissionAmount = int64(value)
 		}
 	}
 

@@ -29,16 +29,19 @@ func BuildVoucher(a models.Voucher, platform string) (b Voucher) {
 		image = m["h5"]
 	}
 	b = Voucher{
-		ID:          a.ID,
-		Name:        a.Name,
-		Description: json.RawMessage(a.Description),
-		Image:       Url(a.Image),
-		Type:        a.PromotionType,
-		StartAt:     a.StartAt.Unix(),
-		EndAt:       a.EndAt.Unix(),
-		Amount:      float64(a.Amount) / 100,
-		Status:      a.Status,
-		BindingAt:   a.BindingAt.Unix(),
+		ID:        a.ID,
+		Name:      a.Name,
+		Image:     Url(a.Image),
+		Type:      a.PromotionType,
+		StartAt:   a.StartAt.Unix(),
+		EndAt:     a.EndAt.Unix(),
+		Amount:    float64(a.Amount) / 100,
+		Status:    a.Status,
+		BindingAt: a.BindingAt.Unix(),
+	}
+
+	if a.Description != "" {
+		b.Description = json.RawMessage(a.Description)
 	}
 	return
 }

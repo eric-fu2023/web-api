@@ -182,13 +182,13 @@ func HasTopupToday(c context.Context, userID int64) (bool, error) {
 	return hasCashInToday, nil
 }
 
-func TopupsByDateRange(c context.Context, userId int64, startDate, endDate time.Time) (topupRecords []CashOrder, err error) {
+func TopupsByDateRange(c context.Context, userId int64, startDate, endDate time.Time) (topupRecords []ploutos.CashOrder, err error) {
 
 	db := DB.WithContext(c).Where("user_id", userId).Where("order_type", ploutos.CashOrderTypeCashIn).Where("status", ploutos.CashOrderStatusSuccess)
 	db.Where("created_at >= ?", startDate)
 	db.Where("created_at < ?", endDate)
 
-	err = db.Find(&CashOrder{}).Error
+	err = db.Find(&topupRecords).Error
 
 	return
 }

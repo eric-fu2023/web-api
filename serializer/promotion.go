@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"math/rand"
 	"strconv"
 	"web-api/model"
 
@@ -173,8 +172,8 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 
 	if len(mDo.Missions) > 0 {
 
-		// totalDepositedAmount := mDo.TotalDepositAmount / 100
-		totalDepositedAmount := int64(rand.Intn(1000000)) / 100
+		totalDepositedAmount := mDo.TotalDepositAmount / 100
+		// totalDepositedAmount := int64(rand.Intn(1000000)) / 100
 
 		card := OutgoingEarnMoreCardDetail{
 			Title: "Deposit Insights",

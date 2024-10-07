@@ -54,21 +54,23 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 
 		selectedMissionTierToClaim := missionTiers[p.MissionId]
 
+		// 检查活动期间已充值金额
 		topupRecords, getTopupsErr := model.TopupsByDateRange(c, user.ID, promotion.StartAt, promotion.EndAt)
 		if getTopupsErr != nil {
 			err = getTopupsErr
 			return
 		}
-		totalDepositedAmount := util.Sum(topupRecords, func(co model.CashOrder) int64 {
+		totalDepositedAmount := util.Sum(topupRecords, func(co ploutos.CashOrder) int64 {
 			return co.ActualCashInAmount
 		})
 
 		if totalDepositedAmount < selectedMissionTierToClaim.MissionAmount {
-			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
+			r = serializer.Err(c, p, serializer.CodeGeneralError, "Deposit Amount Does Not Meet Requirement", err)
 			return
 		}
 
-		voucher, _ := model.GetVoucherByUserAndPromotionAndReference(c, user.ID, promotion.ID, p.MissionId)
+		// 检查该活动任务是否已完成过
+		voucher, _ := model.GetVoucherByUserAndPromotionAndReference(c, user.ID, promotion.ID, fmt.Sprint(p.MissionId))
 		if voucher.ID == 0 {
 
 			coId := uuid.NewString()
@@ -118,6 +120,11 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		}
 
 		r.Data = serializer.BuildVoucher(voucher, deviceInfo.Platform)
+		return
+	}
+
+	if promotion.Type == ploutos.PromotionTypeDepositEarnMoreMission {
+		r = serializer.Err(c, p, serializer.CodeGeneralError, "Invalid Mission Id", err)
 		return
 	}
 
