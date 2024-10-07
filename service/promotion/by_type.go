@@ -158,7 +158,11 @@ func GetPromotionSessionClaimStatus(c context.Context, p ploutos.Promotion, s pl
 
 func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.PromotionSession, v ploutos.VoucherTemplate, userID, promotionRequestID int64, rewardAmount int64, now time.Time, meetGapType int64, vipIncrementDetail ploutos.VipIncrementDetail) (voucher ploutos.Voucher, err error) {
 	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, promotionRequestID, now, meetGapType, vipIncrementDetail)
-	lang := model.GetUserLang(userID)
+	lang, err := model.GetUserLang(userID)
+	if err != nil {
+		log.Printf("model.GetUserLang err, %v", err)
+		// continued. errors are designed to fallthrough in this routine.
+	}
 
 	switch p.Type {
 	case ploutos.PromotionTypeFirstDepB, ploutos.PromotionTypeReDepB, ploutos.PromotionTypeBeginnerB, ploutos.PromotionTypeOneTimeDepB:

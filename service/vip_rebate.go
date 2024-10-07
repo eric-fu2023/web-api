@@ -27,6 +27,11 @@ func (v VipRebateQuery) Load(c *gin.Context) (r serializer.Response, err error) 
 		r = serializer.Err(c, "", serializer.CodeGeneralError, "", err)
 		return
 	}
-	r.Data = serializer.BuildVipRebateDetails(list, desc, vips, model.GetUserLang(user.ID))
+
+	lang, err := model.GetUserLang(user.ID)
+	if err != nil {
+		r = serializer.Err(c, "", serializer.CodeGeneralError, "", err)
+	}
+	r.Data = serializer.BuildVipRebateDetails(list, desc, vips, lang)
 	return
 }
