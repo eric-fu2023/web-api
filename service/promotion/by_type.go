@@ -156,7 +156,10 @@ func GetPromotionSessionClaimStatus(c context.Context, p ploutos.Promotion, s pl
 
 func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.PromotionSession, v ploutos.VoucherTemplate, userID, promotionRequestID int64, rewardAmount int64, now time.Time, meetGapType int64, vipIncrementDetail ploutos.VipIncrementDetail) (voucher ploutos.Voucher, err error) {
 	voucher = CraftVoucherByType(c, p, s, v, rewardAmount, userID, promotionRequestID, now, meetGapType, vipIncrementDetail)
-	lang := model.GetUserLang(userID)
+	lang, err := model.GetUserLang(userID)
+	if err != nil {
+		return ploutos.Voucher{}, err
+	}
 
 	switch p.Type {
 	case ploutos.PromotionTypeFirstDepB, ploutos.PromotionTypeReDepB, ploutos.PromotionTypeBeginnerB, ploutos.PromotionTypeOneTimeDepB:
@@ -264,7 +267,7 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 		})
 	case ploutos.PromotionTypeSpinWheel:
 		fmt.Println("promotion.PromotionTypeSpinWheel ")
-		// TODO move the cash order to here as well 
+		// TODO move the cash order to here as well
 		var spin_items []ploutos.SpinItem
 
 		// Build the GORM query
@@ -276,9 +279,8 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 			Where("sr.user_id = ?", userID).
 			Where("sr.redeemed = ?", false).
 			Find(&spin_items)
-		
 
-		for _,spin_item:=range spin_items{
+		for _, spin_item := range spin_items {
 			voucher.Amount = int64(spin_item.Amount)
 			voucher.WagerMultiplier = spin_item.Wager
 			voucher.ReferenceID = strconv.FormatInt(spin_item.ID, 10)
@@ -286,7 +288,7 @@ func ClaimVoucherByType(c context.Context, p ploutos.Promotion, s ploutos.Promot
 			err = model.DB.Create(&voucher).Error
 			if err != nil {
 				fmt.Println("promotion.PromotionTypeSpinWheel creation failed")
-				return 
+				return
 			}
 		}
 		fmt.Println("promotion.PromotionTypeSpinWheel creation ends")

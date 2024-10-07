@@ -43,7 +43,10 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 	var resp serializer.Response
 	brand := c.MustGet(`_brand`).(int)
 
-	lang := model.GetUserLang(p.UserID)
+	lang, err := model.GetUserLang(p.UserID)
+	if err != nil {
+		// fallthrough as per design
+	}
 
 	switch p.Type {
 	case vipPromoteNote:
