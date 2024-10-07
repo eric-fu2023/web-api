@@ -14,7 +14,7 @@ import (
 )
 
 // ProcessTransactionBatace dollar jackpot, stream games, etc
-func ProcessTransactionBatace(obj CallbackInterface, bet_report_uuid string) (err error) {
+func ProcessTransactionBatace(obj CallbackInterface, bet_report_uuid string, BetAmount int64) (err error) {
 	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelSerializable})
 	if tx.Error != nil {
 		err = tx.Error
@@ -41,7 +41,7 @@ func ProcessTransactionBatace(obj CallbackInterface, bet_report_uuid string) (er
 
 	newRemainingWager := remainingWager
 	newDepositRemainingWager := depositRemainingWager
-	_, _, w, dw, wc, dwc, e := calculateWagerBatace(obj, remainingWager, depositRemainingWager)
+	_, _, w, dw, wc, dwc, e := calculateWagerBatace(obj, remainingWager, depositRemainingWager, BetAmount)
 	if e == nil {
 		newRemainingWager = w
 		newDepositRemainingWager = dw
@@ -141,21 +141,21 @@ func GetSumsBatace(tx *gorm.DB, gpu ploutos.GameVendorUser) (balance int64, rema
 }
 
 // calculateWagerBatace dollar jackpot, stream games, imsb,  ...
-func calculateWagerBatace(transaction CallbackInterface, originalWager int64, originalDepositWager int64) (betAmount int64, betExists bool, newWager int64, newDepositWager int64, wagerChange int64, depositWagerChange int64, err error) {
+func calculateWagerBatace(transaction CallbackInterface, originalWager int64, originalDepositWager int64, BetAmount int64) (betAmount int64, betExists bool, newWager int64, newDepositWager int64, wagerChange int64, depositWagerChange int64, err error) {
 	newWager = originalWager
 	newDepositWager = originalDepositWager
-	betAmount = transaction.GetBetAmountOnly()
+	betAmount = BetAmount
 	if !betExists {
 		return
 	}
-	wagerChange = -betAmount
-	newWager = newWager + wagerChange
+	wagerChange = betAmount
+	newWager = newWager - wagerChange
 	if newWager < 0 {
 		newWager = 0
 	}
 
-	depositWagerChange = -betAmount
-	newDepositWager = newDepositWager + depositWagerChange
+	depositWagerChange = betAmount
+	newDepositWager = newDepositWager - depositWagerChange
 	if newDepositWager < 0 {
 		newDepositWager = 0
 	}
