@@ -100,7 +100,7 @@ type CallbackInterface interface {
 	SaveGameTransaction(*gorm.DB) error
 	ShouldProceed() bool
 	GetAmount() int64
-	GetBetAmountOnly() (int64)
+	GetBetAmountOnly() int64
 	GetWagerMultiplier() (int64, bool)
 	GetBetAmount() (int64, bool)
 	IsAdjustment() bool
@@ -195,6 +195,8 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 		tx.Rollback()
 		return
 	}
+
+	// fixme may need to update deposit wager too, since this routine is used by batace in imsb.[OnBalanceDeduction] in batace's environment.
 	transaction := ploutos.Transaction{
 		UserId:               gpu.UserId,
 		Amount:               obj.GetAmount(),
@@ -439,13 +441,13 @@ func calWagerBatace(obj CallbackInterface, originalWager int64, originalDepositW
 	if !betExists {
 		return
 	}
-	wagerChange = - betAmount
+	wagerChange = -betAmount
 	newWager = newWager + wagerChange
 	if newWager < 0 {
 		newWager = 0
 	}
 
-	depositWagerChange = - betAmount
+	depositWagerChange = -betAmount
 	newDepositWager = newDepositWager + depositWagerChange
 	if newDepositWager < 0 {
 		newDepositWager = 0
@@ -577,7 +579,11 @@ func SendCashNotification(userId int64, notificationType string, title string, t
 			return
 		}
 
-		lang := model.GetUserLang(userId)
+		lang, err := model.GetUserLang(userId)
+		if err != nil {
+			util.Log().Error("send cash notification error (GetUserLang fail): ", err.Error())
+			return
+		}
 		title = conf.GetI18N(lang).T(title)
 		text = conf.GetI18N(lang).T(text)
 		p := message.NewPrinter(message.MatchLanguage(lang))
