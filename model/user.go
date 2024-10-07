@@ -127,17 +127,10 @@ func generateReferralCode(userId int64) string {
 	return referralCode
 }
 
-func GetUserLang(_ int64) (string, error) {
+func GetUserLang(userId int64) string {
 	var user User
-	err := DB.First(&user).Error
-	if err != nil {
-		return "", err
-	}
-
-	if len(user.Locale) < 2 {
-		return "", errors.New("invalid locale of minimum length 2")
-	}
-	return user.Locale[:2], nil
+	DB.First(&user)
+	return user.Locale[:2]
 }
 
 func GetUserByMobileOrEmailOld(countryCode, mobile, email string) (User, error) {

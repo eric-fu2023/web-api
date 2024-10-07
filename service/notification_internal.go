@@ -43,11 +43,7 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 	var resp serializer.Response
 	brand := c.MustGet(`_brand`).(int)
 
-	lang, err := model.GetUserLang(p.UserID)
-	if err != nil {
-		log.Println("cannot get local from .GetUserLang")
-		return
-	}
+	lang := model.GetUserLang(p.UserID)
 
 	switch p.Type {
 	case vipPromoteNote:
