@@ -187,7 +187,7 @@ func (s DeleteWithdrawAccountService) Do(c *gin.Context) (r serializer.Response,
 			IsActive: true,
 		},
 	}
-	err = accountBinding.Remove()
+	err = accountBinding.HardRemove()
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
 	}
