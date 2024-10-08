@@ -60,7 +60,11 @@ func (b *UserAccountBinding) AddToDb() (err error) {
 	return
 }
 
-func (b *UserAccountBinding) Remove() (err error) {
+func (b *UserAccountBinding) SoftRemove() (err error) {
 	err = DB.Model(&UserAccountBinding{}).Where(&b).Update("is_active", false).Error
 	return
+}
+
+func (b *UserAccountBinding) HardRemove() error {
+	return DB.Unscoped().Model(&UserAccountBinding{}).Delete(&b).Where("id", b.ID).Error
 }
