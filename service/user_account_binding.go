@@ -162,7 +162,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("withdraw_account_limit_exceeded"), err)
 			return
 		}
-		r = serializer.Err(c, s, serializer.CodeGeneralError, "", err)
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("withdrawal_account_already_used"), err)
 		return
 	}
 
