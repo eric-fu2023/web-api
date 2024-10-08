@@ -26,6 +26,13 @@ func ShouldPopupWinLose(user User) (bool, error) {
 			return false, res.Err()
 		}
 	}
+	result, err := strconv.Atoi(res.Val())
+	if err!=nil{
+		return false, err
+	}
+	if result < 0 {
+		return false, nil
+	}
 	return true, nil
 }
 
