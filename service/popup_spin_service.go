@@ -67,6 +67,12 @@ func (service *SpinService) Result(c *gin.Context) (r serializer.Response, err e
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
+	fmt.Println("user.Mobile ", user.Mobile)
+	fmt.Println(user.Mobile == "")
+	if user.Mobile == "" {
+		r = serializer.Err(c, service, serializer.CodeGeneralError, "Please bind mobile first", err)
+		return
+	}
 	// need to check if user has used all spin chances
 	now := time.Now()
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
