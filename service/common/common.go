@@ -414,7 +414,8 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 					msg := websocket.BalanceUpdateMessage{
 						Room:            serializer.UserSignature(userId),
 						Event:           "balance_change",
-						Cause:           cause,
+						// Cause:           cause,
+						Cause:           "deposit_success", // this is requested by FE
 						Amount:          amount,
 						Balance:         float64(userSum.Balance) / 100,
 						RemainingWager:  float64(userSum.RemainingWager) / 100,
