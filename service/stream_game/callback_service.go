@@ -120,6 +120,7 @@ func (c *PlaceOrder) GetBetAmount() (amount int64, exists bool) {
 func (c *PlaceOrder) GetBetAmountOnly() (amount int64) {
 	return 0
 }
+
 type SettleOrder struct {
 	Callback
 	Amount     *float64 `json:"amount" form:"amount" binding:"required"`
@@ -221,7 +222,7 @@ func Settle(c *gin.Context, req SettleOrder) (res serializer.Response, err error
 	req.DrawId = br.GameId
 	req.BetAmount = br.Bet
 	if os.Getenv("PRODUCT") == "batace"{
-		err = common.ProcessTransactionBatace(&req)
+		err = common.ProcessTransactionBatace(&req, *br.ID, br.Bet)
 	} else {
 		err = common.ProcessTransaction(&req)
 	}

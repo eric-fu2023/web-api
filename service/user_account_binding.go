@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+
 	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
@@ -11,7 +12,7 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
@@ -43,10 +44,10 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 		if a.CashMethod.CashMethodPromotion == nil {
 			return
 		}
-		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b models.CashMethodPromotionRecord) bool {
+		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
 			return b.CashMethodId == a.CashMethod.ID
 		}).Amount
-		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b models.CashMethodPromotionRecord) bool {
+		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
 			return b.CashMethodId == a.CashMethod.ID
 		}).Amount
 
@@ -105,11 +106,11 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	}
 
 	accountBinding := model.UserAccountBinding{
-		UserAccountBinding: models.UserAccountBinding{
+		UserAccountBinding: ploutos.UserAccountBinding{
 			UserID:        user.ID,
 			CashMethodID:  s.MethodID,
-			AccountName:   models.EncryptedStr(s.AccountName),
-			AccountNumber: models.EncryptedStr(s.AccountNo),
+			AccountName:   ploutos.EncryptedStr(s.AccountName),
+			AccountNumber: ploutos.EncryptedStr(s.AccountNo),
 			IsActive:      true,
 		},
 	}
@@ -118,7 +119,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 		accountBinding.AccountName = "PayPal"
 	}
 
-	accountBinding.SetBankInfo(models.BankInfo{
+	accountBinding.SetBankInfo(ploutos.BankInfo{
 		BankCode:       s.BankCode,
 		BankBranchName: s.BankBranchName,
 		BankName:       s.BankName,
@@ -148,8 +149,8 @@ func (s DeleteWithdrawAccountService) Do(c *gin.Context) (r serializer.Response,
 	accID, _ := s.AccountBindingID.Int64()
 
 	accountBinding := model.UserAccountBinding{
-		UserAccountBinding: models.UserAccountBinding{
-			BASE:     models.BASE{ID: accID},
+		UserAccountBinding: ploutos.UserAccountBinding{
+			BASE:     ploutos.BASE{ID: accID},
 			UserID:   user.ID,
 			IsActive: true,
 		},

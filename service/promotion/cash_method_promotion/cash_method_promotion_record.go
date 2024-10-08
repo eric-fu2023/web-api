@@ -7,11 +7,12 @@ import (
 	"web-api/model"
 	"web-api/util"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"gorm.io/gorm"
 )
 
-func PromotionRecordByCashOrderId(cashOrderId string, tx *gorm.DB) (cashMethodPromotionRecord models.CashMethodPromotionRecord, err error) {
+func PromotionRecordByCashOrderId(cashOrderId string, tx *gorm.DB) (cashMethodPromotionRecord ploutos.CashMethodPromotionRecord, err error) {
 	if tx == nil {
 		tx = model.DB
 	}
@@ -24,7 +25,7 @@ func PromotionRecordByCashOrderId(cashOrderId string, tx *gorm.DB) (cashMethodPr
 
 // TotalClaimedByUserInPeriod
 // FIXME this query returns a single aggregate tuple, not CashMethodPromotionRecord(s).
-func TotalClaimedByUserInPeriod(cashMethodId, userId int64, startAt, endAt time.Time, tx *gorm.DB) (cashMethodPromotionRecords []models.CashMethodPromotionRecord, err error) {
+func TotalClaimedByUserInPeriod(cashMethodId, userId int64, startAt, endAt time.Time, tx *gorm.DB) (cashMethodPromotionRecords []ploutos.CashMethodPromotionRecord, err error) {
 	if tx == nil {
 		tx = model.DB
 	}
@@ -56,7 +57,7 @@ func TotalClaimedByUserInPeriod(cashMethodId, userId int64, startAt, endAt time.
 	return
 }
 
-func GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c context.Context, cashMethodId, userId int64) (weeklyAmountRecords []models.CashMethodPromotionRecord, dailyAmountRecords []models.CashMethodPromotionRecord, err error) {
+func GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c context.Context, cashMethodId, userId int64) (weeklyAmountRecords []ploutos.CashMethodPromotionRecord, dailyAmountRecords []ploutos.CashMethodPromotionRecord, err error) {
 	now := time.Now()
 	weeklyAmountRecords, err = TotalClaimedByUserInPeriod(cashMethodId, userId, now.AddDate(0, 0, -7), now, nil)
 	if err != nil {

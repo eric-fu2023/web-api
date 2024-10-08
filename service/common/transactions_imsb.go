@@ -131,7 +131,7 @@ func ProcessImUpdateBalanceTransactionWithoutWagerCalculation(ctx context.Contex
 	//reducedRemainingWager := remainingWager
 	//reducedDepositRemainingWager := depositRemainingWager
 	betAmount := transactionRequest.GetBetAmountOnly()
-	betAmount, betExists, _ /*wager*/, _ /* depositWager*/, _ /*wagerChange*/, _ /*depositWagerChange*/, e := calculateWagerBatace(transactionRequest, 0, 0)
+	betAmount, betExists, _ /*wager*/, _ /* depositWager*/, _ /*wagerChange*/, _ /*depositWagerChange*/, e := calculateWagerBatace(transactionRequest, 0, 0, betAmount)
 	//_, _ = wagerChange, depositWagerChange // not used. for wager data in `transaction` table, wager changes to update as before minus after
 	//if e == nil {
 	//	reducedRemainingWager = w

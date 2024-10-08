@@ -8,7 +8,7 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
@@ -44,10 +44,10 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		if a.CashMethodPromotion == nil {
 			return
 		}
-		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b models.CashMethodPromotionRecord) bool {
+		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
 			return b.CashMethodId == a.ID
 		}).Amount
-		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b models.CashMethodPromotionRecord) bool {
+		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
 			return b.CashMethodId == a.ID
 		}).Amount
 
