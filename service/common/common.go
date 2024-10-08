@@ -620,6 +620,7 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 						Balance:         float64(userSum.Balance) / 100,
 						RemainingWager:  float64(userSum.RemainingWager) / 100,
 						MaxWithdrawable: float64(userSum.MaxWithdrawable) / 100,
+						IsFTD:           cause == "FTD_success",
 					}
 					msg.Send(conn)
 				}

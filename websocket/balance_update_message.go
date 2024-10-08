@@ -14,6 +14,7 @@ type BalanceUpdateMessage struct {
 	RemainingWager  float64 `json:"wagering_requirement"`
 	MaxWithdrawable float64 `json:"withdrawable"`
 	Amount          float64 `json:"amount"`
+	IsFTD           bool    `json:"is_ftd"`
 }
 
 func (a BalanceUpdateMessage) Send(conn *Connection) (err error) {
