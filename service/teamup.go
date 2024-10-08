@@ -944,6 +944,7 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 	user := u.(model.User)
 	brand := c.MustGet(`_brand`).(int)
 	if user.Mobile == "" {
+		r = serializer.Err(c, s, serializer.CodeGeneralError, "Please bind mobile first", err)
 		return
 	}
 
