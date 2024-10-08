@@ -543,6 +543,7 @@ otp_limit_reached: "每日验证码发送限制已达到"
 
 validation_username: "用户名必须为6-12个字符的小写字母或数字."
 withdraw_account_limit_exceeded: "超出最大提款账户限制"
+withdrawal_account_already_used: "帳號已使用。請入另號"
 
 insufficient_balance: "余额不足."
 
