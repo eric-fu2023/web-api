@@ -25,9 +25,8 @@ const (
 )
 
 type PromotionClaim struct {
-	ID           int64 `form:"id" json:"id"`
-	ClaimMission bool  `form:"claim_mission" json:"claim_mission"`
-	MissionId    int64 `form:"mission_id" json:"mission_id"`
+	ID        int64 `form:"id" json:"id"`
+	MissionId int64 `form:"mission_id" json:"mission_id"`
 }
 
 func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error) {
@@ -43,7 +42,7 @@ func (p PromotionClaim) Handle(c *gin.Context) (r serializer.Response, err error
 		return
 	}
 
-	if p.ClaimMission {
+	if promotion.Type == ploutos.PromotionTypeDepositEarnMoreMission {
 
 		missionTiers := GetPromotionMissionTiers(promotion.RewardDetails)
 
