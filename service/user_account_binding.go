@@ -1,8 +1,12 @@
 package service
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	"context"
 	"encoding/json"
 	"errors"
+	"log"
+	"os"
 	"strings"
 
 	"web-api/conf"
@@ -12,7 +16,9 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
+	"blgit.rfdev.tech/taya/common-function/crypto/md5"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -86,8 +92,12 @@ type AddWithdrawAccountService struct {
 }
 
 func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, err error) {
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "AddWithdrawAccountService")
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	user := c.MustGet("user").(model.User)
+	ctx = rfcontext.AppendParams(ctx, "AddWithdrawAccountService", map[string]interface{}{
+		"middleware_user": user,
+	})
 	// r, err = VerifyKycWithName(c, user.ID, s.AccountName)
 	// if err != nil {
 	// 	return
@@ -96,7 +106,9 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), err
 	}
-	s.AccountNo = strings.TrimLeft(s.AccountNo, "+")
+	accountNo := strings.TrimLeft(s.AccountNo, "+")
+
+	// validate account number format
 	switch method.AccountType {
 	case "crypto_wallet_trc20":
 		if !strings.HasPrefix(s.AccountNo, "T") || len(s.AccountNo) != 34 {
@@ -105,13 +117,26 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 		}
 	}
 
+	// hash
+	hashSalt := os.Getenv("MOBILE_EMAIL_HASH_SALT")
+	service, err := md5.NewWithSalt(hashSalt)
+	if err != nil {
+		ctx = rfcontext.AppendError(ctx, err, "NewWithSalt")
+		log.Printf(rfcontext.Fmt(ctx))
+		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("500"), err)
+		return
+	}
+
+	accountNoHash := service.Hash([]byte(accountNo))
+
 	accountBinding := model.UserAccountBinding{
 		UserAccountBinding: ploutos.UserAccountBinding{
-			UserID:        user.ID,
-			CashMethodID:  s.MethodID,
-			AccountName:   ploutos.EncryptedStr(s.AccountName),
-			AccountNumber: ploutos.EncryptedStr(s.AccountNo),
-			IsActive:      true,
+			UserID:            user.ID,
+			CashMethodID:      s.MethodID,
+			AccountName:       ploutos.EncryptedStr(s.AccountName),
+			AccountNumber:     ploutos.EncryptedStr(s.AccountNo),
+			AccountNumberHash: accountNoHash,
+			IsActive:          true,
 		},
 	}
 
@@ -126,8 +151,12 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 		FirstName:      s.FirstName,
 		LastName:       s.LastName,
 	})
+
 	err = accountBinding.AddToDb()
 	if err != nil {
+		ctx = rfcontext.AppendError(ctx, err, "AddToDb")
+		log.Printf(rfcontext.Fmt(ctx))
+
 		if errors.Is(err, model.ErrAccountLimitExceeded) {
 			r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("withdraw_account_limit_exceeded"), err)
 			return
@@ -135,6 +164,8 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 		r = serializer.Err(c, s, serializer.CodeGeneralError, "", err)
 		return
 	}
+
+	log.Printf(rfcontext.Fmt(ctx))
 	return
 }
 
