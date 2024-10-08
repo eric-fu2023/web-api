@@ -543,6 +543,7 @@ otp_limit_reached: "The daily OTP limit has been reached."
 
 validation_username: "Username must be 6-12 characters long lowercase letters or numbers."
 withdraw_account_limit_exceeded: "Maximum number of withdraw accounts limit exceeded"
+withdrawal_account_already_used: "Withdraw account already used."
 
 insufficient_balance: "Insufficient balance."
 
