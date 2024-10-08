@@ -66,5 +66,5 @@ func (b *UserAccountBinding) SoftRemove() (err error) {
 }
 
 func (b *UserAccountBinding) HardRemove() error {
-	return DB.Model(&UserAccountBinding{}).Delete(&b).Where("id", b.ID).Error
+	return DB.Unscoped().Model(&UserAccountBinding{}).Delete(&b).Where("id", b.ID).Error
 }
