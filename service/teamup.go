@@ -926,6 +926,9 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 	u, _ := c.Get("user")
 	user := u.(model.User)
 	brand := c.MustGet(`_brand`).(int)
+	if user.Mobile == "" {
+		return
+	}
 
 	shouldPop := model.ShouldPopRoulette(brand, user.ID)
 
