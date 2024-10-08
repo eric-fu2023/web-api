@@ -1,7 +1,6 @@
 package service
 
 import (
-	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"encoding/json"
 	"errors"
@@ -17,6 +16,7 @@ import (
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/common-function/crypto/md5"
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
@@ -97,6 +97,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	user := c.MustGet("user").(model.User)
 	ctx = rfcontext.AppendParams(ctx, "AddWithdrawAccountService", map[string]interface{}{
 		"middleware_user": user,
+		"params":          s,
 	})
 	// r, err = VerifyKycWithName(c, user.ID, s.AccountName)
 	// if err != nil {
@@ -134,7 +135,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 			UserID:            user.ID,
 			CashMethodID:      s.MethodID,
 			AccountName:       ploutos.EncryptedStr(s.AccountName),
-			AccountNumber:     ploutos.EncryptedStr(s.AccountNo),
+			AccountNumber:     ploutos.EncryptedStr(accountNo),
 			AccountNumberHash: accountNoHash,
 			IsActive:          true,
 		},
