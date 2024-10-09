@@ -11,6 +11,7 @@ import (
 	"web-api/util"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	"blgit.rfdev.tech/taya/game-service/mancala"
 	"blgit.rfdev.tech/taya/game-service/mancala/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
@@ -77,6 +78,9 @@ func (m *Mancala) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User
 
 	balanceResponse, err := client.GetBalance(ctx, userId, currency)
 	if err != nil {
+		if errors.Is(err, mancala.ErrNotFound) {
+			return nil
+		}
 		return err
 	}
 	toWithdraw := balanceResponse.Balance

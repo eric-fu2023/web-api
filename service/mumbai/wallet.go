@@ -2,6 +2,7 @@ package mumbai
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"web-api/model"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/game-service/mumbai"
 	"blgit.rfdev.tech/taya/game-service/mumbai/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
@@ -16,14 +18,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// CURRENTLY USING HARDCODED VALUE. NOTE: WILL NEED TO CHANGE TO USE USER INPUT.
-const (
-	defaultTransferAmount = "50"
-)
-
 func generateTransactionNo(user model.User, mode api.TransferCheckType) string {
 	return os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + string(mode) + user.IdAsString() + fmt.Sprintf("x%x", time.Now().Unix())
 }
+
 func (c *Mumbai) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, currency string, gameCode string, gameVendorId int64, extra model.Extra) error {
 	// get the balance from mumbai and update the db
 	client, err := util.MumbaiFactory()
@@ -36,6 +34,9 @@ func (c *Mumbai) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User,
 	mbBalance, err := client.CheckBalanceUser(username)
 
 	if err != nil {
+		if errors.Is(err, mumbai.ErrAccountNotFound) {
+			return nil
+		}
 		return err
 	}
 	if mbBalance == 0 {

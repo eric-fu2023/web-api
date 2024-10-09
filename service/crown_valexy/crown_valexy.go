@@ -9,6 +9,7 @@ import (
 	"web-api/model"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/game-service/crownvalexy"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
@@ -87,6 +88,9 @@ func (c *CrownValexy) TransferFrom(ctx context.Context, tx *gorm.DB, user model.
 	}
 	cvUser, err := client.UserDetails(ctx, userId)
 	if err != nil {
+		if errors.Is(err, crownvalexy.ErrAccountInvalid) {
+			return nil
+		}
 		return err
 	}
 	toWithdraw := cvUser.Balance
