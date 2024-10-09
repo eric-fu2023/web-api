@@ -32,8 +32,14 @@ var GameIntegration = map[int64]GameIntegrationInterface{
 	util.IntegrationIdMancala:     &mancala.Mancala{},
 }
 
+// GameIntegrationInterface
 type GameIntegrationInterface interface {
 	CreateWallet(context.Context, model.User, string) error
+
+	// TransferFrom
+	// SHOULD:
+	//	execute a debit action from third party account. if account not found consider a zero withdraw and return nil
+	//  the db/tx instance should be orchestrated by caller
 	TransferFrom(context.Context, *gorm.DB, model.User, string, string, int64, model.Extra) error
 	TransferTo(context.Context, *gorm.DB, model.User, ploutos.UserSum, string, string, int64, model.Extra) (int64, error)
 	GetGameUrl(context.Context, model.User, string, string, string, int64, model.Extra) (string, error)
