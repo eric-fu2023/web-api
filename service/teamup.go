@@ -186,13 +186,14 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 		user = u.(model.User)
 	}
 	loc := c.MustGet("_tz").(*time.Location)
-	log.Printf("GET MATCH DETAIL CHECK TIMEZONE tz - %v , teamup_id - %v \n", loc.String(), s.TeamupId)
 	if loc.String() == "UTC" {
 		loc, _ = time.LoadLocation("Asia/Tokyo")
 	}
+	log.Printf("teamup_id before GetCustomTeamUpByTeamUpId userId - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
 	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
 	outgoingRes := parseBetReport(brand, teamupRes)
+	log.Printf("teamup_id before len(outgoingRes) - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
 	if len(outgoingRes) > 0 {
 		if outgoingRes[0].TeamupEndTime != 0 && loc != nil {
 			t := time.Unix(outgoingRes[0].TeamupEndTime, 0).UTC()
@@ -201,6 +202,7 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 		}
 
 		teamupId, _ := strconv.Atoi(outgoingRes[0].TeamupId)
+		log.Printf("teamup_id check outgoingRes userId - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
 		if user.ID != 0 && outgoingRes[0].UserId != fmt.Sprint(user.ID) {
 			res, _ := model.GetTeamupEntryByTeamupIdAndUserId(int64(teamupId), user.ID)
 			if res.ID != 0 {
@@ -209,6 +211,7 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 		}
 		r.Data = outgoingRes[0]
 	}
+	log.Printf("END userId - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
 
 	return
 }
