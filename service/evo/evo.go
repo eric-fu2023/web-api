@@ -76,7 +76,7 @@ func (e EVO) GetGameBalance(ctx context.Context, user model.User, currency strin
 	return 0, nil
 }
 
-func (e EVO) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, currency string, gameCode string, gameVendorId int64, extra model.Extra) (err error) {
+func (e EVO) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, _ string, _ string, gameVendorId int64, extra model.Extra) (err error) {
 	client := util.EvoFactory.NewClient()
 
 	userBalance, err := client.GetGameBalance(user.IdAsString())

@@ -3,7 +3,6 @@ package mumbai
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -35,7 +34,7 @@ func (c *Mumbai) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User,
 	username := os.Getenv("GAME_MUMBAI_MERCHANT_CODE") + os.Getenv("GAME_MUMBAI_AGENT_CODE") + fmt.Sprintf("%08s", user.IdAsString())
 	transactionNo := generateTransactionNo(user, api.WithdrawCheckType)
 	mbBalance, err := client.CheckBalanceUser(username)
-	log.Printf("(c *Mumbai) TransferFrom balance %v err %v\n", mbBalance, err)
+
 	if err != nil {
 		return err
 	}
