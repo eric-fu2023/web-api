@@ -411,11 +411,15 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 				case <-ctx.Done():
 					return
 				default:
+					cause_type := cause
+					if cause_type == "FTD_success"{
+						cause_type = "deposit_success"
+					}
 					msg := websocket.BalanceUpdateMessage{
 						Room:            serializer.UserSignature(userId),
 						Event:           "balance_change",
-						// Cause:           cause,
-						Cause:           "deposit_success", // this is requested by FE
+						Cause:           cause_type,
+						// Cause:           "deposit_success", // this is requested by FE
 						Amount:          amount,
 						Balance:         float64(userSum.Balance) / 100,
 						RemainingWager:  float64(userSum.RemainingWager) / 100,
