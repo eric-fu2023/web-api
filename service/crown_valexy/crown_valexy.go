@@ -20,7 +20,7 @@ type CrownValexy struct{}
 func (c *CrownValexy) CreateWallet(ctx context.Context, user model.User, s string) error {
 	go func() {
 		// fire and forget. later calls should follow up with user creation, if needed.
-		service, err := util.CrownValexyFactory(context.TODO())
+		service, err := util.CrownValexyFactory(ctx)
 		if err == nil {
 			_, _ = service.Login(ctx, user.IdAsString())
 		}
