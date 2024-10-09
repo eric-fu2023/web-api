@@ -1,6 +1,7 @@
 package crown_valexy
 
 import (
+	"blgit.rfdev.tech/taya/game-service/crownvalexy"
 	"context"
 	"errors"
 	"strconv"
@@ -87,6 +88,9 @@ func (c *CrownValexy) TransferFrom(ctx context.Context, tx *gorm.DB, user model.
 	}
 	cvUser, err := client.UserDetails(ctx, userId)
 	if err != nil {
+		if errors.Is(err, crownvalexy.ErrAccountInvalid) {
+			return nil
+		}
 		return err
 	}
 	toWithdraw := cvUser.Balance

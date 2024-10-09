@@ -1,6 +1,7 @@
 package mancala
 
 import (
+	"blgit.rfdev.tech/taya/game-service/mancala"
 	"context"
 	"errors"
 	"log"
@@ -77,6 +78,9 @@ func (m *Mancala) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User
 
 	balanceResponse, err := client.GetBalance(ctx, userId, currency)
 	if err != nil {
+		if errors.Is(err, mancala.ErrNotFound) {
+			return nil
+		}
 		return err
 	}
 	toWithdraw := balanceResponse.Balance
