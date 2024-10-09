@@ -913,7 +913,7 @@ func (s TeamupCheckSpinService) CheckSpinPopup(c *gin.Context) (r serializer.Res
 	if shouldPop {
 		teamUpSpinPromotionIdString, _ := model.GetAppConfigWithCache("teamup", "teamup_spin_promotion_id")
 
-		if teamUpSpinPromotionIdString == "" || teamUpSpinPromotionIdString == "9999" || user.Mobile == "" {
+		if teamUpSpinPromotionIdString == "" || teamUpSpinPromotionIdString == "9999" {
 			spinRes.HasSpin = false
 			return
 		}
