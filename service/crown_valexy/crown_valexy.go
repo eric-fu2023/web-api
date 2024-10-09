@@ -10,6 +10,7 @@ import (
 	"web-api/model"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/game-service/crownvalexy"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"

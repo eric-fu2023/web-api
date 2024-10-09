@@ -38,7 +38,7 @@ type GameIntegrationInterface interface {
 
 	// TransferFrom
 	// SHOULD:
-	//	execute a debit action from third party account. if account not found should return nil
+	//	execute a debit action from third party account. if account not found consider a zero withdraw and return nil
 	//  the db/tx instance should be orchestrated by caller
 	TransferFrom(context.Context, *gorm.DB, model.User, string, string, int64, model.Extra) error
 	TransferTo(context.Context, *gorm.DB, model.User, ploutos.UserSum, string, string, int64, model.Extra) (int64, error)

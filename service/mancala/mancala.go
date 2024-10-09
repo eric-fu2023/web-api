@@ -12,6 +12,7 @@ import (
 	"web-api/util"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	"blgit.rfdev.tech/taya/game-service/mancala"
 	"blgit.rfdev.tech/taya/game-service/mancala/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 

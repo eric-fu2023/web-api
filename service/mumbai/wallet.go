@@ -11,6 +11,7 @@ import (
 	"web-api/model"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/game-service/mumbai"
 	"blgit.rfdev.tech/taya/game-service/mumbai/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
