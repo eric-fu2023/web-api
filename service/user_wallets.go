@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"blgit.rfdev.tech/taya/common-function/rfcontext"
-
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
