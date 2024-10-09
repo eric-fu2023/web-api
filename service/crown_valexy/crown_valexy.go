@@ -1,7 +1,6 @@
 package crown_valexy
 
 import (
-	"blgit.rfdev.tech/taya/game-service/crownvalexy"
 	"context"
 	"errors"
 	"strconv"

@@ -1,7 +1,6 @@
 package mancala
 
 import (
-	"blgit.rfdev.tech/taya/game-service/mancala"
 	"context"
 	"errors"
 	"log"

@@ -1,7 +1,6 @@
 package mumbai
 
 import (
-	"blgit.rfdev.tech/taya/game-service/mumbai"
 	"context"
 	"errors"
 	"fmt"
