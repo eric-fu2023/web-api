@@ -145,12 +145,13 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 
 			ctx = rfcontext.AppendStats(ctx, "game_vendor_found", 1)
 			go func(g ploutos.GameVendorUser) {
-				ctx = rfcontext.AppendStats(ctx, "game_vendor_visiting", 1)
-				rCtx := rfcontext.AppendCallDesc(ctx, "recall from provider")
-				rCtx = rfcontext.AppendParams(rCtx, "recall from provider", map[string]interface{}{
-					"game_integration_id": g.GameVendor.GameIntegrationId,
-					"game_type_id":        g.GameVendor.ID,
-				})
+				rCtx := ctx
+				// ctx = rfcontext.AppendStats(ctx, "game_vendor_visiting", 1)
+				// rCtx := rfcontext.AppendCallDesc(ctx, "recall from provider")
+				// rCtx = rfcontext.AppendParams(rCtx, "recall from provider", map[string]interface{}{
+				// 	"game_integration_id": g.GameVendor.GameIntegrationId,
+				// 	"game_type_id":        g.GameVendor.ID,
+				// })
 
 				defer wg.Done()
 				tx := model.DB.Begin()
