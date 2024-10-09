@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -191,7 +190,6 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 		_ = model.DB.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`is_recall_needed`, false).Error
 
 		ctx = rfcontext.AppendCallDesc(ctx, "END")
-		log.Printf(rfcontext.Fmt(ctx))
 	}
 	return
 }
