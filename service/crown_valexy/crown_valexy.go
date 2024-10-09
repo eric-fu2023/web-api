@@ -9,6 +9,7 @@ import (
 	"web-api/model"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/game-service/crownvalexy"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
@@ -20,7 +21,7 @@ type CrownValexy struct{}
 func (c *CrownValexy) CreateWallet(ctx context.Context, user model.User, s string) error {
 	go func() {
 		// fire and forget. later calls should follow up with user creation, if needed.
-		service, err := util.CrownValexyFactory(context.TODO())
+		service, err := util.CrownValexyFactory(ctx)
 		if err == nil {
 			_, _ = service.Login(ctx, user.IdAsString())
 		}
@@ -87,6 +88,9 @@ func (c *CrownValexy) TransferFrom(ctx context.Context, tx *gorm.DB, user model.
 	}
 	cvUser, err := client.UserDetails(ctx, userId)
 	if err != nil {
+		if errors.Is(err, crownvalexy.ErrAccountInvalid) {
+			return nil
+		}
 		return err
 	}
 	toWithdraw := cvUser.Balance

@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ServiceWager struct{}
+type ServiceWager struct {}
 type CheckGameWalletStruct struct {
 	GameBalance int64 `json:"game_balance"`
 	UserId      int64 `json:"user_id"`
@@ -22,7 +22,7 @@ type MainWalletStruct struct {
 	UserId  int64 `json:"user_id"`
 }
 
-func (service_wager *ServiceWager) WagerClear(c *gin.Context) serializer.Response {
+func (service_wager *ServiceWager) WagerClear(c *gin.Context) (serializer.Response ){
 
 	min_bet_string := os.Getenv("MIN_BET_VALUE")
 	min_bet_int, err := strconv.ParseInt(min_bet_string, 10, 64)
@@ -36,7 +36,7 @@ func (service_wager *ServiceWager) WagerClear(c *gin.Context) serializer.Respons
 	// check if user total balance is below threshold
 	balance_below_threshold := CheckWallet(user.ID, min_bet_int)
 
-	if balance_below_threshold {
+	if balance_below_threshold{
 		// check if there are pending bet_report
 		should_clear := CheckBetReport(user.ID)
 
@@ -62,7 +62,7 @@ func CheckWallet(user_id int64, min_bet_value int64) (should_clear_wager bool) {
 		return false
 	}
 
-	if main_wallet.UserId == 0 {
+	if main_wallet.UserId==0{
 		return false
 	}
 
@@ -102,15 +102,15 @@ func CheckBetReport(user_id int64) (should_clear bool) {
 	// 	5: "Settled",
 	// 	6: "EarlySettled",
 	// }
-
-	if len(users_bet_reports) != 0 {
+	
+	if len(users_bet_reports) != 0{
 		return false
 	}
 	util.Log().Info("should clear wager for user :", user_id)
 	return true
 }
 
-func ResetWager(user_id int64) {
+func ResetWager (user_id int64){
 	//
 	tx := model.DB.Begin()
 
