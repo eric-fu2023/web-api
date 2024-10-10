@@ -507,84 +507,75 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	brand := c.MustGet(`_brand`).(int)
 
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
-	teamup, isTeamupSuccess, isSuccess, err := model.CreateSlashBetRecord(c, s.TeamupId, user.User, i18n)
-
-	alreadyPushTeamupNotification := false
-
-	if isTeamupSuccess {
-
-		// SUCCESS -> UPDATE USER SUM
-
-		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
-			amount := teamup.TotalTeamUpTarget
-			sum, err := model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "SlashBet"), tx, teamup.UserId, amount, amount, 0, ploutos.TransactionTypeTeamupPromotion, "")
-			if err != nil {
-				return err
-			}
-			notes := fmt.Sprintf("Teamup ID - %v", teamup.ID)
-
-			coId := uuid.NewString()
-			teamupCashOrder := ploutos.CashOrder{
-				ID:                    coId,
-				UserId:                teamup.UserId,
-				OrderType:             ploutos.CashOrderTypeTeamupPromotion,
-				Status:                ploutos.CashOrderStatusSuccess,
-				Notes:                 ploutos.EncryptedStr(notes),
-				AppliedCashInAmount:   amount,
-				ActualCashInAmount:    amount,
-				EffectiveCashInAmount: amount,
-				BalanceBefore:         sum.Balance - amount,
-				WagerChange:           amount,
-			}
-			err = tx.Create(&teamupCashOrder).Error
-			if err != nil {
-				return err
-			}
-
-			// transaction := ploutos.Transaction{
-			// 	UserId:                teamup.UserId,
-			// 	Amount:                amount,
-			// 	BalanceBefore:         sum.Balance - amount,
-			// 	BalanceAfter:          sum.Balance,
-			// 	TransactionType:       ploutos.TransactionTypeTeamupPromotion,
-			// 	Wager:                 0,
-			// 	WagerBefore:           sum.RemainingWager,
-			// 	WagerAfter:            sum.RemainingWager + amount,
-			// 	ExternalTransactionId: strconv.Itoa(int(teamup.ID)),
-			// 	GameVendorId:          0,
-			// }
-			// err = tx.Create(&transaction).Error
-			// if err != nil {
-			// 	log.Printf("Error creating teamup transaction, err: %v", err)
-			// 	return err
-			// }
-
-			util.GetLoggerEntry(c).Info("Team Up Cash Order", coId, teamup.ID)
-			common.SendUserSumSocketMsg(teamup.UserId, sum.UserSum, "teamup_success", float64(amount)/100)
-
-			return
-		})
-		if err != nil {
-			util.GetLoggerEntry(c).Error("Team Up Cash Order ERROR - ", err, teamup.ID)
-			return
-		}
-
-		alreadyPushTeamupNotification = true
-		SendTeamupNotification(brand, 2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
-	}
-
-	if isSuccess {
-		teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
-		if !alreadyPushTeamupNotification {
-			SendTeamupNotification(brand, 1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
-		}
-	}
+	teamup, isSuccess, wonTeamupIds, err := model.CreateSlashBetRecord(c, s.TeamupId, user.User, i18n)
 
 	if err != nil {
 		return serializer.Response{
 			Code:  http.StatusBadRequest,
 			Error: i18n.T(err.Error()),
 		}, nil
+	}
+
+	if isSuccess == false {
+		r.Data = false
+		return
+	}
+
+	teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
+
+	if len(wonTeamupIds) == 0 {
+
+		SendTeamupNotification(brand, 1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+
+		r.Data = true
+		return
+	} else {
+
+		for _, wonId := range wonTeamupIds {
+			if teamup.ID == wonId {
+				SendTeamupNotification(brand, 1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+			} else {
+				wonTeamup, _ := model.GetTeamUpByTeamUpId(wonId)
+
+				err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
+					amount := wonTeamup.TotalTeamUpTarget
+					sum, err := model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "SlashBet"), tx, wonTeamup.UserId, amount, amount, 0, ploutos.TransactionTypeTeamupPromotion, "")
+					if err != nil {
+						return err
+					}
+					notes := fmt.Sprintf("Teamup ID - %v", wonTeamup.ID)
+
+					coId := uuid.NewString()
+					teamupCashOrder := ploutos.CashOrder{
+						ID:                    coId,
+						UserId:                wonTeamup.UserId,
+						OrderType:             ploutos.CashOrderTypeTeamupPromotion,
+						Status:                ploutos.CashOrderStatusSuccess,
+						Notes:                 ploutos.EncryptedStr(notes),
+						AppliedCashInAmount:   amount,
+						ActualCashInAmount:    amount,
+						EffectiveCashInAmount: amount,
+						BalanceBefore:         sum.Balance - amount,
+						WagerChange:           amount,
+					}
+					err = tx.Create(&teamupCashOrder).Error
+					if err != nil {
+						return err
+					}
+
+					util.GetLoggerEntry(c).Info("Team Up Cash Order", coId, wonTeamup.ID)
+					common.SendUserSumSocketMsg(wonTeamup.UserId, sum.UserSum, "teamup_success", float64(amount)/100)
+
+					return
+				})
+				if err != nil {
+					util.GetLoggerEntry(c).Error("Team Up Cash Order ERROR - ", err, wonTeamup.ID)
+					return
+				}
+
+				SendTeamupNotification(brand, 2, wonTeamup.UserId, wonTeamup.TotalFakeProgress, wonTeamup.TotalTeamUpTarget, wonTeamup.ID, i18n)
+			}
+		}
 	}
 
 	r.Data = isSuccess

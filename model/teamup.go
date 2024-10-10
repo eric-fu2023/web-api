@@ -360,11 +360,16 @@ func SuccessShortlisted(brandId int, teamup ploutos.Teamup, teamupEntriesCurrent
 	return
 }
 
-func FlagStatusShortlisted(tx *gorm.DB, ids []int64) (err error) {
+func FlagStatusShortlistedWin(tx *gorm.DB, ids []int64) (err error) {
 	return tx.Transaction(func(tx2 *gorm.DB) error {
 		err = tx2.Model(ploutos.Teamup{}).
 			Where("id IN ?", ids).
-			Update("shortlist_status", ploutos.ShortlistStatusShortlisted).Error
+			Updates(map[string]interface{}{
+				"shortlist_status":      ploutos.ShortlistStatusShortlistWin,
+				"status":                int(ploutos.TeamupStatusSuccess),
+				"total_fake_progress":   int64(10000),
+				"teamup_completed_time": time.Now().UTC().Unix(),
+			}).Error
 
 		return err
 	})

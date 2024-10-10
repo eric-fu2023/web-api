@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
@@ -78,7 +79,7 @@ func GetAllTeamUpEntries(brand int, teamupId int64, page, limit int) (res Teamup
 	return
 }
 
-func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18n i18n.I18n) (teamup ploutos.Teamup, isTeamupSuccess, isSuccess bool, err error) {
+func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18n i18n.I18n) (teamup ploutos.Teamup, isSuccess bool, wonTeamupIds []int64, err error) {
 
 	brand := c.MustGet(`_brand`).(int)
 	// First entry - 85% ~ 92%
@@ -129,25 +130,31 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 
 	// Check if teamup is shortlisted
 	// If yes, then success the current shortlisted
-	if teamup.Term != 0 && teamup.ShortlistStatus != ploutos.ShortlistStatusNotShortlist {
-		// 如果有Term，如果这单是成功 / 入选
-		if isValidSlash {
-			isSuccessShortlisted, _ := SuccessShortlisted(brand, teamup, currentTotalProgress, userId)
+	// if teamup.Term != 0 && teamup.ShortlistStatus != ploutos.ShortlistStatusNotShortlist {
+	// 	// 如果有Term，如果这单是成功 / 入选
+	// 	if isValidSlash {
+	// 		isSuccessShortlisted, _ := SuccessShortlisted(brand, teamup, currentTotalProgress, userId)
 
-			// No matter got error or not, need to return
-			// No error = success = return
-			// Got error = should not continue = return
-			if isSuccessShortlisted {
-				isTeamupSuccess = true
-				isSuccess = true
-				return
-			}
+	// 		// No matter got error or not, need to return
+	// 		// No error = success = return
+	// 		// Got error = should not continue = return
+	// 		if isSuccessShortlisted {
+	// 			isTeamupSuccess = true
+	// 			isSuccess = true
+	// 			return
+	// 		}
 
-			// Give random percentage if shortlisted by others, slash for fun
-			shouldGiveRandomPercentage = true
-		}
-	} else if teamup.Term != 0 && teamup.ShortlistStatus == ploutos.ShortlistStatusNotShortlist {
+	// 		// Give random percentage if shortlisted by others, slash for fun
+	// 		shouldGiveRandomPercentage = true
+	// 	}
+	// } else if teamup.Term != 0 && teamup.ShortlistStatus == ploutos.ShortlistStatusNotShortlist {
 
+	// 	// 如果有Term，就代表CONTRIBUTION >= TARGET+不是入选/成功，就意思意思砍0
+	// 	isValidSlash = false
+	// 	shouldGiveRandomPercentage = true
+	// }
+
+	if teamup.Term != 0 && teamup.ShortlistStatus == ploutos.ShortlistStatusNotShortlist {
 		// 如果有Term，就代表CONTRIBUTION >= TARGET+不是入选/成功，就意思意思砍0
 		isValidSlash = false
 		shouldGiveRandomPercentage = true
@@ -242,16 +249,21 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 				var ids []int64
 				for _, t := range termTeamups {
 					if t.ID == teamup.ID {
-						teamup.ShortlistStatus = ploutos.ShortlistStatusShortlisted
+						teamup.Status = int(ploutos.TeamupStatusSuccess)
+						teamup.ShortlistStatus = ploutos.ShortlistStatusShortlistWin
+						teamup.TotalFakeProgress = int64(1000)
+						teamup.TeamupCompletedTime = time.Now().UTC().Unix()
 					}
 					ids = append(ids, t.ID)
 				}
 
 				// 选价值最小的4张单晋级，之后这4张单选一张砍单成功
-				err = FlagStatusShortlisted(tx, ids)
+				err = FlagStatusShortlistedWin(tx, ids)
 				if err != nil {
 					return
 				}
+
+				wonTeamupIds = ids
 			}
 		}
 
@@ -366,6 +378,17 @@ func GetTeamupEntryByTeamupIdAndUserId(teamupId, userId int64) (res ploutos.Team
 	return
 }
 
+func TeamupEntriesByDateRange(c context.Context, userId int64, startDate, endDate time.Time) (teamupEntries []ploutos.TeamupEntry, err error) {
+
+	db := DB.Table("teamup_entries").Where("user_id", userId).Where("contributed_teamup_deposit != ?", 0)
+	db.Where("created_at >= ?", startDate)
+	db.Where("created_at < ?", endDate)
+
+	err = db.Find(&teamupEntries).Error
+
+	return
+}
+
 func validSlash(c *gin.Context, user ploutos.User) (isValid bool) {
 
 	var condition1, condition2 bool
@@ -382,6 +405,27 @@ func validSlash(c *gin.Context, user ploutos.User) (isValid bool) {
 	}
 
 	isValid = condition1 || (condition2 && !isSlashBefore)
+
+	// if isValid == false {
+	// 	return
+	// }
+
+	// const hours = 48
+	// start := time.Now().Add(-48 * time.Hour).UTC()
+	// end := time.Now().UTC()
+
+	// topupRecords, _ := TopupsByDateRange(c, user.ID, start, end)
+
+	// if len(topupRecords) == 0 {
+	// 	return
+	// }
+
+	// teamupEntries, _ := TeamupEntriesByDateRange(c, user.ID, start, end)
+
+	// if len(topupRecords) > len(teamupEntries) {
+	// 	isValid = true
+	// }
+
 	return
 }
 
@@ -495,8 +539,6 @@ func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, t
 					break
 				}
 
-				// fmt.Println(teamupEntries[i].AdjustedFiatProgress)
-
 				if i != 0 {
 					partialTotalProgress += teamupEntries[i].AdjustedFiatProgress
 				} else {
@@ -505,8 +547,6 @@ func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, t
 						teamupEntries[i].AdjustedFiatProgress = 0
 					}
 				}
-
-				// fmt.Println(fmt.Sprint(partialTotalProgress) + " - " + fmt.Sprint(teamupEntries[i].AdjustedFiatProgress))
 
 				if int(partialTotalProgress) >= int(teamup.TotalTeamUpTarget/100) {
 					prev := partialTotalProgress - teamupEntries[i].AdjustedFiatProgress
