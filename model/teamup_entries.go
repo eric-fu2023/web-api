@@ -254,6 +254,9 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 						teamup.TotalFakeProgress = int64(1000)
 						teamup.TeamupCompletedTime = time.Now().UTC().Unix()
 					}
+					if t.Status == int(ploutos.TeamupStatusFail) {
+						continue
+					}
 					ids = append(ids, t.ID)
 				}
 
