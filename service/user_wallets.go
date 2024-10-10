@@ -146,12 +146,6 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 			ctx = rfcontext.AppendStats(ctx, "game_vendor_found", 1)
 			go func(g ploutos.GameVendorUser) {
 				rCtx := ctx
-				// ctx = rfcontext.AppendStats(ctx, "game_vendor_visiting", 1)
-				// rCtx := rfcontext.AppendCallDesc(ctx, "recall from provider")
-				// rCtx = rfcontext.AppendParams(rCtx, "recall from provider", map[string]interface{}{
-				// 	"game_integration_id": g.GameVendor.GameIntegrationId,
-				// 	"game_type_id":        g.GameVendor.ID,
-				// })
 
 				defer wg.Done()
 				tx := model.DB.Begin()
@@ -161,7 +155,6 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 				err = common.GameIntegration[g.GameVendor.GameIntegrationId].TransferFrom(rCtx, tx, user, g.ExternalCurrency, g.GameVendor.GameCode, g.GameVendorId, extra)
 				if err != nil {
 					util.Log().Error(rfcontext.Fmt(rfcontext.AppendError(rCtx, err, fmt.Sprintf("`GAME INTEGRATION RECALL ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error()))))
-					ctx = rfcontext.AppendStats(ctx, "game_vendor_withdraw_process_db_fail_transfer_from", 1)
 					return
 				}
 				var maxRetries = 3
@@ -179,7 +172,6 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 					break
 				}
 
-				ctx = rfcontext.AppendStats(ctx, "game_vendor_withdraw_process_db_committed", 1)
 				tx.Commit()
 			}(g)
 		}
