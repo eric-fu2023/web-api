@@ -143,10 +143,7 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 			}
 			wg.Add(1)
 
-			ctx = rfcontext.AppendStats(ctx, "game_vendor_found", 1)
-			go func(g ploutos.GameVendorUser) {
-				rCtx := ctx
-
+			go func(rCtx context.Context, g ploutos.GameVendorUser) {
 				defer wg.Done()
 				tx := model.DB.Begin()
 				defer tx.Rollback()
@@ -163,7 +160,6 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 					if err != nil {
 						util.Log().Error(rfcontext.Fmt(rfcontext.AppendError(rCtx, err, fmt.Sprintf("GAME INTEGRATION RECALL DB UPDATE ERROR game_integration_id: %d, game_code: %s, user_id: %d, error: %s", g.GameVendor.GameIntegrationId, g.GameVendor.GameCode, user.ID, err.Error()))))
 						if i == maxRetries-1 {
-							ctx = rfcontext.AppendStats(ctx, "game_vendor_withdraw_process_db_fail_retry", 1)
 							return
 						}
 						time.Sleep(200 * time.Millisecond)
@@ -173,7 +169,7 @@ func recall(user model.User, force bool, locale, ip string) (userSum ploutos.Use
 				}
 
 				tx.Commit()
-			}(g)
+			}(ctx, g)
 		}
 		wg.Wait()
 		err = model.DB.Where(`user_id`, user.ID).First(&userSum).Error
