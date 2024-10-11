@@ -28,6 +28,8 @@ type HomeBanner struct {
 	NavigationId   int64  `json:"navi_id" gorm:"column:navi_id"`
 	Iframe         bool   `json:"iframe" gorm:"column:iframe"`
 	LoginRequired  bool   `json:"login_required" gorm:"column:login_required"`
+	StreamId       int64  `json:"stream_id" gorm:"-"`
+	MatchId        int64  `json:"match_id" gorm:"-"`
 }
 
 type HomeBannerServiceGetResponse struct {
@@ -45,6 +47,19 @@ func (service *HomeBannerService) Get(c *gin.Context) serializer.Response {
 
 	var bannersR []HomeBanner
 	for _, banner := range banners {
+		stream_id := int64(0)
+		match_id := int64(0)
+		if banner.NavigationType == "stream" {
+			var livestream ploutos.LiveStream
+			err = model.DB.Where("streamer_id = ?", banner.NavigationId).Where("status in (1,2)").Order("schedule_time desc").First(&livestream).Error
+			if err != nil {
+				r := serializer.Err(c, service, serializer.CodeGeneralError, "error get stream", err)
+				return r
+			}
+			stream_id = livestream.ID
+			match_id = livestream.MatchId
+
+		}
 		bannersR = append(bannersR, HomeBanner{
 			Id:             banner.ID,
 			ImgUrl:         serializer.Url(banner.ImgUrl),
@@ -52,6 +67,8 @@ func (service *HomeBannerService) Get(c *gin.Context) serializer.Response {
 			NavigationId:   banner.NavigationId,
 			Iframe:         banner.Iframe,
 			LoginRequired:  banner.LoginRequired,
+			StreamId:       stream_id,
+			MatchId:        match_id,
 		})
 	}
 
