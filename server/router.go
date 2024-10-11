@@ -42,6 +42,9 @@ func NewRouter() *gin.Engine {
 	r.GET("/ts", api.Ts)
 	// geolocations
 	r.GET("/v1/geolocation", api.GeolocationGet)
+
+	// beta
+	r.GET("/v1/home_banners", api.GetHomeBanners)
 	// payment
 	r.GET("/finpay_redirect", api.FinpayRedirect)
 	r.POST("/finpay_redirect", api.FinpayRedirect)
