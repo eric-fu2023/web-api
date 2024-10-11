@@ -25,7 +25,7 @@ type HomeBanner struct {
 	Id             int64  `json:"id" gorm:"column:id"`
 	ImgUrl         string `json:"img_url" gorm:"column:img_url"`
 	NavigationType string `json:"navi_type" gorm:"column:navi_type"`
-	NavigationId   string `json:"navi_id" gorm:"column:navi_id"`
+	NavigationId   int64  `json:"navi_id" gorm:"column:navi_id"`
 	Iframe         bool   `json:"iframe" gorm:"column:iframe"`
 	LoginRequired  bool   `json:"login_required" gorm:"column:login_required"`
 }
