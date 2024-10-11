@@ -44,7 +44,7 @@ func NewRouter() *gin.Engine {
 	r.GET("/v1/geolocation", api.GeolocationGet)
 
 	// beta
-	r.GET("/v1/home_banners", api.GetHomeBanners)
+	// r.GET("/v1/home_banners", api.GetHomeBanners)
 	// payment
 	r.GET("/finpay_redirect", api.FinpayRedirect)
 	r.POST("/finpay_redirect", api.FinpayRedirect)
@@ -86,6 +86,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/otp-check", api.VerifyOtp)
 
 		v1.GET("/check-order", api.CheckOrder)
+		v1.GET("/home_banners", api.GetHomeBanners)
 
 		requireMobile := os.Getenv("REGISTER_REQUIRES_MOBILE") == "TRUE"
 		bypassSetMobileOtpVerify := os.Getenv("REGISTER_NO_VERIFY_MOBILE_OTP") == "TRUE"
