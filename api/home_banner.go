@@ -47,7 +47,7 @@ func (service *HomeBannerService) Get(c *gin.Context) serializer.Response {
 	for _, banner := range banners {
 		bannersR = append(bannersR, HomeBanner{
 			Id:             banner.ID,
-			ImgUrl:         banner.ImgUrl,
+			ImgUrl:         serializer.Url(banner.ImgUrl),
 			NavigationType: banner.NavigationType,
 			NavigationId:   banner.NavigationId,
 			Iframe:         banner.Iframe,
