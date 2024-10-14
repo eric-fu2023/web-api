@@ -23,6 +23,7 @@ type TopUpOrderService struct {
 	Amount          string `form:"amount" json:"amount"`
 	MethodID        int64  `form:"method_id" json:"method_id"`
 	BankAccountName string `form:"bank_account_name" json:"bank_account_name"`
+	Platform        int64  `form:"platform" json:"platform"`
 }
 
 func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, err error) {
@@ -88,6 +89,7 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 		amount,
 		userSum.Balance,
 		GetWagerFromAmount(amount, DefaultWager),
+		s.Platform,
 		c.ClientIP(),
 		method.Currency,
 		er.ExchangeRate,
