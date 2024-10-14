@@ -2,12 +2,10 @@ package util
 
 import (
 	"context"
-	"log"
 	"os"
 
 	"web-api/conf/consts"
 
-	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	gameservicecommon "blgit.rfdev.tech/taya/game-service/common"
 	"blgit.rfdev.tech/taya/game-service/crownvalexy"
 	"blgit.rfdev.tech/taya/game-service/dc"
@@ -155,13 +153,13 @@ func InitCrownValexyFactory() {
 		GAME_CROWN_VALEXY_ACCESS_KEY := os.Getenv("GAME_CROWN_VALEXY_ACCESS_KEY")
 		GAME_CROWN_VALEXY_SECRET_KEY := os.Getenv("GAME_CROWN_VALEXY_SECRET_KEY")
 		GAME_CROWN_VALEXY_URL := os.Getenv("GAME_CROWN_VALEXY_URL")
-		ctx = rfcontext.AppendParams(ctx, "InitCrownValexyFactory", map[string]interface{}{
-			"GAME_CROWN_VALEXY_ACCESS_KEY": GAME_CROWN_VALEXY_ACCESS_KEY,
-			"GAME_CROWN_VALEXY_SECRET_KEY": GAME_CROWN_VALEXY_SECRET_KEY,
-			"GAME_CROWN_VALEXY_URL":        GAME_CROWN_VALEXY_URL,
-		})
+		//ctx = rfcontext.AppendParams(ctx, "InitCrownValexyFactory", map[string]interface{}{
+		//	"GAME_CROWN_VALEXY_ACCESS_KEY": GAME_CROWN_VALEXY_ACCESS_KEY,
+		//	"GAME_CROWN_VALEXY_SECRET_KEY": GAME_CROWN_VALEXY_SECRET_KEY,
+		//	"GAME_CROWN_VALEXY_URL":        GAME_CROWN_VALEXY_URL,
+		//})
 
-		log.Printf(rfcontext.Fmt(ctx))
+		//log.Printf(rfcontext.Fmt(ctx))
 		return crownvalexy.New(GAME_CROWN_VALEXY_ACCESS_KEY, GAME_CROWN_VALEXY_SECRET_KEY, GAME_CROWN_VALEXY_URL)
 	}
 }
