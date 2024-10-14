@@ -21,7 +21,7 @@ type CashOrder struct {
 	CashMethodChannel ploutos.CashMethodChannel `gorm:"foreignKey:ID;references:CashMethodChannelId"`
 }
 
-func NewCashInOrder(userID, CashMethodId, CashMethodChannelId, amount, balanceBefore, wagerChange int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) ploutos.CashOrder {
+func NewCashInOrder(userID, CashMethodId, CashMethodChannelId, amount, balanceBefore, wagerChange, platform int64, ip string, currency string, exchangerRate, exchangerRateAdjusted float64) ploutos.CashOrder {
 	return ploutos.CashOrder{
 		ID:                  ploutos.GenerateCashInOrderNo(),
 		UserId:              userID,
@@ -37,11 +37,12 @@ func NewCashInOrder(userID, CashMethodId, CashMethodChannelId, amount, balanceBe
 		ExchangeRate:         exchangerRate,
 		ExchangeRateAdjusted: exchangerRateAdjusted,
 		Ip:                   ip,
+		Platform:             platform,
 	}
 
 }
 
-func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingId int64, remark string, reviewRequired bool, ip string) ploutos.CashOrder {
+func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBindingId, platform int64, remark string, reviewRequired bool, ip string) ploutos.CashOrder {
 	var orderStatus = ploutos.CashOrderStatusPendingRiskCheck
 	var approveStatus int64
 	var reviewStatus int64
@@ -66,6 +67,7 @@ func NewCashOutOrder(userID, CashMethodId, amount, balanceBefore, accountBinding
 		//Notes:, update later
 		Ip:                   ip,
 		UserAccountBindingId: accountBindingId,
+		Platform:             platform,
 	}
 }
 

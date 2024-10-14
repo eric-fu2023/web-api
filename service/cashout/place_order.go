@@ -29,6 +29,7 @@ type WithdrawOrderService struct {
 	Amount            float64 `form:"amount" json:"amount" binding:"required"`
 	AccountBindingId  int64   `form:"account_binding_id" json:"account_binding_id" binding:"required"`
 	SecondaryPassword string  `form:"secondary_password" json:"secondary_password" binding:"required"`
+	Platform          int64   `form:"platform" json:"platform"`
 }
 
 func (s WithdrawOrderService) CreateOrder(c *gin.Context) (r serializer.Response, err error) {
@@ -127,7 +128,7 @@ func (s WithdrawOrderService) CreateOrder(c *gin.Context) (r serializer.Response
 		var msg string
 		reviewRequired, msg = vipRuleOK(rule, payoutCount, amount, totalOut)
 
-		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance, s.AccountBindingId, msg, reviewRequired, c.ClientIP())
+		cashOrder = model.NewCashOutOrder(user.ID, accountBinding.CashMethodID, amount, userSum.Balance, s.AccountBindingId, s.Platform, msg, reviewRequired, c.ClientIP())
 		err = tx.Create(&cashOrder).Error
 		if err != nil {
 			return
