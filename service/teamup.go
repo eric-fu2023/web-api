@@ -219,6 +219,15 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	if s.GameType == "0" || s.GameType == "" {
 		s.GameType = "4"
 	}
+
+	// teamupType := 0
+	// teamupType = int(s.TeamupType)
+
+	// if teamupType == 0 {
+	// 	incomingGameType, _ := strconv.Atoi(s.GameType)
+	// 	_, teamupType = model.GetGameTypeSlice(brand, incomingGameType)
+	// }
+
 	incomingGameType, _ := strconv.Atoi(s.GameType)
 	_, teamupType := model.GetGameTypeSlice(brand, incomingGameType)
 
