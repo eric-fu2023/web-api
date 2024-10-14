@@ -185,21 +185,13 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 	if u != nil {
 		user = u.(model.User)
 	}
-	loc := c.MustGet("_tz").(*time.Location)
-	if loc.String() == "UTC" {
-		loc, _ = time.LoadLocation("Asia/Tokyo")
-	}
+
 	log.Printf("teamup_id before GetCustomTeamUpByTeamUpId userId - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
 	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
 	outgoingRes := parseBetReport(brand, teamupRes)
 	log.Printf("teamup_id before len(outgoingRes) - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
 	if len(outgoingRes) > 0 {
-		if outgoingRes[0].TeamupEndTime != 0 && loc != nil {
-			t := time.Unix(outgoingRes[0].TeamupEndTime, 0).UTC()
-			tInLoc := t.In(loc)
-			outgoingRes[0].TeamupLocalEndTime = tInLoc.Format("2006-01-02 15:04:05")
-		}
 
 		teamupId, _ := strconv.Atoi(outgoingRes[0].TeamupId)
 		log.Printf("teamup_id check outgoingRes userId - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
@@ -521,7 +513,7 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 		return
 	}
 
-	teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
+	// teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
 
 	if len(wonTeamupIds) == 0 {
 
@@ -531,7 +523,10 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 		return
 	} else {
 
+		go model.UpdateLastTeamupEntryToMaxProgress(wonTeamupIds)
+
 		for _, wonId := range wonTeamupIds {
+
 			if teamup.ID == wonId {
 				SendTeamupNotification(brand, 1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
 			} else {
