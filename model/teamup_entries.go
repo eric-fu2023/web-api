@@ -251,7 +251,7 @@ func CreateSlashBetRecord(c *gin.Context, teamupId int64, user ploutos.User, i18
 					if t.ID == teamup.ID {
 						teamup.Status = int(ploutos.TeamupStatusSuccess)
 						teamup.ShortlistStatus = ploutos.ShortlistStatusShortlistWin
-						teamup.TotalFakeProgress = int64(1000)
+						teamup.TotalFakeProgress = int64(10000)
 						teamup.TeamupCompletedTime = time.Now().UTC().Unix()
 					}
 					if t.Status == int(ploutos.TeamupStatusFail) {
@@ -571,6 +571,34 @@ func FormatAdjustedFiatProgress(brand int, teamupEntries TeamupEntryCustomRes, t
 	res = teamupEntries
 
 	return
+}
+
+func UpdateLastTeamupEntryToMaxProgress(teamupIds []int64) {
+	for _, teamupId := range teamupIds {
+		updateErr := DB.Transaction(func(tx *gorm.DB) (err error) {
+
+			teamupEntries, err := FindTeamupEntryByTeamupId(teamupId)
+			if err != nil {
+				return
+			}
+			currentTotalProgress := util.Sum(teamupEntries, func(entry ploutos.TeamupEntry) int64 {
+				return entry.FakePercentageProgress
+			})
+
+			remainingProgress := int64(10000) - currentTotalProgress
+
+			teamupEntries[len(teamupEntries)-1].FakePercentageProgress += remainingProgress
+
+			err = tx.Save(&teamupEntries[len(teamupEntries)-1]).Error
+
+			return
+		})
+
+		if updateErr != nil {
+			util.Log().Error(`Update Last Teamup Entry To Max Progress Error - %v`, updateErr)
+			return
+		}
+	}
 }
 
 func mapFormatAdjustedFiatProgress[T any](t T, f func(T) T) T {
