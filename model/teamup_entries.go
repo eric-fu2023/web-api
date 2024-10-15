@@ -394,20 +394,25 @@ func TeamupEntriesByDateRange(c context.Context, userId int64, startDate, endDat
 
 func validSlash(c *gin.Context, user ploutos.User) (isValid bool) {
 
-	var condition1, condition2 bool
-	topUpCashOrder, _ := FirstTopup(c, user.ID)
-	if topUpCashOrder.ID != "" {
-		condition1 = true
-	}
+	var condition bool
+	// topUpCashOrder, _ := FirstTopup(c, user.ID)
+	// if topUpCashOrder.ID != "" {
+	// 	condition1 = true
+	// }
 
 	isSlashBefore := SlashBeforeByUserId(user.ID)
 
 	isIPRegistered := IPExisted(user.RegistrationIp)
 	if !isIPRegistered {
-		condition2 = true
+		condition = true
 	}
 
-	isValid = condition1 || (condition2 && !isSlashBefore)
+	if condition && !isSlashBefore {
+		isValid = true
+		return
+	}
+
+	// isValid = condition1 || (condition2 && !isSlashBefore)
 
 	// if isValid == false {
 	// 	return
@@ -415,19 +420,23 @@ func validSlash(c *gin.Context, user ploutos.User) (isValid bool) {
 
 	// const hours = 48
 	// start := time.Now().Add(-48 * time.Hour).UTC()
-	// end := time.Now().UTC()
 
-	// topupRecords, _ := TopupsByDateRange(c, user.ID, start, end)
+	const minutes = 5
+	start := time.Now().Add(-(minutes) * time.Hour).UTC()
 
-	// if len(topupRecords) == 0 {
-	// 	return
-	// }
+	end := time.Now().UTC()
 
-	// teamupEntries, _ := TeamupEntriesByDateRange(c, user.ID, start, end)
+	topupRecords, _ := TopupsByDateRange(c, user.ID, start, end)
 
-	// if len(topupRecords) > len(teamupEntries) {
-	// 	isValid = true
-	// }
+	if len(topupRecords) == 0 {
+		return
+	}
+
+	teamupEntries, _ := TeamupEntriesByDateRange(c, user.ID, start, end)
+
+	if len(topupRecords) > len(teamupEntries) {
+		isValid = true
+	}
 
 	return
 }
