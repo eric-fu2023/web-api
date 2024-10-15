@@ -18,7 +18,9 @@ import (
 	"web-api/service/common"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/chenyahui/gin-cache/persist"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -327,7 +329,7 @@ func GetPromotionExtraDetails(c context.Context, p ploutos.Promotion, userID int
 
 func CreateCashOrder(tx *gorm.DB, promoType, userId, rewardAmount, wagerChange int64, notes, name string) error {
 	txType := promotionTypeToTransactionTypeMapping[promoType]
-	sum, err := model.UpdateDbUserSumAndCreateTransaction(tx,
+	sum, err := model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "CreateCashOrder"), tx,
 		userId,
 		rewardAmount,
 		wagerChange,

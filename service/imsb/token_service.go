@@ -1,14 +1,9 @@
 package imsb
 
 import (
-	"blgit.rfdev.tech/taya/game-service/imsb/callback"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"gorm.io/plugin/dbresolver"
 	"strconv"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -16,6 +11,12 @@ import (
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
+
+	"blgit.rfdev.tech/taya/game-service/imsb/callback"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 var (
@@ -129,7 +130,9 @@ func (service *ApplyVoucherService) Apply(c *gin.Context) (res serializer.Respon
 	}
 
 	var voucher ploutos.Voucher
-	err = model.DB.Where(`id`, service.VoucherId).Where(`user_id`, user.ID).Where(`brand_id`, user.BrandId).First(&voucher).Error
+	// remove brand_id,  since now brand_id not use anymore
+	// err = model.DB.Where(`id`, service.VoucherId).Where(`user_id`, user.ID).Where(`brand_id`, user.BrandId).First(&voucher).Error
+	err = model.DB.Where(`id`, service.VoucherId).Where(`user_id`, user.ID).First(&voucher).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			res = serializer.ParamErr(c, service, i18n.T("voucher_invalid"), err)

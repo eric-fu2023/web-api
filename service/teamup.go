@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"web-api/cache"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -18,17 +20,17 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
-	"github.com/chenyahui/gin-cache/persist"
-	"github.com/google/uuid"
-	"github.com/jinzhu/copier"
-	"gorm.io/gorm"
-	"gorm.io/plugin/dbresolver"
-
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	// fbService "blgit.rfdev.tech/taya/game-service/fb2/client/"
 
+	"github.com/chenyahui/gin-cache/persist"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/jinzhu/copier"
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 type TeamupService struct {
@@ -183,22 +185,16 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 	if u != nil {
 		user = u.(model.User)
 	}
-	loc := c.MustGet("_tz").(*time.Location)
-	log.Printf("GET MATCH DETAIL CHECK TIMEZONE tz - %v , teamup_id - %v \n", loc.String(), s.TeamupId)
-	if loc.String() == "UTC" {
-		loc, _ = time.LoadLocation("Asia/Tokyo")
-	}
+
+	log.Printf("teamup_id before GetCustomTeamUpByTeamUpId userId - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
 	teamupRes, err := model.GetCustomTeamUpByTeamUpId(s.TeamupId)
 
 	outgoingRes := parseBetReport(brand, teamupRes)
+	log.Printf("teamup_id before len(outgoingRes) - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
 	if len(outgoingRes) > 0 {
-		if outgoingRes[0].TeamupEndTime != 0 && loc != nil {
-			t := time.Unix(outgoingRes[0].TeamupEndTime, 0).UTC()
-			tInLoc := t.In(loc)
-			outgoingRes[0].TeamupLocalEndTime = tInLoc.Format("2006-01-02 15:04:05")
-		}
 
 		teamupId, _ := strconv.Atoi(outgoingRes[0].TeamupId)
+		log.Printf("teamup_id check outgoingRes userId - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
 		if user.ID != 0 && outgoingRes[0].UserId != fmt.Sprint(user.ID) {
 			res, _ := model.GetTeamupEntryByTeamupIdAndUserId(int64(teamupId), user.ID)
 			if res.ID != 0 {
@@ -207,6 +203,7 @@ func (s GetTeamupService) Get(c *gin.Context) (r serializer.Response, err error)
 		}
 		r.Data = outgoingRes[0]
 	}
+	log.Printf("END userId - %v, teamupId - %v \n", fmt.Sprint(user.ID), s.TeamupId)
 
 	return
 }
@@ -222,6 +219,15 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 	if s.GameType == "0" || s.GameType == "" {
 		s.GameType = "4"
 	}
+
+	// teamupType := 0
+	// teamupType = int(s.TeamupType)
+
+	// if teamupType == 0 {
+	// 	incomingGameType, _ := strconv.Atoi(s.GameType)
+	// 	_, teamupType = model.GetGameTypeSlice(brand, incomingGameType)
+	// }
+
 	incomingGameType, _ := strconv.Atoi(s.GameType)
 	_, teamupType := model.GetGameTypeSlice(brand, incomingGameType)
 
@@ -482,7 +488,7 @@ func (s GetTeamupService) StartTeamUp(c *gin.Context) (r serializer.Response, er
 func (s GetTeamupService) ContributedUserList(c *gin.Context) (r serializer.Response, err error) {
 	brand := c.MustGet(`_brand`).(int)
 
-	s.Limit = 30
+	s.Limit = 50
 	entries, err := model.GetAllTeamUpEntries(brand, s.TeamupId, s.Page, s.Limit)
 
 	for i := range entries {
@@ -499,86 +505,81 @@ func (s GetTeamupService) SlashBet(c *gin.Context) (r serializer.Response, err e
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
+	brand := c.MustGet(`_brand`).(int)
 
 	// CREATE RECORD ONLY, THE REST WILL BE DONE IN DEPOSIT
-	teamup, isTeamupSuccess, isSuccess, err := model.CreateSlashBetRecord(c, s.TeamupId, user.User, i18n)
-
-	alreadyPushTeamupNotification := false
-
-	if isTeamupSuccess {
-
-		// SUCCESS -> UPDATE USER SUM
-
-		err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
-			amount := teamup.TotalTeamUpTarget
-			sum, err := model.UpdateDbUserSumAndCreateTransaction(tx, teamup.UserId, amount, amount, 0, ploutos.TransactionTypeTeamupPromotion, "")
-			if err != nil {
-				return err
-			}
-			notes := fmt.Sprintf("Teamup ID - %v", teamup.ID)
-
-			coId := uuid.NewString()
-			teamupCashOrder := ploutos.CashOrder{
-				ID:                    coId,
-				UserId:                teamup.UserId,
-				OrderType:             ploutos.CashOrderTypeTeamupPromotion,
-				Status:                ploutos.CashOrderStatusSuccess,
-				Notes:                 ploutos.EncryptedStr(notes),
-				AppliedCashInAmount:   amount,
-				ActualCashInAmount:    amount,
-				EffectiveCashInAmount: amount,
-				BalanceBefore:         sum.Balance - amount,
-				WagerChange:           amount,
-			}
-			err = tx.Create(&teamupCashOrder).Error
-			if err != nil {
-				return err
-			}
-
-			transaction := ploutos.Transaction{
-				UserId:                teamup.UserId,
-				Amount:                amount,
-				BalanceBefore:         sum.Balance - amount,
-				BalanceAfter:          sum.Balance,
-				TransactionType:       ploutos.TransactionTypeTeamupPromotion,
-				Wager:                 0,
-				WagerBefore:           sum.RemainingWager,
-				WagerAfter:            sum.RemainingWager + amount,
-				ExternalTransactionId: strconv.Itoa(int(teamup.ID)),
-				GameVendorId:          0,
-			}
-			err = tx.Create(&transaction).Error
-			if err != nil {
-				log.Printf("Error creating teamup transaction, err: %v", err)
-				return err
-			}
-
-			util.GetLoggerEntry(c).Info("Team Up Cash Order", coId, teamup.ID)
-			common.SendUserSumSocketMsg(teamup.UserId, sum.UserSum, "teamup_success", float64(amount)/100)
-
-			return
-		})
-		if err != nil {
-			util.GetLoggerEntry(c).Error("Team Up Cash Order ERROR - ", err, teamup.ID)
-			return
-		}
-
-		alreadyPushTeamupNotification = true
-		SendTeamupNotification(2, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
-	}
-
-	if isSuccess {
-		teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
-		if !alreadyPushTeamupNotification {
-			SendTeamupNotification(1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
-		}
-	}
+	teamup, isSuccess, wonTeamupIds, err := model.CreateSlashBetRecord(c, s.TeamupId, user.User, i18n)
 
 	if err != nil {
 		return serializer.Response{
 			Code:  http.StatusBadRequest,
 			Error: i18n.T(err.Error()),
 		}, nil
+	}
+
+	if isSuccess == false {
+		r.Data = false
+		return
+	}
+
+	// teamup, _ = model.GetTeamUpByTeamUpId(teamup.ID)
+
+	if len(wonTeamupIds) == 0 {
+
+		SendTeamupNotification(brand, 1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+
+		r.Data = true
+		return
+	} else {
+
+		go model.UpdateLastTeamupEntryToMaxProgress(wonTeamupIds)
+
+		for _, wonId := range wonTeamupIds {
+
+			if teamup.ID == wonId {
+				SendTeamupNotification(brand, 1, teamup.UserId, teamup.TotalFakeProgress, teamup.TotalTeamUpTarget, teamup.ID, i18n)
+			} else {
+				wonTeamup, _ := model.GetTeamUpByTeamUpId(wonId)
+
+				err = model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
+					amount := wonTeamup.TotalTeamUpTarget
+					sum, err := model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "SlashBet"), tx, wonTeamup.UserId, amount, amount, 0, ploutos.TransactionTypeTeamupPromotion, "")
+					if err != nil {
+						return err
+					}
+					notes := fmt.Sprintf("Teamup ID - %v", wonTeamup.ID)
+
+					coId := uuid.NewString()
+					teamupCashOrder := ploutos.CashOrder{
+						ID:                    coId,
+						UserId:                wonTeamup.UserId,
+						OrderType:             ploutos.CashOrderTypeTeamupPromotion,
+						Status:                ploutos.CashOrderStatusSuccess,
+						Notes:                 ploutos.EncryptedStr(notes),
+						AppliedCashInAmount:   amount,
+						ActualCashInAmount:    amount,
+						EffectiveCashInAmount: amount,
+						BalanceBefore:         sum.Balance - amount,
+						WagerChange:           amount,
+					}
+					err = tx.Create(&teamupCashOrder).Error
+					if err != nil {
+						return err
+					}
+
+					util.GetLoggerEntry(c).Info("Team Up Cash Order", coId, wonTeamup.ID)
+					common.SendUserSumSocketMsg(wonTeamup.UserId, sum.UserSum, "teamup_success", float64(amount)/100)
+
+					return
+				})
+				if err != nil {
+					util.GetLoggerEntry(c).Error("Team Up Cash Order ERROR - ", err, wonTeamup.ID)
+					return
+				}
+
+				SendTeamupNotification(brand, 2, wonTeamup.UserId, wonTeamup.TotalFakeProgress, wonTeamup.TotalTeamUpTarget, wonTeamup.ID, i18n)
+			}
+		}
 	}
 
 	r.Data = isSuccess
@@ -831,7 +832,7 @@ func (s TestDepositService) TestDeposit(c *gin.Context) (r serializer.Response, 
 	return
 }
 
-func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, teamupId int64, i18n i18n.I18n) {
+func SendTeamupNotification(brand, teamupType int, userId, percentage, totalTarget, teamupId int64, i18n i18n.I18n) {
 
 	// TYPE 1 = PROGRESS
 	// TYPE 2 = SUCCESS
@@ -840,41 +841,55 @@ func SendTeamupNotification(teamupType int, userId, percentage, totalTarget, tea
 		teamupType = 1
 	}
 
-	n := rand.Intn(3)
+	n := 0
 
 	titles := []string{}
 	contents := []string{}
 
 	switch {
 	case teamupType == 1:
-		titles = []string{i18n.T("notification_slash_teamup_progress_title1"), i18n.T("notification_slash_teamup_progress_title2"), i18n.T("notification_slash_teamup_progress_title3")}
-		contents = []string{i18n.T("notification_slash_teamup_progress_content1"), i18n.T("notification_slash_teamup_progress_content2"), i18n.T("notification_slash_teamup_progress_content3")}
+		n = rand.Intn(5)
+		titles = []string{i18n.T("notification_slash_teamup_progress_title1"), i18n.T("notification_slash_teamup_progress_title2"), i18n.T("notification_slash_teamup_progress_title3"), i18n.T("notification_slash_teamup_progress_title4"), i18n.T("notification_slash_teamup_progress_title5")}
+		contents = []string{i18n.T("notification_slash_teamup_progress_content1"), i18n.T("notification_slash_teamup_progress_content2"), i18n.T("notification_slash_teamup_progress_content3"), i18n.T("notification_slash_teamup_progress_content4"), i18n.T("notification_slash_teamup_progress_content5")}
 
 	case teamupType == 2:
+		n = rand.Intn(3)
 		titles = []string{i18n.T("notification_slash_teamup_success_title1"), i18n.T("notification_slash_teamup_success_title2"), i18n.T("notification_slash_teamup_success_title3")}
 		contents = []string{i18n.T("notification_slash_teamup_success_content1"), i18n.T("notification_slash_teamup_success_content2"), i18n.T("notification_slash_teamup_success_content3")}
 	}
 
 	notificationTitle := titles[n]
 	notificationMsg := contents[n]
-	if strings.Contains(notificationMsg, "%s") {
-		// pString := fmt.Sprintf("%.2f", (float64(percentage)/float64(10000))*(float64(totalTarget)/float64(100)))
-		// notificationMsg = fmt.Sprintf(notificationMsg, pString)
-
-		// if n != 1 {
-		// 	pFloat64 := (float64(percentage) / float64(100))
-		// 	notificationMsg = strings.ReplaceAll(notificationMsg, pString, "%s")
-		// 	notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64)+"%")
-		// }
-
-		pFloat64 := (float64(percentage) / float64(100))
-		notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64)+"%")
-	}
 
 	var resp serializer.Response
 
 	resp.Data = TeamupNotificationResp{
 		TeamupId: teamupId,
+	}
+
+	if strings.Contains(notificationMsg, "%s") && teamupType == 1 && n > 2 {
+
+		teamupCustomRes, _ := model.GetAllTeamUpEntries(brand, teamupId, 1, 50)
+		totalFiatProgress := 0
+		if len(teamupCustomRes) != 0 {
+			for _, r := range teamupCustomRes {
+				totalFiatProgress += int(r.AdjustedFiatProgress)
+			}
+		}
+
+		if strings.Contains(notificationMsg, "%s") {
+			notificationMsg = fmt.Sprintf(notificationMsg, "₹"+fmt.Sprint(totalFiatProgress))
+		}
+
+		go common.SendNotification(userId, consts.Notification_Type_Teamup_Detail, notificationTitle, notificationMsg, resp)
+
+		return
+	}
+
+	if strings.Contains(notificationMsg, "%s") {
+
+		pFloat64 := (float64(percentage) / float64(100))
+		notificationMsg = fmt.Sprintf(notificationMsg, fmt.Sprintf("%.2f", pFloat64)+"%")
 	}
 
 	go common.SendNotification(userId, consts.Notification_Type_Teamup_Detail, notificationTitle, notificationMsg, resp)
@@ -934,9 +949,10 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 	shouldPop := model.ShouldPopRoulette(brand, user.ID)
 
 	if !shouldPop {
-		r.Data = TeamupEntrySpinResultResp{
-			IsSuccess: false,
-		}
+		// r.Data = TeamupEntrySpinResultResp{
+		// 	IsSuccess: false,
+		// }
+		r = serializer.Err(c, s, serializer.CodeGeneralError, "You've exceeded the spin limit.", err)
 
 		return
 	}

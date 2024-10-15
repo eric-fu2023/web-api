@@ -1,6 +1,7 @@
 package cashout
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
@@ -136,7 +138,7 @@ func (s WithdrawOrderService) CreateOrder(c *gin.Context) (r serializer.Response
 		// make balance changes
 		// add tx record
 		var newUsersum model.UserSum
-		newUsersum, err = model.UpdateDbUserSumAndCreateTransaction(
+		newUsersum, err = model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "WithdrawOrderService"),
 			tx,
 			user.ID,
 			-amount,

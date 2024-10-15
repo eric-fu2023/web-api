@@ -1,6 +1,7 @@
 package cashout
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -8,6 +9,8 @@ import (
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
+
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redsync/redsync/v4"
@@ -63,7 +66,7 @@ func (svc CustomOrderService) Handle(c *gin.Context) (r serializer.Response, err
 		// make balance changes
 		// add tx record
 		var newUsersum model.UserSum
-		newUsersum, err = model.UpdateDbUserSumAndCreateTransaction(
+		newUsersum, err = model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "CustomOrderService"),
 			tx,
 			cashOrder.UserId,
 			-amount,

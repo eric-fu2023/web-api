@@ -84,9 +84,6 @@ func CheckWallet(user_id int64, min_bet_value int64) (should_clear_wager bool) {
 	return false
 }
 
-
-
-
 func CheckBetReport(user_id int64) (should_clear bool) {
 	var users_bet_reports []models.BetReport
 	terminated_status := []int64{2, 3, 4, 5, 6}
@@ -134,6 +131,7 @@ func ResetWager (user_id int64){
 	tsx := models.Transaction{
 		Amount:               0,
 		Wager:                -usData.RemainingWager,
+		DepositWager:         -usData.DepositRemainingWager,
 		TransactionType:      models.TransactionTypeClearWager,
 		GameVendorId:         0,
 		ForeignTransactionId: 0,
@@ -142,6 +140,8 @@ func ResetWager (user_id int64){
 		BalanceAfter:         usData.Balance,
 		WagerBefore:          usData.RemainingWager,
 		WagerAfter:           0,
+		DepositWagerBefore:   usData.DepositRemainingWager,
+		DepositWagerAfter:    0,
 		UserId:               user_id,
 	}
 
@@ -153,7 +153,7 @@ func ResetWager (user_id int64){
 	fmt.Println("insert into transaction table for user ", user_id)
 
 	// update user_sum table's balance and remaining_wager for that particular userId.
-	if err := tx.Model(&models.UserSum{}).Where("user_id = ?", user_id).UpdateColumn("remaining_wager",0).Error; err != nil {
+	if err := tx.Model(&models.UserSum{}).Where("user_id = ?", user_id).UpdateColumn("remaining_wager", 0).UpdateColumn("deposit_remaining_wager", 0).Error; err != nil {
 		util.Log().Error("Err update remaining wager", err.Error())
 		tx.Rollback()
 	}
@@ -161,13 +161,13 @@ func ResetWager (user_id int64){
 
 	risk_tag_id_string := os.Getenv("WAGER_AUTO_CLEAR_RISK_TAG_ID")
 	risk_tag_id, read_env_err := strconv.ParseInt(risk_tag_id_string, 10, 64)
-	if read_env_err!=nil{
+	if read_env_err != nil {
 		util.Log().Error("Err parse risk tag id", read_env_err.Error())
 	}
 	// add user risk tag
 	risk_tag := models.UserTagConn{
-		UserId:               user_id,
-		UserTagId:            risk_tag_id,
+		UserId:    user_id,
+		UserTagId: risk_tag_id,
 	}
 	if err := tx.Where("user_id = ? AND user_tag_id = ?", user_id, risk_tag_id).FirstOrCreate(&risk_tag).Error; err != nil {
 		util.Log().Error("Err inserting or finding user risk tag", err.Error())
@@ -175,7 +175,7 @@ func ResetWager (user_id int64){
 	}
 
 	err := tx.Commit().Error
-	if err!=nil{
+	if err != nil {
 		util.Log().Error("Err tx commit error", err.Error())
 		tx.Rollback()
 	}

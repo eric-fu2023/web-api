@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
 	"web-api/conf"
 	"web-api/conf/consts"
 	"web-api/model"
@@ -16,6 +17,7 @@ import (
 	"web-api/websocket"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"firebase.google.com/go/v4/messaging"
 	"golang.org/x/text/message"
 	"gorm.io/gorm"
@@ -92,8 +94,9 @@ type UserRegisterInterface interface {
 	OthersError() error
 }
 
+// CallbackInterface
 type CallbackInterface interface {
-	NewCallback(int64)
+	NewCallback(userId int64)
 	GetGameVendorId() int64
 	GetGameTransactionId() int64
 	GetExternalUserId() string
@@ -101,10 +104,10 @@ type CallbackInterface interface {
 	ShouldProceed() bool
 	GetAmount() int64
 	GetBetAmountOnly() int64
-	GetWagerMultiplier() (int64, bool)
-	GetBetAmount() (int64, bool)
+	GetWagerMultiplier() (factor int64, shouldMultiply bool)
+	GetBetAmount() (betPrincipal int64, betExists bool)
 	IsAdjustment() bool
-	ApplyInsuranceVoucher(int64, int64, bool) error
+	ApplyInsuranceVoucher(userId int64, betAmount int64, betExists bool) error
 }
 
 type TestTeamupGamePopUpNotification struct {
@@ -225,190 +228,7 @@ func ProcessTransaction(obj CallbackInterface) (err error) {
 	SendUserSumSocketMsg(gpu.UserId, userSum, "bet", float64(obj.GetAmount())/100)
 
 	return
-}
 
-// batace ProcessTransaction
-func GetUserAndSumBatace(tx *gorm.DB, gameVendor int64, externalUserId string) (gameVendorUser ploutos.GameVendorUser, balance int64, remainingWager int64, depositRemainingWager int64, maxWithdrawable int64, err error) {
-	gameVendorUser, err = GetGameVendorUser(gameVendor, externalUserId)
-	if err != nil {
-		return
-	}
-	balance, remainingWager, depositRemainingWager, maxWithdrawable, err = GetSumsBatace(tx, gameVendorUser)
-	if err != nil {
-		return
-	}
-	return
-}
-
-func GetSumsBatace(tx *gorm.DB, gpu ploutos.GameVendorUser) (balance int64, remainingWager int64, depositRemainingWager int64, maxWithdrawable int64, err error) {
-	var userSum ploutos.UserSum
-	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(`user_id`, gpu.UserId).First(&userSum).Error
-	if err != nil {
-		return
-	}
-	balance = userSum.Balance
-	remainingWager = userSum.RemainingWager
-	depositRemainingWager = userSum.DepositRemainingWager
-	maxWithdrawable = userSum.MaxWithdrawable
-	return
-}
-
-func ProcessTransactionBatace(obj CallbackInterface) (err error) {
-	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelSerializable})
-	if tx.Error != nil {
-		err = tx.Error
-		return
-	}
-
-	gpu, balance, remainingWager, depositRemainingWager, maxWithdrawable, err := GetUserAndSumBatace(tx, obj.GetGameVendorId(), obj.GetExternalUserId())
-	if err != nil {
-		err = fmt.Errorf("%w: %w", ErrGameVendorUserInvalid, err)
-		tx.Rollback()
-		return
-	}
-	obj.NewCallback(gpu.UserId)
-	if !obj.ShouldProceed() {
-		tx.Rollback()
-		return
-	}
-	newBalance := balance + obj.GetAmount()
-	if newBalance < 0 {
-		err = ErrInsuffientBalance
-		tx.Rollback()
-		return
-	}
-
-	newRemainingWager := remainingWager
-	newDepositRemainingWager := depositRemainingWager
-	_, _, w, dw, wc, dwc, e := calWagerBatace(obj, remainingWager, depositRemainingWager)
-	if e == nil {
-		newRemainingWager = w
-		newDepositRemainingWager = dw
-	}
-
-	newWithdrawable := maxWithdrawable
-	if w, e := calMaxWithdrawable(obj, newBalance, newRemainingWager, maxWithdrawable); e == nil {
-		newWithdrawable = w
-	}
-
-	userSum := ploutos.UserSum{
-		Balance:               newBalance,
-		RemainingWager:        newRemainingWager,
-		DepositRemainingWager: newDepositRemainingWager,
-		MaxWithdrawable:       newWithdrawable,
-	}
-	rows := tx.Select(`balance`, `remaining_wager`, `deposit_remaining_wager`, `max_withdrawable`).Where(`user_id`, gpu.UserId).Updates(userSum).RowsAffected
-	if rows == 0 {
-		err = ErrInsuffientBalance
-		tx.Rollback()
-		return
-	}
-	err = obj.SaveGameTransaction(tx)
-	if err != nil {
-		tx.Rollback()
-		return
-	}
-	transaction := ploutos.Transaction{
-		UserId:               gpu.UserId,
-		Amount:               obj.GetAmount(),
-		BalanceBefore:        balance,
-		BalanceAfter:         newBalance,
-		ForeignTransactionId: obj.GetGameTransactionId(),
-		Wager:                wc,
-		WagerBefore:          remainingWager,
-		WagerAfter:           userSum.RemainingWager,
-		DepositWager:         dwc,
-		DepositWagerBefore:   userSum.DepositRemainingWager,
-		DepositWagerAfter:    newDepositRemainingWager,
-		IsAdjustment:         obj.IsAdjustment(),
-		GameVendorId:         obj.GetGameVendorId(),
-	}
-	err = tx.Save(&transaction).Error
-	if err != nil {
-		tx.Rollback()
-		return
-	}
-	tx.Commit()
-
-	//SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
-	SendUserSumSocketMsg(gpu.UserId, userSum, "bet", float64(obj.GetAmount())/100)
-	return
-}
-
-// ProcessImUpdateBalanceTransaction im update balance callbacks and allows negative user sum balance
-func ProcessImUpdateBalanceTransaction(obj CallbackInterface) (err error) {
-	tx := model.DB.Clauses(dbresolver.Use("txConn")).Begin(&sql.TxOptions{Isolation: sql.LevelRepeatableRead})
-	if tx.Error != nil {
-		err = tx.Error
-		return
-	}
-	gpu, balance, remainingWager, maxWithdrawable, err := GetUserAndSum(tx, obj.GetGameVendorId(), obj.GetExternalUserId())
-	if err != nil {
-		err = fmt.Errorf("%w: %w", ErrGameVendorUserInvalid, err)
-		tx.Rollback()
-		return
-	}
-	obj.NewCallback(gpu.UserId)
-	if !obj.ShouldProceed() {
-		tx.Rollback()
-		return
-	}
-	newBalance := balance + obj.GetAmount()
-	fmt.Printf("DebugLog1234: GameVendorId=%d, newBalance=%d\n", obj.GetGameVendorId(), newBalance)
-	newRemainingWager := remainingWager
-	fmt.Printf("DebugLog1234: GameVendorId=%d, remainingWager=%d\n", obj.GetGameVendorId(), remainingWager)
-	betAmount, betExists, w, e := calWager(obj, remainingWager)
-	if e == nil {
-		newRemainingWager = w
-	}
-	newWithdrawable := maxWithdrawable
-	if w, e := calMaxWithdrawable(obj, newBalance, newRemainingWager, maxWithdrawable); e == nil {
-		newWithdrawable = w
-	}
-	userSum := ploutos.UserSum{
-		Balance:         newBalance,
-		RemainingWager:  newRemainingWager,
-		MaxWithdrawable: newWithdrawable,
-	}
-	rows := tx.Select(`balance`, `remaining_wager`, `max_withdrawable`).Where(`user_id`, gpu.UserId).Updates(userSum).RowsAffected
-	if rows == 0 {
-		err = ErrInsuffientBalance
-		tx.Rollback()
-		return
-	}
-	err = obj.SaveGameTransaction(tx)
-	if err != nil {
-		tx.Rollback()
-		return
-	}
-	transaction := ploutos.Transaction{
-		UserId:               gpu.UserId,
-		Amount:               obj.GetAmount(),
-		BalanceBefore:        balance,
-		BalanceAfter:         newBalance,
-		ForeignTransactionId: obj.GetGameTransactionId(),
-		Wager:                userSum.RemainingWager - remainingWager,
-		WagerBefore:          remainingWager,
-		WagerAfter:           userSum.RemainingWager,
-		IsAdjustment:         obj.IsAdjustment(),
-		GameVendorId:         obj.GetGameVendorId(),
-	}
-	err = tx.Save(&transaction).Error
-	if err != nil {
-		tx.Rollback()
-		return
-	}
-	tx.Commit()
-
-	e = obj.ApplyInsuranceVoucher(gpu.UserId, abs(betAmount), betExists)
-	if e != nil {
-		util.Log().Error("apply insurance voucher error: ", e.Error())
-	}
-
-	//SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
-	SendUserSumSocketMsg(gpu.UserId, userSum, "bet", float64(obj.GetAmount())/100)
-
-	return
 }
 
 func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betExists bool, newWager int64, err error) {
@@ -430,27 +250,6 @@ func calWager(obj CallbackInterface, originalWager int64) (betAmount int64, betE
 
 	if newWager < 0 {
 		newWager = 0
-	}
-	return
-}
-
-func calWagerBatace(obj CallbackInterface, originalWager int64, originalDepositWager int64) (betAmount int64, betExists bool, newWager int64, newDepositWager int64, wagerChange int64, depositWagerChange int64, err error) {
-	newWager = originalWager
-	newDepositWager = originalDepositWager
-	betAmount = obj.GetBetAmountOnly()
-	if !betExists {
-		return
-	}
-	wagerChange = -betAmount
-	newWager = newWager + wagerChange
-	if newWager < 0 {
-		newWager = 0
-	}
-
-	depositWagerChange = -betAmount
-	newDepositWager = newDepositWager + depositWagerChange
-	if newDepositWager < 0 {
-		newDepositWager = 0
 	}
 	return
 }

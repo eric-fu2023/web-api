@@ -11,6 +11,8 @@ import (
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -54,12 +56,6 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		if err != nil {
 			return
 		}
-		// only if the cash orders has been settled, then we start adding the rewards
-		// err = cash_orders.CreateReferralRewardRecord(txDB, newCashOrderState.UserId, orderNumber)
-		// if err != nil {
-		// 	util.GetLoggerEntry(c).Error("CreateReferralRewardRecord error", err)
-		// 	return
-		// }
 		return
 	})
 
@@ -73,7 +69,8 @@ func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionTyp
 	if err != nil {
 		return
 	}
-	userSum, err := model.UpdateDbUserSumAndCreateTransaction(txDB,
+	userSum, err := model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "CloseCashInOrder"),
+		txDB,
 		newCashOrderState.UserId,
 		newCashOrderState.EffectiveCashInAmount,
 		newCashOrderState.WagerChange,

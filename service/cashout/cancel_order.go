@@ -1,12 +1,14 @@
 package cashout
 
 import (
+	"context"
 	"errors"
 
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
@@ -40,7 +42,7 @@ func RevertCashOutOrder(c *gin.Context, orderNumber string, notes, remark string
 			return
 		}
 		updatedCashOrder = newCashOrderState
-		userSum, err := model.UpdateDbUserSumAndCreateTransaction(
+		userSum, err := model.UpdateDbUserSumAndCreateTransaction(rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "revertCashOutOrder"),
 			tx,
 			newCashOrderState.UserId,
 			newCashOrderState.AppliedCashOutAmount,

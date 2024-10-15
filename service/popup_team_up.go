@@ -26,7 +26,7 @@ type TeamUpPopupResponse struct {
 	OrderId string `json:"order_id"`
 	Status  int    `json:"status"`
 	// TotalTeamupDeposit int64                   `json:"total_deposit"`
-	TotalTeamUpTarget float64                 `json:"total_target"`
+	TotalTeamUpTarget float64 `json:"total_target"`
 	// Remaining         int64                   `json:"remaining"`
 	// Saved             int64                   `json:"saved"`
 	Progress float64                 `json:"progress"`
@@ -57,6 +57,7 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 
 	u, _ := c.Get("user")
 	user := u.(model.User)
+	brand := c.MustGet(`_brand`).(int)
 
 	var team_up ploutos.Teamup
 	// status = 1 is success,    status = 0 is onging
@@ -84,6 +85,18 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 	// follow 2 fields are only used in batace due to INR need to rounding
 	// saved:=int64(float64(team_up.TotalTeamUpTarget) / 100 * float64(team_up.TotalFakeProgress)/10000)
 	// remaining:=(team_up.TotalTeamUpTarget-saved) / 100
+
+	teamupEntryCustomRes, err := model.GetAllTeamUpEntries(brand, team_up.ID, 1, 50)
+	if err != nil {
+		fmt.Println("Get teamup entries err", err.Error())
+		return TeamUpPopupResponse{}, err
+	}
+
+	totalAdjustedFiatProgress := 0.00
+	for _, teamupEntry := range teamupEntryCustomRes {
+		totalAdjustedFiatProgress += teamupEntry.AdjustedFiatProgress
+	}
+
 	data = TeamUpPopupResponse{
 		Id:      team_up.ID,
 		OrderId: team_up.OrderId,
@@ -93,10 +106,15 @@ func (service *TeamUpService) Get(c *gin.Context) (data TeamUpPopupResponse, err
 		Progress:          float64(team_up.TotalFakeProgress) / 100,
 		// Remaining:         remaining,
 		// Saved:             saved,
-		Start:             yesterdayStart.Unix(),
-		End:               yesterdayEnd.Unix(),
-		Type:              teamup_type,
-		Members:           members,
+		Start:   yesterdayStart.Unix(),
+		End:     yesterdayEnd.Unix(),
+		Type:    teamup_type,
+		Members: members,
+
+		AdjustedCurrentProgress:             totalAdjustedFiatProgress,
+		AdjustedCurrentProgressPercentage:   float64(team_up.TotalFakeProgress) / 100,
+		AdjustedRemainingProgress:           float64(team_up.TotalTeamUpTarget)/100 - totalAdjustedFiatProgress,
+		AdjustedRemainingProgressPercentage: float64(100) - (float64(team_up.TotalFakeProgress) / 100),
 	}
 	service.Shown(c)
 	return data, nil

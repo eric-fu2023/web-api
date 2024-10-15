@@ -125,10 +125,12 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 
 	genNickname(&user)
 	user.Avatar = avatar.GetRandomAvatarUrl()
+	var referrer_nickname string
+	var is_join_success bool
 
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		ConnectChannelAgent(&user, tx)
-		err = CreateNewUserWithDB(&user, service.Code, tx)
+		referrer_nickname, is_join_success, err = CreateNewUserWithDB(&user, service.Code, tx)
 		if err != nil {
 			util.GetLoggerEntry(c).Errorf("CreateNewUser error: %s", err.Error())
 			return
@@ -161,7 +163,10 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 
 	return serializer.Response{
 		Data: map[string]interface{}{
-			"token": tokenString,
+			"token":            tokenString,
+			"alliance_name":    referrer_nickname,
+			"is_join_alliance": service.Code != "",
+			"is_join_success":  is_join_success,
 		},
 	}
 }

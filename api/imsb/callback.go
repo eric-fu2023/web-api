@@ -39,7 +39,7 @@ func DeductBalance(c *gin.Context) {
 			c.String(200, ErrorResponse(c, req, e))
 			return
 		}
-		res, e := imsb.DeductBalanceCallback(c, decrypted, req)
+		res, e := imsb.OnBalanceDeduction(c, decrypted, req)
 		if e != nil {
 			c.String(200, ErrorResponse(c, req, e))
 			return

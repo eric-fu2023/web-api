@@ -3,6 +3,8 @@ package promotion
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
+	"strconv"
 	"time"
 
 	"web-api/model"
@@ -10,6 +12,7 @@ import (
 	"web-api/util"
 
 	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 )
@@ -137,9 +140,41 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 
 		customData any
 		newbieData any
+		mDo        serializer.MissionDO
 	)
 
 	switch promotion.Type {
+
+	case models.PromotionTypeDepositEarnMoreMission:
+		topupRecords, getTopupsErr := model.TopupsByDateRange(gCtx, user.ID, promotion.StartAt, promotion.EndAt)
+		if getTopupsErr != nil {
+			err = getTopupsErr
+			return
+		}
+
+		totalDepositedAmount := util.Sum(topupRecords, func(co ploutos.CashOrder) int64 {
+			return co.ActualCashInAmount
+		})
+
+		var promotionRewardDetails model.PromotionReward
+		err = json.Unmarshal(promotion.RewardDetails, &promotionRewardDetails)
+
+		if len(promotionRewardDetails.Rewards) <= 0 {
+			r = serializer.Err(gCtx, p, serializer.CodeGeneralError, "", err)
+			return
+		}
+
+		missionTiers := GetPromotionMissionTiers(promotion.RewardDetails)
+
+		claimedVouchers, getVouchersErr := model.GetVouchersByUserAndPromotion(gCtx, user.ID, promotion.ID)
+		if getVouchersErr != nil {
+			err = getVouchersErr
+			return
+		}
+
+		mDo.Missions = missionTiers
+		mDo.CompletedMissions = claimedVouchers
+		mDo.TotalDepositAmount = totalDepositedAmount
 
 	case models.PromotionTypeCustomTemplate:
 		customData = "anything"
@@ -181,7 +216,7 @@ func (p PromotionDetail) Handle(gCtx *gin.Context) (r serializer.Response, err e
 		}
 	}
 
-	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, activeSession, voucherView, claimStatus, extra, customData, newbieData)
+	r.Data = serializer.BuildPromotionDetail(progress, reward, deviceInfo.Platform, promotion, activeSession, voucherView, claimStatus, extra, customData, newbieData, mDo)
 	return
 }
 
@@ -330,5 +365,40 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 	}
 
 	r.Data = outgoingRes
+	return
+}
+
+func GetPromotionMissionTiers(rewardDetails []byte) (missions []model.MissionTier) {
+
+	var promotionRewardDetails model.PromotionReward
+	_ = json.Unmarshal(rewardDetails, &promotionRewardDetails)
+
+	if len(promotionRewardDetails.Rewards) <= 0 {
+		return
+	}
+
+	missionTiers := make([]model.MissionTier, len(promotionRewardDetails.Rewards))
+	for i, r := range promotionRewardDetails.Rewards {
+		if len(r.Rewards) > 0 {
+			missionTiers[i].RewardAmount = r.Rewards[0].Value
+		}
+
+		if len(r.Conditions) > 0 {
+			value, _ := strconv.Atoi(r.Conditions[0].Value)
+			missionTiers[i].MissionAmount = int64(value)
+		}
+	}
+
+	slices.SortFunc(missionTiers, func(a, b model.MissionTier) int {
+		if a.MissionAmount > b.MissionAmount {
+			return 1
+		} else if a.MissionAmount < b.MissionAmount {
+			return -1
+		}
+		return 0
+	})
+
+	missions = missionTiers
+
 	return
 }

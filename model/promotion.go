@@ -9,6 +9,35 @@ import (
 	"gorm.io/gorm"
 )
 
+type PromotionReward struct {
+	Rewards []PromotionRewardDetail `json:"rewards"`
+}
+
+type PromotionRewardDetail struct {
+	Rewards    []RewardDetail    `json:"rewards"`
+	Conditions []RewardCondition `json:"conditions"`
+}
+
+type RewardDetail struct {
+	Max      int64  `json:"max"`
+	Type     string `json:"type"`
+	Value    int64  `json:"value"`
+	ValueMin string `json:"value_min"`
+	ValueMax string `json:"value_max"`
+}
+
+type RewardCondition struct {
+	Value          string `json:"value"`
+	Operator       string `json:"operator"`
+	ValueType      string `json:"value_type"`
+	ReferenceValue int64  `json:"reference_value"`
+}
+
+type MissionTier struct {
+	MissionAmount int64 `json:"mission_amount"`
+	RewardAmount  int64 `json:"reward_amount"`
+}
+
 func OngoingPromotions(c context.Context, brandId int, now time.Time) (list []models.Promotion, err error) {
 	err = DB.WithContext(c).Where("brand_id = ? or brand_id = 0", brandId).Where("is_active").Not("is_hide").Scopes(Ongoing(now, "start_at", "end_at")).Order("sort_factor desc").Find(&list).Error
 	return

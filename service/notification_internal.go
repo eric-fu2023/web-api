@@ -141,24 +141,6 @@ func (p InternalNotificationPushRequest) Handle(c *gin.Context) (r serializer.Re
 		title = conf.GetI18N(lang).T("notification_teamup_start_game_title")
 		text = conf.GetI18N(lang).T("notification_teamup_start_game_content")
 
-		// common.SendNotification(3697, notificationType, title, text, resp)                                                                                                       // DEBUG PURPOSE
-		// common.SendTeamupGamePopupNotificationSocketMsg(3697, int64(teamupId), int64(endTime), int64(amount)/100, int64(teamupType), providerName, providerIcon, teamup.OrderId) // DEBUG PURPOSE
-
-		// common.SendNotification(3713, notificationType, title, text, resp)                                                                                                       // DEBUG PURPOSE
-		// common.SendTeamupGamePopupNotificationSocketMsg(3713, int64(teamupId), int64(endTime), int64(amount)/100, int64(teamupType), providerName, providerIcon, teamup.OrderId) // DEBUG PURPOSE
-
-		// common.SendNotification(3722, notificationType, title, text, resp)                                                                                                       // DEBUG PURPOSE
-		// common.SendTeamupGamePopupNotificationSocketMsg(3722, int64(teamupId), int64(endTime), int64(amount)/100, int64(teamupType), providerName, providerIcon, teamup.OrderId) // DEBUG PURPOSE
-
-		// common.SendNotification(3761, notificationType, title, text, resp)                                                                                                       // DEBUG PURPOSE
-		// common.SendTeamupGamePopupNotificationSocketMsg(3761, int64(teamupId), int64(endTime), int64(amount)/100, int64(teamupType), providerName, providerIcon, teamup.OrderId) // DEBUG PURPOSE
-
-		// common.SendNotification(455, notificationType, title, text, resp)                                                                                                       // DEBUG PURPOSE
-		// common.SendTeamupGamePopupNotificationSocketMsg(455, int64(teamupId), int64(endTime), int64(amount)/100, int64(teamupType), providerName, providerIcon, teamup.OrderId) // DEBUG PURPOSE
-
-		// common.SendNotification(3621, notificationType, title, text, resp)                                                                                                       // DEBUG PURPOSE
-		// common.SendTeamupGamePopupNotificationSocketMsg(3621, int64(teamupId), int64(endTime), int64(amount)/100, int64(teamupType), providerName, providerIcon, teamup.OrderId) // DEBUG PURPOSE
-
 		common.SendTeamupGamePopupNotificationSocketMsg(p.UserID, int64(teamupId), int64(endTime), int64(amount)/100, int64(teamupType), providerName, providerIcon, teamup.OrderId)
 	}
 	common.SendNotification(p.UserID, notificationType, title, text, resp)

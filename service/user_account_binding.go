@@ -11,12 +11,13 @@ import (
 	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/promotion/cash_method_promotion"
 	"web-api/util"
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/common-function/crypto/md5"
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +38,7 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}
 
-	weeklyAmountRecords, dailyAmountRecords, err := model.GetWeeklyAndDailyCashMethodPromotionRecord(c, 0, user.ID)
+	weeklyAmountRecords, dailyAmountRecords, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c, 0, user.ID)
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}
@@ -49,14 +50,14 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 		if a.CashMethod.CashMethodPromotion == nil {
 			return
 		}
-		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b models.CashMethodPromotionRecord) bool {
+		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
 			return b.CashMethodId == a.CashMethod.ID
 		}).Amount
-		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b models.CashMethodPromotionRecord) bool {
+		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
 			return b.CashMethodId == a.CashMethod.ID
 		}).Amount
 
-		maxAmount, err := model.GetMaxCashMethodPromotionAmount(c, weeklyAmount, dailyAmount, *a.CashMethod.CashMethodPromotion, user.ID, 0, true)
+		maxAmount, err := cash_method_promotion.FinalPayout(c, weeklyAmount, dailyAmount, *a.CashMethod.CashMethodPromotion, 0, true)
 		if err != nil {
 			util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetMaxAmountPayment", err)
 		}
@@ -130,11 +131,11 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 	accountNoHash := service.Hash([]byte(accountNo))
 
 	accountBinding := model.UserAccountBinding{
-		UserAccountBinding: models.UserAccountBinding{
+		UserAccountBinding: ploutos.UserAccountBinding{
 			UserID:            user.ID,
 			CashMethodID:      s.MethodID,
-			AccountName:       models.EncryptedStr(s.AccountName),
-			AccountNumber:     models.EncryptedStr(accountNo),
+			AccountName:       ploutos.EncryptedStr(s.AccountName),
+			AccountNumber:     ploutos.EncryptedStr(accountNo),
 			AccountNumberHash: accountNoHash,
 			IsActive:          true,
 		},
@@ -144,7 +145,7 @@ func (s AddWithdrawAccountService) Do(c *gin.Context) (r serializer.Response, er
 		accountBinding.AccountName = "PayPal"
 	}
 
-	accountBinding.SetBankInfo(models.BankInfo{
+	accountBinding.SetBankInfo(ploutos.BankInfo{
 		BankCode:       s.BankCode,
 		BankBranchName: s.BankBranchName,
 		BankName:       s.BankName,
@@ -180,8 +181,8 @@ func (s DeleteWithdrawAccountService) Do(c *gin.Context) (r serializer.Response,
 	accID, _ := s.AccountBindingID.Int64()
 
 	accountBinding := model.UserAccountBinding{
-		UserAccountBinding: models.UserAccountBinding{
-			BASE:     models.BASE{ID: accID},
+		UserAccountBinding: ploutos.UserAccountBinding{
+			BASE:     ploutos.BASE{ID: accID},
 			UserID:   user.ID,
 			IsActive: true,
 		},

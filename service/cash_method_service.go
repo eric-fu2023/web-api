@@ -4,10 +4,11 @@ import (
 	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/promotion/cash_method_promotion"
 	"web-api/util"
 	"web-api/util/i18n"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,7 +17,7 @@ type CasheMethodListService struct {
 	TopupOnly    bool `form:"topup_only" json:"topup_only"`
 }
 
-func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err error) {
+func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error) {
 	brand := c.MustGet(`_brand`).(int)
 
 	i18n := c.MustGet("i18n").(i18n.I18n)
@@ -26,31 +27,31 @@ func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err
 
 	vip, err := model.GetVipWithDefault(c, user.ID)
 	if err != nil {
-		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
+		r := serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return r, err
 	}
 
-	var list []model.CashMethod
-	list, err = model.CashMethod{}.List(c, s.WithdrawOnly, s.TopupOnly, deviceInfo.Platform, brand, int(vip.VipRule.ID))
+	var cashMethods []model.CashMethod
+	cashMethods, err = model.CashMethod{}.List(c, s.WithdrawOnly, s.TopupOnly, deviceInfo.Platform, brand, int(vip.VipRule.ID), user)
 	if err != nil {
-		r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		return
+		r := serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
+		return r, err
 	}
 
-	weeklyAmountRecords, dailyAmountRecords, err := model.GetWeeklyAndDailyCashMethodPromotionRecord(c, 0, user.ID)
-	maxPromotionAmountByCashMethodId := map[int64]int64{}
-	util.MapSlice(list, func(a model.CashMethod) (err error) {
+	weeklyAmountRecords, dailyAmountRecords, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c, 0, user.ID)
+	maxPromotionAmountByCashMethodId := map[ /*cash_method.id*/ int64] /*max amount*/ int64{}
+	util.MapSlice(cashMethods, func(a model.CashMethod) (err error) {
 		if a.CashMethodPromotion == nil {
 			return
 		}
-		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b models.CashMethodPromotionRecord) bool {
+		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
 			return b.CashMethodId == a.ID
 		}).Amount
-		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b models.CashMethodPromotionRecord) bool {
+		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
 			return b.CashMethodId == a.ID
 		}).Amount
 
-		maxAmount, err := model.GetMaxCashMethodPromotionAmount(c, weeklyAmount, dailyAmount, *a.CashMethodPromotion, user.ID, 0, true)
+		maxAmount, err := cash_method_promotion.FinalPayout(c, weeklyAmount, dailyAmount, *a.CashMethodPromotion, 0, true)
 		if err != nil {
 			util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetMaxAmountPayment", err)
 		}
@@ -58,6 +59,7 @@ func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err
 		return
 	})
 
+	var r serializer.Response
 	if s.TopupOnly {
 		// var firstTime bool
 		// firstTime, err = model.CashOrder{}.IsFirstTime(c, user.ID)
@@ -69,11 +71,11 @@ func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err
 		// if !firstTime && loggedIn {
 		// 	minAmount = conf.GetCfg().TopupMinimum / 100
 		// }
-		r.Data = util.MapSlice(list, func(a model.CashMethod) serializer.CashMethod {
+		r.Data = util.MapSlice(cashMethods, func(a model.CashMethod) serializer.CashMethod {
 			return serializer.BuildCashMethod(a, maxPromotionAmountByCashMethodId)
 		})
 	} else {
-		r.Data = util.MapSlice(list, serializer.Modifier(
+		r.Data = util.MapSlice(cashMethods, serializer.Modifier(
 			func(a model.CashMethod) serializer.CashMethod {
 				return serializer.BuildCashMethod(a, maxPromotionAmountByCashMethodId)
 			},
@@ -85,5 +87,5 @@ func (s CasheMethodListService) List(c *gin.Context) (r serializer.Response, err
 				return cm
 			}))
 	}
-	return
+	return r, nil
 }

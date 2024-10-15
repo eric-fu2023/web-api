@@ -1,36 +1,37 @@
 package promotion
 
-import models "blgit.rfdev.tech/taya/ploutos-object"
+import ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 var promotionTypeToCashOrderType = map[int64]int64{
-	models.PromotionTypeFirstDepB:      models.CashOrderTypeDepB,
-	models.PromotionTypeReDepB:         models.CashOrderTypeDepB,
-	models.PromotionTypeFirstDepIns:    models.CashOrderTypeBetIns,
-	models.PromotionTypeReDepIns:       models.CashOrderTypeBetIns,
-	models.PromotionTypeBeginnerB:      models.CashOrderTypeBeginnerB,
-	models.PromotionTypeOneTimeDepB:    models.CashOrderTypeDepB,
-	models.PromotionTypeVipRebate:      models.CashOrderTypeVipRebate,
-	models.PromotionTypeVipBirthdayB:   models.CashOrderTypeVipBday,
-	models.PromotionTypeVipPromotionB:  models.CashOrderTypeVipPromo,
-	models.PromotionTypeVipWeeklyB:     models.CashOrderTypeVipWeekly,
-	models.PromotionTypeVipReferral:    models.CashOrderTypeVipReferral,
-	models.PromotionTypeCustomTemplate: models.CashOrderTypeCustomPromotion,
-	models.PromotionTypeTeamup:         models.CashOrderTypeTeamupPromotion,
+	ploutos.PromotionTypeFirstDepB:                  ploutos.CashOrderTypeDepB,
+	ploutos.PromotionTypeReDepB:                     ploutos.CashOrderTypeDepB,
+	ploutos.PromotionTypeFirstDepIns:                ploutos.CashOrderTypeBetIns,
+	ploutos.PromotionTypeReDepIns:                   ploutos.CashOrderTypeBetIns,
+	ploutos.PromotionTypeBeginnerB:                  ploutos.CashOrderTypeBeginnerB,
+	ploutos.PromotionTypeOneTimeDepB:                ploutos.CashOrderTypeDepB,
+	ploutos.PromotionTypeVipRebate:                  ploutos.CashOrderTypeVipRebate,
+	ploutos.PromotionTypeVipBirthdayB:               ploutos.CashOrderTypeVipBday,
+	ploutos.PromotionTypeVipPromotionB:              ploutos.CashOrderTypeVipPromo,
+	ploutos.PromotionTypeVipWeeklyB:                 ploutos.CashOrderTypeVipWeekly,
+	ploutos.PromotionTypeVipReferral:                ploutos.CashOrderTypeVipReferral,
+	ploutos.PromotionTypeCustomTemplate:             ploutos.CashOrderTypeCustomPromotion,
+	ploutos.PromotionTypeTeamup:                     ploutos.CashOrderTypeTeamupPromotion,
+	ploutos.PromotionTypeCashMethodDepositPromotion: ploutos.CashOrderTypeCashMethodPromotion,
 }
 
 var promotionTypeToTransactionTypeMapping = map[int64]int64{
-	models.PromotionTypeFirstDepB:      models.TransactionTypeDepB,
-	models.PromotionTypeReDepB:         models.TransactionTypeDepB,
-	models.PromotionTypeFirstDepIns:    models.TransactionTypeBetIns,
-	models.PromotionTypeReDepIns:       models.TransactionTypeBetIns,
-	models.PromotionTypeBeginnerB:      models.TransactionTypeBeginnerB,
-	models.PromotionTypeOneTimeDepB:    models.TransactionTypeDepB,
-	models.PromotionTypeVipRebate:      models.TransactionTypeVipRebate,
-	models.PromotionTypeVipBirthdayB:   models.TransactionTypeVipBdayB,
-	models.PromotionTypeVipPromotionB:  models.TransactionTypeVipPromotionB,
-	models.PromotionTypeVipWeeklyB:     models.TransactionTypeVipWeeklyB,
-	models.PromotionTypeVipReferral:    models.TransactionTypeVipReferral,
-	models.PromotionTypeCustomTemplate: models.TransactionTypeCustomPromotion,
+	ploutos.PromotionTypeFirstDepB:      ploutos.TransactionTypeDepB,
+	ploutos.PromotionTypeReDepB:         ploutos.TransactionTypeDepB,
+	ploutos.PromotionTypeFirstDepIns:    ploutos.TransactionTypeBetIns,
+	ploutos.PromotionTypeReDepIns:       ploutos.TransactionTypeBetIns,
+	ploutos.PromotionTypeBeginnerB:      ploutos.TransactionTypeBeginnerB,
+	ploutos.PromotionTypeOneTimeDepB:    ploutos.TransactionTypeDepB,
+	ploutos.PromotionTypeVipRebate:      ploutos.TransactionTypeVipRebate,
+	ploutos.PromotionTypeVipBirthdayB:   ploutos.TransactionTypeVipBdayB,
+	ploutos.PromotionTypeVipPromotionB:  ploutos.TransactionTypeVipPromotionB,
+	ploutos.PromotionTypeVipWeeklyB:     ploutos.TransactionTypeVipWeeklyB,
+	ploutos.PromotionTypeVipReferral:    ploutos.TransactionTypeVipReferral,
+	ploutos.PromotionTypeCustomTemplate: ploutos.TransactionTypeCustomPromotion,
 }
 
 const (

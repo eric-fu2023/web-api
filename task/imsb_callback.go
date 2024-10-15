@@ -1,23 +1,33 @@
 package task
 
 import (
-	"blgit.rfdev.tech/taya/game-service/imsb/callback"
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
 	"web-api/cache"
 	"web-api/service/common"
 	"web-api/service/imsb"
 	"web-api/util"
+
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	"blgit.rfdev.tech/taya/game-service/imsb/callback"
 )
 
-func ProcessImUpdateBalance() {
+func ProcessImUpdateBalance(ctx context.Context) {
+	skipWagerCalc := os.Getenv("GAME_IMSB_SKIP_WAGER_CALCULATION_AND_SETTLEMENT") == "TRUE"
+	ctx = rfcontext.AppendCallDesc(ctx, "ProcessImUpdateBalance")
+	ctx = rfcontext.AppendParams(ctx, "ProcessImUpdateBalance", map[string]interface{}{
+		"skipWagerCalc": skipWagerCalc,
+	})
+
 	for {
-		ctx := context.TODO()
 		iter := cache.RedisSyncTransactionClient.Scan(ctx, 0, "im:*", 0).Iterator()
 		keys := make(map[string][]string)
 		for iter.Next(ctx) {
@@ -54,7 +64,16 @@ func ProcessImUpdateBalance() {
 					fmt.Println("DebugLog1234: Request.TransactionAmount", data.TransactionAmount)
 					fmt.Println("DebugLog1234: Request.SourceWallet", data.SourceWallet)
 
-					err = common.ProcessImUpdateBalanceTransaction(&imsb.Callback{Request: data})
+					if skipWagerCalc {
+						err = common.ProcessImUpdateBalanceTransactionWithoutWagerCalculation(ctx, &imsb.TransactionBuilder{Request: data})
+						if err != nil {
+							ctx = rfcontext.AppendError(ctx, err, "complete process with error")
+							log.Printf(rfcontext.Fmt(ctx))
+						}
+					} else {
+						err = common.ProcessImUpdateBalanceTransaction(ctx, &imsb.TransactionBuilder{Request: data})
+					}
+
 					if err != nil {
 						util.Log().Error("Task:ProcessImUpdateBalance error", err, data)
 						return
@@ -71,4 +90,7 @@ func ProcessImUpdateBalance() {
 		wg.Wait()
 		time.Sleep(1 * time.Second)
 	}
+
+	ctx = rfcontext.AppendCallDesc(ctx, "END")
+	log.Printf(rfcontext.Fmt(ctx))
 }

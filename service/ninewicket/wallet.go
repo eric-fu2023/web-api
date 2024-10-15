@@ -10,6 +10,7 @@ import (
 	"web-api/model"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"blgit.rfdev.tech/taya/game-service/ninewickets"
 	"blgit.rfdev.tech/taya/game-service/ninewickets/api"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -43,6 +44,11 @@ func (n *NineWicket) CreateWallet(ctx context.Context, user model.User, currency
 }
 
 func (n *NineWicket) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum ploutos.UserSum, currency string, gameCode string, gameVendorId int64, extra model.Extra) (balance int64, err error) {
+	ctx = rfcontext.AppendParams(ctx, "(n *NineWicket) TransferTo", map[string]interface{}{
+		"user_id":     user.ID,
+		"sum.Balance": sum.Balance,
+		"sum.Extra":   extra,
+	})
 	switch {
 	case sum.Balance == 0:
 		return 0, nil
@@ -56,7 +62,10 @@ func (n *NineWicket) TransferTo(ctx context.Context, tx *gorm.DB, user model.Use
 	}
 
 	tsCode, err := client.Deposit(api.UserId(user.ID), util.MoneyFloat(sum.Balance))
-	util.Log().Info("9Wicket GAME INTEGRATION TRANSFER IN game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIdNineWicket, user.IdAsString(), util.MoneyFloat(sum.Balance), tsCode)
+	if err != nil { // fallthrough since NineWicketFactory() will do a ping and catch class of errors from the network layer. other errors (logical etc.) should be rare
+		rfcontext.AppendErrorAsWarn(ctx, err, "api.deposit")
+		log.Println(rfcontext.Fmt(ctx))
+	}
 
 	//go handleFailedTransaction(userId, userId+currentTimeMillisString)
 	transaction := ploutos.Transaction{
@@ -96,7 +105,7 @@ func (n *NineWicket) TransferFrom(ctx context.Context, tx *gorm.DB, user model.U
 	}
 
 	if userBalance <= 0 {
-		util.Log().Info("This user balance is smaller than / equal to 0, user: %v, balance: %v", user.IdAsString(), userBalance)
+		util.Log().Info("nw This user balance is smaller than / equal to 0, user: %v, balance: %v", user.IdAsString(), userBalance)
 		return
 	}
 
@@ -162,12 +171,12 @@ func (n *NineWicket) GetGameBalance(ctx context.Context, user model.User, curren
 	}
 	userBalance, err := client.GetBalanceOneUser(api.UserId(user.ID))
 	if err != nil {
-		util.Log().Info("Error getting 9wicket user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
+		util.Log().Info("nw Error getting 9wicket user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
 	}
 
 	if userBalance <= 0 {
-		util.Log().Info("This user balance is smaller than / equal to 0, user: %v, balance: %v", user.IdAsString(), userBalance)
+		util.Log().Info("nw This user balance is smaller than / equal to 0, user: %v, balance: %v", user.IdAsString(), userBalance)
 		return
 	}
 
