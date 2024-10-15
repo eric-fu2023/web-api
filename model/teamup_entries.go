@@ -400,36 +400,25 @@ func validSlash(c *gin.Context, user ploutos.User) (isValid bool) {
 	// 	condition1 = true
 	// }
 
-	isSlashBefore := SlashBeforeByUserId(user.ID)
-
-	isIPRegistered := IPExisted(user.RegistrationIp)
-	if !isIPRegistered {
-		condition = true
-	}
-
-	if condition && !isSlashBefore {
-		isValid = true
-		return
-	}
-
-	// isValid = condition1 || (condition2 && !isSlashBefore)
-
-	// if isValid == false {
-	// 	return
-	// }
-
 	const hours = 48
 	start := time.Now().Add(-hours * time.Hour).UTC()
-
-	// const minutes = 5
-	// start := time.Now().Add(-(minutes) * time.Hour).UTC()
 
 	end := time.Now().UTC()
 
 	topupRecords, _ := TopupsByDateRange(c, user.ID, start, end)
 
 	if len(topupRecords) == 0 {
-		return
+		isSlashBefore := SlashBeforeByUserId(user.ID)
+
+		isIPRegistered := IPExisted(user.RegistrationIp)
+		if !isIPRegistered {
+			condition = true
+		}
+
+		if condition && !isSlashBefore {
+			isValid = true
+			return
+		}
 	}
 
 	teamupEntries, _ := TeamupEntriesByDateRange(c, user.ID, start, end)
