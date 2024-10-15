@@ -949,9 +949,10 @@ func (s TeamupCheckSpinService) TeamupSpinResult(c *gin.Context) (r serializer.R
 	shouldPop := model.ShouldPopRoulette(brand, user.ID)
 
 	if !shouldPop {
-		r.Data = TeamupEntrySpinResultResp{
-			IsSuccess: false,
-		}
+		// r.Data = TeamupEntrySpinResultResp{
+		// 	IsSuccess: false,
+		// }
+		r = serializer.Err(c, s, serializer.CodeGeneralError, "You've exceeded the spin limit.", err)
 
 		return
 	}
