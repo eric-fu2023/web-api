@@ -418,11 +418,11 @@ func validSlash(c *gin.Context, user ploutos.User) (isValid bool) {
 	// 	return
 	// }
 
-	// const hours = 48
-	// start := time.Now().Add(-48 * time.Hour).UTC()
+	const hours = 48
+	start := time.Now().Add(-hours * time.Hour).UTC()
 
-	const minutes = 5
-	start := time.Now().Add(-(minutes) * time.Hour).UTC()
+	// const minutes = 5
+	// start := time.Now().Add(-(minutes) * time.Hour).UTC()
 
 	end := time.Now().UTC()
 
