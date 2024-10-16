@@ -123,7 +123,7 @@ func (CashOrder) List(userID int64, topupOnly, withdrawOnly bool, startTime, end
 
 func (CashOrder) IsFirstTime(c context.Context, userID int64) (bool, error) {
 	var firstTime bool = false
-	err := DB.WithContext(c).Where("user_id", userID).Where("order_type > 0").Where("status", ploutos.CashOrderStatusSuccess).First(&CashOrder{}).Error
+	err := DB.WithContext(c).Where("user_id", userID).Where("order_type = 1").Where("status", ploutos.CashOrderStatusSuccess).First(&CashOrder{}).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			firstTime = true
