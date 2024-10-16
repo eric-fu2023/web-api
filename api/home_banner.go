@@ -51,14 +51,13 @@ func (service *HomeBannerService) Get(c *gin.Context) serializer.Response {
 		match_id := int64(0)
 		if banner.NavigationType == "stream" {
 			var livestream ploutos.LiveStream
-			err = model.DB.Where("streamer_id = ?", banner.NavigationId).Where("status in (1,2)").Order("schedule_time desc").First(&livestream).Error
+			err = model.DB.Where("streamer_id = ?", banner.NavigationId).Order("schedule_time desc").First(&livestream).Error
 			if err != nil {
 				r := serializer.Err(c, service, serializer.CodeGeneralError, "error get stream", err)
 				return r
 			}
 			stream_id = livestream.ID
 			match_id = livestream.MatchId
-
 		}
 		bannersR = append(bannersR, HomeBanner{
 			Id:             banner.ID,

@@ -2,6 +2,7 @@ package cashin
 
 import (
 	"context"
+	"fmt"
 
 	"web-api/conf/consts"
 	"web-api/model"
@@ -9,6 +10,7 @@ import (
 	"web-api/service/social_media_pixel"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/common-function/cash_orders"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
@@ -83,6 +85,18 @@ func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionTyp
 
 	updatedCashOrder = newCashOrderState
 
+	// only create for cash in order, for 2 types:
+	// 0: real deposit 
+	// ploutos.CashOrderOperationTypeMakeUpOrder:  make up cash order
+	if newCashOrderState.OrderType == ploutos.CashOrderTypeCashIn &&  (newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0) {
+		err = cash_orders.CreateReferralRewardRecord(model.DB, newCashOrderState.ID)
+		if err != nil {
+			fmt.Println("CreateReferralRewardRecord for cash in order error", err)
+			return
+		}
+	}
+
+	
 	// check if it is FTD
 	is_FTD := false
 	var cashOrder []model.CashOrder

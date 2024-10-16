@@ -3,10 +3,8 @@ package on_cash_orders
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"web-api/model"
-	"web-api/service/promotion/cash_method_promotion"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -79,10 +77,10 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 			"shouldHandleCashMethodPromotion": shouldHandleCashMethodPromotion,
 		})
 
-		log.Printf(rfcontext.Fmt(ctx))
+		// log.Printf(rfcontext.Fmt(ctx))
 
 		if shouldHandleCashMethodPromotion {
-			go cash_method_promotion.ValidateAndClaim(ctx, order)
+			// go cash_method_promotion.ValidateAndClaim(ctx, order)
 		}
 	}
 
