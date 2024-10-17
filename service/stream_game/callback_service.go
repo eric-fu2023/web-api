@@ -176,6 +176,16 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 		res = serializer.ParamErr(c, req, i18n.T("invalid_stream_game_draw_id"), err)
 		return
 	}
+	
+	if req.Amount > float64(draw.StreamGame.MaxBet){
+		res = serializer.ParamErr(c, req, i18n.T("exceed_stream_game_bet_limit"), err)
+		return
+	}
+
+	if req.Amount < float64(draw.StreamGame.MinBet){
+		res = serializer.ParamErr(c, req, i18n.T("under_stream_game_bet_limit"), err)
+		return
+	}
 	req.User = &user
 	err = common.ProcessTransaction(&req)
 	if err != nil {
