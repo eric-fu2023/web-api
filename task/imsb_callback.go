@@ -91,8 +91,7 @@ func ProcessImUpdateBalance(ctx context.Context) {
 		}
 		wg.Wait()
 		time.Sleep(1 * time.Second)
-	}
 
-	ctx = rfcontext.AppendCallDesc(ctx, "END")
-	log.Printf(rfcontext.Fmt(ctx))
+		log.Printf(rfcontext.Fmt(ctx))
+	}
 }
