@@ -40,6 +40,7 @@ func init() {
 
 func main() {
 	conf.Init()
+	log.Println("config initialized")
 
 	if runTask {
 		go task.ProcessFbSyncTransaction()
