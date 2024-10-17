@@ -46,46 +46,48 @@ func ProcessImUpdateBalance(ctx context.Context) {
 			sort.Strings(arr)
 			wg.Add(1)
 			time.Sleep(1 * time.Second)
-			go func(key string, arr []string) {
+			go func(_ctx context.Context, key string, arr []string) {
 				defer wg.Done()
 				for _, a := range arr {
 					redisKey := fmt.Sprintf(`im:%s:%s`, key, a)
 					v := cache.RedisSyncTransactionClient.Get(context.TODO(), redisKey)
+					_ctx = rfcontext.AppendParams(_ctx, key, map[string]interface{}{
+						"redisKey": redisKey,
+					})
 					var data callback.WagerDetail
 					err := json.Unmarshal([]byte(v.Val()), &data)
 					if err != nil {
-						util.Log().Error("Task:ProcessImUpdateBalance error", err, data)
+						_ctx = rfcontext.AppendError(_ctx, err, "marshal")
+						util.Log().Error(rfcontext.Fmt(_ctx))
 						continue
 					}
 
-					fmt.Println("DebugLog1234: Request.ActionId", data.ActionId)
-					fmt.Println("DebugLog1234: Request.MemberCode", data.MemberCode)
-					fmt.Println("DebugLog1234: Request.WagerNo", data.WagerNo)
-					fmt.Println("DebugLog1234: Request.TransactionAmount", data.TransactionAmount)
-					fmt.Println("DebugLog1234: Request.SourceWallet", data.SourceWallet)
+					_ctx = rfcontext.AppendParams(_ctx, redisKey, map[string]interface{}{
+						"data": data,
+					})
 
 					if skipWagerCalc {
-						err = common.ProcessImUpdateBalanceTransactionWithoutWagerCalculation(ctx, &imsb.TransactionBuilder{Request: data})
-						if err != nil {
-							ctx = rfcontext.AppendError(ctx, err, "complete process with error")
-							log.Printf(rfcontext.Fmt(ctx))
-						}
+						err = common.ProcessImUpdateBalanceTransactionWithoutWagerCalculation(_ctx, &imsb.TransactionBuilder{Request: data})
 					} else {
-						err = common.ProcessImUpdateBalanceTransaction(ctx, &imsb.TransactionBuilder{Request: data})
+						err = common.ProcessImUpdateBalanceTransaction(_ctx, &imsb.TransactionBuilder{Request: data})
 					}
 
 					if err != nil {
-						util.Log().Error("Task:ProcessImUpdateBalance error", err, data)
+						_ctx = rfcontext.AppendError(_ctx, err, "process update balance")
+						util.Log().Error(rfcontext.Fmt(_ctx))
 						return
 					}
 
 					_, err = cache.RedisSyncTransactionClient.Del(context.TODO(), redisKey).Result()
 					if err != nil {
-						util.Log().Error("Task:ProcessImUpdateBalance redis delete key error", err, data)
-						return
+						_ctx = rfcontext.AppendError(_ctx, err, "redis delete key error")
+						util.Log().Error(rfcontext.Fmt(_ctx))
+
 					}
+
+					log.Println(rfcontext.Fmt(_ctx)) // debug
 				}
-			}(key, arr)
+			}(ctx, key, arr)
 		}
 		wg.Wait()
 		time.Sleep(1 * time.Second)
