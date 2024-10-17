@@ -177,12 +177,12 @@ func Place(c *gin.Context, req PlaceOrder) (res serializer.Response, err error) 
 		return
 	}
 	
-	if req.Amount > float64(draw.StreamGame.MaxBet){
+	if req.Amount*100 > float64(draw.StreamGame.MaxBet){
 		res = serializer.ParamErr(c, req, i18n.T("exceed_stream_game_bet_limit"), err)
 		return
 	}
 
-	if req.Amount < float64(draw.StreamGame.MinBet){
+	if req.Amount*100 < float64(draw.StreamGame.MinBet){
 		res = serializer.ParamErr(c, req, i18n.T("under_stream_game_bet_limit"), err)
 		return
 	}
