@@ -598,6 +598,8 @@ invalid_draw_id: "Dollar Jackpot 抽奖无效."
 contribution_limit_reached: "您已达到此抽奖的贡献限制."
 prize_limit_reached: "您无法投入过多的金额"
 invalid_stream_game_draw_id: "游戏无效或已关闭."
+exceed_stream_game_bet_limit: "投注额太大."
+under_stream_game_bet_limit: "投注额太小"
 
 NOTIFICATION_PLACE_BET_TITLE: "下注成功！"
 NOTIFICATION_PLACE_BET: "您已成功下注。继续观看或在您的账户中查看下注历史。祝您好运！"

@@ -37,7 +37,7 @@ func ProcessImUpdateBalanceTransaction(ctx context.Context, transactionRequest C
 		return
 	}
 	newBalance := balance + transactionRequest.GetAmount()
-	fmt.Printf("DebugLog1234: GameVendorId=%d, newBalance=%d\n", transactionRequest.GetGameVendorId(), newBalance)
+	ctx = rfcontext.AppendDescription(ctx, fmt.Sprintf("GameVendorId=%d, newBalance=%d\n", transactionRequest.GetGameVendorId(), newBalance))
 	reducedRemainingWager := remainingWager
 	reducedDepositRemainingWager := depositRemainingWager
 	//betAmount, betExists, w, depositWager, e := calculateWagerBatace(transactionRequest, remainingWager, reducedDepositRemainingWager)
@@ -187,7 +187,8 @@ func ProcessImUpdateBalanceTransactionWithoutWagerCalculation(ctx context.Contex
 
 	e = transactionRequest.ApplyInsuranceVoucher(gpu.UserId, abs(betAmount), betExists)
 	if e != nil {
-		util.Log().Error("apply insurance voucher error: ", e.Error())
+		ctx = rfcontext.AppendError(ctx, e, "apply insurance voucher")
+		util.Log().Error(rfcontext.Fmt(ctx))
 	}
 
 	//SendNotification(gpu.UserId, consts.Notification_Type_Bet_Placement, NOTIFICATION_PLACE_BET_TITLE, NOTIFICATION_PLACE_BET)
