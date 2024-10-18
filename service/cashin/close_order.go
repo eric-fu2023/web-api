@@ -86,9 +86,9 @@ func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionTyp
 	updatedCashOrder = newCashOrderState
 
 	// only create for cash in order, for 2 types:
-	// 0: real deposit 
+	// 0: real deposit
 	// ploutos.CashOrderOperationTypeMakeUpOrder:  make up cash order
-	if newCashOrderState.OrderType == ploutos.CashOrderTypeCashIn &&  (newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0) {
+	if newCashOrderState.OrderType == ploutos.CashOrderTypeCashIn && (newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0) {
 		err = cash_orders.CreateReferralRewardRecord(model.DB, newCashOrderState.ID)
 		if err != nil {
 			fmt.Println("CreateReferralRewardRecord for cash in order error", err)
@@ -96,28 +96,33 @@ func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionTyp
 		}
 	}
 
-	
 	// check if it is FTD
 	is_FTD := false
 	var cashOrder []model.CashOrder
 	err = txDB.Where("user_id", userSum.UserId).
-	Where("order_type", ploutos.CashOrderTypeCashIn).
-	Where("status", ploutos.CashOrderStatusSuccess).
-	Where("operation_type in (0, 5000)").  // 0 is for deposit from app, 5000 is for make up order
-	Find(&cashOrder).Error
+		Where("order_type", ploutos.CashOrderTypeCashIn).
+		Where("status", ploutos.CashOrderStatusSuccess).
+		Where("operation_type in (0, 5000)"). // 0 is for deposit from app, 5000 is for make up order
+		Find(&cashOrder).Error
 	if err != nil {
 		return
 	}
 	// this order has been settled, so if this is the FTD, the length must be 1
-	if len(cashOrder) == 1{
+	if len(cashOrder) == 1 {
 		is_FTD = true
 	}
 	common.SendCashNotificationWithoutCurrencyId(newCashOrderState.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_DEPOSIT_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_SUCCESS, newCashOrderState.AppliedCashInAmount)
-	if is_FTD {
-		common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "FTD_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
+	// only send notification when it is real deposit (make up order or real cash in)
+	if newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0 {
+		if is_FTD {
+			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "FTD_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
+		} else {
+			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "deposit_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
+		}
 	}else{
-		common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "deposit_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
+		common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "other_cash_in_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
 	}
+
 	return
 }
 
