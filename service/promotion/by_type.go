@@ -596,6 +596,8 @@ func buildSuffixByType(c context.Context, p ploutos.Promotion, userID int64) str
 	case ploutos.PromotionTypeVipRebate:
 		suffix = fmt.Sprintf("date-%s", today.Format(time.DateOnly))
 	case ploutos.PromotionTypeVipWeeklyB:
+		year, week := today.ISOWeek()
+		suffix = fmt.Sprintf("year-%d-week-%d", year, week)
 	case ploutos.PromotionTypeVipBirthdayB:
 		suffix = fmt.Sprintf("year-%d", today.Year())
 	case ploutos.PromotionTypeVipPromotionB:
