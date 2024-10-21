@@ -8,7 +8,7 @@ toolchain go1.21.1
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
-	blgit.rfdev.tech/taya/common-function v0.0.0-20241021043018-12a0fb2790eb
+	blgit.rfdev.tech/taya/common-function v0.0.0-20241021063301-97a2edeb4d94
 	blgit.rfdev.tech/taya/game-service v0.0.0-20241014034805-558320c67af6
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240926111808-9cafcbb67695
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20241014054103-9f7ad631512b

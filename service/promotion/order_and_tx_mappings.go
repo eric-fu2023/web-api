@@ -1,6 +1,9 @@
 package promotion
 
-import ploutos "blgit.rfdev.tech/taya/ploutos-object"
+import (
+	"blgit.rfdev.tech/taya/common-function/domain/transactions"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+)
 
 var promotionTypeToCashOrderType = map[int64]int64{
 	ploutos.PromotionTypeFirstDepB:                  ploutos.CashOrderTypeDepB,
@@ -19,20 +22,7 @@ var promotionTypeToCashOrderType = map[int64]int64{
 	ploutos.PromotionTypeCashMethodDepositPromotion: ploutos.CashOrderTypeCashMethodPromotion,
 }
 
-var promotionTypeToTransactionTypeMapping = map[int64]int64{
-	ploutos.PromotionTypeFirstDepB:      ploutos.TransactionTypeDepB,
-	ploutos.PromotionTypeReDepB:         ploutos.TransactionTypeDepB,
-	ploutos.PromotionTypeFirstDepIns:    ploutos.TransactionTypeBetIns,
-	ploutos.PromotionTypeReDepIns:       ploutos.TransactionTypeBetIns,
-	ploutos.PromotionTypeBeginnerB:      ploutos.TransactionTypeBeginnerB,
-	ploutos.PromotionTypeOneTimeDepB:    ploutos.TransactionTypeDepB,
-	ploutos.PromotionTypeVipRebate:      ploutos.TransactionTypeVipRebate,
-	ploutos.PromotionTypeVipBirthdayB:   ploutos.TransactionTypeVipBdayB,
-	ploutos.PromotionTypeVipPromotionB:  ploutos.TransactionTypeVipPromotionB,
-	ploutos.PromotionTypeVipWeeklyB:     ploutos.TransactionTypeVipWeeklyB,
-	ploutos.PromotionTypeVipReferral:    ploutos.TransactionTypeVipReferral,
-	ploutos.PromotionTypeCustomTemplate: ploutos.TransactionTypeCustomPromotion,
-}
+var promotionTypeToTransactionTypeMapping = transactions.PromotionTypeToTransactionTypeMapping
 
 const (
 	MatchTypeEnded        = 0
