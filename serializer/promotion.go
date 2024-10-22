@@ -57,7 +57,6 @@ type PromotionCover struct {
 	IsVipAssociated        bool            `json:"is_vip_associated"`
 	DisplayOnly            bool            `json:"display_only"`
 	ParentId               int64           `json:"parent_id"`
-	IsCustom               bool            `json:"is_custom"`
 	SubpageContent         json.RawMessage `json:"subpage_content"`
 
 	ChildrenPromotions []PromotionCover `json:"children_promotions"`
@@ -87,8 +86,6 @@ type PromotionDetail struct {
 	CustomTemplateData     OutgoingCustomPromotionDetail `json:"custom_template_data"`
 	NewbieData             interface{}                   `json:"newbie_data"` // TODO : to be updated
 	EarnMoreData           OutgoingEarnMoreMission       `json:"earn_more_promotion_data"`
-
-	IsCustom bool `json:"is_custom"`
 }
 
 type ClaimStatus struct {

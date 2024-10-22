@@ -92,7 +92,6 @@ func (p PromotionList) Handle(c *gin.Context) (r serializer.Response, err error)
 	for i, promotionCover := range promotionCovers {
 		childrenPromotions, exists := childPromotionCoversMap[promotionCover.ID]
 		if exists {
-			promotionCovers[i].IsCustom = false
 			promotionCovers[i].ChildrenPromotions = childrenPromotions
 		}
 	}
@@ -253,7 +252,6 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 	if promotion.ParentId == 0 {
 		parentPromotion = promotion
 	} else {
-		outgoingRes.IsCustomPromotion = false
 		parentPromotion, err = model.OngoingPromotionById(c, brand, promotion.ParentId, now)
 		if err != nil {
 			r = serializer.Err(c, p, serializer.CodeGeneralError, "", err)
@@ -282,7 +280,6 @@ func (p PromotionCustomDetail) Handle(c *gin.Context) (r serializer.Response, er
 		}
 
 		for _, subPromo := range subPromotions {
-			outgoingRes.IsCustomPromotion = false
 			incomingMatchList := serializer.IncomingPromotionMatchList{}
 			_ = json.Unmarshal(subPromo.SubpageContent, &incomingMatchList)
 
@@ -429,7 +426,6 @@ func handleCustomPromotionDetail(c *gin.Context, p PromotionDetail) (outgoingRes
 	if promotion.ParentId == 0 {
 		parentPromotion = promotion
 	} else {
-		outgoingRes.IsCustomPromotion = false
 		parentPromotion, err = model.OngoingPromotionById(c, brand, promotion.ParentId, now)
 		if err != nil {
 			return
@@ -456,7 +452,6 @@ func handleCustomPromotionDetail(c *gin.Context, p PromotionDetail) (outgoingRes
 		}
 
 		for _, subPromo := range subPromotions {
-			outgoingRes.IsCustomPromotion = false
 			incomingMatchList := serializer.IncomingPromotionMatchList{}
 			_ = json.Unmarshal(subPromo.SubpageContent, &incomingMatchList)
 
