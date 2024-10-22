@@ -18,8 +18,6 @@ import (
 	"web-api/service/common"
 	"web-api/util"
 
-	"math/rand"
-
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
@@ -599,11 +597,7 @@ func buildSuffixByType(c context.Context, p ploutos.Promotion, userID int64) str
 		suffix = fmt.Sprintf("date-%s", today.Format(time.DateOnly))
 	case ploutos.PromotionTypeVipWeeklyB:
 		year, week := today.ISOWeek()
-		// here add this random number is to prevent the duplicate key generated when we calculate for the missing weekly bonus
-		// need to remove this random on 28/10/2024
-		rand.Seed(time.Now().UnixNano())
-		randomInt := rand.Int()
-		suffix = fmt.Sprintf("year-%d-week-%d-rand-%d", year, week, randomInt)
+		suffix = fmt.Sprintf("year-%d-week-%d", year, week)
 	case ploutos.PromotionTypeVipBirthdayB:
 		suffix = fmt.Sprintf("year-%d", today.Year())
 	case ploutos.PromotionTypeVipPromotionB:
