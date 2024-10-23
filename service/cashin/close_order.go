@@ -64,6 +64,48 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		return
 	})
 
+	// if no error in closing the cash-in order, and the order must be auto cash in - (operation type 0) or make up order - (operation type ploutos.CashOrderOperationTypeMakeUpOrder)
+	if err == nil && newCashOrderState.OrderType == ploutos.CashOrderTypeCashIn && (newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0) {
+		uid := newCashOrderState.UserId
+		now := time.Now().UTC()
+		// this is to claim referral bonus!!!
+		var referralPromo ploutos.Promotion
+		var referralSession ploutos.PromotionSession
+		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeVipReferral).Where("start_at < ? and end_at > ?", now, now).First(&referralPromo).Error
+		if err != nil {
+			fmt.Println("referralPromo get err ", err)
+		}
+		referralSession, err := model.GetActivePromotionSessionByPromotionId(context.TODO(), referralPromo.ID, now)
+		if err != nil {
+			fmt.Println("referralSession session get err ", err)
+		}
+		// if claim success, will send notification, and create notification in db.
+		_, err = promotion.Claim(context.TODO(), now, referralPromo, referralSession, uid, nil)
+		if err != nil {
+			fmt.Println("referralPromo.Claim err ", err)
+		}
+		fmt.Println("referralPromo.Claim finished ", uid)
+
+		// this is to claim FTD bonus!!!
+		var ftdPromo ploutos.Promotion
+		var ftdSession ploutos.PromotionSession
+		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeFirstDepB).Where("start_at < ? and end_at > ?", now, now).First(&ftdPromo).Error
+		if err != nil {
+			fmt.Println("ftdPromo get err ", err)
+		}
+		ftdSession, err = model.GetActivePromotionSessionByPromotionId(context.TODO(), ftdPromo.ID, now)
+		if err != nil {
+			fmt.Println("ftdSession session get err ", err)
+		}
+		// if claim success, will send notification, and create notification in db.
+		_, err = promotion.Claim(context.TODO(), now, ftdPromo, ftdSession, uid, nil)
+		if err != nil {
+			fmt.Println("ftdPromo.Claim err ", err)
+		}
+		fmt.Println("ftdPromo.Claim finished ", uid)
+
+	}
+
 	return
 }
 
@@ -97,24 +139,6 @@ func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionTyp
 			fmt.Println("CreateReferralRewardRecord for cash in order error", err)
 			return
 		}
-		// if it is FTD, we should just help user to claim the FTD bonus
-		uid := newCashOrderState.UserId
-		now := time.Now().UTC()
-		var promo ploutos.Promotion
-		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeVipReferral).Where("start_at < ? and end_at > ?", now, now).First(&promo).Error
-		if err != nil {
-			fmt.Println("promotion get err ", err)
-		}
-		session, err := model.GetActivePromotionSessionByPromotionId(context.TODO(), promo.ID, now)
-		if err != nil {
-			fmt.Println("promotion session get err ", err)
-		}
-		// if claim success, will send notification, and create notification in db.
-		_, err = promotion.Claim(context.TODO(), now, promo, session, uid, nil)
-		if err != nil {
-			fmt.Println("promotion.Claim err ", err)
-		}
-		fmt.Println("promotion.Claim finished ", uid)
 	}
 
 	// check if it is FTD
@@ -137,30 +161,10 @@ func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionTyp
 	if newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0 {
 		if is_FTD {
 			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "FTD_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
-
-			// if it is FTD, we should just help user to claim the FTD bonus
-			uid := newCashOrderState.UserId
-			now := time.Now().UTC()
-			var promo ploutos.Promotion
-			err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeFirstDepB).Where("start_at < ? and end_at > ?", now, now).First(&promo).Error
-			if err != nil {
-				fmt.Println("promotion get err ", err)
-			}
-			session, err := model.GetActivePromotionSessionByPromotionId(context.TODO(), promo.ID, now)
-			if err != nil {
-				fmt.Println("promotion session get err ", err)
-			}
-			// if claim success, will send notification, and create notification in db.
-			_, err = promotion.Claim(context.TODO(), now, promo, session, uid, nil)
-			if err != nil {
-				fmt.Println("promotion.Claim err ", err)
-			}
-			fmt.Println("promotion.Claim finished ", uid)
-
 		} else {
 			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "deposit_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
 		}
-	}else{
+	} else {
 		common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "other_cash_in_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
 	}
 
