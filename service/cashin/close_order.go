@@ -3,6 +3,7 @@ package cashin
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"web-api/conf/consts"
 	"web-api/model"
@@ -14,6 +15,8 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
+
+	"web-api/service/promotion"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -116,6 +119,26 @@ func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionTyp
 	if newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0 {
 		if is_FTD {
 			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "FTD_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
+
+			// if it is FTD, we should just help user to claim the FTD bonus
+			uid := newCashOrderState.UserId
+			now := time.Now().UTC()
+			var promo ploutos.Promotion
+			err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeFirstDepB).Where("start_at < ? and end_at > ?", now, now).First(&promo).Error
+			if err != nil {
+				fmt.Println("promotion get err ", err)
+			}
+			session, err := model.GetActivePromotionSessionByPromotionId(context.TODO(), promo.ID, now)
+			if err != nil {
+				fmt.Println("promotion session get err ", err)
+			}
+			// if claim success, will send notification, and create notification in db.
+			_, err = promotion.Claim(context.TODO(), now, promo, session, uid, nil)
+			if err != nil {
+				fmt.Println("promotion.Claim err ", err)
+			}
+			fmt.Println("promotion.Claim finished ", uid)
+
 		} else {
 			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "deposit_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
 		}
