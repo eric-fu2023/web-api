@@ -1,10 +1,14 @@
 package model
 
 import (
+	"context"
+	"fmt"
 	"math"
 	"time"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"gorm.io/gorm"
 )
 
@@ -70,4 +74,44 @@ func GetBetReport(businessId string) (betReport ploutos.BetReport, err error) {
 		Where("business_id = ?", businessId).
 		First(&betReport).Error
 	return
+}
+
+type OrderSummary struct {
+	Count  int64 `gorm:"column:count"`
+	Amount int64 `gorm:"column:amount"`
+	Win    int64 `gorm:"column:win"`
+}
+
+func BetReportsStats(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds, statuses []int64, isParlay bool, isSettled *bool) (OrderSummary, error) {
+	var orderSummary OrderSummary
+
+	ctx = rfcontext.AppendCallDesc(ctx, "CountBetReports")
+	db := DB
+	if db == nil {
+		return OrderSummary{}, fmt.Errorf("db is nil")
+	}
+	err := db.Model(BetReport{}).Debug().Select(`COUNT(1) as count, SUM(bet) as amount, SUM(win-bet) as win`).Scopes(ByOrderListConditions(userId, gameVendorIds, statuses, isParlay, isSettled, fromBetTime, toBetTime)).Find(&orderSummary).Error
+
+	if err != nil {
+		return OrderSummary{}, err
+	}
+	return orderSummary, err
+}
+
+func BetReports(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds, statuses []int64, isParlay bool, isSettled *bool, pageNo int, pageSize int) ([]ploutos.BetReport, error) {
+	ctx = rfcontext.AppendCallDesc(ctx, "BetReports")
+	db := DB
+	if db == nil {
+		return []ploutos.BetReport{}, fmt.Errorf("db is nil")
+	}
+
+	var betReports []ploutos.BetReport
+	err := DB.Preload(`Voucher`).Preload(`ImVoucher`).Preload(`GameVendor`).
+		Model(ploutos.BetReport{}).Debug().Scopes(ByOrderListConditions(userId, gameVendorIds, statuses, isParlay, isSettled, fromBetTime, toBetTime), ByBetTimeSort, Paginate(pageNo, pageSize)).
+		Find(&betReports).Error
+
+	if err != nil {
+		return []ploutos.BetReport{}, err
+	}
+	return betReports, nil
 }

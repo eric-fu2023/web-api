@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+	"log"
 	"time"
 
 	"web-api/model"
@@ -9,39 +11,11 @@ import (
 	"web-api/service/common"
 	"web-api/util/i18n"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 )
-
-type GamesPaneType = int64
-
-const (
-	GamesPaneType1      GamesPaneType = 1
-	GamesPaneTypeSports               = GamesPaneType1
-	GamesPaneType2      GamesPaneType = 2
-	GamesPaneTypeCasino               = GamesPaneType2
-)
-
-var GameVendorIdsByPaneType = map[int64][]int64{
-	/*
-		Equivalence  Oct 2024
-				AHA:
-					GamesPaneTypeSports: {ploutos.GAME_FB, ploutos.GAME_SABA, ploutos.GAME_TAYA, ploutos.GAME_IMSB, ploutos.GAME_DB_SPORT},
-				Batace:
-					GamesPaneTypeSports: {NA, NA , ploutos.GAME_SelfSports, ploutos.GAME_InplayMatrixSportsbook, NA},
-	*/
-	GamesPaneTypeSports: {ploutos.GAME_FB, ploutos.GAME_SABA, ploutos.GAME_TAYA, ploutos.GAME_IMSB, ploutos.GAME_DB_SPORT},
-
-	/*
-		Equivalence Oct 2024
-				AHA:
-					GamesPaneTypeCasino: {ploutos.GAME_HACKSAW, ploutos.GAME_DOLLAR_JACKPOT, ploutos.GAME_STREAM_GAME},
-				Batace:
-					GamesPaneTypeCasino: {NA, ploutos.GAME_DollarJackpot, NA},
-	*/
-	GamesPaneTypeCasino: {ploutos.GAME_HACKSAW, ploutos.GAME_DOLLAR_JACKPOT, ploutos.GAME_STREAM_GAME},
-}
 
 type CheckOrderService struct {
 	BusinessId string `form:"business_id" json:"business_id" binding:"required"`
@@ -54,12 +28,6 @@ type OrderListService struct {
 	Start     string `form:"start" json:"start" binding:"required"`
 	End       string `form:"end" json:"end" binding:"required"`
 	common.Page
-}
-
-type OrderSummary struct {
-	Count  int64 `gorm:"column:count"`
-	Amount int64 `gorm:"column:amount"`
-	Win    int64 `gorm:"column:win"`
 }
 
 func (service *CheckOrderService) CheckOrder(c *gin.Context) serializer.Response {
@@ -90,8 +58,11 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 		}
 	}
 
-	gameVendorIds := GameVendorIdsByPaneType[service.PaneType]
-	if service.PaneType == GamesPaneTypeCasino { // assumes all game vendors of game integrations are of the same type GamesPaneTypeCasino and include them in gameVendorIds
+	rfCtx := rfcontext.Spawn(context.Background())
+	rfCtx = rfcontext.AppendCallDesc(rfCtx, "OrderListService")
+
+	gameVendorIds := game_vendor_pane.GameVendorIdsByPaneType[service.PaneType]
+	if service.PaneType == game_vendor_pane.GamesPaneTypeCasino { // assumes all game vendors of game integrations are of the same type GamesPaneTypeCasino and include them in gameVendorIds
 		var gi []ploutos.GameIntegration
 		err = model.DB.Model(ploutos.GameIntegration{}).Preload(`GameVendors`).Find(&gi).Error
 		if err != nil {
@@ -125,35 +96,33 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	// take sum_status: [0, 1, 4]
 
 	statuses := []int64{2, 3, 5, 6}
-	imVoucherStatuses := statuses
 
 	var sumStatuses []int64
 	if service.IsSettled == nil { // "default" sumStatuses
 		sumStatuses = statuses
-	} else if service.IsSettled != nil && *service.IsSettled {
+	} else if /*service.IsSettled != nil &&*/ *service.IsSettled {
 		sumStatuses = []int64{5, 6}
-	} else if service.IsSettled != nil && !*service.IsSettled {
+	} else if /*service.IsSettled != nil &&*/ !*service.IsSettled {
 		sumStatuses = []int64{2, 3, 5, 6}
 	}
 
-	var betReports []ploutos.BetReport
-	err = model.DB.Preload(`Voucher`).Preload(`ImVoucher`).Preload(`GameVendor`).
-		Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, gameVendorIds, imVoucherStatuses, service.IsParlay, service.IsSettled, start, end), model.ByBetTimeSort, model.Paginate(service.Page.Page, service.Page.Limit)).
-		Find(&betReports).Error
+	betReports, err := model.BetReports(rfCtx, user.ID, start, end, gameVendorIds, sumStatuses, service.IsParlay, service.IsSettled, service.Page.Page, service.Page.Limit)
 	if err != nil {
-		return serializer.DBErr(c, service, i18n.T("general_error"), err)
-	}
-
-	var orderSummary OrderSummary
-	err = model.DB.Model(ploutos.BetReport{}).Scopes(model.ByOrderListConditions(user.ID, gameVendorIds, sumStatuses, service.IsParlay, service.IsSettled, start, end)).
-		Select(`COUNT(1) as count, SUM(bet) as amount, SUM(win-bet) as win`).Find(&orderSummary).Error
-	if err != nil {
+		rfCtx = rfcontext.AppendError(rfCtx, err, ".BetReports")
+		log.Println(rfcontext.Fmt(rfCtx))
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
 	for i, l := range betReports {
 		l.ParseInfo()
 		betReports[i] = l
+	}
+
+	orderSummary, err := model.BetReportsStats(rfCtx, user.ID, start, end, gameVendorIds, sumStatuses, service.IsParlay, service.IsSettled)
+	if err != nil {
+		rfCtx = rfcontext.AppendError(rfCtx, err, ".BetReportsStats")
+		log.Println(rfcontext.Fmt(rfCtx))
+		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
 	go ResetUserCounter_OrderCount(user.ID)

@@ -7,7 +7,6 @@ import (
 
 	"web-api/model"
 	"web-api/serializer"
-	"web-api/service/backend_for_frontend/game_vendor_pane"
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
@@ -41,7 +40,7 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 	}
 	ctx := rfcontext.Spawn(context.Background())
 
-	_, derr := game_vendor_pane.CountBetReports(ctx, user.ID, time.Time{}, []int64{})
+	_, derr := model.BetReportsStats(ctx, user.ID, time.Time{}, time.Time{}, []int64{}, []int64{}, false, nil)
 	if derr != nil {
 		ctx = rfcontext.AppendError(ctx, derr, "get db")
 		log.Println(rfcontext.Fmt(ctx))
