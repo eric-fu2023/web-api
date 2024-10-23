@@ -107,18 +107,16 @@ func ByIds(ids []int64) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
-func ByOrderListConditions(userId int64, gameType []int64, statuses []int64, isParlay bool, isSettled *bool, start time.Time, end time.Time) func(db *gorm.DB) *gorm.DB {
+func ByOrderListConditions(userId int64, gameType []int64, statusesToInclude []int64, isParlay *bool, start time.Time, end time.Time) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		db.Where(`user_id`, userId).Where(`is_parlay`, isParlay).Where(`game_type`, gameType)
-		if isSettled != nil {
-			if *isSettled {
-				db.Where(`status`, statuses)
-			} else {
-				db.Where(`status NOT IN ?`, statuses)
-			}
+		db = db.Where(`user_id`, userId)
+
+		if isParlay != nil {
+			db = db.Where(`is_parlay`, *isParlay)
 		}
+		db = db.Where(`game_type`, gameType).Where(`status`, statusesToInclude)
 		if !start.IsZero() && !end.IsZero() {
-			db.Where(`bet_time >= ?`, start).Where(`bet_time <= ?`, end)
+			db = db.Where(`bet_time >= ?`, start).Where(`bet_time <= ?`, end)
 		}
 		return db
 	}

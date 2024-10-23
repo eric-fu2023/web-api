@@ -30,7 +30,6 @@ func GetNegativeProfitRebate(startDate, endDate time.Time, userId, percentage in
 }
 
 func GetNegativeProfit(startDate, endDate time.Time, userId int64) (res int64, err error) {
-
 	// SUM ALL ONLY SPORTS BETTING (FB, TAYA, IMSB)
 	// If totalNegativeProfit > 0, means user bet result overall lose
 
@@ -82,15 +81,14 @@ type OrderSummary struct {
 	Win    int64 `gorm:"column:win"`
 }
 
-func BetReportsStats(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds, statuses []int64, isParlay bool, isSettled *bool) (OrderSummary, error) {
+func BetReportsStats(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds, statuses []int64, isParlay bool) (OrderSummary, error) {
 	var orderSummary OrderSummary
-
 	ctx = rfcontext.AppendCallDesc(ctx, "CountBetReports")
 	db := DB
 	if db == nil {
 		return OrderSummary{}, fmt.Errorf("db is nil")
 	}
-	err := db.Model(BetReport{}).Debug().Select(`COUNT(1) as count, SUM(bet) as amount, SUM(win-bet) as win`).Scopes(ByOrderListConditions(userId, gameVendorIds, statuses, isParlay, isSettled, fromBetTime, toBetTime)).Find(&orderSummary).Error
+	err := db.Model(BetReport{}).Debug().Select(`COUNT(1) as count, SUM(bet) as amount, SUM(win-bet) as win`).Scopes(ByOrderListConditions(userId, gameVendorIds, statuses, &isParlay, fromBetTime, toBetTime)).Find(&orderSummary).Error
 
 	if err != nil {
 		return OrderSummary{}, err
@@ -98,7 +96,7 @@ func BetReportsStats(ctx context.Context, userId int64, fromBetTime, toBetTime t
 	return orderSummary, err
 }
 
-func BetReports(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds, statuses []int64, isParlay bool, isSettled *bool, pageNo int, pageSize int) ([]ploutos.BetReport, error) {
+func BetReports(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds, statusesToInclude []int64, isParlay bool, pageNo int, pageSize int) ([]ploutos.BetReport, error) {
 	ctx = rfcontext.AppendCallDesc(ctx, "BetReports")
 	db := DB
 	if db == nil {
@@ -107,11 +105,24 @@ func BetReports(ctx context.Context, userId int64, fromBetTime, toBetTime time.T
 
 	var betReports []ploutos.BetReport
 	err := DB.Preload(`Voucher`).Preload(`ImVoucher`).Preload(`GameVendor`).
-		Model(ploutos.BetReport{}).Debug().Scopes(ByOrderListConditions(userId, gameVendorIds, statuses, isParlay, isSettled, fromBetTime, toBetTime), ByBetTimeSort, Paginate(pageNo, pageSize)).
+		Model(ploutos.BetReport{}).Debug().Scopes(ByOrderListConditions(userId, gameVendorIds, statusesToInclude, &isParlay, fromBetTime, toBetTime), ByBetTimeSort, Paginate(pageNo, pageSize)).
 		Find(&betReports).Error
 
 	if err != nil {
 		return []ploutos.BetReport{}, err
 	}
 	return betReports, nil
+}
+
+func IsSettledFlagToPloutosIncludeStatuses(s *bool) []int64 {
+	var statuses []int64
+	if s == nil { // "default"
+		statuses = []int64{1, 2, 3, 4, 5, 6}
+	} else if /*service.IsSettled != nil &&*/ *s {
+		statuses = []int64{5, 6}
+	} else /*service.IsSettled != nil && !*service.IsSettled */ {
+		statuses = []int64{0, 1, 4}
+	}
+
+	return statuses
 }

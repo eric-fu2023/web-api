@@ -7,13 +7,11 @@ import (
 
 	"web-api/model"
 	"web-api/serializer"
-	"web-api/service/backend_for_frontend/game_vendor_pane"
+	"web-api/service/backend_for_frontend/game_history_pane"
 	"web-api/service/common"
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -61,18 +59,9 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	rfCtx := rfcontext.Spawn(context.Background())
 	rfCtx = rfcontext.AppendCallDesc(rfCtx, "OrderListService")
 
-	gameVendorIds := game_vendor_pane.GameVendorIdsByPaneType[service.PaneType]
-	if service.PaneType == game_vendor_pane.GamesPaneTypeCasino { // assumes all game vendors of game integrations are of the same type GamesPaneTypeCasino and include them in gameVendorIds
-		var gi []ploutos.GameIntegration
-		err = model.DB.Model(ploutos.GameIntegration{}).Preload(`GameVendors`).Find(&gi).Error
-		if err != nil {
-			return serializer.DBErr(c, service, i18n.T("general_error"), err)
-		}
-		for _, g := range gi {
-			for _, v := range g.GameVendors {
-				gameVendorIds = append(gameVendorIds, v.ID)
-			}
-		}
+	gameVendorIds, err := game_history_pane.GetGameVendorIdsByPaneType(service.PaneType)
+	if err != nil {
+		return serializer.Err(c, service, 500, i18n.T("general_error"), err)
 	}
 
 	// status mapping
@@ -95,18 +84,8 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	// take status: [0, 1, 4]
 	// take sum_status: [0, 1, 4]
 
-	statuses := []int64{2, 3, 5, 6}
-
-	var sumStatuses []int64
-	if service.IsSettled == nil { // "default" sumStatuses
-		sumStatuses = statuses
-	} else if /*service.IsSettled != nil &&*/ *service.IsSettled {
-		sumStatuses = []int64{5, 6}
-	} else if /*service.IsSettled != nil &&*/ !*service.IsSettled {
-		sumStatuses = []int64{2, 3, 5, 6}
-	}
-
-	betReports, err := model.BetReports(rfCtx, user.ID, start, end, gameVendorIds, sumStatuses, service.IsParlay, service.IsSettled, service.Page.Page, service.Page.Limit)
+	statuses := model.IsSettledFlagToPloutosIncludeStatuses(service.IsSettled)
+	betReports, err := model.BetReports(rfCtx, user.ID, start, end, gameVendorIds, statuses, service.IsParlay, service.Page.Page, service.Page.Limit)
 	if err != nil {
 		rfCtx = rfcontext.AppendError(rfCtx, err, ".BetReports")
 		log.Println(rfcontext.Fmt(rfCtx))
@@ -118,21 +97,17 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 		betReports[i] = l
 	}
 
-	orderSummary, err := model.BetReportsStats(rfCtx, user.ID, start, end, gameVendorIds, sumStatuses, service.IsParlay, service.IsSettled)
+	orderSummary, err := model.BetReportsStats(rfCtx, user.ID, start, end, gameVendorIds, statuses, service.IsParlay)
 	if err != nil {
 		rfCtx = rfcontext.AppendError(rfCtx, err, ".BetReportsStats")
 		log.Println(rfcontext.Fmt(rfCtx))
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
-	go ResetUserCounter_OrderCount(user.ID)
-	go game_vendor_pane.ResetUserCounter_Order_GamePane(user.ID, service.PaneType)
+	go game_history_pane.ResetUserCounter_OrderCount(user.ID)
+	go game_history_pane.AdvanceUserCounter_Order_GamePane_LastSeen(user.ID, service.PaneType, time.Now())
 
 	return serializer.Response{
 		Data: serializer.BuildPaginatedBetReport(c, betReports, orderSummary.Count, orderSummary.Amount, orderSummary.Win),
 	}
-}
-
-func ResetUserCounter_OrderCount(userId int64) {
-	model.DB.Model(ploutos.UserCounter{}).Scopes(model.ByUserId(userId)).Updates(map[string]interface{}{"order_count": 0, "order_last_seen": time.Now()})
 }
