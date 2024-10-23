@@ -97,6 +97,24 @@ func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionTyp
 			fmt.Println("CreateReferralRewardRecord for cash in order error", err)
 			return
 		}
+		// if it is FTD, we should just help user to claim the FTD bonus
+		uid := newCashOrderState.UserId
+		now := time.Now().UTC()
+		var promo ploutos.Promotion
+		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeVipReferral).Where("start_at < ? and end_at > ?", now, now).First(&promo).Error
+		if err != nil {
+			fmt.Println("promotion get err ", err)
+		}
+		session, err := model.GetActivePromotionSessionByPromotionId(context.TODO(), promo.ID, now)
+		if err != nil {
+			fmt.Println("promotion session get err ", err)
+		}
+		// if claim success, will send notification, and create notification in db.
+		_, err = promotion.Claim(context.TODO(), now, promo, session, uid, nil)
+		if err != nil {
+			fmt.Println("promotion.Claim err ", err)
+		}
+		fmt.Println("promotion.Claim finished ", uid)
 	}
 
 	// check if it is FTD
