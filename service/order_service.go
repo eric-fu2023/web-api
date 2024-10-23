@@ -84,7 +84,7 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	// take status: [0, 1, 4]
 	// take sum_status: [0, 1, 4]
 
-	statuses := model.IsSettledFlagToPloutosIncludeStatuses(service.IsSettled)
+	statuses := model.IsSettledFlagToPloutosIncludeStatuses(service.IsSettled, false)
 	betReports, err := model.BetReports(rfCtx, user.ID, start, end, gameVendorIds, statuses, service.IsParlay, service.Page.Page, service.Page.Limit)
 	if err != nil {
 		rfCtx = rfcontext.AppendError(rfCtx, err, ".BetReports")
@@ -97,7 +97,8 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 		betReports[i] = l
 	}
 
-	orderSummary, err := model.BetReportsStats(rfCtx, user.ID, start, end, gameVendorIds, statuses, service.IsParlay)
+	sumStatuses := model.IsSettledFlagToPloutosIncludeStatuses(service.IsSettled, true)
+	orderSummary, err := model.BetReportsStats(rfCtx, user.ID, start, end, gameVendorIds, sumStatuses, service.IsParlay)
 	if err != nil {
 		rfCtx = rfcontext.AppendError(rfCtx, err, ".BetReportsStats")
 		log.Println(rfcontext.Fmt(rfCtx))

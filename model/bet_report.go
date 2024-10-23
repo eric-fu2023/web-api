@@ -81,7 +81,7 @@ type OrderSummary struct {
 	Win    int64 `gorm:"column:win"`
 }
 
-func BetReportsStats(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds, statuses []int64, isParlay bool) (OrderSummary, error) {
+func BetReportsStats(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds []int64, statuses []ploutos.TayaBetReportStatus, isParlay bool) (OrderSummary, error) {
 	var orderSummary OrderSummary
 	ctx = rfcontext.AppendCallDesc(ctx, "CountBetReports")
 	db := DB
@@ -96,7 +96,7 @@ func BetReportsStats(ctx context.Context, userId int64, fromBetTime, toBetTime t
 	return orderSummary, err
 }
 
-func BetReports(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds, statusesToInclude []int64, isParlay bool, pageNo int, pageSize int) ([]ploutos.BetReport, error) {
+func BetReports(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds []int64, statusesToInclude []ploutos.TayaBetReportStatus, isParlay bool, pageNo int, pageSize int) ([]ploutos.BetReport, error) {
 	ctx = rfcontext.AppendCallDesc(ctx, "BetReports")
 	db := DB
 	if db == nil {
@@ -114,14 +114,25 @@ func BetReports(ctx context.Context, userId int64, fromBetTime, toBetTime time.T
 	return betReports, nil
 }
 
-func IsSettledFlagToPloutosIncludeStatuses(s *bool) []int64 {
-	var statuses []int64
+func IsSettledFlagToPloutosIncludeStatuses(s *bool, forAggregation bool) []ploutos.TayaBetReportStatus {
+	var statuses []ploutos.TayaBetReportStatus
 	if s == nil { // "default"
-		statuses = []int64{1, 2, 3, 4, 5, 6}
+		statuses = []ploutos.TayaBetReportStatus{ploutos.TayaBetReportStatusCreated, ploutos.TayaBetReportStatusConfirming,
+			ploutos.TayaBetReportStatusRejected,
+			ploutos.TayaBetReportStatusCancelled,
+			ploutos.TayaBetReportStatusConfirmed,
+			ploutos.TayaBetReportStatusSettled, 6}
 	} else if /*service.IsSettled != nil &&*/ *s {
-		statuses = []int64{5, 6}
+		if forAggregation { // only include effective bet amounts
+			statuses = []ploutos.TayaBetReportStatus{ploutos.TayaBetReportStatusSettled, 6}
+		} else {
+			statuses = []ploutos.TayaBetReportStatus{ploutos.TayaBetReportStatusRejected,
+				ploutos.TayaBetReportStatusCancelled, ploutos.TayaBetReportStatusSettled, 6}
+		}
 	} else /*service.IsSettled != nil && !*service.IsSettled */ {
-		statuses = []int64{0, 1, 4}
+		statuses = []ploutos.TayaBetReportStatus{ploutos.TayaBetReportStatusCreated,
+			ploutos.TayaBetReportStatusConfirming,
+			ploutos.TayaBetReportStatusConfirmed}
 	}
 
 	return statuses

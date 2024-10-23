@@ -1,6 +1,7 @@
 package model
 
 import (
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"fmt"
 	"strings"
 	"time"
@@ -107,7 +108,7 @@ func ByIds(ids []int64) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
-func ByOrderListConditions(userId int64, gameType []int64, statusesToInclude []int64, isParlay *bool, start time.Time, end time.Time) func(db *gorm.DB) *gorm.DB {
+func ByOrderListConditions(userId int64, gameType []int64, statusesToInclude []ploutos.TayaBetReportStatus, isParlay *bool, start time.Time, end time.Time) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		db = db.Where(`user_id`, userId)
 

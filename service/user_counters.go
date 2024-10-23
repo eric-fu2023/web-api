@@ -63,7 +63,6 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 	}
 
 	counter := UserCounter(_counter)
-
 	txCount, err := service.countTransactions(user.ID, _counter.TransactionLastSeen)
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
@@ -82,7 +81,7 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 
 	gameHistoryPaneCounts := make(map[game_history_pane.GamesHistoryPaneType]int64)
 	now := time.Now()
-	statuses := model.IsSettledFlagToPloutosIncludeStatuses(nil)
+	statuses := model.IsSettledFlagToPloutosIncludeStatuses(nil, false /* count for all reports yet to be seen*/)
 	for _, gamePane := range game_history_pane.GamePaneHistoryTypes() {
 		pCtx := rfcontext.AppendCallDesc(rfCtx, "counting for game history type: "+strconv.Itoa(int(gamePane)))
 		lastSeen, err := counter.LastSeenForGamePane(gamePane)
