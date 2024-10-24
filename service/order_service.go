@@ -59,6 +59,9 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 
 	rfCtx := rfcontext.Spawn(context.Background())
 	rfCtx = rfcontext.AppendCallDesc(rfCtx, "OrderListService")
+	rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("service.IsSettled %#v", service.IsSettled))
+	rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("service.PaneType %#v", service.PaneType))
+	log.Println(rfcontext.Fmt(rfCtx))
 
 	gameVendorIds, err := game_history_pane.GetGameVendorIdsByPaneType(service.PaneType)
 	if err != nil {
@@ -86,6 +89,8 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	// take sum_status: [0, 1, 4]
 
 	statuses := model.IsSettledFlagToPloutosIncludeStatuses(service.IsSettled, false)
+	rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("statuses %#v", statuses))
+	log.Println(rfcontext.Fmt(rfCtx))
 	betReports, err := model.BetReports(rfCtx, user.ID, start, end, gameVendorIds, statuses, service.IsParlay, service.Page.Page, service.Page.Limit)
 	if err != nil {
 		rfCtx = rfcontext.AppendError(rfCtx, err, ".BetReports")
@@ -99,8 +104,7 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	}
 
 	sumStatuses := model.IsSettledFlagToPloutosIncludeStatuses(service.IsSettled, true)
-
-	rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("service.PaneType %#v, statuses %#v sumStatuses %#v", service.PaneType, statuses, sumStatuses))
+	rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("sumStatuses %#v", sumStatuses))
 	log.Println(rfcontext.Fmt(rfCtx))
 
 	orderSummary, err := model.BetReportsStats(rfCtx, user.ID, start, end, gameVendorIds, sumStatuses, service.IsParlay)
