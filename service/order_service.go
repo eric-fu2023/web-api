@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -98,6 +99,10 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 	}
 
 	sumStatuses := model.IsSettledFlagToPloutosIncludeStatuses(service.IsSettled, true)
+
+	rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("service.PaneType %#v, statuses %#v sumStatuses %#v", service.PaneType, statuses, sumStatuses))
+	log.Println(rfcontext.Fmt(rfCtx))
+
 	orderSummary, err := model.BetReportsStats(rfCtx, user.ID, start, end, gameVendorIds, sumStatuses, service.IsParlay)
 	if err != nil {
 		rfCtx = rfcontext.AppendError(rfCtx, err, ".BetReportsStats")
@@ -105,8 +110,20 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
-	go game_history_pane.ResetUserCounter_OrderCount(user.ID)
-	go game_history_pane.AdvanceUserCounter_Order_GamePane_LastSeen(user.ID, service.PaneType, time.Now())
+	go func() {
+		ocerr := game_history_pane.ResetUserCounter_OrderCount(user.ID)
+		if ocerr == nil { // debug
+			rfCtx = rfcontext.AppendDescription(rfCtx, "OrderHistory_GamePane_LastSeen ok")
+			log.Println(rfcontext.Fmt(rfCtx))
+		}
+	}()
+	go func() {
+		oherr := game_history_pane.AdvanceUserCounter_OrderHistory_GamePane_LastSeen(user.ID, service.PaneType, time.Now())
+		if oherr == nil { // debug
+			rfCtx = rfcontext.AppendDescription(rfCtx, "OrderHistory_GamePane_LastSeen ok")
+			log.Println(rfcontext.Fmt(rfCtx))
+		}
+	}()
 
 	return serializer.Response{
 		Data: serializer.BuildPaginatedBetReport(c, betReports, orderSummary.Count, orderSummary.Amount, orderSummary.Win),
