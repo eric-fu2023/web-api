@@ -104,8 +104,8 @@ func BetReports(ctx context.Context, userId int64, fromBetTime, toBetTime time.T
 	}
 
 	var betReports []ploutos.BetReport
-	err := DB.Preload(`Voucher`).Preload(`ImVoucher`).Preload(`GameVendor`).
-		Model(ploutos.BetReport{}).Debug().Scopes(ByOrderListConditions(userId, gameVendorIds, statusesToInclude, &isParlay, fromBetTime, toBetTime), ByBetTimeSort, Paginate(pageNo, pageSize)).
+	err := DB.Debug().Preload(`Voucher`).Preload(`ImVoucher`).Preload(`GameVendor`).
+		Model(ploutos.BetReport{}).Scopes(ByOrderListConditions(userId, gameVendorIds, statusesToInclude, &isParlay, fromBetTime, toBetTime), ByBetTimeSort, Paginate(pageNo, pageSize)).
 		Find(&betReports).Error
 
 	if err != nil {

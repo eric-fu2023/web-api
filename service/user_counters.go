@@ -100,9 +100,16 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 		gameHistoryPaneCounts[gamePane] = orderSummary.Count
 	}
 
-	return serializer.Response{
-		Data: serializer.BuildUserCounters(c, counters, gameHistoryPaneCounts),
+	data := serializer.BuildUserCounters(c, counters, gameHistoryPaneCounts)
+
+	responseBody := serializer.Response{
+		Data: data,
 	}
+	{ // debug
+		rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("response body %v", responseBody))
+		log.Println(rfcontext.Fmt(rfCtx))
+	}
+	return responseBody
 }
 
 func (service *CounterService) countTransactions(userId int64, fromCreatedTime time.Time) (count int64, err error) {

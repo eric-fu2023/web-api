@@ -18,6 +18,7 @@ const (
 	GamesPaneTypeCasino                      = GamesPaneType2
 )
 
+// GamePaneHistoryTypes derived from keys of [gameVendorIdsByPaneType_baseline]
 var GamePaneHistoryTypes = sync.OnceValue(
 	func() (paneTypes []GamesHistoryPaneType) {
 		for paneType, _ := range gameVendorIdsByPaneType_baseline {
