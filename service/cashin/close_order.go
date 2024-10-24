@@ -68,24 +68,6 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 	if err == nil && newCashOrderState.OrderType == ploutos.CashOrderTypeCashIn && (newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0) {
 		uid := newCashOrderState.UserId
 		now := time.Now().UTC()
-		// this is to claim referral bonus!!!
-		var referralPromo ploutos.Promotion
-		var referralSession ploutos.PromotionSession
-		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeVipReferral).Where("start_at < ? and end_at > ?", now, now).First(&referralPromo).Error
-		if err != nil {
-			fmt.Println("referralPromo get err ", err)
-		}
-		referralSession, err := model.GetActivePromotionSessionByPromotionId(context.TODO(), referralPromo.ID, now)
-		if err != nil {
-			fmt.Println("referralSession session get err ", err)
-		}
-		// if claim success, will send notification, and create notification in db.
-		_, err = promotion.Claim(context.TODO(), now, referralPromo, referralSession, uid, nil)
-		if err != nil {
-			fmt.Println("referralPromo.Claim err ", err)
-		}
-		fmt.Println("referralPromo.Claim finished ", uid)
-
 		// this is to claim FTD bonus!!!
 		var ftdPromo ploutos.Promotion
 		var ftdSession ploutos.PromotionSession
@@ -104,6 +86,24 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		}
 		fmt.Println("ftdPromo.Claim finished ", uid)
 
+
+		// this is to claim referral bonus!!!
+		var referralPromo ploutos.Promotion
+		var referralSession ploutos.PromotionSession
+		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeVipReferral).Where("start_at < ? and end_at > ?", now, now).First(&referralPromo).Error
+		if err != nil {
+			fmt.Println("referralPromo get err ", err)
+		}
+		referralSession, err := model.GetActivePromotionSessionByPromotionId(context.TODO(), referralPromo.ID, now)
+		if err != nil {
+			fmt.Println("referralSession session get err ", err)
+		}
+		// if claim success, will send notification, and create notification in db.
+		_, err = promotion.Claim(context.TODO(), now, referralPromo, referralSession, uid, nil)
+		if err != nil {
+			fmt.Println("referralPromo.Claim err ", err)
+		}
+		fmt.Println("referralPromo.Claim finished ", uid)
 	}
 
 	return
