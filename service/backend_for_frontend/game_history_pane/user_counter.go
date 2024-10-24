@@ -17,7 +17,7 @@ var GamesPaneLastSeenTypeToUserCounterColumn = map[GamesHistoryPaneType]string{
 const UserCounterColumnTransactionLastSeen = `transaction_last_seen`
 const UserCounterColumnNotificationLastSeen = `notification_last_seen`
 
-func AdvanceUserCounter_Order_GamePane_LastSeen(userId int64, paneType GamesHistoryPaneType, datetime time.Time) error {
+func AdvanceUserCounter_OrderHistory_GamePane_LastSeen(userId int64, paneType GamesHistoryPaneType, datetime time.Time) error {
 	columnName, ok := GamesPaneLastSeenTypeToUserCounterColumn[paneType]
 	if !ok {
 		return fmt.Errorf("column name for pane type %d not exist", paneType)
@@ -39,6 +39,6 @@ func _userCounterAdvanceLastSeen(userId int64, datetime time.Time, columnName st
 	return err
 }
 
-func ResetUserCounter_OrderCount(userId int64) {
-	model.DB.Model(ploutos.UserCounter{}).Scopes(model.ByUserId(userId)).Updates(map[string]interface{}{"order_count": 0, "order_last_seen": time.Now()})
+func ResetUserCounter_OrderCount(userId int64) error {
+	return model.DB.Model(ploutos.UserCounter{}).Scopes(model.ByUserId(userId)).Updates(map[string]interface{}{"order_count": 0, "order_last_seen": time.Now()}).Error
 }
