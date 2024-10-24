@@ -120,12 +120,6 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 		gameHistoryPaneCounts[game_history_pane.GamesPaneAll] += orderSummary.Count
 	}
 
-	for gamePane, count := range gameHistoryPaneCounts {
-		if gamePane != game_history_pane.GamesPaneAll {
-			gameHistoryPaneCounts[game_history_pane.GamesPaneAll] += count
-		}
-	}
-
 	data := serializer.BuildUserCounters(c, counters, gameHistoryPaneCounts)
 
 	responseBody := serializer.Response{
