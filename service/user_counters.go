@@ -120,8 +120,13 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 		gameHistoryPaneCounts[game_history_pane.GamesPaneAll] += orderSummary.Count
 	}
 
-	data := serializer.BuildUserCounters(c, counters, gameHistoryPaneCounts)
-
+	var giftUnseenCount int64 = 0
+	data, err := serializer.BuildUserCounters(counters, gameHistoryPaneCounts, giftUnseenCount)
+	if err != nil {
+		rfCtx = rfcontext.AppendError(rfCtx, err, "BuildUserCounters")
+		log.Println(rfcontext.Fmt(rfCtx))
+		return serializer.DBErr(c, service, i18n.T("general_error"), err)
+	}
 	responseBody := serializer.Response{
 		Data: data,
 	}

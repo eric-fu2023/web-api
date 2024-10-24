@@ -1,38 +1,37 @@
 package serializer
 
 import (
+	"fmt"
 	"strconv"
 
 	"web-api/model"
 	"web-api/service/backend_for_frontend/game_history_pane"
-
-	"github.com/gin-gonic/gin"
 )
 
 type UserCounters struct {
-	Order              string             `json:"order"`
-	Transaction        string             `json:"transaction"`
-	Notification       string             `json:"notification"`
-	GameOrderHistories GameOrderHistories `json:"game_order_histories"`
+	Order        string            `json:"order"`
+	Transaction  string            `json:"transaction"`
+	Notification string            `json:"notification"`
+	OrderType    map[string]string `json:"order_type"`
 }
 
-type GameOrderHistories struct {
-	ByPaneType map[string]string `json:"by_pane_type"`
-}
-
-func BuildUserCounters(c *gin.Context, a model.UserCounters, _gameOrderHistoriesByPaneType map[game_history_pane.GamesHistoryPaneType]int64) UserCounters {
-	gameOrderHistories := make(map[string]string)
+func BuildUserCounters(a model.UserCounters, _gameOrderHistoriesByPaneType map[game_history_pane.GamesHistoryPaneType]int64, giftUnseenCount int64) (UserCounters, error) {
+	var giftcountkey int64 = 3
+	orderTypes := make(map[string]string)
 	for paneType, count := range _gameOrderHistoriesByPaneType {
-		gameOrderHistories[strconv.Itoa(int(paneType))] = formatCounter(count)
+		orderTypes[strconv.Itoa(int(paneType))] = formatCounter(count)
+		if paneType == giftcountkey {
+			return UserCounters{}, fmt.Errorf("conflict: order type 3 is reserved form giftUnseenCount")
+		}
 	}
+
+	orderTypes[strconv.Itoa(int(giftcountkey))] = formatCounter(giftUnseenCount)
 	return UserCounters{
 		Order:        formatCounter(a.Order),
 		Transaction:  formatCounter(a.Transaction),
 		Notification: formatCounter(a.Notification),
-		GameOrderHistories: GameOrderHistories{
-			ByPaneType: gameOrderHistories,
-		},
-	}
+		OrderType:    orderTypes,
+	}, nil
 }
 
 func formatCounter(counter int64) string {
