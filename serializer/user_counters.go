@@ -14,11 +14,13 @@ type UserCounters struct {
 	OrderType    map[string]string `json:"order_type"`
 }
 
-func BuildUserCounters(a model.UserCounters, _gameOrderHistoriesByPaneType map[game_history_pane.GamesHistoryPaneType]int64) (UserCounters, error) {
+func BuildUserCounters(a model.UserCounters, _gameOrderHistoriesByPaneType map[game_history_pane.GamesHistoryPaneType]int64, gameHistoryPaneCountsHideAll bool) (UserCounters, error) {
 	orderTypes := make(map[string]string)
+	if gameHistoryPaneCountsHideAll {
+		delete(_gameOrderHistoriesByPaneType, game_history_pane.GamesPaneAll)
+	}
 	for paneType, count := range _gameOrderHistoriesByPaneType {
 		orderTypes[strconv.Itoa(int(paneType))] = formatCounter(count)
-
 	}
 	return UserCounters{
 		Order:        formatCounter(a.Order),

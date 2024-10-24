@@ -135,7 +135,7 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 	gameHistoryPaneCounts[giftcountkey] = giftUnseenCount
 	gameHistoryPaneCounts[game_history_pane.GamesPaneAll] += giftUnseenCount
 
-	data, err := serializer.BuildUserCounters(counters, gameHistoryPaneCounts)
+	data, err := serializer.BuildUserCounters(counters, gameHistoryPaneCounts, true)
 	if err != nil {
 		rfCtx = rfcontext.AppendError(rfCtx, err, "BuildUserCounters")
 		log.Println(rfcontext.Fmt(rfCtx))
