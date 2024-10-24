@@ -33,6 +33,10 @@ type UserCounter struct {
 	GameHistoryCasinoLastSeen time.Time
 }
 
+func (u *UserCounter) TableName() string {
+	return ploutos.TableUserCounter
+}
+
 // LastSeenForGamePane to identify a particular db column and read its value. prioritise safeness by hardcoding instead of using reflection on field tags.
 func (userCounter *UserCounter) LastSeenForGamePane(paneType game_history_pane.GamesHistoryPaneType) (time.Time, error) {
 	switch paneType {
@@ -56,19 +60,18 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 
 	rfCtx := rfcontext.Spawn(context.Background())
 	rfCtx = rfcontext.AppendCallDesc(rfCtx, "CounterService) Get")
-	var _counter UserCounter
-	err := model.DB.Model(UserCounter{}).Scopes(model.ByUserId(user.ID)).Find(&_counter).Error
+	var counter UserCounter
+	err := model.DB.Model(UserCounter{}).Scopes(model.ByUserId(user.ID)).Find(&counter).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
-	counter := UserCounter(_counter)
-	txCount, err := service.countTransactions(user.ID, _counter.TransactionLastSeen)
+	txCount, err := service.countTransactions(user.ID, counter.TransactionLastSeen)
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
-	notificationCount, err := service.countNotifications(user.ID, _counter.NotificationLastSeen)
+	notificationCount, err := service.countNotifications(user.ID, counter.NotificationLastSeen)
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
