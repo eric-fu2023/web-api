@@ -99,7 +99,6 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 
 	for _, gamePane := range game_history_pane.GamePaneHistoryTypes() {
 		pCtx := rfcontext.AppendCallDesc(rfCtx, "counting for game history type: "+strconv.Itoa(int(gamePane)))
-
 		if gamePane == game_history_pane.GamesPaneAll {
 			continue
 		}
@@ -121,10 +120,17 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 		}
 
 		gameVendorIds, err := game_history_pane.GetGameVendorIdsByPaneType(gamePane)
+		if err != nil {
+			rfCtx = rfcontext.AppendError(rfCtx, err, "GetGameVendorIdsByPaneType")
+			log.Println(rfcontext.Fmt(rfCtx))
+			return serializer.Err(c, service, 500, i18n.T("general_error"), err)
+		}
+
 		orderSummary, derr := model.BetReportsStats(rfCtx, user.ID, lastSeen, now, gameVendorIds, statuses, false)
 		if derr != nil {
 			pCtx = rfcontext.AppendErrorAsWarn(pCtx, fmt.Errorf("%v", gamePane), "getting game vendor id for game pane")
 			log.Printf(rfcontext.Fmt(pCtx))
+			continue
 		}
 
 		gameHistoryPaneCounts[gamePane] = orderSummary.Count
