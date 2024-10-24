@@ -90,6 +90,11 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		// this is to claim referral bonus!!!
 		var referralPromo ploutos.Promotion
 		var referralSession ploutos.PromotionSession
+		var userReferral ploutos.UserReferral
+		err = txDB.Debug().Where("deleted_at is null").Where("referral = ?", uid).First(&userReferral).Error
+		if err != nil {
+			fmt.Println("user referral get err ", err)
+		}
 		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeVipReferral).Where("start_at < ? and end_at > ?", now, now).First(&referralPromo).Error
 		if err != nil {
 			fmt.Println("referralPromo get err ", err)
@@ -99,7 +104,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 			fmt.Println("referralSession session get err ", err)
 		}
 		// if claim success, will send notification, and create notification in db.
-		_, err = promotion.Claim(context.TODO(), now, referralPromo, referralSession, uid, nil)
+		_, err = promotion.Claim(context.TODO(), now, referralPromo, referralSession, userReferral.ReferrerId, nil)
 		if err != nil {
 			fmt.Println("referralPromo.Claim err ", err)
 		}
