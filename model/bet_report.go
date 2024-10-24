@@ -85,6 +85,15 @@ type OrderSummary struct {
 func BetReportsStats(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds []int64, statuses []ploutos.TayaBetReportStatus, isParlay bool) (OrderSummary, error) {
 	var orderSummary OrderSummary
 	ctx = rfcontext.AppendCallDesc(ctx, "CountBetReports")
+	ctx = rfcontext.AppendParams(ctx, "CountBetReports", map[string]interface{}{
+		"userId":        userId,
+		"fromBetTime":   fromBetTime,
+		"toBetTime":     toBetTime,
+		"gameVendorIds": gameVendorIds,
+		"isParlay":      isParlay,
+	})
+	log.Println(rfcontext.Fmt(ctx))
+
 	db := DB
 	if db == nil {
 		return OrderSummary{}, fmt.Errorf("db is nil")
