@@ -56,8 +56,8 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 
 	rfCtx := rfcontext.Spawn(context.Background())
 	rfCtx = rfcontext.AppendCallDesc(rfCtx, "CounterService) Get")
-	var _counter ploutos.UserCounter
-	err := model.DB.Model(ploutos.UserCounter{}).Scopes(model.ByUserId(user.ID)).Find(&_counter).Error
+	var _counter UserCounter
+	err := model.DB.Model(UserCounter{}).Scopes(model.ByUserId(user.ID)).Find(&_counter).Error
 	if err != nil {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
