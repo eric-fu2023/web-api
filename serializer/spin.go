@@ -61,6 +61,7 @@ func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_co
 
 	button_start := ""
 	button_end := ""
+	button_text_color := ""
 	if len(spin.ButtonStart) > 0 && spin.ButtonStart[0] == '#' {
 		button_start = spin.ButtonStart[1:]
 	} else {
@@ -70,6 +71,11 @@ func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_co
 		button_end = spin.ButtonEnd[1:]
 	} else {
 		button_end = spin.ButtonEnd
+	}
+	if len(spin.ButtonTextColor) > 0 && spin.ButtonTextColor[0] == '#' {
+		button_text_color = spin.ButtonTextColor[1:]
+	} else {
+		button_text_color = spin.ButtonTextColor
 	}
 	spin_resp = Spin{
 		ID:                spin.ID,
@@ -84,8 +90,8 @@ func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_co
 		ButtonStart:       button_start,
 		ButtonEnd:         button_end,
 		ButtonText:        spin.ButtonText,
-		ButtonTextColor:   spin.ButtonTextColor,
-		SpinBackgroundUrl: spin.SpinBackgroundUrl,
+		ButtonTextColor:   button_text_color,
+		SpinBackgroundUrl: Url(spin.SpinBackgroundUrl),
 		SpinItems:         spin_items_resp,
 	}
 
