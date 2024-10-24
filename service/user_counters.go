@@ -86,6 +86,8 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 	now := time.Now()
 	statuses := model.IsSettledFlagToPloutosIncludeStatuses(nil, false /* count for all reports yet to be seen*/)
 	for _, gamePane := range game_history_pane.GamePaneHistoryTypes() {
+		gameHistoryPaneCounts[gamePane] = 0
+
 		pCtx := rfcontext.AppendCallDesc(rfCtx, "counting for game history type: "+strconv.Itoa(int(gamePane)))
 		lastSeen, err := counter.LastSeenForGamePane(gamePane)
 		if err != nil {
