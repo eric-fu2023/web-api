@@ -1,7 +1,6 @@
 package serializer
 
 import (
-	"fmt"
 	"strconv"
 
 	"web-api/model"
@@ -15,17 +14,12 @@ type UserCounters struct {
 	OrderType    map[string]string `json:"order_type"`
 }
 
-func BuildUserCounters(a model.UserCounters, _gameOrderHistoriesByPaneType map[game_history_pane.GamesHistoryPaneType]int64, giftUnseenCount int64) (UserCounters, error) {
-	var giftcountkey int64 = 3
+func BuildUserCounters(a model.UserCounters, _gameOrderHistoriesByPaneType map[game_history_pane.GamesHistoryPaneType]int64) (UserCounters, error) {
 	orderTypes := make(map[string]string)
 	for paneType, count := range _gameOrderHistoriesByPaneType {
 		orderTypes[strconv.Itoa(int(paneType))] = formatCounter(count)
-		if paneType == giftcountkey {
-			return UserCounters{}, fmt.Errorf("conflict: order type 3 is reserved form giftUnseenCount")
-		}
-	}
 
-	orderTypes[strconv.Itoa(int(giftcountkey))] = formatCounter(giftUnseenCount)
+	}
 	return UserCounters{
 		Order:        formatCounter(a.Order),
 		Transaction:  formatCounter(a.Transaction),
