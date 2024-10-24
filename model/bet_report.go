@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
 	"time"
 
@@ -98,6 +99,18 @@ func BetReportsStats(ctx context.Context, userId int64, fromBetTime, toBetTime t
 
 func BetReports(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds []int64, statusesToInclude []ploutos.TayaBetReportStatus, isParlay bool, pageNo int, pageSize int) ([]ploutos.BetReport, error) {
 	ctx = rfcontext.AppendCallDesc(ctx, "BetReports")
+	ctx = rfcontext.AppendParams(ctx, "BetReports", map[string]interface{}{
+		"userId":            userId,
+		"fromBetTime":       fromBetTime,
+		"toBetTime":         toBetTime,
+		"gameVendorIds":     gameVendorIds,
+		"statusesToInclude": statusesToInclude,
+		"isParlay":          isParlay,
+		"pageNo":            pageNo,
+		"pageSize":          pageSize,
+	})
+
+	log.Println(rfcontext.Fmt(ctx))
 	db := DB
 	if db == nil {
 		return []ploutos.BetReport{}, fmt.Errorf("db is nil")

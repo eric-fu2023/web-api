@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -85,13 +86,18 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 	gameHistoryPaneCounts := make(map[game_history_pane.GamesHistoryPaneType]int64)
 	now := time.Now()
 	statuses := model.IsSettledFlagToPloutosIncludeStatuses(nil, false /* count for all reports yet to be seen*/)
+
+	rfCtx = rfcontext.AppendCallDesc(rfCtx, fmt.Sprintf("IsSettledFlagToPloutosIncludeStatuses = %v", statuses))
+	rfCtx = rfcontext.AppendCallDesc(rfCtx, fmt.Sprintf("game_history_pane.GamePaneHistoryTypes()  = %v", game_history_pane.GamePaneHistoryTypes()))
+	log.Printf(rfcontext.Fmt(rfCtx))
+
 	for _, gamePane := range game_history_pane.GamePaneHistoryTypes() {
 		gameHistoryPaneCounts[gamePane] = 0
 
 		pCtx := rfcontext.AppendCallDesc(rfCtx, "counting for game history type: "+strconv.Itoa(int(gamePane)))
 		lastSeen, err := counter.LastSeenForGamePane(gamePane)
 		if err != nil {
-			pCtx = rfcontext.AppendErrorAsWarn(pCtx, fmt.Errorf("%v", gamePane), "getting column name for game pane")
+			pCtx = rfcontext.AppendErrorAsWarn(pCtx, fmt.Errorf("%v %v", err, gamePane), "getting column name for game pane")
 			log.Printf(rfcontext.Fmt(pCtx))
 			continue
 		}
@@ -99,7 +105,7 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 		gameVendorIds, err := game_history_pane.GetGameVendorIdsByPaneType(gamePane)
 		orderSummary, derr := model.BetReportsStats(rfCtx, user.ID, lastSeen, now, gameVendorIds, statuses, false)
 		if derr != nil {
-			pCtx = rfcontext.AppendErrorAsWarn(pCtx, fmt.Errorf("%v", gamePane), "getting column name for game pane")
+			pCtx = rfcontext.AppendErrorAsWarn(pCtx, fmt.Errorf("%v", gamePane), "getting game vendor id for game pane")
 			log.Printf(rfcontext.Fmt(pCtx))
 		}
 
@@ -112,7 +118,9 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 		Data: data,
 	}
 	{ // debug
-		rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("response body %v", responseBody))
+		rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("response body Struct: %#v", responseBody))
+		jj, _ := json.Marshal(responseBody)
+		rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("response body JSON: %s", string(jj)))
 		log.Println(rfcontext.Fmt(rfCtx))
 	}
 	return responseBody
