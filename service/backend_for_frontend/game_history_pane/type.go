@@ -1,6 +1,7 @@
 package game_history_pane
 
 import (
+	"fmt"
 	"sync"
 	"web-api/model"
 
@@ -16,6 +17,7 @@ const (
 	GamesPaneTypeSports                      = GamesPaneType1
 	GamesPaneType2      GamesHistoryPaneType = 2
 	GamesPaneTypeCasino                      = GamesPaneType2
+	_                   GamesHistoryPaneType = 3 // reserved for gift
 )
 
 // GamePaneHistoryTypes derived from keys of [gameVendorIdsByPaneType_baseline]
@@ -50,13 +52,16 @@ var gameVendorIdsByPaneType_baseline = map[GamesHistoryPaneType][]int64{
 }
 
 func GetGameVendorIdsByPaneType(pType GamesHistoryPaneType) ([]int64, error) {
+	if pType == 3 {
+		return []int64{}, fmt.Errorf("3 is reserved for gift (not a game / bet report feature)")
+	}
+
 	gameVendorIds, ok := gameVendorIdsByPaneType_baseline[pType]
 	if !ok {
 		gameVendorIds = []int64{}
 	}
 
 	// additions
-
 	switch pType {
 	case GamesPaneAll:
 		forSports, _ := GetGameVendorIdsByPaneType(GamesPaneTypeSports)

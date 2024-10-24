@@ -9,6 +9,7 @@ import (
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
+// db <-> web-api
 var GamesPaneLastSeenTypeToUserCounterColumn = map[GamesHistoryPaneType]string{
 	GamesPaneTypeCasino: "game_history_casino_last_seen",
 	GamesPaneTypeSports: "game_history_sports_last_seen",
