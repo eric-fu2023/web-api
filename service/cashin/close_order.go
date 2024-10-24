@@ -91,7 +91,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		var referralPromo ploutos.Promotion
 		var referralSession ploutos.PromotionSession
 		var userReferral ploutos.UserReferral
-		err = txDB.Debug().Where("deleted_at is null").Where("referral = ?", uid).First(&userReferral).Error
+		err = txDB.Debug().Where("deleted_at is null").Where("referral_id = ?", uid).First(&userReferral).Error
 		if err != nil {
 			fmt.Println("user referral get err ", err)
 		}
