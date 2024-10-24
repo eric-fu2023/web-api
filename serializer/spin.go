@@ -23,6 +23,7 @@ type Spin struct {
 	ButtonText        string     `json:"button_text"`
 	ButtonTextColor   string     `json:"button_text_color"`
 	SpinBackgroundUrl string     `json:"spin_background_url"`
+	FloatUrl          string     `json:"float_url"`
 	SpinItems         []SpinItem `json:"items"`
 }
 type SpinItem struct {
@@ -92,6 +93,7 @@ func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_co
 		ButtonText:        spin.ButtonText,
 		ButtonTextColor:   button_text_color,
 		SpinBackgroundUrl: Url(spin.SpinBackgroundUrl),
+		FloatUrl:          Url(spin.FloatUrl),
 		SpinItems:         spin_items_resp,
 	}
 
