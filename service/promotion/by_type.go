@@ -499,7 +499,12 @@ func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward i
 }
 
 func claimVoucherReferralVip(c context.Context, p ploutos.Promotion, voucher ploutos.Voucher, userID int64, now time.Time) error {
-	user := c.Value("user").(model.User)
+	var user model.User
+	err:=model.DB.Where("id", userID).First(&user).Error
+	if err != nil{
+		return fmt.Errorf("find user error: %w", err)
+	}
+	
 	return model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 		rewardRecords, err := claimReferralAllianceRewards(tx, userID, now)
 		if err != nil {
