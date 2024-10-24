@@ -83,7 +83,6 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 		Notification: notificationCount,
 	}
 
-	gameHistoryPaneCounts := make(map[game_history_pane.GamesHistoryPaneType]int64)
 	now := time.Now()
 	statuses := model.IsSettledFlagToPloutosIncludeStatuses(nil, false /* count for all reports yet to be seen*/)
 
@@ -91,7 +90,15 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 	rfCtx = rfcontext.AppendCallDesc(rfCtx, fmt.Sprintf("game_history_pane.GamePaneHistoryTypes()  = %v", game_history_pane.GamePaneHistoryTypes()))
 	log.Printf(rfcontext.Fmt(rfCtx))
 
+	// gameHistoryPaneCounts
+	// for type 0 (all), add all counts from others
+	// for others types, count(reports) since last seen.
+	gameHistoryPaneCounts := make(map[game_history_pane.GamesHistoryPaneType]int64)
+	gameHistoryPaneCounts[game_history_pane.GamesPaneAll] = 0
 	for _, gamePane := range game_history_pane.GamePaneHistoryTypes() {
+		if gamePane == game_history_pane.GamesPaneAll {
+			continue
+		}
 		gameHistoryPaneCounts[gamePane] = 0
 
 		pCtx := rfcontext.AppendCallDesc(rfCtx, "counting for game history type: "+strconv.Itoa(int(gamePane)))
@@ -110,6 +117,13 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 		}
 
 		gameHistoryPaneCounts[gamePane] = orderSummary.Count
+		gameHistoryPaneCounts[game_history_pane.GamesPaneAll] += orderSummary.Count
+	}
+
+	for gamePane, count := range gameHistoryPaneCounts {
+		if gamePane != game_history_pane.GamesPaneAll {
+			gameHistoryPaneCounts[game_history_pane.GamesPaneAll] += count
+		}
 	}
 
 	data := serializer.BuildUserCounters(c, counters, gameHistoryPaneCounts)
