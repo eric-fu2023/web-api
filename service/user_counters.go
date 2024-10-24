@@ -91,6 +91,7 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 		if err != nil {
 			pCtx = rfcontext.AppendErrorAsWarn(pCtx, fmt.Errorf("%v", gamePane), "getting column name for game pane")
 			log.Printf(rfcontext.Fmt(pCtx))
+			continue
 		}
 
 		gameVendorIds, err := game_history_pane.GetGameVendorIdsByPaneType(gamePane)
