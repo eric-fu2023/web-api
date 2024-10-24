@@ -9,19 +9,21 @@ import (
 )
 
 type Spin struct {
-	ID              int64      `json:"id"`
-	Name            string     `json:"name"`
-	Description     string     `json:"description"`
-	Button          string     `json:"button"`
-	Counts          int        `json:"counts"`
-	RemainingCounts int        `json:"remaining_counts"`
-	PromotionId     int64      `json:"promotion_id"`
-	BackgroundUrl   string     `json:"background_url"`
-	PointerUrl      string     `json:"pointer_url"`
-	ButtonStart     string     `json:"button_start"`
-	ButtonEnd       string     `json:"button_end"`
-	ButtonText      string     `json:"button_text"`
-	SpinItems       []SpinItem `json:"items"`
+	ID                int64      `json:"id"`
+	Name              string     `json:"name"`
+	Description       string     `json:"description"`
+	Button            string     `json:"button"`
+	Counts            int        `json:"counts"`
+	RemainingCounts   int        `json:"remaining_counts"`
+	PromotionId       int64      `json:"promotion_id"`
+	BackgroundUrl     string     `json:"background_url"`
+	PointerUrl        string     `json:"pointer_url"`
+	ButtonStart       string     `json:"button_start"`
+	ButtonEnd         string     `json:"button_end"`
+	ButtonText        string     `json:"button_text"`
+	ButtonTextColor   string     `json:"button_text_color"`
+	SpinBackgroundUrl string     `json:"spin_background_url"`
+	SpinItems         []SpinItem `json:"items"`
 }
 type SpinItem struct {
 	ID        int64  `json:"id"`
@@ -61,28 +63,30 @@ func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_co
 	button_end := ""
 	if len(spin.ButtonStart) > 0 && spin.ButtonStart[0] == '#' {
 		button_start = spin.ButtonStart[1:]
-	}else{
+	} else {
 		button_start = spin.ButtonStart
 	}
 	if len(spin.ButtonEnd) > 0 && spin.ButtonEnd[0] == '#' {
 		button_end = spin.ButtonEnd[1:]
-	}else{
+	} else {
 		button_end = spin.ButtonEnd
 	}
 	spin_resp = Spin{
-		ID:              spin.ID,
-		Name:            spin.Name,
-		Description:     spin.Description,
-		Button:          spin.Button,
-		Counts:          spin.Counts,
-		RemainingCounts: max(spin.Counts-spin_result_counts, 0),
-		PromotionId:     spin.PromotionId,
-		BackgroundUrl:    Url(spin.BackgroundUrl),
-		PointerUrl:       Url(spin.PointerUrl),
-		ButtonStart:      button_start,
-		ButtonEnd:        button_end,
-		ButtonText:       spin.ButtonText,
-		SpinItems:       spin_items_resp,
+		ID:                spin.ID,
+		Name:              spin.Name,
+		Description:       spin.Description,
+		Button:            spin.Button,
+		Counts:            spin.Counts,
+		RemainingCounts:   max(spin.Counts-spin_result_counts, 0),
+		PromotionId:       spin.PromotionId,
+		BackgroundUrl:     Url(spin.BackgroundUrl),
+		PointerUrl:        Url(spin.PointerUrl),
+		ButtonStart:       button_start,
+		ButtonEnd:         button_end,
+		ButtonText:        spin.ButtonText,
+		ButtonTextColor:   spin.ButtonTextColor,
+		SpinBackgroundUrl: spin.SpinBackgroundUrl,
+		SpinItems:         spin_items_resp,
 	}
 
 	if len(isHardcodeResultCount) > 0 && isHardcodeResultCount[0] {
