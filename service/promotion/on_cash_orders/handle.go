@@ -6,6 +6,8 @@ import (
 
 	"web-api/model"
 
+	"web-api/service/promotion/cash_method_promotion"
+
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
@@ -69,7 +71,7 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 	{
 		shouldHandleCashMethodPromotion := false
 		switch {
-		case ploutos.TransactionTypeCashIn == transactionType:
+		case order.OrderType == ploutos.CashOrderTypeCashIn && (order.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || order.OperationType == 0):
 			shouldHandleCashMethodPromotion = true
 		}
 
@@ -80,7 +82,7 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 		// log.Printf(rfcontext.Fmt(ctx))
 
 		if shouldHandleCashMethodPromotion {
-			// go cash_method_promotion.ValidateAndClaim(ctx, order)
+			go cash_method_promotion.ValidateAndClaim(ctx, order)
 		}
 	}
 

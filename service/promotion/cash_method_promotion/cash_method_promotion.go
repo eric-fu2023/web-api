@@ -7,8 +7,9 @@ import (
 	"web-api/model"
 	"web-api/util"
 
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"errors"
 
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"gorm.io/gorm"
 )
 
@@ -28,8 +29,10 @@ func PromoByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Ti
 		Where("status = ?", 1)
 
 	// temporary guard for dev work, once stable can pass arg by value.
-	if cashInAmount == nil {
+	if cashInAmount != nil {
 		tx = tx.Where("? > floor_cash_in_amount", cashInAmount).Order("floor_cash_in_amount desc")
+	}else{
+		return cashMethodPromotion, errors.New("cashInAmount required")
 	}
 
 	err = tx.First(&cashMethodPromotion).Error

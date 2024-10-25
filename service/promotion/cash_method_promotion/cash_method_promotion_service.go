@@ -73,11 +73,11 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 	})
 
 	if err != nil {
-		util.GetLoggerEntry(ctx).Error("ValidateAndClaim Find ValidateAndClaim", err, orderId)
+		util.GetLoggerEntry(ctx).Error("ValidateAndClaim Find Cash Method promotion", err, orderId)
 		return
 	}
 	if cashMethodPromotionId == 0 {
-		util.GetLoggerEntry(ctx).Error("ValidateAndClaim no ValidateAndClaim", orderId)
+		util.GetLoggerEntry(ctx).Error("ValidateAndClaim no Cash Method promotion", orderId)
 		return
 	}
 
