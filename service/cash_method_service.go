@@ -1,6 +1,11 @@
 package service
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+
 	"web-api/conf"
 	"web-api/model"
 	"web-api/serializer"
@@ -8,7 +13,9 @@ import (
 	"web-api/util"
 	"web-api/util/i18n"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,6 +38,16 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		return r, err
 	}
 
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "CasheMethodListService.List")
+
+	{
+		ctx = rfcontext.AppendParams(ctx, "CasheMethodListService.List", map[string]interface{}{
+			"brand":     brand,
+			"withdraw?": s.WithdrawOnly,
+			"deposit?":  s.TopupOnly,
+			"vip_id":    vip.VipID,
+		})
+	}
 	var cashMethods []model.CashMethod
 	cashMethods, err = model.CashMethod{}.List(c, s.WithdrawOnly, s.TopupOnly, deviceInfo.Platform, brand, int(vip.VipRule.ID), user)
 	if err != nil {
@@ -87,5 +104,10 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 				return cm
 			}))
 	}
+
+	responseB, _ := json.Marshal(r)
+	ctx = rfcontext.AppendDescription(ctx, fmt.Sprintf("response %s", string(responseB)))
+
+	go log.Println(rfcontext.Fmt(ctx))
 	return r, nil
 }
