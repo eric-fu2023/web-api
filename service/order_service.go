@@ -21,11 +21,11 @@ type CheckOrderService struct {
 }
 
 type OrderListService struct {
-	PaneType  int64  `form:"type" json:"type" binding:"required"`
-	IsParlay  bool   `form:"is_parlay" json:"is_parlay"`
-	IsSettled *bool  `form:"is_settled" json:"is_settled"`
-	Start     string `form:"start" json:"start" binding:"required"`
-	End       string `form:"end" json:"end" binding:"required"`
+	PaneType  game_history_pane.GamesHistoryPaneType `form:"type" json:"type" binding:"required"`
+	IsParlay  bool                                   `form:"is_parlay" json:"is_parlay"`
+	IsSettled *bool                                  `form:"is_settled" json:"is_settled"`
+	Start     string                                 `form:"start" json:"start" binding:"required"`
+	End       string                                 `form:"end" json:"end" binding:"required"`
 	common.Page
 }
 
@@ -114,17 +114,23 @@ func (service *OrderListService) List(c *gin.Context) serializer.Response {
 		return serializer.DBErr(c, service, i18n.T("general_error"), err)
 	}
 
-	go func() {
+	go func() { // debug: remove once stable
 		ocerr := game_history_pane.ResetUserCounter_OrderCount(user.ID)
 		if ocerr == nil { // debug
-			rfCtx = rfcontext.AppendDescription(rfCtx, "OrderHistory_GamePane_LastSeen ok")
+			rfCtx := rfcontext.AppendDescription(rfCtx, "ResetUserCounter_OrderCount ok")
+			log.Println(rfcontext.Fmt(rfCtx))
+		} else {
+			rfCtx := rfcontext.AppendError(rfCtx, ocerr, "ResetUserCounter_OrderCount")
 			log.Println(rfcontext.Fmt(rfCtx))
 		}
 	}()
-	go func() {
+	go func() { // debug: remove once stable
 		oherr := game_history_pane.AdvanceUserCounter_OrderHistory_GamePane_LastSeen(user.ID, service.PaneType, time.Now())
 		if oherr == nil { // debug
-			rfCtx = rfcontext.AppendDescription(rfCtx, "OrderHistory_GamePane_LastSeen ok")
+			rfCtx := rfcontext.AppendDescription(rfCtx, "OrderHistory_GamePane_LastSeen ok")
+			log.Println(rfcontext.Fmt(rfCtx))
+		} else {
+			rfCtx := rfcontext.AppendError(rfCtx, oherr, "OrderHistory_GamePane_LastSeen")
 			log.Println(rfcontext.Fmt(rfCtx))
 		}
 	}()
