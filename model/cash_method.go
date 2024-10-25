@@ -43,7 +43,7 @@ func (CashMethod) List(c context.Context, withdrawOnly, topupOnly bool, platform
 	}
 
 	now := time.Now().UTC()
-	q = q.Joins("CashMethodPromotion", DB.Where("\"CashMethodPromotion\".start_at < ? and \"CashMethodPromotion\".end_at > ?", now, now).Where("\"CashMethodPromotion\".status = ?", 1).Where("\"CashMethodPromotion\".vip_id = ?", vipId))
+	q = q.Joins("CashMethodPromotion", DB.Where("\"CashMethodPromotion\".start_at < ? and \"CashMethodPromotion\".end_at > ?", now, now).Where("\"CashMethodPromotion\".status = ?", 1).Where("\"CashMethodPromotion\".vip_id = ?", vipId).Order("floor_cash_in_amount desc").Limit(1))
 
 	err := q.Order("sort desc").Find(&cashMethods).Error
 	if err != nil {
