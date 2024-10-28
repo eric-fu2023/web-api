@@ -5,15 +5,21 @@ import (
 	"web-api/util"
 )
 
-type DefaultCashMethodPromotionOptions struct {
-	Amount float64 `json:"amount"`
+type DefaultCashMethodPromotionSelection struct {
+	SelectionAmount     float64 `json:"selection_amount"`
+	Label               string  `json:"label"`
+	Icon                string  `json:"icon"`
+	BonusRate           float64 `json:"bonus_rate"`
+	BonusAmount         float64 `json:"bonus_amount"`
+	NeedCustomerSupport bool    `json:"need_customer_support"`
 }
 
 type CashMethodPromotion struct {
-	PayoutRate                    float64                             `json:"payout_rate"`
-	MaxPromotionAmount            float64                             `json:"max_promotion_amount"`
-	MinAmountForPayout            float64                             `json:"min_payout"`
-	DefaultOptionPromotionAmounts []DefaultCashMethodPromotionOptions `json:"default_option_promotion_amounts"`
+	PayoutRate         float64 `json:"payout_rate"`
+	MaxPromotionAmount float64 `json:"max_promotion_amount"`
+	MinAmountForPayout float64 `json:"min_payout"`
+
+	DefaultCashMethodPromotionSelections []DefaultCashMethodPromotionSelection `json:"cash_method_promotion_selections"`
 }
 
 type CashMethod struct {
@@ -62,10 +68,10 @@ func BuildCashMethod(a model.CashMethod, maxClaimableByCashMethodId MaxPromotion
 
 	if a.CashMethodPromotion != nil {
 		cashMethod.CashMethodPromotion = &CashMethodPromotion{
-			PayoutRate:                    a.CashMethodPromotion.PayoutRate,
-			MaxPromotionAmount:            float64(maxClaimableByCashMethodId[a.ID]) / 100,
-			DefaultOptionPromotionAmounts: nil,
-			MinAmountForPayout:            float64(a.CashMethodPromotion.MinPayout) / 100,
+			PayoutRate:                           a.CashMethodPromotion.PayoutRate,
+			MaxPromotionAmount:                   float64(maxClaimableByCashMethodId[a.ID]) / 100,
+			DefaultCashMethodPromotionSelections: nil,
+			MinAmountForPayout:                   float64(a.CashMethodPromotion.MinPayout) / 100,
 		}
 	}
 
@@ -98,7 +104,7 @@ func BuildCashMethod2(cm model.CashMethod) CashMethod {
 	return cashMethod
 }
 
-func BuildCashMethodWithPromotion(_cm model.CashMethod, cashMethodPromotion *CashMethodPromotion) CashMethod {
+func BuildCashMethodWithCashMethodPromotion(_cm model.CashMethod, cashMethodPromotion *CashMethodPromotion) CashMethod {
 	methodType := "top-up"
 	if _cm.MethodType < 0 {
 		methodType = "withdraw"

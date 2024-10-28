@@ -35,6 +35,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		r := serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return r, err
 	}
+	vipRecordVipRuleId := vip.VipRule.ID
 
 	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "CasheMethodListService.List")
 
@@ -54,7 +55,6 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 	}
 
 	claimedPast7DaysL, claimedPast1DayL, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1DaysM(c, user.ID)
-
 	cashMethodsR := make([]serializer.CashMethod, 0, len(cashMethods))
 	for _, cm := range cashMethods {
 		cCtx := rfcontext.AppendParams(ctx, "moulding ", map[string]interface{}{
@@ -69,28 +69,55 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 			"claimedPast1Day":  claimedPast7Days,
 		})
 
-		maxClaimable, err := cash_method_promotion.FinalPossiblePayout(c, claimedPast7Days.Amount, claimedPast1Day.Amount, *cm.CashMethodPromotion, 0, true)
-		if err != nil {
-			cCtx = rfcontext.AppendError(cCtx, err, "FinalPossiblePayout")
-			log.Println(rfcontext.Fmt(cCtx))
-		}
-
 		var cashMethodPromotion *serializer.CashMethodPromotion
+
 		if !cm.HasCashMethodPromotion() {
-			payoutRate := cm.CashMethodPromotion.PayoutRate
+			{ // for each option, individual query to get respective cashMethodPromotionOfSelection
+				cashMethodDefaultOptions := cm.DefaultOptions
 
-			floorApplicable := float64(cm.CashMethodPromotion.MinPayout) / 100
+				var _floorApplicable, _payoutRate, _maxClaimable float64
 
-			cashMethodPromotion = &serializer.CashMethodPromotion{
-				PayoutRate:                    payoutRate,
-				MaxPromotionAmount:            float64(maxClaimable) / 100,
-				MinAmountForPayout:            floorApplicable,
-				DefaultOptionPromotionAmounts: nil,
+				selections := make([]serializer.DefaultCashMethodPromotionSelection, 0, len(cashMethodDefaultOptions))
+				for _, _selectionAmount := range cashMethodDefaultOptions {
+					sCtx := rfcontext.Nonce(cCtx)
+					selectionAmount := int64(_selectionAmount) // overcast
+					cashMethodPromotionOfSelection, sErr := cash_method_promotion.ByCashMethodIdAndVipId(nil, cm.ID, vipRecordVipRuleId, nil, &selectionAmount)
+					if sErr != nil {
+						sCtx = rfcontext.AppendParams(sCtx, "cashMethodDefaultOption", map[string]interface{}{
+							"selection_amount": selectionAmount,
+						})
+						sCtx = rfcontext.AppendError(sCtx, sErr, "ByCashMethodIdAndVipId")
+					}
+
+					// QQ: extra百分比和“+XX“不會變 因为这个是display给全部人知道这个支付渠道有这个活动的 user达到了上限是那个user的问题 ，所以不会变
+					_claimable, clErr := cash_method_promotion.FinalPossiblePayout(c, 0, 0, cashMethodPromotionOfSelection, selectionAmount, true)
+					if clErr != nil {
+						cCtx = rfcontext.AppendError(cCtx, clErr, "FinalPossiblePayout")
+						log.Println(rfcontext.Fmt(cCtx))
+					}
+
+					label := fmt.Sprintf("%#v", selectionAmount)
+					_maxClaimable = max(_maxClaimable, float64(_claimable))
+					selections = append(selections, serializer.DefaultCashMethodPromotionSelection{
+						SelectionAmount:     float64(selectionAmount) / 100,
+						Label:               label,
+						Icon:                "",
+						BonusRate:           cashMethodPromotionOfSelection.PayoutRate,
+						BonusAmount:         float64(_claimable) / 100,
+						NeedCustomerSupport: false,
+					})
+				}
+
+				cashMethodPromotion = &serializer.CashMethodPromotion{
+					PayoutRate:                           _payoutRate,
+					MaxPromotionAmount:                   float64(_maxClaimable) / 100,
+					MinAmountForPayout:                   _floorApplicable,
+					DefaultCashMethodPromotionSelections: selections,
+				}
 			}
+			cashMethodR := serializer.BuildCashMethodWithCashMethodPromotion(cm, cashMethodPromotion)
+			cashMethodsR = append(cashMethodsR, cashMethodR)
 		}
-
-		cashMethodR := serializer.BuildCashMethodWithPromotion(cm, cashMethodPromotion)
-		cashMethodsR = append(cashMethodsR, cashMethodR)
 	}
 
 	var r serializer.Response
@@ -108,7 +135,6 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 
 	responseB, _ := json.Marshal(r)
 	ctx = rfcontext.AppendDescription(ctx, fmt.Sprintf("response %s", string(responseB)))
-
 	go log.Println(rfcontext.Fmt(ctx))
 	return r, nil
 }

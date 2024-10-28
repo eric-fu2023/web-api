@@ -13,14 +13,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func PromoByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Time, cashInAmount *int64, tx *gorm.DB) (cashMethodPromotion ploutos.CashMethodPromotion, err error) {
+func ByCashMethodIdAndVipId(tx *gorm.DB, cashMethodId, vipId int64, promotionAt *time.Time, cashInAmount *int64) (cashMethodPromotion ploutos.CashMethodPromotion, err error) {
+	if tx == nil {
+		tx = model.DB
+	}
+
 	if promotionAt == nil {
 		now := time.Now().UTC()
 		promotionAt = &now
-	}
-
-	if tx == nil {
-		tx = model.DB
 	}
 
 	tx = tx.Debug().
@@ -36,9 +36,6 @@ func PromoByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Ti
 	}
 
 	err = tx.First(&cashMethodPromotion).Error
-	if err != nil {
-		return
-	}
 	return
 }
 

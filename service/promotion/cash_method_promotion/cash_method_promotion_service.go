@@ -66,7 +66,7 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 	log.Printf(rfcontext.Fmt(ctx))
 
 	// check cash method and vip combination has promotion or not
-	cashMethodPromotion, err := PromoByCashMethodIdAndVipId(orderCashMethodId, vipRecordVipRuleId, &cashedInOrder.CreatedAt, &cashedInOrder.AppliedCashInAmount, model.DB)
+	cashMethodPromotion, err := ByCashMethodIdAndVipId(model.DB, orderCashMethodId, vipRecordVipRuleId, &cashedInOrder.CreatedAt, &cashedInOrder.AppliedCashInAmount)
 	cashMethodPromotionId := cashMethodPromotion.ID
 	ctx = rfcontext.AppendParams(ctx, callDesc, map[string]any{
 		"cashMethodPromotionId": cashMethodPromotionId,
