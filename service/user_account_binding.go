@@ -57,7 +57,7 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 			return b.CashMethodId == a.CashMethod.ID
 		}).Amount
 
-		maxAmount, err := cash_method_promotion.FinalPayout(c, weeklyAmount, dailyAmount, *a.CashMethod.CashMethodPromotion, 0, true)
+		maxAmount, err := cash_method_promotion.FinalPossiblePayout(c, weeklyAmount, dailyAmount, *a.CashMethod.CashMethodPromotion, 0, true)
 		if err != nil {
 			util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetMaxAmountPayment", err)
 		}

@@ -5,11 +5,15 @@ import (
 	"web-api/util"
 )
 
+type DefaultCashMethodPromotionOptions struct {
+	Amount float64 `json:"amount"`
+}
+
 type CashMethodPromotion struct {
-	PayoutRate                    float64   `json:"payout_rate"`
-	MaxPromotionAmount            float64   `json:"max_promotion_amount"`
-	DefaultOptionPromotionAmounts []float64 `json:"default_option_promotion_amounts"`
-	MinAmountForPayout            float64   `json:"min_payout"`
+	PayoutRate                    float64                             `json:"payout_rate"`
+	MaxPromotionAmount            float64                             `json:"max_promotion_amount"`
+	MinAmountForPayout            float64                             `json:"min_payout"`
+	DefaultOptionPromotionAmounts []DefaultCashMethodPromotionOptions `json:"default_option_promotion_amounts"`
 }
 
 type CashMethod struct {
@@ -32,7 +36,9 @@ type CashMethod struct {
 type PromotionAmountByCashMethodId = map[int64]int64
 type MaxPromotionAmountByCashMethodId = PromotionAmountByCashMethodId
 
-func BuildCashMethod(a model.CashMethod, maxPromotionAmountByCashMethodId MaxPromotionAmountByCashMethodId) CashMethod {
+// BuildCashMethod
+// Deprecated. refer and use [BuildCashMethodWithPromotion]/[BuildCashMethod2]
+func BuildCashMethod(a model.CashMethod, maxClaimableByCashMethodId MaxPromotionAmountByCashMethodId) CashMethod {
 	methodType := "top-up"
 	if a.MethodType < 0 {
 		methodType = "withdraw"
@@ -56,19 +62,65 @@ func BuildCashMethod(a model.CashMethod, maxPromotionAmountByCashMethodId MaxPro
 
 	if a.CashMethodPromotion != nil {
 		cashMethod.CashMethodPromotion = &CashMethodPromotion{
-			PayoutRate:         a.CashMethodPromotion.PayoutRate,
-			MaxPromotionAmount: float64(maxPromotionAmountByCashMethodId[a.ID]) / 100,
-			DefaultOptionPromotionAmounts: util.MapSlice(a.DefaultOptions, func(defaultOption int32) (amount float64) {
-				amount = float64(defaultOption) * a.CashMethodPromotion.PayoutRate
-				maxAmount, exist := maxPromotionAmountByCashMethodId[a.ID]
-				if exist && amount > float64(maxAmount) {
-					amount = float64(maxAmount)
-				}
-				return amount / 100
-			}),
-			MinAmountForPayout: float64(a.CashMethodPromotion.MinPayout) / 100,
+			PayoutRate:                    a.CashMethodPromotion.PayoutRate,
+			MaxPromotionAmount:            float64(maxClaimableByCashMethodId[a.ID]) / 100,
+			DefaultOptionPromotionAmounts: nil,
+			MinAmountForPayout:            float64(a.CashMethodPromotion.MinPayout) / 100,
 		}
 	}
 
+	return cashMethod
+}
+
+func BuildCashMethod2(cm model.CashMethod) CashMethod {
+	methodType := "top-up"
+	if cm.MethodType < 0 {
+		methodType = "withdraw"
+	}
+
+	cashMethod := CashMethod{
+		ID:          cm.ID,
+		Name:        cm.Name,
+		IconURL:     Url(cm.IconURL),
+		MethodType:  methodType,
+		BaseURL:     cm.BaseURL,
+		CallbackURL: cm.CallbackURL,
+		AccountType: cm.AccountType,
+		MinAmount:   cm.MinAmount / 100,
+		MaxAmount:   cm.MaxAmount / 100,
+		DefaultOptions: util.MapSlice(cm.DefaultOptions, func(option int32) int {
+			return int(option) / 100
+		}),
+		Currency:            cm.Currency,
+		AccountNameRequired: cm.AccountType == "bank_card",
+	}
+
+	return cashMethod
+}
+
+func BuildCashMethodWithPromotion(_cm model.CashMethod, cashMethodPromotion *CashMethodPromotion) CashMethod {
+	methodType := "top-up"
+	if _cm.MethodType < 0 {
+		methodType = "withdraw"
+	}
+
+	cashMethod := CashMethod{
+		ID:          _cm.ID,
+		Name:        _cm.Name,
+		IconURL:     Url(_cm.IconURL),
+		MethodType:  methodType,
+		BaseURL:     _cm.BaseURL,
+		CallbackURL: _cm.CallbackURL,
+		AccountType: _cm.AccountType,
+		MinAmount:   _cm.MinAmount / 100,
+		MaxAmount:   _cm.MaxAmount / 100,
+		DefaultOptions: util.MapSlice(_cm.DefaultOptions, func(option int32) int {
+			return int(option) / 100
+		}),
+		Currency:            _cm.Currency,
+		AccountNameRequired: _cm.AccountType == "bank_card",
+	}
+
+	cashMethod.CashMethodPromotion = cashMethodPromotion
 	return cashMethod
 }

@@ -42,15 +42,15 @@ func PromoByCashMethodIdAndVipId(cashMethodId, vipId int64, promotionAt *time.Ti
 	return
 }
 
-// FinalPayout
+// FinalPossiblePayout
 // dryRun == calculate ceiling for the payout
-func FinalPayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount int64, dryRun bool) (amount int64, err error) {
+func FinalPossiblePayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount int64, dryRun bool) (amount int64, err error) {
 	if claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout {
-		util.GetLoggerEntry(c).Info("FinalPayout claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout", claimedPast7Days, cashMethodPromotion.WeeklyMaxPayout)
+		util.GetLoggerEntry(c).Info("FinalPossiblePayout claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout", claimedPast7Days, cashMethodPromotion.WeeklyMaxPayout)
 		return
 	}
 	if claimedPast1Day >= cashMethodPromotion.DailyMaxPayout {
-		util.GetLoggerEntry(c).Info("FinalPayout claimedPast1Day >= cashMethodPromotion.DailyMaxPayout", claimedPast1Day, cashMethodPromotion.DailyMaxPayout)
+		util.GetLoggerEntry(c).Info("FinalPossiblePayout claimedPast1Day >= cashMethodPromotion.DailyMaxPayout", claimedPast1Day, cashMethodPromotion.DailyMaxPayout)
 		return
 	}
 

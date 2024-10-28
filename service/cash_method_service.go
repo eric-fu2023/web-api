@@ -43,6 +43,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 			"brand":     brand,
 			"withdraw?": s.WithdrawOnly,
 			"deposit?":  s.TopupOnly,
+			"user":      user.ID,
 			"vip_id":    vip.VipID,
 		})
 	}
@@ -53,42 +54,56 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 	}
 
 	claimedPast7DaysL, claimedPast1DayL, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1DaysM(c, user.ID)
-	maxClaimableByCashMethodId := map[ /*cash_method.id*/ int64] /*max amount*/ int64{}
 
+	cashMethodsR := make([]serializer.CashMethod, 0, len(cashMethods))
 	for _, cm := range cashMethods {
-		if !cm.HasCashMethodPromotion() {
-			continue
-		}
+		cCtx := rfcontext.AppendParams(ctx, "moulding ", map[string]interface{}{
+			"cash_method_id": cm.ID,
+		})
 		cashMethodId := cm.ID
 
 		claimedPast7Days, _ := claimedPast7DaysL[cashMethodId]
 		claimedPast1Day, _ := claimedPast1DayL[cashMethodId]
+		cCtx = rfcontext.AppendParams(ctx, "moulding ", map[string]interface{}{
+			"claimedPast7Days": claimedPast1Day,
+			"claimedPast1Day":  claimedPast7Days,
+		})
 
-		maxAmount, err := cash_method_promotion.FinalPayout(c, claimedPast7Days.Amount, claimedPast1Day.Amount, *cm.CashMethodPromotion, 0, true)
+		maxClaimable, err := cash_method_promotion.FinalPossiblePayout(c, claimedPast7Days.Amount, claimedPast1Day.Amount, *cm.CashMethodPromotion, 0, true)
 		if err != nil {
-			util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetMaxAmountPayment", err)
+			cCtx = rfcontext.AppendError(cCtx, err, "FinalPossiblePayout")
+			log.Println(rfcontext.Fmt(cCtx))
 		}
-		maxClaimableByCashMethodId[cm.ID] = maxAmount
 
+		var cashMethodPromotion *serializer.CashMethodPromotion
+		if !cm.HasCashMethodPromotion() {
+			payoutRate := cm.CashMethodPromotion.PayoutRate
+
+			floorApplicable := float64(cm.CashMethodPromotion.MinPayout) / 100
+
+			cashMethodPromotion = &serializer.CashMethodPromotion{
+				PayoutRate:                    payoutRate,
+				MaxPromotionAmount:            float64(maxClaimable) / 100,
+				MinAmountForPayout:            floorApplicable,
+				DefaultOptionPromotionAmounts: nil,
+			}
+		}
+
+		cashMethodR := serializer.BuildCashMethodWithPromotion(cm, cashMethodPromotion)
+		cashMethodsR = append(cashMethodsR, cashMethodR)
 	}
 
 	var r serializer.Response
 	if s.TopupOnly {
-		r.Data = util.MapSlice(cashMethods, func(a model.CashMethod) serializer.CashMethod {
-			return serializer.BuildCashMethod(a, maxClaimableByCashMethodId)
-		})
+		r.Data = cashMethodsR
 	} else {
-		r.Data = util.MapSlice(cashMethods, serializer.Modifier(
-			func(a model.CashMethod) serializer.CashMethod {
-				return serializer.BuildCashMethod(a, maxClaimableByCashMethodId)
-			},
-			func(cm serializer.CashMethod) serializer.CashMethod {
-				firstTopup, err := model.FirstTopup(c, user.ID)
-				if err != nil || len(firstTopup.ID) == 0 {
-					cm.MinAmount = max(conf.GetCfg().WithdrawMinNoDeposit/100, cm.MinAmount)
-				}
-				return cm
-			}))
+		r.Data = util.MapSlice(cashMethodsR, func(cm serializer.CashMethod) serializer.CashMethod {
+			firstTopup, err := model.FirstTopup(c, user.ID)
+			if err != nil || len(firstTopup.ID) == 0 {
+				cm.MinAmount = max(conf.GetCfg().WithdrawMinNoDeposit/100, cm.MinAmount)
+			}
+			return cm
+		})
 	}
 
 	responseB, _ := json.Marshal(r)
