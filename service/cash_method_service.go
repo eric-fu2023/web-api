@@ -127,7 +127,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 				log.Println(rfcontext.Fmt(cCtx))
 			}
 			cashMethodPromotion = &serializer.CashMethodPromotion{
-				PayoutRate:                        _maxPayoutRate / 100,
+				PayoutRate:                        _maxPayoutRate,
 				MaxPromotionAmount:                float64(_maxClaimable) / 100,
 				MinAmountForPayout:                _minFloor / 100, // fixme get the floor of the leftmost cash method promotion applicable range
 				DefaultCashMethodPromotionOptions: selections,
