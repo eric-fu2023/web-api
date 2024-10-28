@@ -5,7 +5,7 @@ import (
 	"web-api/util"
 )
 
-type DefaultCashMethodPromotionSelection struct {
+type DefaultCashMethodPromotionOption struct {
 	SelectionAmount     float64 `json:"selection_amount"`
 	Label               string  `json:"label"`
 	Icon                string  `json:"icon"`
@@ -19,7 +19,7 @@ type CashMethodPromotion struct {
 	MaxPromotionAmount float64 `json:"max_promotion_amount"`
 	MinAmountForPayout float64 `json:"min_payout"`
 
-	DefaultCashMethodPromotionSelections []DefaultCashMethodPromotionSelection `json:"cash_method_promotion_selections"`
+	DefaultCashMethodPromotionOptions []DefaultCashMethodPromotionOption `json:"cash_method_promotion_options"`
 }
 
 type CashMethod struct {
@@ -68,10 +68,10 @@ func BuildCashMethod(a model.CashMethod, maxClaimableByCashMethodId MaxPromotion
 
 	if a.CashMethodPromotion != nil {
 		cashMethod.CashMethodPromotion = &CashMethodPromotion{
-			PayoutRate:                           a.CashMethodPromotion.PayoutRate,
-			MaxPromotionAmount:                   float64(maxClaimableByCashMethodId[a.ID]) / 100,
-			DefaultCashMethodPromotionSelections: nil,
-			MinAmountForPayout:                   float64(a.CashMethodPromotion.MinPayout) / 100,
+			PayoutRate:                        a.CashMethodPromotion.PayoutRate,
+			MaxPromotionAmount:                float64(maxClaimableByCashMethodId[a.ID]) / 100,
+			DefaultCashMethodPromotionOptions: nil,
+			MinAmountForPayout:                float64(a.CashMethodPromotion.MinPayout) / 100,
 		}
 	}
 

@@ -79,7 +79,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 			cashMethodDefaultOptions := cm.DefaultOptions
 			var _floorApplicable, _payoutRate, _maxClaimable float64
 
-			selections := make([]serializer.DefaultCashMethodPromotionSelection, 0, len(cashMethodDefaultOptions))
+			selections := make([]serializer.DefaultCashMethodPromotionOption, 0, len(cashMethodDefaultOptions))
 			for _, _selectionAmount := range cashMethodDefaultOptions {
 				sCtx := rfcontext.Nonce(cCtx)
 				selectionAmount := int64(_selectionAmount) // overcast
@@ -94,13 +94,13 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 				// QQ: extra百分比和“+XX“不會變 因为这个是display给全部人知道这个支付渠道有这个活动的 user达到了上限是那个user的问题 ，所以不会变
 				_claimable, clErr := cash_method_promotion.FinalPossiblePayout(c, 0, 0, cashMethodPromotionOfSelection, selectionAmount, true)
 				if clErr != nil {
-					cCtx = rfcontext.AppendError(cCtx, clErr, "FinalPossiblePayout")
-					log.Println(rfcontext.Fmt(cCtx))
+					sCtx = rfcontext.AppendError(sCtx, clErr, "FinalPossiblePayout")
+					log.Println(rfcontext.Fmt(sCtx))
 				}
 
 				label := fmt.Sprintf("%#v", selectionAmount)
 				_maxClaimable = max(_maxClaimable, float64(_claimable))
-				selections = append(selections, serializer.DefaultCashMethodPromotionSelection{
+				selections = append(selections, serializer.DefaultCashMethodPromotionOption{
 					SelectionAmount:     float64(selectionAmount) / 100,
 					Label:               label,
 					Icon:                "",
@@ -111,10 +111,10 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 			}
 
 			cashMethodPromotion = &serializer.CashMethodPromotion{
-				PayoutRate:                           _payoutRate,
-				MaxPromotionAmount:                   float64(_maxClaimable) / 100,
-				MinAmountForPayout:                   _floorApplicable,
-				DefaultCashMethodPromotionSelections: selections,
+				PayoutRate:                        _payoutRate,
+				MaxPromotionAmount:                float64(_maxClaimable) / 100,
+				MinAmountForPayout:                _floorApplicable,
+				DefaultCashMethodPromotionOptions: selections,
 			}
 		}
 
