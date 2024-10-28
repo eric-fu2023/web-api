@@ -18,6 +18,10 @@ type CashMethod struct {
 	CashMethodPromotion *ploutos.CashMethodPromotion `json:"cash_method_promotion,omitempty" form:"-" gorm:"foreignKey:CashMethodId;references:ID"`
 }
 
+func (c CashMethod) HasCashMethodPromotion() bool {
+	return c.CashMethodPromotion != nil
+}
+
 func (CashMethod) GetByID(c *gin.Context, id int64, brandID int) (item CashMethod, err error) {
 	err = DB.Where("brand_id = ? or brand_id = 0", brandID).Where("id", id).First(&item, id).Error
 	return
@@ -28,7 +32,8 @@ func (CashMethod) GetByIDWithChannel(c *gin.Context, id int64) (item CashMethod,
 	return
 }
 
-func (CashMethod) List(c context.Context, withdrawOnly, topupOnly bool, platform string, brandId, vipId int, user User) ([]CashMethod, error) {
+// CashMethodWithPromotions
+func CashMethodWithPromotions(c context.Context, withdrawOnly, topupOnly bool, platform string, brandId, vipId int, user User) ([]CashMethod, error) {
 	var cashMethods []CashMethod
 	q := DB.Debug().Preload("CashMethodChannels", "is_active").Where("is_active").Where("brand_id = ? or brand_id = 0", brandId)
 	if withdrawOnly {

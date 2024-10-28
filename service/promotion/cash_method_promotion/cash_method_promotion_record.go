@@ -23,9 +23,25 @@ func PromotionRecordByCashOrderId(cashOrderId string, tx *gorm.DB) (cashMethodPr
 	return
 }
 
+type _ = ploutos.CashMethodPromotionRecord
+type CashMethodPromotionRecordStats struct {
+	ploutos.BASE
+	CashMethodPromotionId int64 `json:"cash_method_promotion_id" form:"cash_method_promotion_id" gorm:"column:cash_method_promotion_id;comment:;size:64;"`
+	CashMethodId          int64 `json:"cash_method_id" form:"cash_method_id" gorm:"column:cash_method_id;comment:;size:64;"`
+	VipId                 int64 `json:"vip_id" form:"vip_id" gorm:"column:vip_id;comment:;size:64;"`
+
+	UserId     int64   `json:"user_id" form:"user_id" gorm:"column:user_id;comment:;size:64;"`
+	PayoutRate float64 `json:"payout_rate" form:"payout_rate" gorm:"column:payout_rate;comment:;"`
+	Amount     int64   `json:"amount" form:"amount" gorm:"column:amount;comment:;size:64;"`
+}
+
+func (CashMethodPromotionRecordStats) TableName() string {
+	return ploutos.TableNameCashMethodPromotionRecord
+}
+
 // TotalClaimedByUserInPeriod
 // FIXME this query returns a single aggregate tuple, not CashMethodPromotionRecord(s).
-func TotalClaimedByUserInPeriod(cashMethodId, userId int64, startAt, endAt time.Time, tx *gorm.DB) (cashMethodPromotionRecords []ploutos.CashMethodPromotionRecord, err error) {
+func TotalClaimedByUserInPeriod(cashMethodId *int64, userId int64, startAt, endAt time.Time, tx *gorm.DB) (cashMethodPromotionRecords []CashMethodPromotionRecordStats, err error) {
 	if tx == nil {
 		tx = model.DB
 	}
@@ -42,7 +58,7 @@ func TotalClaimedByUserInPeriod(cashMethodId, userId int64, startAt, endAt time.
 		tx = tx.Where("created_at < ?", endAt)
 	}
 
-	if cashMethodId != 0 {
+	if cashMethodId != nil {
 		tx = tx.Where("cash_method_id", cashMethodId)
 	}
 	if userId != 0 {
@@ -57,7 +73,7 @@ func TotalClaimedByUserInPeriod(cashMethodId, userId int64, startAt, endAt time.
 	return
 }
 
-func GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c context.Context, cashMethodId, userId int64) (weeklyAmountRecords []ploutos.CashMethodPromotionRecord, dailyAmountRecords []ploutos.CashMethodPromotionRecord, err error) {
+func GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c context.Context, cashMethodId *int64, userId int64) (weeklyAmountRecords []CashMethodPromotionRecordStats, dailyAmountRecords []CashMethodPromotionRecordStats, err error) {
 	now := time.Now()
 	weeklyAmountRecords, err = TotalClaimedByUserInPeriod(cashMethodId, userId, now.AddDate(0, 0, -7), now, nil)
 	if err != nil {
@@ -72,4 +88,31 @@ func GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c context.Context, ca
 	util.GetLoggerEntry(c).Info("GetAccumulatedClaimedCashMethodPromotionPast7And1Days weeklyAmountRecords", weeklyAmountRecords, cashMethodId, userId, now.AddDate(0, 0, -7), now) // wl: for staging debug
 	util.GetLoggerEntry(c).Info("GetAccumulatedClaimedCashMethodPromotionPast7And1Days dailyAmountRecords", dailyAmountRecords, cashMethodId, userId, now.AddDate(0, 0, -1), now)   // wl: for staging debug
 	return
+}
+
+// GetAccumulatedClaimedCashMethodPromotionPast7And1DaysM
+// aggregated by cash method
+func GetAccumulatedClaimedCashMethodPromotionPast7And1DaysM(c context.Context, userId int64) (map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, map[ /* cash method id */ int64]CashMethodPromotionRecordStats, error) {
+	now := time.Now()
+	claimed7DaysByCashMethod, err := TotalClaimedByUserInPeriod(nil, userId, now.AddDate(0, 0, -7), now, nil)
+	if err != nil {
+		return make(map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, 0), make(map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, 0), err
+	}
+	claimed1DayByCashMethod, err := TotalClaimedByUserInPeriod(nil, userId, now.AddDate(0, 0, -1), now, nil)
+	if err != nil {
+		return make(map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, 0), make(map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, 0), err
+	}
+
+	claimed7DaysByCashMethodMap := make(map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, 0)
+
+	for _, v := range claimed7DaysByCashMethod {
+		claimed7DaysByCashMethodMap[v.CashMethodId] = v
+	}
+
+	claimed1DayByCashMethodMap := make(map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, 0)
+	for _, v := range claimed1DayByCashMethod {
+		claimed1DayByCashMethodMap[v.CashMethodId] = v
+	}
+
+	return claimed7DaysByCashMethodMap, claimed1DayByCashMethodMap, nil
 }

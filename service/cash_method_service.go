@@ -14,8 +14,6 @@ import (
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -49,22 +47,22 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		})
 	}
 	var cashMethods []model.CashMethod
-	cashMethods, err = model.CashMethod{}.List(c, s.WithdrawOnly, s.TopupOnly, deviceInfo.Platform, brand, int(vip.VipRule.ID), user)
+	cashMethods, err = model.CashMethodWithPromotions(c, s.WithdrawOnly, s.TopupOnly, deviceInfo.Platform, brand, int(vip.VipRule.ID), user)
 	if err != nil {
 		r := serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return r, err
 	}
 
-	weeklyAmountRecords, dailyAmountRecords, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c, 0, user.ID)
-	maxPromotionAmountByCashMethodId := map[ /*cash_method.id*/ int64] /*max amount*/ int64{}
+	claimedPast7DaysL, claimedPast1Day, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c, nil, user.ID)
+	maxClaimableByCashMethodId := map[ /*cash_method.id*/ int64] /*max amount*/ int64{}
 	util.MapSlice(cashMethods, func(a model.CashMethod) (err error) {
 		if a.CashMethodPromotion == nil {
 			return
 		}
-		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
+		weeklyAmount := util.FindOrDefault(claimedPast7DaysL, func(b cash_method_promotion.CashMethodPromotionRecordStats) bool {
 			return b.CashMethodId == a.ID
 		}).Amount
-		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
+		dailyAmount := util.FindOrDefault(claimedPast1Day, func(b cash_method_promotion.CashMethodPromotionRecordStats) bool {
 			return b.CashMethodId == a.ID
 		}).Amount
 
@@ -72,19 +70,19 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		if err != nil {
 			util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetMaxAmountPayment", err)
 		}
-		maxPromotionAmountByCashMethodId[a.ID] = maxAmount
+		maxClaimableByCashMethodId[a.ID] = maxAmount
 		return
 	})
 
 	var r serializer.Response
 	if s.TopupOnly {
 		r.Data = util.MapSlice(cashMethods, func(a model.CashMethod) serializer.CashMethod {
-			return serializer.BuildCashMethod(a, maxPromotionAmountByCashMethodId)
+			return serializer.BuildCashMethod(a, maxClaimableByCashMethodId)
 		})
 	} else {
 		r.Data = util.MapSlice(cashMethods, serializer.Modifier(
 			func(a model.CashMethod) serializer.CashMethod {
-				return serializer.BuildCashMethod(a, maxPromotionAmountByCashMethodId)
+				return serializer.BuildCashMethod(a, maxClaimableByCashMethodId)
 			},
 			func(cm serializer.CashMethod) serializer.CashMethod {
 				firstTopup, err := model.FirstTopup(c, user.ID)

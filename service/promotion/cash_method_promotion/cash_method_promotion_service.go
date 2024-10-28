@@ -85,7 +85,7 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 	log.Printf(rfcontext.Fmt(ctx))
 
 	// check over payout limit or not
-	claimedPast7DaysL, claimedPast1DayL, err := GetAccumulatedClaimedCashMethodPromotionPast7And1Days(ctx, orderCashMethodId, orderUserId)
+	claimedPast7DaysL, claimedPast1DayL, err := GetAccumulatedClaimedCashMethodPromotionPast7And1Days(ctx, &orderCashMethodId, orderUserId)
 	if err != nil {
 		ctx = rfcontext.AppendError(ctx, err, "get user past claimed")
 		log.Printf(rfcontext.Fmt(ctx))

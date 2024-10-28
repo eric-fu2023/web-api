@@ -38,7 +38,7 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}
 
-	weeklyAmountRecords, dailyAmountRecords, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c, 0, user.ID)
+	weeklyAmountRecords, dailyAmountRecords, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c, nil, user.ID)
 	if err != nil {
 		return serializer.Err(c, s, serializer.CodeGeneralError, "", err), nil
 	}
@@ -50,10 +50,10 @@ func (s ListWithdrawAccountsService) List(c *gin.Context) (serializer.Response, 
 		if a.CashMethod.CashMethodPromotion == nil {
 			return
 		}
-		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
+		weeklyAmount := util.FindOrDefault(weeklyAmountRecords, func(b cash_method_promotion.CashMethodPromotionRecordStats) bool {
 			return b.CashMethodId == a.CashMethod.ID
 		}).Amount
-		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b ploutos.CashMethodPromotionRecord) bool {
+		dailyAmount := util.FindOrDefault(dailyAmountRecords, func(b cash_method_promotion.CashMethodPromotionRecordStats) bool {
 			return b.CashMethodId == a.CashMethod.ID
 		}).Amount
 
