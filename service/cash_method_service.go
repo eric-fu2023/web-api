@@ -53,7 +53,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		return r, err
 	}
 
-	claimedPast7DaysL, claimedPast1Day, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c, nil, user.ID)
+	claimedPast7DaysL, claimedPast1DayL, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c, nil, user.ID)
 	maxClaimableByCashMethodId := map[ /*cash_method.id*/ int64] /*max amount*/ int64{}
 	util.MapSlice(cashMethods, func(a model.CashMethod) (err error) {
 		if a.CashMethodPromotion == nil {
@@ -62,7 +62,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		weeklyAmount := util.FindOrDefault(claimedPast7DaysL, func(b cash_method_promotion.CashMethodPromotionRecordStats) bool {
 			return b.CashMethodId == a.ID
 		}).Amount
-		dailyAmount := util.FindOrDefault(claimedPast1Day, func(b cash_method_promotion.CashMethodPromotionRecordStats) bool {
+		dailyAmount := util.FindOrDefault(claimedPast1DayL, func(b cash_method_promotion.CashMethodPromotionRecordStats) bool {
 			return b.CashMethodId == a.ID
 		}).Amount
 

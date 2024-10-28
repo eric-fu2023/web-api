@@ -39,9 +39,9 @@ func (CashMethodPromotionRecordStats) TableName() string {
 	return ploutos.TableNameCashMethodPromotionRecord
 }
 
-// TotalClaimedByUserInPeriod
+// totalClaimedByUserInPeriod
 // FIXME this query returns a single aggregate tuple, not CashMethodPromotionRecord(s).
-func TotalClaimedByUserInPeriod(cashMethodId *int64, userId int64, startAt, endAt time.Time, tx *gorm.DB) (cashMethodPromotionRecords []CashMethodPromotionRecordStats, err error) {
+func totalClaimedByUserInPeriod(cashMethodId *int64, userId int64, startAt, endAt time.Time, tx *gorm.DB) (cashMethodPromotionRecords []CashMethodPromotionRecordStats, err error) {
 	if tx == nil {
 		tx = model.DB
 	}
@@ -75,14 +75,14 @@ func TotalClaimedByUserInPeriod(cashMethodId *int64, userId int64, startAt, endA
 
 func GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c context.Context, cashMethodId *int64, userId int64) (weeklyAmountRecords []CashMethodPromotionRecordStats, dailyAmountRecords []CashMethodPromotionRecordStats, err error) {
 	now := time.Now()
-	weeklyAmountRecords, err = TotalClaimedByUserInPeriod(cashMethodId, userId, now.AddDate(0, 0, -7), now, nil)
+	weeklyAmountRecords, err = totalClaimedByUserInPeriod(cashMethodId, userId, now.AddDate(0, 0, -7), now, nil)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("GetAccumulatedClaimedCashMethodPromotionPast7And1Days TotalClaimedByUserInPeriod", cashMethodId, userId)
+		util.GetLoggerEntry(c).Error("GetAccumulatedClaimedCashMethodPromotionPast7And1Days totalClaimedByUserInPeriod", cashMethodId, userId)
 		return
 	}
-	dailyAmountRecords, err = TotalClaimedByUserInPeriod(cashMethodId, userId, now.AddDate(0, 0, -1), now, nil)
+	dailyAmountRecords, err = totalClaimedByUserInPeriod(cashMethodId, userId, now.AddDate(0, 0, -1), now, nil)
 	if err != nil {
-		util.GetLoggerEntry(c).Error("GetAccumulatedClaimedCashMethodPromotionPast7And1Days TotalClaimedByUserInPeriod", cashMethodId, userId)
+		util.GetLoggerEntry(c).Error("GetAccumulatedClaimedCashMethodPromotionPast7And1Days totalClaimedByUserInPeriod", cashMethodId, userId)
 		return
 	}
 	util.GetLoggerEntry(c).Info("GetAccumulatedClaimedCashMethodPromotionPast7And1Days weeklyAmountRecords", weeklyAmountRecords, cashMethodId, userId, now.AddDate(0, 0, -7), now) // wl: for staging debug
@@ -94,11 +94,11 @@ func GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c context.Context, ca
 // aggregated by cash method
 func GetAccumulatedClaimedCashMethodPromotionPast7And1DaysM(c context.Context, userId int64) (map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, map[ /* cash method id */ int64]CashMethodPromotionRecordStats, error) {
 	now := time.Now()
-	claimed7DaysByCashMethod, err := TotalClaimedByUserInPeriod(nil, userId, now.AddDate(0, 0, -7), now, nil)
+	claimed7DaysByCashMethod, err := totalClaimedByUserInPeriod(nil, userId, now.AddDate(0, 0, -7), now, nil)
 	if err != nil {
 		return make(map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, 0), make(map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, 0), err
 	}
-	claimed1DayByCashMethod, err := TotalClaimedByUserInPeriod(nil, userId, now.AddDate(0, 0, -1), now, nil)
+	claimed1DayByCashMethod, err := totalClaimedByUserInPeriod(nil, userId, now.AddDate(0, 0, -1), now, nil)
 	if err != nil {
 		return make(map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, 0), make(map[ /*cash method id*/ int64]CashMethodPromotionRecordStats, 0), err
 	}
