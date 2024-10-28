@@ -39,6 +39,32 @@ func ByCashMethodIdAndVipId(tx *gorm.DB, cashMethodId, vipId int64, promotionAt 
 	return
 }
 
+func SelectMaxPayoutRate(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *time.Time) (ploutos.Fractional, error) {
+	if cashMethodId == nil || vipId == nil {
+		return 0, errors.New("cashMethodId or vipId required to cal max payout rate")
+	}
+	if tx == nil {
+		tx = model.DB
+	}
+
+	if promotionAt == nil {
+		now := time.Now().UTC()
+		promotionAt = &now
+	}
+
+	var rate ploutos.Fractional
+	tx = tx.Debug().Table(ploutos.CashMethodPromotion{}.TableName()).Select("payout_rate").
+		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
+		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).
+		Where("status = ?", 1).Order("payout_rate desc").
+		Find(&rate)
+	err := tx.Error
+	if err != nil {
+		return 0, err
+	}
+	return rate, nil
+}
+
 // FinalPossiblePayout
 // dryRun == calculate ceiling for the payout
 func FinalPossiblePayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount int64, dryRun bool) (amount int64, err error) {
