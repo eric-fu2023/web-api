@@ -94,8 +94,8 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 				// QQ: extra百分比和“+XX“不會變 因为这个是display给全部人知道这个支付渠道有这个活动的 user达到了上限是那个user的问题 ，所以不会变
 				_claimable, clErr := cash_method_promotion.FinalPossiblePayout(c, 0, 0, cashMethodPromotionOfSelection, selectionAmount, true)
 				if clErr != nil {
-					cCtx = rfcontext.AppendError(cCtx, clErr, "FinalPossiblePayout")
-					log.Println(rfcontext.Fmt(cCtx))
+					sCtx = rfcontext.AppendError(sCtx, clErr, "FinalPossiblePayout")
+					log.Println(rfcontext.Fmt(sCtx))
 				}
 
 				label := fmt.Sprintf("%#v", selectionAmount)
