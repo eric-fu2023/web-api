@@ -59,8 +59,9 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 	cashMethodsR := make([]serializer.CashMethod, 0, len(cashMethods))
 	for _, cm := range cashMethods {
 		cCtx := rfcontext.AppendParams(ctx, "moulding ", map[string]interface{}{
-			"cash_method_id": cm.ID,
-			"cash_method":    cm,
+			"cash_method_id":    cm.ID,
+			"cash_method":       cm,
+			"cm.DefaultOptions": cm.DefaultOptions,
 		})
 		cashMethodId := cm.ID
 
@@ -74,50 +75,47 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		var cashMethodPromotion *serializer.CashMethodPromotion
 
 		if cm.HasCashMethodPromotion() {
-			{ // for each option, individual query to get respective cashMethodPromotionOfSelection
-				cashMethodDefaultOptions := cm.DefaultOptions
+			// for each option, individual query to get respective cashMethodPromotionOfSelection
+			cashMethodDefaultOptions := cm.DefaultOptions
+			var _floorApplicable, _payoutRate, _maxClaimable float64
 
-				var _floorApplicable, _payoutRate, _maxClaimable float64
-
-				selections := make([]serializer.DefaultCashMethodPromotionSelection, 0, len(cashMethodDefaultOptions))
-				for _, _selectionAmount := range cashMethodDefaultOptions {
-					sCtx := rfcontext.Nonce(cCtx)
-					selectionAmount := int64(_selectionAmount) // overcast
-					cashMethodPromotionOfSelection, sErr := cash_method_promotion.ByCashMethodIdAndVipId(nil, cm.ID, vipRecordVipRuleId, nil, &selectionAmount)
-					if sErr != nil {
-						sCtx = rfcontext.AppendParams(sCtx, "cashMethodDefaultOption", map[string]interface{}{
-							"selection_amount": selectionAmount,
-						})
-						sCtx = rfcontext.AppendError(sCtx, sErr, "ByCashMethodIdAndVipId")
-					}
-
-					// QQ: extra百分比和“+XX“不會變 因为这个是display给全部人知道这个支付渠道有这个活动的 user达到了上限是那个user的问题 ，所以不会变
-					_claimable, clErr := cash_method_promotion.FinalPossiblePayout(c, 0, 0, cashMethodPromotionOfSelection, selectionAmount, true)
-					if clErr != nil {
-						cCtx = rfcontext.AppendError(cCtx, clErr, "FinalPossiblePayout")
-						log.Println(rfcontext.Fmt(cCtx))
-					}
-
-					label := fmt.Sprintf("%#v", selectionAmount)
-					_maxClaimable = max(_maxClaimable, float64(_claimable))
-					selections = append(selections, serializer.DefaultCashMethodPromotionSelection{
-						SelectionAmount:     float64(selectionAmount) / 100,
-						Label:               label,
-						Icon:                "",
-						BonusRate:           cashMethodPromotionOfSelection.PayoutRate,
-						BonusAmount:         float64(_claimable) / 100,
-						NeedCustomerSupport: false,
+			selections := make([]serializer.DefaultCashMethodPromotionSelection, 0, len(cashMethodDefaultOptions))
+			for _, _selectionAmount := range cashMethodDefaultOptions {
+				sCtx := rfcontext.Nonce(cCtx)
+				selectionAmount := int64(_selectionAmount) // overcast
+				cashMethodPromotionOfSelection, sErr := cash_method_promotion.ByCashMethodIdAndVipId(nil, cm.ID, vipRecordVipRuleId, nil, &selectionAmount)
+				if sErr != nil {
+					sCtx = rfcontext.AppendParams(sCtx, "cashMethodDefaultOption", map[string]interface{}{
+						"selection_amount": selectionAmount,
 					})
+					sCtx = rfcontext.AppendError(sCtx, sErr, "ByCashMethodIdAndVipId")
 				}
 
-				cashMethodPromotion = &serializer.CashMethodPromotion{
-					PayoutRate:                           _payoutRate,
-					MaxPromotionAmount:                   float64(_maxClaimable) / 100,
-					MinAmountForPayout:                   _floorApplicable,
-					DefaultCashMethodPromotionSelections: selections,
+				// QQ: extra百分比和“+XX“不會變 因为这个是display给全部人知道这个支付渠道有这个活动的 user达到了上限是那个user的问题 ，所以不会变
+				_claimable, clErr := cash_method_promotion.FinalPossiblePayout(c, 0, 0, cashMethodPromotionOfSelection, selectionAmount, true)
+				if clErr != nil {
+					cCtx = rfcontext.AppendError(cCtx, clErr, "FinalPossiblePayout")
+					log.Println(rfcontext.Fmt(cCtx))
 				}
+
+				label := fmt.Sprintf("%#v", selectionAmount)
+				_maxClaimable = max(_maxClaimable, float64(_claimable))
+				selections = append(selections, serializer.DefaultCashMethodPromotionSelection{
+					SelectionAmount:     float64(selectionAmount) / 100,
+					Label:               label,
+					Icon:                "",
+					BonusRate:           cashMethodPromotionOfSelection.PayoutRate,
+					BonusAmount:         float64(_claimable) / 100,
+					NeedCustomerSupport: false,
+				})
 			}
 
+			cashMethodPromotion = &serializer.CashMethodPromotion{
+				PayoutRate:                           _payoutRate,
+				MaxPromotionAmount:                   float64(_maxClaimable) / 100,
+				MinAmountForPayout:                   _floorApplicable,
+				DefaultCashMethodPromotionSelections: selections,
+			}
 		}
 
 		cashMethodR := serializer.BuildCashMethodWithCashMethodPromotion(cm, cashMethodPromotion)
