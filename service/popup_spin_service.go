@@ -1,7 +1,11 @@
 package service
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"strconv"
 	"time"
@@ -53,6 +57,10 @@ func (service *SpinService) Get(c *gin.Context) (r serializer.Response, err erro
 	r = serializer.Response{
 		Data: data,
 	}
+
+	rr, _ := json.Marshal(r)
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), fmt.Sprintf("SpinService.Get spin promo id: %s, response: %s", spin_promotion_id, string(rr)))
+	log.Println(rfcontext.FmtJSON(ctx))
 	return
 }
 
