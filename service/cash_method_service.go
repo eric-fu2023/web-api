@@ -79,7 +79,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 			cashMethodDefaultOptions := cm.DefaultOptions
 			var _floorApplicable, _payoutRate, _maxClaimable float64
 
-			selections := make([]serializer.DefaultCashMethodPromotionSelection, 0, len(cashMethodDefaultOptions))
+			selections := make([]serializer.DefaultCashMethodPromotionOption, 0, len(cashMethodDefaultOptions))
 			for _, _selectionAmount := range cashMethodDefaultOptions {
 				sCtx := rfcontext.Nonce(cCtx)
 				selectionAmount := int64(_selectionAmount) // overcast
@@ -100,7 +100,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 
 				label := fmt.Sprintf("%#v", selectionAmount)
 				_maxClaimable = max(_maxClaimable, float64(_claimable))
-				selections = append(selections, serializer.DefaultCashMethodPromotionSelection{
+				selections = append(selections, serializer.DefaultCashMethodPromotionOption{
 					SelectionAmount:     float64(selectionAmount) / 100,
 					Label:               label,
 					Icon:                "",
@@ -111,10 +111,10 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 			}
 
 			cashMethodPromotion = &serializer.CashMethodPromotion{
-				PayoutRate:                           _payoutRate,
-				MaxPromotionAmount:                   float64(_maxClaimable) / 100,
-				MinAmountForPayout:                   _floorApplicable,
-				DefaultCashMethodPromotionSelections: selections,
+				PayoutRate:                        _payoutRate,
+				MaxPromotionAmount:                float64(_maxClaimable) / 100,
+				MinAmountForPayout:                _floorApplicable,
+				DefaultCashMethodPromotionOptions: selections,
 			}
 		}
 
