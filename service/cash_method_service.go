@@ -14,7 +14,7 @@ import (
 	"web-api/util/i18n"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
-	
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -60,6 +60,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 	for _, cm := range cashMethods {
 		cCtx := rfcontext.AppendParams(ctx, "moulding ", map[string]interface{}{
 			"cash_method_id": cm.ID,
+			"cash_method":    cm,
 		})
 		cashMethodId := cm.ID
 
@@ -72,7 +73,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 
 		var cashMethodPromotion *serializer.CashMethodPromotion
 
-		if !cm.HasCashMethodPromotion() {
+		if cm.HasCashMethodPromotion() {
 			{ // for each option, individual query to get respective cashMethodPromotionOfSelection
 				cashMethodDefaultOptions := cm.DefaultOptions
 
@@ -116,9 +117,11 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 					DefaultCashMethodPromotionSelections: selections,
 				}
 			}
-			cashMethodR := serializer.BuildCashMethodWithCashMethodPromotion(cm, cashMethodPromotion)
-			cashMethodsR = append(cashMethodsR, cashMethodR)
+
 		}
+
+		cashMethodR := serializer.BuildCashMethodWithCashMethodPromotion(cm, cashMethodPromotion)
+		cashMethodsR = append(cashMethodsR, cashMethodR)
 	}
 
 	var r serializer.Response
