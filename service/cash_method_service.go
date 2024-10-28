@@ -78,16 +78,6 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 
 	var r serializer.Response
 	if s.TopupOnly {
-		// var firstTime bool
-		// firstTime, err = model.CashOrder{}.IsFirstTime(c, user.ID)
-		// if err != nil {
-		// 	r = serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
-		// 	return
-		// }
-		// minAmount := conf.GetCfg().FirstTopupMinimum / 100
-		// if !firstTime && loggedIn {
-		// 	minAmount = conf.GetCfg().TopupMinimum / 100
-		// }
 		r.Data = util.MapSlice(cashMethods, func(a model.CashMethod) serializer.CashMethod {
 			return serializer.BuildCashMethod(a, maxPromotionAmountByCashMethodId)
 		})
