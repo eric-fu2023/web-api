@@ -41,7 +41,7 @@ func ByCashMethodIdAndVipId(tx *gorm.DB, cashMethodId, vipId int64, promotionAt 
 
 func SelectMaxPayoutRate(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *time.Time) (ploutos.Fractional, error) {
 	if cashMethodId == nil || vipId == nil {
-		return 0, errors.New("cashMethodId or vipId required to cal max payout rate")
+		return 0, errors.New("cashMethodId and vipId required to cal max payout rate")
 	}
 	if tx == nil {
 		tx = model.DB
@@ -53,10 +53,37 @@ func SelectMaxPayoutRate(tx *gorm.DB, cashMethodId *int64, vipId *int64, promoti
 	}
 
 	var rate ploutos.Fractional
-	tx = tx.Debug().Table(ploutos.CashMethodPromotion{}.TableName()).Select("payout_rate").
+	tx = tx.Debug().Table(ploutos.CashMethodPromotion{}.TableName()).Select("max(payout_rate) payout_rate").
 		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
 		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).
-		Where("status = ?", 1).Order("payout_rate desc").
+		Where("status = ?", 1).
+		Find(&rate)
+	err := tx.Error
+	if err != nil {
+		return 0, err
+	}
+	return rate, nil
+}
+
+// SelectFloorForPromotio TODO check which column for min. calc.
+func SelectFloorForPromotion(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *time.Time) (ploutos.Fractional, error) {
+	if cashMethodId == nil || vipId == nil {
+		return 0, errors.New("cashMethodId and vipId required to cal max payout rate")
+	}
+	if tx == nil {
+		tx = model.DB
+	}
+
+	if promotionAt == nil {
+		now := time.Now().UTC()
+		promotionAt = &now
+	}
+
+	var rate ploutos.Fractional
+	tx = tx.Debug().Table(ploutos.CashMethodPromotion{}.TableName()).Select("min(min_payout) min_payout").
+		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
+		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).
+		Where("status = ?", 1).
 		Find(&rate)
 	err := tx.Error
 	if err != nil {
