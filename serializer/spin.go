@@ -2,6 +2,7 @@ package serializer
 
 import (
 	"time"
+
 	"web-api/conf/consts"
 	"web-api/util/i18n"
 
@@ -26,14 +27,17 @@ type Spin struct {
 	FloatUrl          string     `json:"float_url"`
 	SpinItems         []SpinItem `json:"items"`
 }
+
 type SpinItem struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	PicSrc    string `json:"pic_src"`
-	TextColor string `json:"text_color"`
-	BgColor   string `json:"bg_color"`
-	IsWin     bool   `json:"is_win"`
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	PicSrc      string `json:"pic_src"`
+	TextColor   string `json:"text_color"`
+	BgColor     string `json:"bg_color"`
+	IsWin       bool   `json:"is_win"`
+	NameVisible bool   `json:"name_visible"`
 }
+
 type SpinHistory struct {
 	SpinID         int64  `json:"spin_id"`
 	SpinName       string `json:"spin_name"`
@@ -43,6 +47,7 @@ type SpinHistory struct {
 	SpinResultType string `json:"spin_result_type"`
 	Redeemed       bool   `json:"redeemed"`
 }
+
 type SpinSqlHistory struct {
 	SpinID         int64     `json:"spin_id"`
 	SpinName       string    `json:"spin_name"`
@@ -54,7 +59,6 @@ type SpinSqlHistory struct {
 }
 
 func BuildSpin(spin ploutos.Spins, spin_items []ploutos.SpinItem, spin_result_counts int, isHardcodeResultCount ...bool) (spin_resp Spin) {
-
 	var spin_items_resp []SpinItem
 	for _, item := range spin_items {
 		spin_items_resp = append(spin_items_resp, BuildSpinItem(item))
@@ -114,13 +118,15 @@ func BuildSpinItem(a ploutos.SpinItem) (b SpinItem) {
 	if len(a.BgColor) > 0 && a.BgColor[0] == '#' {
 		bg_color = a.BgColor[1:]
 	}
+
 	b = SpinItem{
-		ID:        a.ID,
-		Name:      a.Name,
-		PicSrc:    Url(a.PicSrc),
-		TextColor: text_color,
-		BgColor:   bg_color,
-		IsWin:     a.IsWin,
+		ID:          a.ID,
+		Name:        a.Name,
+		PicSrc:      Url(a.PicSrc),
+		TextColor:   text_color,
+		BgColor:     bg_color,
+		IsWin:       a.IsWin,
+		NameVisible: a.NameVisible,
 	}
 	return
 }
