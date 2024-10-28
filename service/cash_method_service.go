@@ -77,9 +77,10 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		if cm.HasCashMethodPromotion() {
 			// for each option, individual query to get respective cashMethodPromotionOfSelection
 			cashMethodDefaultOptions := cm.DefaultOptions
-			var minFloor, _maxClaimable float64
+			var _maxClaimable float64
 
 			// var maxPayoutRate float64
+			// var minFloor float64
 
 			selections := make([]serializer.DefaultCashMethodPromotionOption, 0, len(cashMethodDefaultOptions))
 			for _, _selectionAmount := range cashMethodDefaultOptions {
@@ -120,11 +121,15 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 				rfcontext.AppendError(cCtx, rrerr, "SelectMaxPayoutRate")
 				log.Println(rfcontext.Fmt(cCtx))
 			}
-
+			_minFloor, rmerr := cash_method_promotion.SelectFloorForPromotion(nil, &cashMethodId, &vipRecordVipRuleId, nil)
+			if rrerr != nil {
+				rfcontext.AppendError(cCtx, rmerr, "SelectFloorForPromotion")
+				log.Println(rfcontext.Fmt(cCtx))
+			}
 			cashMethodPromotion = &serializer.CashMethodPromotion{
 				PayoutRate:                        _maxPayoutRate / 100,
 				MaxPromotionAmount:                float64(_maxClaimable) / 100,
-				MinAmountForPayout:                minFloor, // fixme get the floor of the leftmost cash method promotion applicable range
+				MinAmountForPayout:                _minFloor / 100, // fixme get the floor of the leftmost cash method promotion applicable range
 				DefaultCashMethodPromotionOptions: selections,
 			}
 		}
