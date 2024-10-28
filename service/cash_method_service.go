@@ -46,33 +46,31 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 			"vip_id":    vip.VipID,
 		})
 	}
-	var cashMethods []model.CashMethod
-	cashMethods, err = model.CashMethodWithPromotions(c, s.WithdrawOnly, s.TopupOnly, deviceInfo.Platform, brand, int(vip.VipRule.ID), user)
+	cashMethods, err := model.CashMethodWithPromotions(c, s.WithdrawOnly, s.TopupOnly, deviceInfo.Platform, brand, int(vip.VipRule.ID), user)
 	if err != nil {
 		r := serializer.Err(c, s, serializer.CodeGeneralError, i18n.T("general_error"), err)
 		return r, err
 	}
 
-	claimedPast7DaysL, claimedPast1DayL, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1Days(c, nil, user.ID)
+	claimedPast7DaysL, claimedPast1DayL, err := cash_method_promotion.GetAccumulatedClaimedCashMethodPromotionPast7And1DaysM(c, user.ID)
 	maxClaimableByCashMethodId := map[ /*cash_method.id*/ int64] /*max amount*/ int64{}
-	util.MapSlice(cashMethods, func(a model.CashMethod) (err error) {
-		if a.CashMethodPromotion == nil {
-			return
-		}
-		weeklyAmount := util.FindOrDefault(claimedPast7DaysL, func(b cash_method_promotion.CashMethodPromotionRecordStats) bool {
-			return b.CashMethodId == a.ID
-		}).Amount
-		dailyAmount := util.FindOrDefault(claimedPast1DayL, func(b cash_method_promotion.CashMethodPromotionRecordStats) bool {
-			return b.CashMethodId == a.ID
-		}).Amount
 
-		maxAmount, err := cash_method_promotion.FinalPayout(c, weeklyAmount, dailyAmount, *a.CashMethodPromotion, 0, true)
+	for _, cm := range cashMethods {
+		if !cm.HasCashMethodPromotion() {
+			continue
+		}
+		cashMethodId := cm.ID
+
+		claimedPast7Days, _ := claimedPast7DaysL[cashMethodId]
+		claimedPast1Day, _ := claimedPast1DayL[cashMethodId]
+
+		maxAmount, err := cash_method_promotion.FinalPayout(c, claimedPast7Days.Amount, claimedPast1Day.Amount, *cm.CashMethodPromotion, 0, true)
 		if err != nil {
 			util.GetLoggerEntry(c).Error("HandleCashMethodPromotion GetMaxAmountPayment", err)
 		}
-		maxClaimableByCashMethodId[a.ID] = maxAmount
-		return
-	})
+		maxClaimableByCashMethodId[cm.ID] = maxAmount
+
+	}
 
 	var r serializer.Response
 	if s.TopupOnly {
