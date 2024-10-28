@@ -66,7 +66,7 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 	log.Printf(rfcontext.Fmt(ctx))
 
 	// check cash method and vip combination has promotion or not
-	cashMethodPromotion, err := PromoByCashMethodIdAndVipId(orderCashMethodId, vipRecordVipRuleId, &cashedInOrder.CreatedAt, &cashedInOrder.AppliedCashInAmount, model.DB)
+	cashMethodPromotion, err := ByCashMethodIdAndVipId(model.DB, orderCashMethodId, vipRecordVipRuleId, &cashedInOrder.CreatedAt, &cashedInOrder.AppliedCashInAmount)
 	cashMethodPromotionId := cashMethodPromotion.ID
 	ctx = rfcontext.AppendParams(ctx, callDesc, map[string]any{
 		"cashMethodPromotionId": cashMethodPromotionId,
@@ -85,7 +85,7 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 	log.Printf(rfcontext.Fmt(ctx))
 
 	// check over payout limit or not
-	claimedPast7DaysL, claimedPast1DayL, err := GetAccumulatedClaimedCashMethodPromotionPast7And1Days(ctx, orderCashMethodId, orderUserId)
+	claimedPast7DaysL, claimedPast1DayL, err := GetAccumulatedClaimedCashMethodPromotionPast7And1Days(ctx, &orderCashMethodId, orderUserId)
 	if err != nil {
 		ctx = rfcontext.AppendError(ctx, err, "get user past claimed")
 		log.Printf(rfcontext.Fmt(ctx))
@@ -118,7 +118,7 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 		"claimedPast1Day":  claimedPast1Day,
 	})
 
-	finalPayout, err := FinalPayout(ctx, claimedPast7Days, claimedPast1Day, cashMethodPromotion, cashOrderAmount, false)
+	finalPayout, err := FinalPossiblePayout(ctx, claimedPast7Days, claimedPast1Day, cashMethodPromotion, cashOrderAmount, false)
 	if err != nil {
 		ctx = rfcontext.AppendError(ctx, err, "final payout cal err")
 		log.Printf(rfcontext.Fmt(ctx))
