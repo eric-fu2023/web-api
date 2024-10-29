@@ -1,6 +1,9 @@
 package cashin
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	"context"
+	"log"
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/promotion/on_cash_orders"
@@ -21,7 +24,11 @@ func (s ManualCloseService) Do(c *gin.Context) (r serializer.Response, err error
 	if s.TransactionType == 0 {
 		s.TransactionType = 10000
 	}
-	closedCashInOrder, err := CloseCashInOrder(c, s.OrderNumber, s.ActualAmount, s.BonusAmount, s.AdditionalWagerChange, util.JSON(s), model.DB, s.TransactionType)
+
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "(s ManualCloseService) Do")
+	closedCashInOrder, err := CloseCashInOrder(c, ctx, s.OrderNumber, s.ActualAmount, s.BonusAmount, s.AdditionalWagerChange, util.JSON(s), model.DB, s.TransactionType)
+	ctx = rfcontext.AppendError(ctx, err, "CloseCashInOrder")
+	log.Println(rfcontext.Fmt(ctx))
 	if err != nil {
 		r = serializer.Err(c, s, serializer.CodeGeneralError, "", err)
 		return

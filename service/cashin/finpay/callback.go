@@ -1,7 +1,10 @@
 package cashin_finpay
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	"context"
 	"errors"
+	"log"
 
 	"web-api/model"
 	"web-api/service/cashin"
@@ -34,7 +37,11 @@ func (s *FinpayPaymentCallback) Handle(c *gin.Context) error {
 	// update user_sum
 	// create transaction history
 	// }
-	cashOrder, err := cashin.CloseCashInOrder(c, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, ploutos.TransactionTypeCashIn)
+
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "(s *FinpayPaymentCallback) Handle")
+	cashOrder, err := cashin.CloseCashInOrder(c, ctx, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, ploutos.TransactionTypeCashIn)
+	ctx = rfcontext.AppendError(ctx, err, "CloseCashInOrder")
+	log.Println(rfcontext.Fmt(ctx))
 	if err != nil {
 		return err
 	}

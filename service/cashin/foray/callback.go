@@ -1,7 +1,10 @@
 package cashin_foray
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	"context"
 	"errors"
+	"log"
 
 	"web-api/model"
 	"web-api/service/cashin"
@@ -35,8 +38,11 @@ func (s *ForayPaymentCallback) Handle(c *gin.Context) error {
 	// create transaction history
 	// }
 
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "(s *ForayPaymentCallback) Handle")
 	txType := ploutos.TransactionTypeCashIn
-	cashOrder, err := cashin.CloseCashInOrder(c, s.OrderTranoIn, s.OrderAmount, 0, 0, util.JSON(s), model.DB, txType)
+	cashOrder, err := cashin.CloseCashInOrder(c, ctx, s.OrderTranoIn, s.OrderAmount, 0, 0, util.JSON(s), model.DB, txType)
+	ctx = rfcontext.AppendError(ctx, err, "CloseCashInOrder")
+	log.Println(rfcontext.Fmt(ctx))
 	if err != nil {
 		return err
 	}

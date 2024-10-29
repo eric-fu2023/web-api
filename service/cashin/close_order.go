@@ -3,6 +3,7 @@ package cashin
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"web-api/conf/consts"
@@ -44,7 +45,8 @@ import (
 // WagerChange -- only special cases
 // Account
 // Remark
-func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes string, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
+func CloseCashInOrder(c *gin.Context, ctx context.Context, orderNumber string, actualAmount, bonusAmount, additionalWagerChange int64, notes string, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
+	ctx = rfcontext.AppendCallDesc(ctx, "CloseCashInOrder")
 	var newCashOrderState model.CashOrder
 	err = txDB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) (err error) {
 		newCashOrderState, err = model.CashOrder{}.GetPendingOrPeApWithLockWithDB(orderNumber, tx)
@@ -57,7 +59,7 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		newCashOrderState.Notes = ploutos.EncryptedStr(notes)
 		newCashOrderState.WagerChange += additionalWagerChange
 		newCashOrderState.Status = ploutos.CashOrderStatusSuccess
-		updatedCashOrder, err = closeOrder(newCashOrderState, tx, transactionType)
+		updatedCashOrder, err = closeOrder(ctx, newCashOrderState, tx, transactionType)
 		if err != nil {
 			return
 		}
@@ -73,19 +75,20 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		var ftdSession ploutos.PromotionSession
 		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeFirstDepB).Where("start_at < ? and end_at > ?", now, now).First(&ftdPromo).Error
 		if err != nil {
+			ctx = rfcontext.AppendError(ctx, err, "promotion.First(&ftdPromo")
 			fmt.Println("ftdPromo get err ", err)
 		}
 		ftdSession, err = model.GetActivePromotionSessionByPromotionId(context.TODO(), ftdPromo.ID, now)
 		if err != nil {
-			fmt.Println("ftdSession session get err ", err)
+			ctx = rfcontext.AppendError(ctx, err, "promotion.GetActivePromotionSessionByPromotionId")
 		}
 		// if claim success, will send notification, and create notification in db.
-		_, err = promotion.Claim(context.TODO(), now, ftdPromo, ftdSession, uid, nil)
+		_, err = promotion.Claim(ctx, now, ftdPromo, ftdSession, uid, nil)
 		if err != nil {
-			fmt.Println("ftdPromo.Claim err ", err)
+			ctx = rfcontext.AppendError(ctx, err, "promotion.Claim")
 		}
-		fmt.Println("ftdPromo.Claim finished ", uid)
-
+		ctx = rfcontext.AppendDescription(ctx, fmt.Sprintf("ftdPromo.Claim finished %d", uid))
+		log.Println(rfcontext.Fmt(ctx))
 
 		// this is to claim referral bonus!!!
 		var referralPromo ploutos.Promotion
@@ -93,28 +96,34 @@ func CloseCashInOrder(c *gin.Context, orderNumber string, actualAmount, bonusAmo
 		var userReferral ploutos.UserReferral
 		err = txDB.Debug().Where("deleted_at is null").Where("referral_id = ?", uid).First(&userReferral).Error
 		if err != nil {
-			fmt.Println("user referral get err ", err)
+			ctx = rfcontext.AppendError(ctx, err, "promotion.First(&userReferral)")
+			log.Println(rfcontext.Fmt(ctx))
 		}
 		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeVipReferral).Where("start_at < ? and end_at > ?", now, now).First(&referralPromo).Error
 		if err != nil {
-			fmt.Println("referralPromo get err ", err)
+			ctx = rfcontext.AppendError(ctx, err, "promotion.First(&referralPromo)")
+			log.Println(rfcontext.Fmt(ctx))
 		}
 		referralSession, err := model.GetActivePromotionSessionByPromotionId(context.TODO(), referralPromo.ID, now)
 		if err != nil {
-			fmt.Println("referralSession session get err ", err)
+			ctx = rfcontext.AppendError(ctx, err, "GetActivePromotionSessionByPromotionId")
+			log.Println(rfcontext.Fmt(ctx))
 		}
 		// if claim success, will send notification, and create notification in db.
+		ctx = rfcontext.AppendCallDesc(ctx, "this is to claim referral bonus!!!")
 		_, err = promotion.Claim(context.TODO(), now, referralPromo, referralSession, userReferral.ReferrerId, nil)
 		if err != nil {
-			fmt.Println("referralPromo.Claim err ", err)
+			ctx = rfcontext.AppendError(ctx, err, "promotion.Claim")
+			log.Println(rfcontext.Fmt(ctx))
 		}
-		fmt.Println("referralPromo.Claim finished ", uid)
-	}
 
+		ctx = rfcontext.AppendDescription(ctx, fmt.Sprintf("referralPromo.Claim finished %d", uid))
+	}
+	log.Println(rfcontext.Fmt(ctx))
 	return
 }
 
-func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
+func closeOrder(ctx context.Context, newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
 	// update cash order
 	err = txDB.Omit(clause.Associations).Updates(newCashOrderState).Error
 	// modify user sum
@@ -161,6 +170,10 @@ func closeOrder(newCashOrderState model.CashOrder, txDB *gorm.DB, transactionTyp
 	if len(cashOrder) == 1 {
 		is_FTD = true
 	}
+
+	ctx = rfcontext.AppendDescription(ctx, "closeOrder ok")
+	log.Println(rfcontext.Fmt(ctx))
+
 	common.SendCashNotificationWithoutCurrencyId(newCashOrderState.UserId, consts.Notification_Type_Cash_Transaction, common.NOTIFICATION_DEPOSIT_SUCCESS_TITLE, common.NOTIFICATION_DEPOSIT_SUCCESS, newCashOrderState.AppliedCashInAmount)
 	// only send notification when it is real deposit (make up order or real cash in)
 	if newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0 {

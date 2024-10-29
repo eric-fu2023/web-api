@@ -1,6 +1,7 @@
 package promotion
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"errors"
 	"fmt"
@@ -25,7 +26,7 @@ func Claim(ctx context.Context, now time.Time, promotion models.Promotion, sessi
 		claimStatus     serializer.ClaimStatus
 		voucherTemplate models.VoucherTemplate
 	)
-	fmt.Println("promotion.GetPromotionSessionClaimStatus ")
+	ctx = rfcontext.AppendCallDesc(ctx, "Claim")
 	claimStatus = GetPromotionSessionClaimStatus(ctx, promotion, session, userID, now)
 	if claimStatus.HasClaimed {
 		err = errors.New("double_claim")
