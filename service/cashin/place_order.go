@@ -1,20 +1,24 @@
 package cashin
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
+
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/exchange"
 	"web-api/util"
 	"web-api/util/i18n"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"blgit.rfdev.tech/taya/payment-service/finpay"
 	foray "blgit.rfdev.tech/taya/payment-service/foray"
 	forayDto "blgit.rfdev.tech/taya/payment-service/foray/dto"
 	forayService "blgit.rfdev.tech/taya/payment-service/foray/service"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 )
@@ -30,6 +34,15 @@ func (s TopUpOrderService) CreateOrder(c *gin.Context) (r serializer.Response, e
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
+
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "(s TopUpOrderService) CreateOrder")
+	ctx = rfcontext.AppendParams(ctx, "(s TopUpOrderService) CreateOrder", map[string]interface{}{
+		"s.Amount":          s.Amount,
+		"s.MethodID":        s.MethodID,
+		"s.BankAccountName": s.BankAccountName,
+		"s.Platform":        s.Platform,
+		"userId":            user.ID,
+	})
 
 	// convert amount from buck to cent
 	amountDecimal, err := decimal.NewFromString(s.Amount)
