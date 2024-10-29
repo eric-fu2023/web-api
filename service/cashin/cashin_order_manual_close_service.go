@@ -1,13 +1,15 @@
 package cashin
 
 import (
-	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"log"
+
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/promotion/on_cash_orders"
 	"web-api/util"
+
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,9 +36,10 @@ func (s ManualCloseService) Do(c *gin.Context) (r serializer.Response, err error
 		return
 	}
 	go func() {
-		pErr := on_cash_orders.Handle(c.Copy(), closedCashInOrder, s.TransactionType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayDefault, on_cash_orders.RequestModeManual)
+		pErr := on_cash_orders.Handle(ctx, closedCashInOrder, s.TransactionType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayDefault, on_cash_orders.RequestModeManual)
 		if pErr != nil {
-			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
+			ctx = rfcontext.AppendError(ctx, pErr, "on_cash_orders.Handle")
+			log.Println(rfcontext.Fmt(ctx))
 		}
 	}()
 

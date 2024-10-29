@@ -1,7 +1,6 @@
 package cashin_finpay
 
 import (
-	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"errors"
 	"log"
@@ -11,6 +10,7 @@ import (
 	"web-api/service/promotion/on_cash_orders"
 	"web-api/util"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"blgit.rfdev.tech/taya/payment-service/finpay"
@@ -48,9 +48,10 @@ func (s *FinpayPaymentCallback) Handle(c *gin.Context) error {
 
 	// if err == nil {
 	go func() {
-		pErr := on_cash_orders.Handle(c.Copy(), cashOrder, ploutos.TransactionTypeCashIn, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinpay, on_cash_orders.RequestModeCallback)
+		pErr := on_cash_orders.Handle(ctx, cashOrder, ploutos.TransactionTypeCashIn, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayFinpay, on_cash_orders.RequestModeCallback)
 		if pErr != nil {
-			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
+			ctx = rfcontext.AppendError(ctx, pErr, "on_cash_orders.Handle")
+			log.Println(rfcontext.Fmt(ctx))
 		}
 	}()
 	return nil
