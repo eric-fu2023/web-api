@@ -3,6 +3,7 @@ package on_cash_orders
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"web-api/model"
 
@@ -50,6 +51,8 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 		"order":           order,
 	})
 
+	log.Println(rfcontext.Fmt(ctx))
+
 	// validate eventType
 	switch eventType {
 	case CashOrderEventTypeClose:
@@ -85,6 +88,6 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 			go cash_method_promotion.ValidateAndClaim(ctx, order)
 		}
 	}
-
+	log.Println(rfcontext.Fmt(ctx))
 	return nil
 }

@@ -17,9 +17,6 @@ func PromotionRecordByCashOrderId(cashOrderId string, tx *gorm.DB) (cashMethodPr
 		tx = model.DB
 	}
 	err = tx.Where("cash_order_id", cashOrderId).Find(&cashMethodPromotionRecord).Error
-	if err != nil {
-		return
-	}
 	return
 }
 
