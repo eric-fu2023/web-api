@@ -2,12 +2,13 @@ package util
 
 import (
 	"context"
+	"fmt"
+	"os"
+
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
-	"fmt"
 	"github.com/pkg/errors"
 	"google.golang.org/api/option"
-	"os"
 )
 
 var FCMFactory client
@@ -63,22 +64,19 @@ func (c *client) SendMessageToAll(data map[string]string, notification messaging
 			Notification: &notification,
 		}
 
+		var resp *messaging.BatchResponse
+
 		if c.dryRun {
-			resp, err := msgClient.SendEachForMulticastDryRun(ctx, message)
-			if err != nil {
-				return err
-			}
-			if resp.FailureCount > 0 {
-				failures += resp.FailureCount
-			}
+			resp, err = msgClient.SendEachForMulticastDryRun(ctx, message)
 		} else {
-			resp, err := msgClient.SendEachForMulticast(ctx, message)
-			if err != nil {
-				return err
-			}
-			if resp.FailureCount > 0 {
-				failures += resp.FailureCount
-			}
+			resp, err = msgClient.SendEachForMulticast(ctx, message)
+		}
+
+		if err != nil {
+			return err
+		}
+		if resp.FailureCount > 0 {
+			failures += resp.FailureCount
 		}
 	}
 

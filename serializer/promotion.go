@@ -57,38 +57,35 @@ type PromotionCover struct {
 	IsVipAssociated        bool            `json:"is_vip_associated"`
 	DisplayOnly            bool            `json:"display_only"`
 	ParentId               int64           `json:"parent_id"`
-	IsCustom               bool            `json:"is_custom"`
 	SubpageContent         json.RawMessage `json:"subpage_content"`
 
 	ChildrenPromotions []PromotionCover `json:"children_promotions"`
 }
 
 type PromotionDetail struct {
-	ID                     int64                   `json:"id"`
-	Name                   string                  `json:"name"`
-	Description            json.RawMessage         `json:"description"`
-	Image                  string                  `json:"image"`
-	StartAt                int64                   `json:"start_at"`
-	EndAt                  int64                   `json:"end_at"`
-	RecurringDay           int64                   `json:"recurring_day"`
-	ResetAt                int64                   `json:"reset_at"`
-	Type                   int64                   `json:"type"`
-	RewardType             int64                   `json:"reward_type"`
-	RewardDistributionType int64                   `json:"reward_distribution_type"`
-	Category               int64                   `json:"category"`
-	Label                  int64                   `json:"label"`
-	PromotionProgress      PromotionProgress       `json:"promotion_progress"`
-	Reward                 float64                 `json:"reward"`
-	ClaimStatus            ClaimStatus             `json:"claim_status"`
-	Voucher                Voucher                 `json:"voucher"`
-	IsVipAssociated        bool                    `json:"is_vip_associated"`
-	DisplayOnly            bool                    `json:"display_only"`
-	Extra                  any                     `json:"extra"`
-	CustomTemplateData     json.RawMessage         `json:"custom_template_data"`
-	NewbieData             interface{}             `json:"newbie_data"` // TODO : to be updated
-	EarnMoreData           OutgoingEarnMoreMission `json:"earn_more_promotion_data"`
-
-	IsCustom bool `json:"is_custom"`
+	ID                     int64                         `json:"id"`
+	Name                   string                        `json:"name"`
+	Description            json.RawMessage               `json:"description"`
+	Image                  string                        `json:"image"`
+	StartAt                int64                         `json:"start_at"`
+	EndAt                  int64                         `json:"end_at"`
+	RecurringDay           int64                         `json:"recurring_day"`
+	ResetAt                int64                         `json:"reset_at"`
+	Type                   int64                         `json:"type"`
+	RewardType             int64                         `json:"reward_type"`
+	RewardDistributionType int64                         `json:"reward_distribution_type"`
+	Category               int64                         `json:"category"`
+	Label                  int64                         `json:"label"`
+	PromotionProgress      PromotionProgress             `json:"promotion_progress"`
+	Reward                 float64                       `json:"reward"`
+	ClaimStatus            ClaimStatus                   `json:"claim_status"`
+	Voucher                Voucher                       `json:"voucher"`
+	IsVipAssociated        bool                          `json:"is_vip_associated"`
+	DisplayOnly            bool                          `json:"display_only"`
+	Extra                  any                           `json:"extra"`
+	CustomTemplateData     OutgoingCustomPromotionDetail `json:"custom_template_data"`
+	NewbieData             interface{}                   `json:"newbie_data"` // TODO : to be updated
+	EarnMoreData           OutgoingEarnMoreMission       `json:"earn_more_promotion_data"`
 }
 
 type ClaimStatus struct {
@@ -159,7 +156,7 @@ func BuildPromotionCover(p models.Promotion, platform string) PromotionCover {
 	}
 }
 
-func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, voucher Voucher, cl ClaimStatus, extra any, customData any, newbieData any, mDo MissionDO) PromotionDetail {
+func BuildPromotionDetail(progress, reward int64, platform string, p models.Promotion, s models.PromotionSession, voucher Voucher, cl ClaimStatus, extra any, customData OutgoingCustomPromotionDetail, newbieData any, mDo MissionDO) PromotionDetail {
 	raw := json.RawMessage(p.Image)
 	m := make(map[string]string)
 	json.Unmarshal(raw, &m)
@@ -241,9 +238,9 @@ func BuildPromotionDetail(progress, reward int64, platform string, p models.Prom
 		IsVipAssociated:        p.VipAssociated,
 		DisplayOnly:            p.DisplayOnly,
 		Extra:                  extra,
-		// CustomTemplateData: 	json.RawMessage(customData),
-		NewbieData:   newbieData,
-		EarnMoreData: earnMoreData,
+		CustomTemplateData:     customData,
+		NewbieData:             newbieData,
+		EarnMoreData:           earnMoreData,
 	}
 }
 

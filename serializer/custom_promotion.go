@@ -72,7 +72,6 @@ type IncomingCustomPromotionRequestField struct {
 }
 
 type OutgoingCustomPromotionDetail struct {
-	IsCustomPromotion  bool                             `json:"is_custom"`
 	ParentInfo         IncomingPromotion                `json:"parent_info"`
 	PromotionInfo      CustomPromotionPage              `json:"promotion_info,omitempty"`
 	ChildrenPromotions []OutgoingCustomPromotionPreview `json:"children_promotions"`

@@ -2,19 +2,18 @@ package cash_method_promotion
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"web-api/model"
 	"web-api/service/common"
-	"web-api/util"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
+
+	"github.com/google/uuid"
 )
 
 // ValidateAndClaim
@@ -34,19 +33,22 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 	})
 
 	if orderCashMethodId == 0 {
-		util.GetLoggerEntry(ctx).Info("ValidateAndClaim orderCashMethodId == 0", orderId)
+		ctx = rfcontext.AppendDescription(ctx, "orderCashMethodId == 0")
+		log.Printf(rfcontext.Fmt(ctx))
 		return
 	}
 	{
 		// check claim before or not
 		promotionRecord, err := PromotionRecordByCashOrderId(orderId, nil)
 		if err != nil {
-			util.GetLoggerEntry(ctx).Error("ValidateAndClaim PromotionRecordByCashOrderId", err, orderId)
+			ctx = rfcontext.AppendError(ctx, err, "orderCashMethodId == 0")
+			log.Printf(rfcontext.Fmt(ctx))
 			return
 		}
 
 		if promotionRecord.ID != 0 {
-			util.GetLoggerEntry(ctx).Info("ValidateAndClaim PromotionRecordByCashOrderId order has been claimed", orderId)
+			ctx = rfcontext.AppendDescription(ctx, "promotionRecord.ID != 0. exist -> skip")
+			log.Printf(rfcontext.Fmt(ctx))
 			return
 		}
 	}
@@ -58,7 +60,8 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 		"vipRecordVipRuleId": vipRecordVipRuleId,
 	})
 	if err != nil {
-		util.GetLoggerEntry(ctx).Error(rfcontext.Fmt(rfcontext.AppendDescription(ctx, fmt.Sprintf("ValidateAndClaim GetVipWithDefault %v %v", err, orderId))))
+		ctx = rfcontext.AppendError(ctx, err, "GetVipWithDefault")
+		log.Printf(rfcontext.Fmt(ctx))
 		return
 	}
 
@@ -66,18 +69,20 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 	log.Printf(rfcontext.Fmt(ctx))
 
 	// check cash method and vip combination has promotion or not
-	cashMethodPromotion, err := PromoByCashMethodIdAndVipId(orderCashMethodId, vipRecordVipRuleId, &cashedInOrder.CreatedAt, &cashedInOrder.AppliedCashInAmount, model.DB)
+	cashMethodPromotion, err := ByCashMethodIdAndVipId(model.DB, orderCashMethodId, vipRecordVipRuleId, &cashedInOrder.CreatedAt, &cashedInOrder.AppliedCashInAmount)
 	cashMethodPromotionId := cashMethodPromotion.ID
 	ctx = rfcontext.AppendParams(ctx, callDesc, map[string]any{
 		"cashMethodPromotionId": cashMethodPromotionId,
 	})
 
 	if err != nil {
-		util.GetLoggerEntry(ctx).Error("ValidateAndClaim Find ValidateAndClaim", err, orderId)
+		ctx = rfcontext.AppendError(ctx, err, "ByCashMethodIdAndVipId")
+		log.Printf(rfcontext.Fmt(ctx))
 		return
 	}
 	if cashMethodPromotionId == 0 {
-		util.GetLoggerEntry(ctx).Error("ValidateAndClaim no ValidateAndClaim", orderId)
+		ctx = rfcontext.AppendDescription(ctx, "cashMethodPromotionId == 0")
+		log.Printf(rfcontext.Fmt(ctx))
 		return
 	}
 
@@ -85,7 +90,7 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 	log.Printf(rfcontext.Fmt(ctx))
 
 	// check over payout limit or not
-	claimedPast7DaysL, claimedPast1DayL, err := GetAccumulatedClaimedCashMethodPromotionPast7And1Days(ctx, orderCashMethodId, orderUserId)
+	claimedPast7DaysL, claimedPast1DayL, err := GetAccumulatedClaimedCashMethodPromotionPast7And1Days(ctx, &orderCashMethodId, orderUserId)
 	if err != nil {
 		ctx = rfcontext.AppendError(ctx, err, "get user past claimed")
 		log.Printf(rfcontext.Fmt(ctx))
@@ -118,7 +123,7 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 		"claimedPast1Day":  claimedPast1Day,
 	})
 
-	finalPayout, err := FinalPayout(ctx, claimedPast7Days, claimedPast1Day, cashMethodPromotion, cashOrderAmount, false)
+	finalPayout, err := FinalPossiblePayout(ctx, claimedPast7Days, claimedPast1Day, cashMethodPromotion, cashOrderAmount, false)
 	if err != nil {
 		ctx = rfcontext.AppendError(ctx, err, "final payout cal err")
 		log.Printf(rfcontext.Fmt(ctx))
@@ -168,16 +173,16 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 		}
 		err = tx.Create(&dummyOrder).Error
 		if err != nil {
+			ctx = rfcontext.AppendError(ctx, err, "tx.Create(&dummyOrder).Error")
+			log.Printf(rfcontext.Fmt(ctx))
 			return err
 		}
-		util.GetLoggerEntry(ctx).Info("ValidateAndClaim new cash order ", cashOrderId, orderId) // wl: for staging debug
-		common.SendUserSumSocketMsg(orderUserId, updatedSum.UserSum, "promotion", float64(finalPayout)/100)
+		go common.SendUserSumSocketMsg(orderUserId, updatedSum.UserSum, "promotion", float64(finalPayout)/100)
 		return
 	})
 	if err != nil {
-		ctx = rfcontext.AppendError(ctx, err, "ValidateAndClaim")
+		ctx = rfcontext.AppendError(ctx, err, "transaction")
 		log.Printf(rfcontext.Fmt(ctx))
-		util.GetLoggerEntry(ctx).Error("ValidateAndClaim", err, orderId)
 		return
 	}
 }

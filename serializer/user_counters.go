@@ -1,24 +1,33 @@
 package serializer
 
 import (
-	"github.com/gin-gonic/gin"
 	"strconv"
+
 	"web-api/model"
+	"web-api/service/backend_for_frontend/game_history_pane"
 )
 
 type UserCounters struct {
-	Order        string `json:"order"`
-	Transaction  string `json:"transaction"`
-	Notification string `json:"notification"`
+	Order        string            `json:"order"`
+	Transaction  string            `json:"transaction"`
+	Notification string            `json:"notification"`
+	OrderType    map[string]string `json:"order_type"`
 }
 
-func BuildUserCounters(c *gin.Context, a model.UserCounters) (b UserCounters) {
-	b = UserCounters{
+func BuildUserCounters(a model.UserCounters, _gameOrderHistoriesByPaneType map[game_history_pane.GamesHistoryPaneType]int64, gameHistoryPaneCountsHideAll bool) (UserCounters, error) {
+	orderTypes := make(map[string]string)
+	if gameHistoryPaneCountsHideAll {
+		delete(_gameOrderHistoriesByPaneType, game_history_pane.GamesPaneAll)
+	}
+	for paneType, count := range _gameOrderHistoriesByPaneType {
+		orderTypes[strconv.Itoa(int(paneType))] = formatCounter(count)
+	}
+	return UserCounters{
 		Order:        formatCounter(a.Order),
 		Transaction:  formatCounter(a.Transaction),
 		Notification: formatCounter(a.Notification),
-	}
-	return
+		OrderType:    orderTypes,
+	}, nil
 }
 
 func formatCounter(counter int64) string {

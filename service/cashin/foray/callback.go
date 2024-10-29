@@ -1,16 +1,19 @@
 package cashin_foray
 
 import (
+	"context"
 	"errors"
+	"log"
 
 	"web-api/model"
 	"web-api/service/cashin"
+	"web-api/service/promotion/on_cash_orders"
 	"web-api/util"
 
-	"web-api/service/promotion/on_cash_orders"
-
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	forayDto "blgit.rfdev.tech/taya/payment-service/foray/dto"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,16 +38,20 @@ func (s *ForayPaymentCallback) Handle(c *gin.Context) error {
 	// create transaction history
 	// }
 
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "(s *ForayPaymentCallback) Handle")
 	txType := ploutos.TransactionTypeCashIn
-	cashOrder, err := cashin.CloseCashInOrder(c, s.OrderTranoIn, s.OrderAmount, 0, 0, util.JSON(s), model.DB, txType)
+	cashOrder, err := cashin.CloseCashInOrder(c, ctx, s.OrderTranoIn, s.OrderAmount, 0, 0, util.JSON(s), model.DB, txType)
+	ctx = rfcontext.AppendError(ctx, err, "CloseCashInOrder")
+	log.Println(rfcontext.Fmt(ctx))
 	if err != nil {
 		return err
 	}
 	// if err == nil {
 	go func() {
-		pErr := on_cash_orders.Handle(c.Copy(), cashOrder, txType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeCallback)
+		pErr := on_cash_orders.Handle(ctx, cashOrder, txType, on_cash_orders.CashOrderEventTypeClose, on_cash_orders.PaymentGatewayForay, on_cash_orders.RequestModeCallback)
 		if pErr != nil {
-			util.GetLoggerEntry(c).Error("error on promotion handling", pErr)
+			ctx = rfcontext.AppendError(ctx, pErr, "on_cash_orders.Handle")
+			log.Println(rfcontext.Fmt(ctx))
 		}
 	}()
 

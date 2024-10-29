@@ -2,14 +2,14 @@ package service
 
 import (
 	"time"
+
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/backend_for_frontend/game_history_pane"
 	"web-api/service/common"
 	"web-api/util"
 	"web-api/util/i18n"
-
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,10 +46,6 @@ func (s CashOrderService) List(c *gin.Context) (r serializer.Response, err error
 	r.Data = util.MapSlice(list, func(input model.CashOrder) serializer.GenericCashOrder {
 		return serializer.BuildGenericCashOrder(input, i18n)
 	})
-	go updateTransactionLastSeen(user.ID)
+	go game_history_pane.AdvanceTransactionLastSeen(user.ID, time.Now())
 	return
-}
-
-func updateTransactionLastSeen(userId int64) {
-	model.DB.Model(ploutos.UserCounter{}).Scopes(model.ByUserId(userId)).Update(`transaction_last_seen`, time.Now())
 }

@@ -2,8 +2,9 @@ package model
 
 import (
 	"database/sql"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
@@ -54,7 +55,7 @@ func GetReferralAllianceSummaries(cond GetReferralAllianceSummaryCond) ([]Referr
 	}
 
 	var res []ReferralAllianceSummary
-	err := db.Table(ploutos.ReferralAllianceReward{}.TableName()).
+	err := db.Debug().Table(ploutos.ReferralAllianceReward{}.TableName()).
 		Select(selectFields).
 		Where("reward_month != ''"). // filter out old data TODO remove this after a while
 		Find(&res).Error

@@ -1,10 +1,15 @@
 package model
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"math"
 	"time"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"gorm.io/gorm"
 )
 
@@ -26,7 +31,6 @@ func GetNegativeProfitRebate(startDate, endDate time.Time, userId, percentage in
 }
 
 func GetNegativeProfit(startDate, endDate time.Time, userId int64) (res int64, err error) {
-
 	// SUM ALL ONLY SPORTS BETTING (FB, TAYA, IMSB)
 	// If totalNegativeProfit > 0, means user bet result overall lose
 
@@ -70,4 +74,88 @@ func GetBetReport(businessId string) (betReport ploutos.BetReport, err error) {
 		Where("business_id = ?", businessId).
 		First(&betReport).Error
 	return
+}
+
+type OrderSummary struct {
+	Count  int64 `gorm:"column:count"`
+	Amount int64 `gorm:"column:amount"`
+	Win    int64 `gorm:"column:win"`
+}
+
+func BetReportsStats(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds []int64, statuses []ploutos.TayaBetReportStatus, isParlay bool) (OrderSummary, error) {
+	var orderSummary OrderSummary
+	ctx = rfcontext.AppendCallDesc(ctx, "CountBetReports")
+	ctx = rfcontext.AppendParams(ctx, "CountBetReports", map[string]interface{}{
+		"userId":        userId,
+		"fromBetTime":   fromBetTime,
+		"toBetTime":     toBetTime,
+		"gameVendorIds": gameVendorIds,
+		"isParlay":      isParlay,
+	})
+	log.Println(rfcontext.Fmt(ctx))
+
+	db := DB
+	if db == nil {
+		return OrderSummary{}, fmt.Errorf("db is nil")
+	}
+	err := db.Model(BetReport{}).Debug().Select(`COUNT(1) as count, SUM(bet) as amount, SUM(win-bet) as win`).Scopes(ByOrderListConditions(userId, gameVendorIds, statuses, &isParlay, fromBetTime, toBetTime)).Find(&orderSummary).Error
+
+	if err != nil {
+		return OrderSummary{}, err
+	}
+	return orderSummary, err
+}
+
+func BetReports(ctx context.Context, userId int64, fromBetTime, toBetTime time.Time, gameVendorIds []int64, statusesToInclude []ploutos.TayaBetReportStatus, isParlay bool, pageNo int, pageSize int) ([]ploutos.BetReport, error) {
+	ctx = rfcontext.AppendCallDesc(ctx, "BetReports")
+	ctx = rfcontext.AppendParams(ctx, "BetReports", map[string]interface{}{
+		"userId":            userId,
+		"fromBetTime":       fromBetTime,
+		"toBetTime":         toBetTime,
+		"gameVendorIds":     gameVendorIds,
+		"statusesToInclude": statusesToInclude,
+		"isParlay":          isParlay,
+		"pageNo":            pageNo,
+		"pageSize":          pageSize,
+	})
+
+	log.Println(rfcontext.Fmt(ctx))
+	db := DB
+	if db == nil {
+		return []ploutos.BetReport{}, fmt.Errorf("db is nil")
+	}
+
+	var betReports []ploutos.BetReport
+	err := DB.Debug().Preload(`Voucher`).Preload(`ImVoucher`).Preload(`GameVendor`).
+		Model(ploutos.BetReport{}).Scopes(ByOrderListConditions(userId, gameVendorIds, statusesToInclude, &isParlay, fromBetTime, toBetTime), ByBetTimeSort, Paginate(pageNo, pageSize)).
+		Find(&betReports).Error
+
+	if err != nil {
+		return []ploutos.BetReport{}, err
+	}
+	return betReports, nil
+}
+
+func IsSettledFlagToPloutosIncludeStatuses(s *bool, forAggregation bool) []ploutos.TayaBetReportStatus {
+	var statuses []ploutos.TayaBetReportStatus
+	if s == nil { // "default"
+		statuses = []ploutos.TayaBetReportStatus{ploutos.TayaBetReportStatusCreated, ploutos.TayaBetReportStatusConfirming,
+			ploutos.TayaBetReportStatusRejected,
+			ploutos.TayaBetReportStatusCancelled,
+			ploutos.TayaBetReportStatusConfirmed,
+			ploutos.TayaBetReportStatusSettled, 6}
+	} else if /*service.IsSettled != nil &&*/ *s {
+		if forAggregation { // only include effective bet amounts
+			statuses = []ploutos.TayaBetReportStatus{ploutos.TayaBetReportStatusSettled, 6}
+		} else {
+			statuses = []ploutos.TayaBetReportStatus{ploutos.TayaBetReportStatusRejected,
+				ploutos.TayaBetReportStatusCancelled, ploutos.TayaBetReportStatusSettled, 6}
+		}
+	} else /*service.IsSettled != nil && !*service.IsSettled */ {
+		statuses = []ploutos.TayaBetReportStatus{ploutos.TayaBetReportStatusCreated,
+			ploutos.TayaBetReportStatusConfirming,
+			ploutos.TayaBetReportStatusConfirmed}
+	}
+
+	return statuses
 }

@@ -18,6 +18,7 @@ type Stream struct {
 	Status               int64                  `json:"status"`
 	PullUrl              map[string]interface{} `json:"src"`
 	ImgUrl               string                 `json:"img_url"`
+	H5HomeCover          string                 `json:"h5_home_cover"`
 	ScheduleTimeTS       int64                  `json:"schedule_time_ts"`
 	OnlineAtTs           int64                  `json:"online_at_ts"`
 	CurrentView          int64                  `json:"current_view"`
@@ -29,7 +30,7 @@ type Stream struct {
 	Width                int64                  `json:"width,omitempty"`
 	Height               int64                  `json:"height,omitempty"`
 	MgRoomId             *string                `json:"mg_room_id,omitempty"`
-	LiveChatGroupId                string                 `json:"live_chat_group_id"`
+	LiveChatGroupId      string                 `json:"live_chat_group_id"`
 	Match                *Match                 `json:"match,omitempty"`
 	Streamer             *Streamer              `json:"streamer,omitempty"`
 }
@@ -49,10 +50,13 @@ func BuildStream(c *gin.Context, a ploutos.LiveStream) (b Stream) {
 		Width:                a.Width,
 		Height:               a.Height,
 		MgRoomId:             a.MgRoomId,
-		LiveChatGroupId: a.LiveChatGroupId,
+		LiveChatGroupId:      a.LiveChatGroupId,
 	}
 	if a.ImgUrl != "" {
 		b.ImgUrl = Url(a.ImgUrl)
+	}
+	if a.H5HomeCover != "" {
+		b.H5HomeCover = Url(a.H5HomeCover)
 	}
 	if a.PullUrl != "" {
 		var m map[string]interface{}

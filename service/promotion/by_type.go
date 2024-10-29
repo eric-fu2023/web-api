@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -497,7 +498,12 @@ func rewardVipReferral(c context.Context, userID int64, now time.Time) (reward i
 }
 
 func claimVoucherReferralVip(c context.Context, p ploutos.Promotion, voucher ploutos.Voucher, userID int64, now time.Time) error {
-	user := c.Value("user").(model.User)
+	var user model.User
+	err := model.DB.Where("id", userID).First(&user).Error
+	if err != nil {
+		return fmt.Errorf("find user error: %w", err)
+	}
+
 	return model.DB.Clauses(dbresolver.Use("txConn")).Debug().WithContext(c).Transaction(func(tx *gorm.DB) error {
 		rewardRecords, err := claimReferralAllianceRewards(tx, userID, now)
 		if err != nil {
@@ -597,7 +603,11 @@ func buildSuffixByType(c context.Context, p ploutos.Promotion, userID int64) str
 		suffix = fmt.Sprintf("date-%s", today.Format(time.DateOnly))
 	case ploutos.PromotionTypeVipWeeklyB:
 		year, week := today.ISOWeek()
-		suffix = fmt.Sprintf("year-%d-week-%d", year, week)
+		// here add this random number is to prevent the duplicate key generated when we calculate for the missing weekly bonus
+		// need to remove this random on 28/10/2024
+		rand.Seed(time.Now().UnixNano())
+		randomInt := rand.Int()
+		suffix = fmt.Sprintf("year-%d-week-%d-rand-%d", year, week, randomInt)
 	case ploutos.PromotionTypeVipBirthdayB:
 		suffix = fmt.Sprintf("year-%d", today.Year())
 	case ploutos.PromotionTypeVipPromotionB:

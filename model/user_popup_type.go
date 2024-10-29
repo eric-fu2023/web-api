@@ -7,10 +7,12 @@ import (
 	"os"
 	"strconv"
 	"time"
+
 	"web-api/cache"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 	"github.com/go-redis/redis/v8"
+
 	"gorm.io/gorm/logger"
 )
 
@@ -27,7 +29,7 @@ func ShouldPopupWinLose(user User) (bool, error) {
 		}
 	}
 	result, err := strconv.Atoi(res.Val())
-	if err!=nil{
+	if err != nil {
 		return false, err
 	}
 	if result < 0 {
@@ -125,7 +127,6 @@ func ShouldPopupSpin(user User, spin_promotion_id int) (bool, error) {
 		return true, nil
 	}
 	return false, nil
-
 }
 
 func GetPopupList(condition int64) (resp_list []ploutos.Popups, err error) {

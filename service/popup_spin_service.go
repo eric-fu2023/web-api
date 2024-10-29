@@ -1,16 +1,22 @@
 package service
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"strconv"
 	"time"
+
 	"web-api/model"
 	"web-api/serializer"
 	"web-api/service/common"
 	"web-api/util/i18n"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,6 +59,10 @@ func (service *SpinService) Get(c *gin.Context) (r serializer.Response, err erro
 	r = serializer.Response{
 		Data: data,
 	}
+
+	rr, _ := json.Marshal(r)
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), fmt.Sprintf("SpinService.Get spin promo id: %s, response: %s", spin_promotion_id, string(rr)))
+	log.Println(rfcontext.FmtJSON(ctx))
 	return
 }
 

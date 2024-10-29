@@ -1,15 +1,19 @@
 package service
 
 import (
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
 	"time"
+
 	"web-api/model"
 	"web-api/serializer"
+	"web-api/service/backend_for_frontend/game_history_pane"
 	"web-api/service/common"
 	"web-api/util/i18n"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	"github.com/gin-gonic/gin"
 )
 
 type UserNotificationListService struct {
@@ -32,7 +36,7 @@ func (service *UserNotificationListService) List(c *gin.Context) (r serializer.R
 		list = append(list, serializer.BuildUserNotification(c, notification))
 	}
 
-	go updateNotificationLastSeen(user.ID)
+	go game_history_pane.AdvanceNotificationLastSeen(user.ID, time.Now())
 
 	r = serializer.Response{
 		Data: list,
@@ -63,8 +67,4 @@ func (service *UserNotificationMarkReadService) MarkRead(c *gin.Context) (r seri
 	}
 	r.Msg = "Success"
 	return
-}
-
-func updateNotificationLastSeen(userId int64) {
-	model.DB.Model(ploutos.UserCounter{}).Scopes(model.ByUserId(userId)).Update(`notification_last_seen`, time.Now())
 }
