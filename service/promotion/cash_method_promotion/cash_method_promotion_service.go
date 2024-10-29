@@ -47,7 +47,7 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 		}
 
 		if promotionRecord.ID != 0 {
-			ctx = rfcontext.AppendDescription(ctx, "promotionRecord.ID != 0")
+			ctx = rfcontext.AppendDescription(ctx, "promotionRecord.ID != 0. exist -> skip")
 			log.Printf(rfcontext.Fmt(ctx))
 			return
 		}

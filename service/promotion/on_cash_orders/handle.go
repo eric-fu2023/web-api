@@ -52,31 +52,24 @@ func Handle(ctx context.Context, order model.CashOrder, transactionType ploutos.
 	})
 
 	log.Println(rfcontext.Fmt(ctx))
-
-	// validate eventType
 	switch eventType {
 	case CashOrderEventTypeClose:
 	default:
 		return fmt.Errorf("unsupported event type: %d", eventType)
 	}
-	// validate payment channel
-	switch gateway {
-	case PaymentGatewayFinpay, PaymentGatewayForay:
-	default:
-		return fmt.Errorf("unsupported gateway: %s", gateway)
-	}
-	// one time bonus if it's cash in
-	if transactionType == ploutos.TransactionTypeCashIn {
+
+	// promotion: one time bonus if it's cash in
+	if transactionType == ploutos.TransactionTypeCashIn && (gateway == PaymentGatewayFinpay || gateway == PaymentGatewayForay) {
 		OneTimeBonusPromotion(ctx, order)
 	}
-	// handle cash method promotion
+
+	// promotion: cash in: regular
 	// future can add feature flag or runtime control via app_config to toggle.
 	{
-		shouldHandleCashMethodPromotion := false
-		switch {
-		case order.OrderType == ploutos.CashOrderTypeCashIn && (order.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || order.OperationType == 0):
-			shouldHandleCashMethodPromotion = true
-		}
+
+		validOpType := order.OrderType == ploutos.CashOrderTypeCashIn && (order.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || order.OperationType == 0)
+		validPaymentGateway := true
+		shouldHandleCashMethodPromotion := validPaymentGateway && validOpType
 
 		ctx = rfcontext.AppendParams(ctx, "cash_method_promo", map[string]interface{}{
 			"shouldHandleCashMethodPromotion": shouldHandleCashMethodPromotion,
