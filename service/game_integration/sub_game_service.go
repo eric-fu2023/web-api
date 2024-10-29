@@ -117,7 +117,7 @@ func (service *SubGameService) FeaturedList(c *gin.Context) (serializer.Response
 
 	// todo use view model from this repo
 	var subGames []ploutos.SubGameBrand
-	tx := model.DB.Debug().Model(ploutos.SubGameBrand{}).Where(fmt.Sprintf("%s.brand_id = %d", ploutos.SubGameBrand{}.TableName(), brandId)).Where(fmt.Sprintf("%s.%s = ?", ploutos.SubGameBrand{}.TableName(), platform), 1).Where("is_featured = true").Order("sort DESC").Find(&subGames)
+	tx := model.DB.Debug().Model(ploutos.SubGameBrand{}).Where(fmt.Sprintf("%s.brand_id = %d", ploutos.SubGameBrand{}.TableName(), brandId)).Where(fmt.Sprintf("%s.%s = ?", ploutos.SubGameBrand{}.TableName(), platform), 1).Where("is_featured").Order("sort DESC, updated_at DESC").Find(&subGames)
 	if err := tx.Error; err != nil {
 		return serializer.Response{
 			Data: []serializer.SubGamesBrandsByGameType{},
