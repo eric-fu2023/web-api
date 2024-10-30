@@ -74,8 +74,8 @@ func ConfigStats(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *ti
 }
 
 // FinalPossiblePayout
-// dryRun == calculate ceiling for the payout
-func FinalPossiblePayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount int64, dryRun bool) (amount int64, err error) {
+// cashAmount == nil => calculate ceiling for the payout
+func FinalPossiblePayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount *int64) (amount int64, err error) {
 	if claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout {
 		util.GetLoggerEntry(c).Info("FinalPossiblePayout claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout", claimedPast7Days, cashMethodPromotion.WeeklyMaxPayout)
 		return
@@ -88,10 +88,10 @@ func FinalPossiblePayout(c context.Context, claimedPast7Days int64, claimedPast1
 	dailyClaimableCeiling := float64(cashMethodPromotion.DailyMaxPayout - claimedPast1Day)
 	weeklyClaimableCeiling := float64(cashMethodPromotion.WeeklyMaxPayout - claimedPast7Days)
 
-	if dryRun {
+	if cashAmount == nil {
 		return int64(min(dailyClaimableCeiling, weeklyClaimableCeiling)), nil
 	} else {
-		ratedPayout := cashMethodPromotion.PayoutRate * float64(cashAmount)
+		ratedPayout := cashMethodPromotion.PayoutRate * float64(*cashAmount)
 		return int64(min(ratedPayout, dailyClaimableCeiling, weeklyClaimableCeiling)), nil
 	}
 }

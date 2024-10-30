@@ -123,7 +123,7 @@ func ValidateAndClaim(ctx context.Context, cashedInOrder model.CashOrder) {
 		"claimedPast1Day":  claimedPast1Day,
 	})
 
-	finalPayout, err := FinalPossiblePayout(ctx, claimedPast7Days, claimedPast1Day, cashMethodPromotion, cashOrderAmount, false)
+	finalPayout, err := FinalPossiblePayout(ctx, claimedPast7Days, claimedPast1Day, cashMethodPromotion, &cashOrderAmount)
 	if err != nil {
 		ctx = rfcontext.AppendError(ctx, err, "final payout cal err")
 		log.Printf(rfcontext.Fmt(ctx))
