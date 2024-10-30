@@ -39,36 +39,16 @@ func ByCashMethodIdAndVipId(tx *gorm.DB, cashMethodId, vipId int64, promotionAt 
 	return
 }
 
-func SelectMaxPayoutRate(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *time.Time) (ploutos.Fractional, error) {
-	if cashMethodId == nil || vipId == nil {
-		return 0, errors.New("cashMethodId and vipId required to cal max payout rate")
-	}
-	if tx == nil {
-		tx = model.DB
-	}
-
-	if promotionAt == nil {
-		now := time.Now().UTC()
-		promotionAt = &now
-	}
-
-	var rate ploutos.Fractional
-	tx = tx.Debug().Table(ploutos.CashMethodPromotion{}.TableName()).Select("max(payout_rate) payout_rate").
-		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
-		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).
-		Where("status = ?", 1).
-		Find(&rate)
-	err := tx.Error
-	if err != nil {
-		return 0, err
-	}
-	return rate, nil
+type ConfigStat struct {
+	PayoutRate_Max      ploutos.Fractional `json:"payout_rate_max"`
+	DailyMaxPayout_Max  int64              `json:"daily_max_payout_max"`
+	WeeklyMaxPayout_Max int64              `json:"weekly_max_payout_max"`
+	MinPayout_Min       int64              `json:"min_payout_min"`
 }
 
-// SelectFloorForPromotio TODO check which column for min. calc.
-func SelectFloorForPromotion(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *time.Time) (ploutos.Fractional, error) {
+func ConfigStats(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *time.Time) (ConfigStat, error) {
 	if cashMethodId == nil || vipId == nil {
-		return 0, errors.New("cashMethodId and vipId required to cal max payout rate")
+		return ConfigStat{}, errors.New("cashMethodId and vipId required to cal max payout rate")
 	}
 	if tx == nil {
 		tx = model.DB
@@ -79,17 +59,18 @@ func SelectFloorForPromotion(tx *gorm.DB, cashMethodId *int64, vipId *int64, pro
 		promotionAt = &now
 	}
 
-	var rate ploutos.Fractional
-	tx = tx.Debug().Table(ploutos.CashMethodPromotion{}.TableName()).Select("min(min_payout) min_payout").
+	var _stats ConfigStat
+	tx = tx.Debug().Table(ploutos.CashMethodPromotion{}.TableName()).
+		Select("max(payout_rate) payout_rate_max, max(daily_max_payout) daily_max_payout_max, max(weekly_max_payout) weekly_max_payout_max, min(min_payout) min_payout_min").
 		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
 		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).
 		Where("status = ?", 1).
-		Find(&rate)
+		Find(&_stats)
 	err := tx.Error
 	if err != nil {
-		return 0, err
+		return ConfigStat{}, err
 	}
-	return rate, nil
+	return _stats, nil
 }
 
 // FinalPossiblePayout

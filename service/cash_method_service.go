@@ -77,7 +77,6 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		if cm.HasCashMethodPromotion() {
 			// for each option, individual query to get respective cashMethodPromotionOfSelection
 			cashMethodDefaultOptions := cm.DefaultOptions
-			var _maxClaimable float64
 
 			// var maxPayoutRate float64
 			// var minFloor float64
@@ -101,9 +100,9 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 					log.Println(rfcontext.Fmt(sCtx))
 				}
 
-				label := fmt.Sprintf("%#v", float64(selectionAmount)/100)
-				_maxClaimable = max(_maxClaimable, float64(_claimable))
+				label := fmt.Sprintf("%f", float64(selectionAmount)/100)
 
+				//_maxClaimable = max(_maxClaimable, float64(_claimable))
 				//maxPayoutRate = max(maxPayoutRate, cashMethodPromotionOfSelection.PayoutRate)
 
 				selections = append(selections, serializer.DefaultCashMethodPromotionOption{
@@ -116,20 +115,16 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 				})
 			}
 
-			_maxPayoutRate, rrerr := cash_method_promotion.SelectMaxPayoutRate(nil, &cashMethodId, &vipRecordVipRuleId, nil)
+			stats, rrerr := cash_method_promotion.ConfigStats(nil, &cashMethodId, &vipRecordVipRuleId, nil)
 			if rrerr != nil {
-				rfcontext.AppendError(cCtx, rrerr, "SelectMaxPayoutRate")
+				rfcontext.AppendErrorAsWarn(cCtx, rrerr, "ConfigStats")
 				log.Println(rfcontext.Fmt(cCtx))
 			}
-			_minFloor, rmerr := cash_method_promotion.SelectFloorForPromotion(nil, &cashMethodId, &vipRecordVipRuleId, nil)
-			if rrerr != nil {
-				rfcontext.AppendError(cCtx, rmerr, "SelectFloorForPromotion")
-				log.Println(rfcontext.Fmt(cCtx))
-			}
+
 			cashMethodPromotion = &serializer.CashMethodPromotion{
-				PayoutRate:                        _maxPayoutRate,
-				MaxPromotionAmount:                float64(_maxClaimable) / 100,
-				MinAmountForPayout:                _minFloor / 100, // fixme get the floor of the leftmost cash method promotion applicable range
+				PayoutRate:                        float64(stats.PayoutRate_Max) / 100,
+				MaxPromotionAmount:                float64(stats.WeeklyMaxPayout_Max) / 100,
+				MinAmountForPayout:                float64(stats.MinPayout_Min) / 100,
 				DefaultCashMethodPromotionOptions: selections,
 			}
 		}
