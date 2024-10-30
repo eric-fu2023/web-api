@@ -29,6 +29,8 @@ type DomainConfigRes struct {
 	BataceApi string `json:"b,omitempty"`
 	// for ba only, crickong api
 	CrickongApi string `json:"c,omitempty"`
+	// for ba only, A screen or B
+	Mode bool `json:"m"`
 }
 
 func (service *DomainConfigService) InitApp(c *gin.Context) (code int, res serializer.Response, err error) {
@@ -42,6 +44,16 @@ func (service *DomainConfigService) InitApp(c *gin.Context) (code int, res seria
 		return
 	}
 
+	// validABScreenHeaders := checkABScreenHeaders(c)
+
+	// TEMPORARY - get ab screen status from app config
+	// Pending API from Taiwan
+	isA := false
+	abScreenString, _ := model.GetAppConfigWithCache("mode", "is_a")
+	if abScreenString != "" && abScreenString == "true" {
+		isA = true
+	}
+
 	// retrieve all active app domains, shuffle and return
 	code = 200
 	res = serializer.Response{
@@ -52,6 +64,9 @@ func (service *DomainConfigService) InitApp(c *gin.Context) (code int, res seria
 			Nami:        FindRandomDomain(model.SupportTypeApp, model.DomainTypeNami, c),
 			BataceApi:   FindRandomDomain(model.SupportTypeApp, model.DomainTypeBatace, c),
 			CrickongApi: FindRandomDomain(model.SupportTypeApp, model.DomainTypeCrickong, c),
+			// Mode = true = Is A Screen
+			// Mode = false = Is Not A Screen
+			Mode: isA,
 		},
 	}
 
@@ -119,4 +134,32 @@ func retrieveFromDB(supportType string, domainType string, c *gin.Context) strin
 		return domains[time.Now().UTC().UnixMicro()%int64(size)].DomainUrl
 	}
 	return ""
+}
+
+func checkABScreenHeaders(c *gin.Context) (isValid bool) {
+
+	// Headers
+	// 设备号 - DeviceUuid
+	// 是否为Ipad - IsIpad
+	// VPN状态 - IsVpn
+	// 充电状态 - IsCharging
+	// 产品代号 -
+	// 母包版本 -
+	// 上架包 ｜ 非上架包 - IsOnStore
+
+	// Headers to decide A/B screen
+	// c.GetHeader("DeviceUuid")
+	// c.GetHeader("IsIpad")
+	// c.GetHeader("IsVpn")
+	// c.GetHeader("IsCharging")
+	// c.GetHeader("IsOnStore")
+	// c.GetHeader("产品代号")
+	// c.GetHeader("母包版本")
+
+	if c.GetHeader("DeviceUuid") == "" || c.GetHeader("IsIpad") == "" || c.GetHeader("IsVpn") == "" || c.GetHeader("IsCharging") == "" || c.GetHeader("IsOnStore") == "" || c.GetHeader("产品代号") == "" || c.GetHeader("母包版本") == "" {
+		return
+	}
+
+	isValid = true
+	return
 }
