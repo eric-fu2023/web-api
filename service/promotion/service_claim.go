@@ -1,16 +1,17 @@
 package promotion
 
 import (
-	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	models "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/go-redsync/redsync/v4"
@@ -26,10 +27,23 @@ func Claim(ctx context.Context, now time.Time, promotion models.Promotion, sessi
 		claimStatus     serializer.ClaimStatus
 		voucherTemplate models.VoucherTemplate
 	)
-	ctx = rfcontext.AppendCallDesc(ctx, "Claim")
+
+	ctx = rfcontext.AppendParams(rfcontext.AppendCallDesc(ctx, "Claim"), "Claim", map[string]interface{}{
+		"promotion.Id":        promotion.ID,
+		"promotion.Name":      promotion.Name,
+		"promotion.Type.Name": models.DefaultPromotionTypeNames[promotion.Type],
+		"userID":              userID,
+		"user":                user,
+		"session.ID":          session.ID,
+		"session.ClaimStart":  session.ClaimStart,
+		"session.ClaimEnd":    session.ClaimEnd,
+	})
+
 	claimStatus = GetPromotionSessionClaimStatus(ctx, promotion, session, userID, now)
 	if claimStatus.HasClaimed {
 		err = errors.New("double_claim")
+		ctx = rfcontext.AppendError(ctx, err, "GetPromotionSessionClaimStatus")
+		log.Println(rfcontext.Fmt(ctx))
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "Already Claimed", err)
 		return
 	}

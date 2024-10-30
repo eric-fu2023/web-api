@@ -9,15 +9,13 @@ import (
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+	"web-api/service/promotion"
 	"web-api/service/social_media_pixel"
 	"web-api/util"
 
 	"blgit.rfdev.tech/taya/common-function/cash_orders"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
-
-	"web-api/service/promotion"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -111,13 +109,13 @@ func CloseCashInOrder(c *gin.Context, ctx context.Context, orderNumber string, a
 		}
 		// if claim success, will send notification, and create notification in db.
 		ctx = rfcontext.AppendCallDesc(ctx, "this is to claim referral bonus!!!")
-		_, err = promotion.Claim(context.TODO(), now, referralPromo, referralSession, userReferral.ReferrerId, nil)
+		_, err = promotion.Claim(ctx, now, referralPromo, referralSession, userReferral.ReferrerId, nil)
 		if err != nil {
 			ctx = rfcontext.AppendError(ctx, err, "promotion.Claim")
 			log.Println(rfcontext.Fmt(ctx))
 		}
 
-		ctx = rfcontext.AppendDescription(ctx, fmt.Sprintf("referralPromo.Claim finished %d", uid))
+		ctx = rfcontext.AppendDescription(ctx, fmt.Sprintf("referralPromo.Claim finished userId %d", uid))
 	}
 	log.Println(rfcontext.Fmt(ctx))
 	return
