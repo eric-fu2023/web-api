@@ -306,7 +306,7 @@ func ParseButtonClickOption(c *gin.Context, incoming IncomingCustomPromotionRequ
 	buttonClickOption := incoming.MaxClick
 	entryLimitType := int64(buttonClickOption)
 	if incoming.X == "" {
-		incoming.X = "0"
+		incoming.X = "99999"
 	}
 	buttonClickTimes, _ := strconv.Atoi(incoming.X)
 
