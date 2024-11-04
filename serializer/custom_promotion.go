@@ -61,7 +61,7 @@ type IncomingCustomPromotionRequestField struct {
 	InputId      string              `json:"input_id"`
 	Switch       int                 `json:"switch"`
 	Options      []map[string]string `json:"option"`
-	X            string              `json:"x"`
+	X            int                 `json:"x"`
 	Weightage    int                 `json:"weightage"`
 	ErrorHint    string              `json:"error_hint,omitempty"`
 	OrderType    []interface{}       `json:"order_type"`
@@ -306,10 +306,10 @@ func ParseButtonClickOption(c *gin.Context, incoming IncomingCustomPromotionRequ
 
 	buttonClickOption := incoming.MaxClick
 	entryLimitType := int64(buttonClickOption)
-	if incoming.X == "" {
-		incoming.X = "99999"
+	if incoming.X == 0 {
+		incoming.X = 99999
 	}
-	buttonClickTimes, _ := strconv.Atoi(incoming.X)
+	buttonClickTimes := incoming.X
 
 	isExceeded, err = model.CheckIfCustomPromotionEntryExceededLimit(c, entryLimitType, promotionId, userId, buttonClickTimes)
 	if err != nil {
