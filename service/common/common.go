@@ -427,6 +427,7 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 						IsFTD:           cause == "FTD_success",
 					}
 					msg.Send(conn)
+					util.Log().Info("deposit callback msg sent for %d, cause_type: %s, IsFTD: %b, Amount: %2f ", userId, cause_type, cause == "FTD_success", amount)
 				}
 			},
 		})
