@@ -35,7 +35,7 @@ type IncomingPromotionMatchListItem struct {
 	Id           string                               `json:"id"`
 	Teams        []IncomingPromotionMatchListItemTeam `json:"teams"`
 	Title        string                               `json:"title"`
-	RedirectType string                               `json:"redirect_type"`
+	RedirectType int                                  `json:"redirect_type"`
 	Img          string                               `json:"img"`
 	Name         string                               `json:"name"`
 	Time         time.Time                            `json:"open_time"`
@@ -192,6 +192,7 @@ func BuildPromotionMatchList(incoming []IncomingPromotionMatchListItem, subPromo
 			Title:         subPromotion.Name,
 			Text:          "立即前往",
 			StartDateTime: item.Time,
+			RedirectType:  item.RedirectType,
 		}
 
 		if item.Title != "" {
