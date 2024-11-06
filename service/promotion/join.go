@@ -43,6 +43,9 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 	}
 
 	var requestInput map[string]string
+	if p.Input == "" {
+		p.Input = "{}"
+	}
 	err = json.Unmarshal([]byte(p.Input), &requestInput)
 	if err != nil {
 		r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_entry_fail"), err)

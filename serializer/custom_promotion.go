@@ -304,14 +304,9 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 
 func ParseButtonClickOption(c *gin.Context, incoming IncomingCustomPromotionRequestField, promotionId, userId int64) (isExceeded bool, err error) {
 
-	buttonClickOption := incoming.MaxClick
-	entryLimitType := int64(buttonClickOption)
-	if incoming.X == 0 {
-		incoming.X = 99999
-	}
-	buttonClickTimes := incoming.X
+	entryLimitType := int64(incoming.MaxClick)
 
-	isExceeded, err = model.CheckIfCustomPromotionEntryExceededLimit(c, entryLimitType, promotionId, userId, buttonClickTimes)
+	isExceeded, err = model.CheckIfCustomPromotionEntryExceededLimit(c, entryLimitType, promotionId, userId, incoming.X)
 	if err != nil {
 		fmt.Println(err)
 	}
