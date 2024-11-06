@@ -30,7 +30,7 @@ func ByCashMethodIdAndVipId(tx *gorm.DB, cashMethodId, vipId int64, promotionAt 
 
 	// temporary guard for dev work, once stable can pass arg by value.
 	if cashInAmount != nil {
-		tx = tx.Where("? > min_payout", cashInAmount).Order("min_payout desc")
+		tx = tx.Where("? >= min_payout", cashInAmount).Order("min_payout desc")
 	} else {
 		return cashMethodPromotion, errors.New("cashInAmount required")
 	}
