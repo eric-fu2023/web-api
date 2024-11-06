@@ -123,7 +123,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 
 			cashMethodPromotion = &serializer.CashMethodPromotion{
 				PayoutRate:                        stats.PayoutRate_Max,
-				MaxPromotionAmount:                float64(stats.WeeklyMaxPayout_Max) / 100,
+				MaxPromotionAmount:                float64(min(stats.WeeklyMaxPayout_Max, stats.DailyMaxPayout_Max)) / 100,
 				MinAmountForPayout:                float64(stats.MinPayout_Min) / 100,
 				DefaultCashMethodPromotionOptions: selections,
 			}
