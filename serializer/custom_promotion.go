@@ -66,7 +66,7 @@ type IncomingCustomPromotionRequestField struct {
 	ErrorHint    string              `json:"error_hint,omitempty"`
 	OrderType    []interface{}       `json:"order_type"`
 	ContentType  int                 `json:"content_type"`
-	OrderStatus  string              `json:"order_status"`
+	OrderStatus  int                 `json:"order_status"`
 	MaxClick     int                 `json:"max_click"`
 	RedirectType int                 `json:"redirect_type"`
 }
