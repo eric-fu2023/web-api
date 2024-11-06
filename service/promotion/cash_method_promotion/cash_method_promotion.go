@@ -1,14 +1,14 @@
 package cash_method_promotion
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"errors"
+	"log"
 	"time"
 
-	"web-api/model"
-	"web-api/util"
-
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"web-api/model"
 
 	"gorm.io/gorm"
 )
@@ -75,13 +75,14 @@ func ConfigStats(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *ti
 
 // FinalPossiblePayout
 // cashAmount == nil => calculate ceiling for the payout
-func FinalPossiblePayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount *int64) (amount int64, err error) {
+func FinalPossiblePayout(ctx context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount *int64) (amount int64, err error) {
+	ctx = rfcontext.AppendCallDesc(ctx, "FinalPossiblePayout")
 	if claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout {
-		util.GetLoggerEntry(c).Info("FinalPossiblePayout claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout", claimedPast7Days, cashMethodPromotion.WeeklyMaxPayout)
+		log.Println(rfcontext.AppendDescription(ctx, "weekly payout reached"))
 		return
 	}
 	if claimedPast1Day >= cashMethodPromotion.DailyMaxPayout {
-		util.GetLoggerEntry(c).Info("FinalPossiblePayout claimedPast1Day >= cashMethodPromotion.DailyMaxPayout", claimedPast1Day, cashMethodPromotion.DailyMaxPayout)
+		log.Println(rfcontext.AppendDescription(ctx, "daily payout reached"))
 		return
 	}
 
