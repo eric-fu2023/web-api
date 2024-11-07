@@ -307,6 +307,11 @@ func NewRouter() *gin.Engine {
 					referralAllianceUserGroup.GET("/referral_summary", referral_alliance_api.GetReferralSummary)
 					referralAllianceUserGroup.GET("/referral_reward_records", referral_alliance_api.GetReferralRewardRecords)
 				}
+
+				v2 := user.Group("/v2")
+				{
+					v2.GET("/notifications", api.UserNotificationList)
+				}
 			}
 		}
 
