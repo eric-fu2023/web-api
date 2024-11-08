@@ -203,7 +203,7 @@ func NewRouter() *gin.Engine {
 					// v2
 					v2_user_auth_brand.GET("/notification", api.GeneralNotificationV2)
 					v2_user_auth_brand.GET("/notifications", api.UserNotificationListV2)
-					v2_user_auth_brand.PUT("/notifications/mark_read", api.UserNotificationMarkReadV2)
+					v2_user_auth_brand.PUT("/notifications/mark_read", api.UserNotificationsMarkReadV2)
 				}
 
 				user.GET("/counters", api.UserCounters)
