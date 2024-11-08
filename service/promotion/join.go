@@ -55,6 +55,20 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 	isExceeded := false
 	data := make(map[string]string)
 	numOriFields := 0
+
+	if len(incomingRequestAction.Fields) == 0 {
+		parentPromotion, getParentPromotionErr := model.OngoingPromotionById(c, brand, promotion.ParentId, now)
+		if getParentPromotionErr != nil {
+			r = serializer.Err(c, p, serializer.CodeGeneralError, i18n.T("custom_promotion_not_found"), err)
+			return
+		}
+
+		err = json.Unmarshal(parentPromotion.Action, &incomingRequestAction)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
 	for _, field := range incomingRequestAction.Fields {
 		if field.Switch == 0 {
 			continue
