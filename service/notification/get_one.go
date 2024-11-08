@@ -38,7 +38,7 @@ func (Notification) TableName() string {
 }
 
 type _ = ploutos.UserNotification
-type UserNotificationWithNotification struct {
+type GeneralNotification struct {
 	ID             int64         `gorm:"primarykey" json:"id"` // 主键ID
 	UserId         int64         `json:"user_id" form:"user_id" gorm:"column:user_id"`
 	Text           string        `json:"text" form:"text" gorm:"column:text"`
@@ -47,33 +47,24 @@ type UserNotificationWithNotification struct {
 	Notification   *Notification `json:"notification,omitempty" form:"-" gorm:"references:NotificationId;foreignKey:ID"`
 }
 
-func (UserNotificationWithNotification) TableName() string {
+func (GeneralNotification) TableName() string {
 	return "user_notifications"
 }
 
-// FindOne
+// FindGeneralOne
 // categoryType references [ploutos.Notification.Category]
 // notificationId references [ploutos.Notification]
 // userNotificationId references [ploutos.UserNotification]
-func FindOne(ctx context.Context, user model.User, categoryType ploutos.NotificationCategoryType, notificationId int64, userNotificationId int64) (UserNotificationWithNotification, error) {
-	var notif UserNotificationWithNotification
+func FindGeneralOne(ctx context.Context, user model.User, categoryType ploutos.NotificationCategoryType, notificationId int64, userNotificationId int64) (GeneralNotification, error) {
+	var notif GeneralNotification
 	switch categoryType {
-	case ploutos.NotificationCategoryTypeSystem, 0:
-		err := model.DB.Debug().Model(UserNotificationWithNotification{}).Where("user_id = ?", user.ID).Scopes(model.ByIds([]int64{userNotificationId})).Find(&notif).Error
-		if err != nil {
-			return UserNotificationWithNotification{}, err
-		}
 	case ploutos.NotificationCategoryTypeNotification:
-	case ploutos.NotificationCategoryTypeGame, ploutos.NotificationCategoryTypePromotion:
-		fallthrough
-	case ploutos.NotificationCategoryTypeSportsBet,
-		ploutos.NotificationCategoryTypeStream:
-		err := model.DB.Debug().Model(UserNotificationWithNotification{}).Where("user_id = ?", user.ID).Joins("Notification").Scopes(model.ByIds([]int64{userNotificationId})).Find(&notif).Error
+		err := model.DB.Debug().Model(GeneralNotification{}).Where("user_id = ?", user.ID).Scopes(model.ByIds([]int64{userNotificationId})).Find(&notif).Error
 		if err != nil {
-			return UserNotificationWithNotification{}, err
+			return GeneralNotification{}, err
 		}
 	default:
-		return UserNotificationWithNotification{}, errors.New("unknown notification category")
+		return GeneralNotification{}, errors.New("unknown or invalid notification category")
 	}
 
 	return notif, nil
