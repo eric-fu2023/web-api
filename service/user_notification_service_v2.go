@@ -63,9 +63,9 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 		var cms_notifications []ploutos.Notification
 		// filter by category is category is not 0
 		if service.Category != 0 {
-			err = model.DB.Scopes(model.Paginate(service.Page.Page, service.Page.Limit), model.SortByCreated).Where("id in ? or target = 0", notification_ids).Where("category = ?", service.Category).Find(&cms_notifications).Error
+			err = model.DB.Scopes(model.Paginate(service.Page.Page, service.Page.Limit), model.SortByCreated).Where("id in ? or target = 0", notification_ids).Where("send_at < ?", time.Now()).Where("expired_at > ?", time.Now()).Where("category = ?", service.Category).Find(&cms_notifications).Error
 		} else {
-			err = model.DB.Scopes(model.Paginate(service.Page.Page, service.Page.Limit), model.SortByCreated).Where("id in ? or target = 0", notification_ids).Find(&cms_notifications).Error
+			err = model.DB.Scopes(model.Paginate(service.Page.Page, service.Page.Limit), model.SortByCreated).Where("id in ? or target = 0", notification_ids).Where("send_at < ?", time.Now()).Where("expired_at > ?", time.Now()).Find(&cms_notifications).Error
 		}
 		if err != nil {
 			r = serializer.DBErr(c, service, i18n.T("general_error"), err)
