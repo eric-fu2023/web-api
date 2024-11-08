@@ -1,6 +1,8 @@
 package service
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	"context"
 	"strconv"
 	"strings"
 	"time"
@@ -78,11 +80,15 @@ func _MarkReadByUserAndSelectedNotifications(userId int64, userNotificationIds [
 type GetUserNotificationRequest struct {
 	UserNotificationId int64 `form:"user_notification_id" json:"user_notification_id"`
 	NotificationId     int64 `form:"notification_id" json:"notification_id"`
-	Category           int64 `form:"category" json:"category"`
+	CategoryType       int64 `form:"category_type" json:"category_type"`
 }
 
-func GetUserNotification(req GetUserNotificationRequest) (serializer.Response, error) {
-	notif, err := notificationservice.Find(req.Category, req.NotificationId, req.UserNotificationId)
+func GetUserNotification(c *gin.Context, req GetUserNotificationRequest) (serializer.Response, error) {
+	u, _ := c.Get("user")
+	user := u.(model.User)
+
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "GetUserNotification")
+	notif, err := notificationservice.FindOne(ctx, user, ploutos.NotificationCategoryType(req.CategoryType), req.NotificationId, req.UserNotificationId)
 	if err != nil {
 		return serializer.Response{}, err
 	}
