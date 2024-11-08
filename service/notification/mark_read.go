@@ -27,23 +27,10 @@ type UserNotificationMarkReadForm struct {
 // MarkNotificationsAsRead
 func MarkNotificationsAsRead(ctx context.Context, user model.User, notifications []UserNotificationMarkReadForm) error {
 	var err error
-	//userId := user.ID
-	//for _, notification := range notifications {
-	//	category := notification.CategoryType
-	//
-	//	var marker ReadMarker
-	//	switch category {
-	//	case ploutos.NotificationCategoryTypeSystem:
-	//		marker := &NotificationCategoryTypeSystemMarker{UserId: userId}
-	//	//case ploutos.NotificationCategoryTypeNotification:
-	//
-	//	default:
-	//		return errors.New("MarkNotificationsAsRead: unknown or invalid notification category")
-	//	}
-	//
-	//	marker.Mark()
-	//	err = errors.Join()
-	//}
+	for _, notification := range notifications {
+		MarkNotificationAsRead(ctx, user, notification)
+		err = errors.Join()
+	}
 	return err
 }
 
