@@ -194,11 +194,17 @@ func NewRouter() *gin.Engine {
 				user.POST("/clear_wager", api.ClearWager)
 				user.POST("/nickname", api.NicknameUpdate)
 				user.POST("/profile_pic", api.ProfilePicUpload)
-				user.GET("/notifications", api.UserNotificationList)
-				user.PUT("/notification/mark_read", api.UserNotificationMarkRead)
+				{ // notifications
 
-				v2_user_auth_brand.GET("/notification", api.GeneralNotificationV2)
-				v2_user_auth_brand.GET("/notifications", api.UserNotificationListV2)
+					// v1
+					user.GET("/notifications", api.UserNotificationList)
+					user.PUT("/notification/mark_read", api.UserNotificationMarkRead)
+
+					// v2
+					v2_user_auth_brand.GET("/notification", api.GeneralNotificationV2)
+					v2_user_auth_brand.GET("/notifications", api.UserNotificationListV2)
+					v2_user_auth_brand.PUT("/notification/mark_read", api.UserNotificationMarkReadV2)
+				}
 
 				user.GET("/counters", api.UserCounters)
 				user.PUT("/fcm_token", api.FcmTokenUpdate)

@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"web-api/service/notification"
 
 	"web-api/model"
 	"web-api/serializer"
@@ -60,16 +61,11 @@ func (service *UserNotificationMarkReadService) MarkRead(c *gin.Context) (r seri
 		}
 	}
 
-	err = _MarkReadByUserAndSelectedNotifications(user.ID, ids)
+	err = notification.MarkReadByUserAndSelectedNotifications(user.ID, ids)
 	if err != nil {
 		r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 		return
 	}
 	r.Msg = "Success"
 	return
-}
-
-func _MarkReadByUserAndSelectedNotifications(userId int64, userNotificationIds []int64) error {
-	err := model.DB.Model(ploutos.UserNotification{}).Scopes(model.ByUserId(userId), model.ByIds(userNotificationIds)).Update(`is_read`, true).Error
-	return err
 }

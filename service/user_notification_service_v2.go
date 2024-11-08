@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
 
 	"web-api/conf/consts"
@@ -62,9 +60,9 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 		var cms_notifications []ploutos.Notification
 		// filter by category is category is not 0
 		if service.Category != 0 {
-			err = model.DB.Scopes(model.Paginate(service.Page.Page, service.Page.Limit), model.SortByCreated).Where("id in ? or target = 0", notification_ids).Where("send_at < ?", time.Now().UTC().Add(8 * time.Hour)).Where("expired_at > ? or expired_at is null", time.Now().UTC().Add(8 * time.Hour)).Where("category = ?", service.Category).Find(&cms_notifications).Error
+			err = model.DB.Scopes(model.Paginate(service.Page.Page, service.Page.Limit), model.SortByCreated).Where("id in ? or target = 0", notification_ids).Where("send_at < ?", time.Now().UTC().Add(8*time.Hour)).Where("expired_at > ? or expired_at is null", time.Now().UTC().Add(8*time.Hour)).Where("category = ?", service.Category).Find(&cms_notifications).Error
 		} else {
-			err = model.DB.Scopes(model.Paginate(service.Page.Page, service.Page.Limit), model.SortByCreated).Where("id in ? or target = 0", notification_ids).Where("send_at < ?", time.Now().UTC().Add(8 * time.Hour)).Where("expired_at > ? or expired_at is null", time.Now().UTC().Add(8 * time.Hour)).Find(&cms_notifications).Error
+			err = model.DB.Scopes(model.Paginate(service.Page.Page, service.Page.Limit), model.SortByCreated).Where("id in ? or target = 0", notification_ids).Where("send_at < ?", time.Now().UTC().Add(8*time.Hour)).Where("expired_at > ? or expired_at is null", time.Now().UTC().Add(8*time.Hour)).Find(&cms_notifications).Error
 		}
 		if err != nil {
 			r = serializer.DBErr(c, service, i18n.T("general_error"), err)
@@ -122,34 +120,25 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 	return
 }
 
-type UserNotificationMarkReadServiceV2 struct {
-	Ids string `form:"ids" json:"ids"`
-}
+type UserNotificationMarkReadRequestV2 = notificationservice.UserNotificationMarkReadForm
 
-func (service *UserNotificationMarkReadServiceV2) MarkRead(c *gin.Context) (r serializer.Response, err error) {
-	i18n := c.MustGet("i18n").(i18n.I18n)
+func MarkReadV2(c *gin.Context, req UserNotificationMarkReadRequestV2) (serializer.Response, error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	var ids []int64
-	for _, s := range strings.Split(service.Ids, ",") {
-		if i, e := strconv.Atoi(strings.TrimSpace(s)); e == nil {
-			ids = append(ids, int64(i))
-		}
-	}
-
-	err = _MarkReadByUserAndSelectedNotifications(user.ID, ids)
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "MarkReadV2")
+	notif, err := notificationservice.MarkNotificationAsRead(ctx, user, req)
 	if err != nil {
-		r = serializer.DBErr(c, service, i18n.T("general_error"), err)
-		return
+		log.Println(rfcontext.AppendError(ctx, err, "notificationservice.FindGeneralOne"))
+		return serializer.Response{}, err
 	}
-	r.Msg = "Success"
-	return
-}
 
-func _MarkReadByUserAndSelectedNotificationsV2(userId int64, userNotificationIds []int64) error {
-	err := model.DB.Model(ploutos.UserNotification{}).Scopes(model.ByUserId(userId), model.ByIds(userNotificationIds)).Update(`is_read`, true).Error
-	return err
+	return serializer.Response{
+		Code:  0,
+		Data:  notif,
+		Msg:   "",
+		Error: "",
+	}, err
 }
 
 type GetGeneralNotificationRequestV2 struct {
