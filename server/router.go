@@ -311,7 +311,7 @@ func NewRouter() *gin.Engine {
 
 				v2 := user.Group("/v2")
 				{
-					v2.GET("/notifications", api.UserNotificationList)
+					v2.GET("/notifications", api.UserNotificationListV2)
 				}
 			}
 		}
