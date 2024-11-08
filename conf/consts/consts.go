@@ -22,7 +22,14 @@ const (
 	KycStatusRejected  = 3
 	GinErrorKey        = "gin_error"
 )
-
+const (
+	NotificationCategorySystem = 999
+	NotificationCategoryPromotion = 1
+	NotificationCategoryGeneral = 2
+	NotificationCategoryBet = 3
+	NotificationCategoryGame = 4
+	NotificationCategoryStream = 5
+)
 var (
 	SpinResultType = map[int64]string{
 		1: SpinVoucher,
