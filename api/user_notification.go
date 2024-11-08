@@ -20,7 +20,7 @@ func UserNotificationList(c *gin.Context) {
 func UserNotification(c *gin.Context) {
 	var req service.GetUserNotificationRequest
 
-	if err := c.ShouldBindUri(&req); err == nil {
+	if err := c.ShouldBind(&req); err == nil {
 		res, _ := service.GetUserNotification(req)
 		c.JSON(200, res)
 	} else {
