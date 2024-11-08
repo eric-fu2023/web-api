@@ -60,11 +60,49 @@ func (service *UserNotificationMarkReadService) MarkRead(c *gin.Context) (r seri
 		}
 	}
 
-	err = model.DB.Model(ploutos.UserNotification{}).Scopes(model.ByUserId(user.ID), model.ByIds(ids)).Update(`is_read`, true).Error
+	err = _MarkReadByUserAndSelectedNotifications(user.ID, ids)
 	if err != nil {
 		r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 		return
 	}
 	r.Msg = "Success"
 	return
+}
+
+func _MarkReadByUserAndSelectedNotifications(userId int64, userNotificationIds []int64) error {
+	err := model.DB.Model(ploutos.UserNotification{}).Scopes(model.ByUserId(userId), model.ByIds(userNotificationIds)).Update(`is_read`, true).Error
+	return err
+}
+
+type GetUserNotificationRequest struct {
+	UserNotificationId int64 `form:"user_notification_id" json:"user_notification_id"`
+	NotificationId     int64 `form:"notification_id" json:"notification_id"`
+	Type               int64 `form:"type" json:"type"`
+}
+
+type UserNotification struct {
+	ID     int64  `gorm:"primarykey" json:"id"` // 主键ID
+	UserId int64  `json:"user_id" form:"user_id" gorm:"column:user_id"`
+	Text   string `json:"text" form:"text" gorm:"column:text"`
+	IsRead bool   `json:"is_read" form:"is_read" gorm:"column:is_read"`
+}
+
+func (UserNotification) TableName() string {
+	return "user_notifications"
+}
+
+func GetUserNotification(req GetUserNotificationRequest) (serializer.Response, error) {
+	var notif ploutos.UserNotification
+	err := model.DB.Model(UserNotification{}).Scopes(model.ByIds([]int64{req.UserNotificationId})).Find(&notif).Error
+
+	if err != nil {
+		return serializer.Response{}, err
+	}
+
+	return serializer.Response{
+		Code:  0,
+		Data:  notif,
+		Msg:   "",
+		Error: "",
+	}, err
 }
