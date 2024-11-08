@@ -73,8 +73,8 @@ func BuildCMSNotificationV2(c *gin.Context, a ploutos.Notification, notification
 		CategoryContentId: int(a.CategoryContentID),
 		IsRead:            isRead,
 	}
-	if !a.CreatedAt.IsZero() {
-		b.Ts = a.CreatedAt.Unix()
+	if !a.SendAt.IsZero() {
+		b.Ts = a.SendAt.Unix()
 	}
 	if !a.ExpiredAt.IsZero() {
 		b.ExpiredAt = a.ExpiredAt.Unix()
