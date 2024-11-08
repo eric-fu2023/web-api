@@ -188,7 +188,7 @@ func NewRouter() *gin.Engine {
 				user.POST("/nickname", api.NicknameUpdate)
 				user.POST("/profile_pic", api.ProfilePicUpload)
 				user.GET("/notifications", api.UserNotificationList)
-				user.GET("/notification/:userNotificationId", api.UserNotification)
+				user.GET("/notification", api.UserNotification)
 				user.PUT("/notification/mark_read", api.UserNotificationMarkRead)
 				user.GET("/counters", api.UserCounters)
 				user.PUT("/fcm_token", api.FcmTokenUpdate)
