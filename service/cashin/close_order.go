@@ -9,15 +9,13 @@ import (
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/service/common"
+	"web-api/service/promotion"
 	"web-api/service/social_media_pixel"
 	"web-api/util"
 
 	"blgit.rfdev.tech/taya/common-function/cash_orders"
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
-
-	"web-api/service/promotion"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -69,58 +67,55 @@ func CloseCashInOrder(c *gin.Context, ctx context.Context, orderNumber string, a
 	// if no error in closing the cash-in order, and the order must be auto cash in - (operation type 0) or make up order - (operation type ploutos.CashOrderOperationTypeMakeUpOrder)
 	if err == nil && newCashOrderState.OrderType == ploutos.CashOrderTypeCashIn && (newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0) {
 		uid := newCashOrderState.UserId
+		ctx = rfcontext.AppendParams(ctx, "promotions", map[string]interface{}{
+			"userId": uid,
+		})
 		now := time.Now().UTC()
 		// this is to claim FTD bonus!!!
+		ftdPromoCtx := rfcontext.AppendCallDesc(ctx, "this is to claim FTD bonus!!!")
 		var ftdPromo ploutos.Promotion
 		var ftdSession ploutos.PromotionSession
-		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeFirstDepB).Where("start_at < ? and end_at > ?", now, now).First(&ftdPromo).Error
-		if err != nil {
-			ctx = rfcontext.AppendError(ctx, err, "promotion.First(&ftdPromo")
-			fmt.Println("ftdPromo get err ", err)
+		pErr := txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeFirstDepB).Where("start_at < ? and end_at > ?", now, now).First(&ftdPromo).Error
+		if pErr != nil {
+			ftdPromoCtx = rfcontext.AppendError(ftdPromoCtx, pErr, "promotion.First(&ftdPromo)")
 		}
-		ftdSession, err = model.GetActivePromotionSessionByPromotionId(context.TODO(), ftdPromo.ID, now)
-		if err != nil {
-			ctx = rfcontext.AppendError(ctx, err, "promotion.GetActivePromotionSessionByPromotionId")
+		ftdSession, pErr = model.GetActivePromotionSessionByPromotionId(ftdPromoCtx, ftdPromo.ID, now)
+		if pErr != nil {
+			ftdPromoCtx = rfcontext.AppendError(ftdPromoCtx, pErr, "promotion.GetActivePromotionSessionByPromotionId")
 		}
 		// if claim success, will send notification, and create notification in db.
-		_, err = promotion.Claim(ctx, now, ftdPromo, ftdSession, uid, nil)
-		if err != nil {
-			ctx = rfcontext.AppendError(ctx, err, "promotion.Claim")
+		_, pErr = promotion.Claim(ftdPromoCtx, now, ftdPromo, ftdSession, uid, nil)
+		if pErr != nil {
+			ftdPromoCtx = rfcontext.AppendError(ftdPromoCtx, pErr, "promotion.Claim")
 		}
-		ctx = rfcontext.AppendDescription(ctx, fmt.Sprintf("ftdPromo.Claim finished %d", uid))
-		log.Println(rfcontext.Fmt(ctx))
+		go log.Println(rfcontext.Fmt(rfcontext.AppendDescription(ftdPromoCtx, "END")))
 
 		// this is to claim referral bonus!!!
+
+		referralPromoCtx := rfcontext.AppendCallDesc(ctx, "this is to claim referral bonus!!!")
 		var referralPromo ploutos.Promotion
 		var referralSession ploutos.PromotionSession
 		var userReferral ploutos.UserReferral
-		err = txDB.Debug().Where("deleted_at is null").Where("referral_id = ?", uid).First(&userReferral).Error
-		if err != nil {
-			ctx = rfcontext.AppendError(ctx, err, "promotion.First(&userReferral)")
-			log.Println(rfcontext.Fmt(ctx))
+		pErr = txDB.Debug().Where("deleted_at is null").Where("referral_id = ?", uid).First(&userReferral).Error
+		if pErr != nil {
+			referralPromoCtx = rfcontext.AppendError(referralPromoCtx, pErr, "promotion.First(&userReferral)")
 		}
-		err = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeVipReferral).Where("start_at < ? and end_at > ?", now, now).First(&referralPromo).Error
-		if err != nil {
-			ctx = rfcontext.AppendError(ctx, err, "promotion.First(&referralPromo)")
-			log.Println(rfcontext.Fmt(ctx))
+		pErr = txDB.Debug().Where("is_active").Where("type", ploutos.PromotionTypeVipReferral).Where("start_at < ? and end_at > ?", now, now).First(&referralPromo).Error
+		if pErr != nil {
+			referralPromoCtx = rfcontext.AppendError(referralPromoCtx, pErr, "promotion.First(&referralPromo)")
 		}
-		referralSession, err := model.GetActivePromotionSessionByPromotionId(context.TODO(), referralPromo.ID, now)
-		if err != nil {
-			ctx = rfcontext.AppendError(ctx, err, "GetActivePromotionSessionByPromotionId")
-			log.Println(rfcontext.Fmt(ctx))
+		referralSession, pErr = model.GetActivePromotionSessionByPromotionId(referralPromoCtx, referralPromo.ID, now)
+		if pErr != nil {
+			referralPromoCtx = rfcontext.AppendError(referralPromoCtx, pErr, "GetActivePromotionSessionByPromotionId")
 		}
 		// if claim success, will send notification, and create notification in db.
-		ctx = rfcontext.AppendCallDesc(ctx, "this is to claim referral bonus!!!")
-		_, err = promotion.Claim(context.TODO(), now, referralPromo, referralSession, userReferral.ReferrerId, nil)
-		if err != nil {
-			ctx = rfcontext.AppendError(ctx, err, "promotion.Claim")
-			log.Println(rfcontext.Fmt(ctx))
+		_, pErr = promotion.Claim(referralPromoCtx, now, referralPromo, referralSession, userReferral.ReferrerId, nil)
+		if pErr != nil {
+			referralPromoCtx = rfcontext.AppendError(referralPromoCtx, pErr, "promotion.Claim")
 		}
-
-		ctx = rfcontext.AppendDescription(ctx, fmt.Sprintf("referralPromo.Claim finished %d", uid))
+		go log.Println(rfcontext.Fmt(rfcontext.AppendDescription(referralPromoCtx, "END")))
 	}
-	log.Println(rfcontext.Fmt(ctx))
-	return
+	return /* err */
 }
 
 func closeOrder(ctx context.Context, newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
