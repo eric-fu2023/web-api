@@ -40,6 +40,7 @@ func NewRouter() *gin.Engine {
 	// middlewares order can't be changed
 	r.Use(middleware.Cors())
 	r.GET("/ts", api.Ts)
+
 	// geolocations
 	r.GET("/v1/geolocation", api.GeolocationGet)
 
@@ -75,6 +76,7 @@ func NewRouter() *gin.Engine {
 	r.GET("/init_web", api.DomainInitWeb)
 
 	v1 := r.Group("/v1")
+	v2 := r.Group("/v2")
 	{
 		// no cache routes
 		v1.POST("/sms_otp", api.SmsOtp)
@@ -166,9 +168,11 @@ func NewRouter() *gin.Engine {
 
 		v1.GET("/gifts", middleware.Cache(1*time.Minute, false), api.GiftList)
 
-		auth := v1.Group("/user")
+		v1_user := v1.Group("/user")
+		v2_user := v2.Group("/user")
+
 		{
-			userWithoutBrand := auth.Group("")
+			userWithoutBrand := v1_user.Group("")
 			userWithoutBrand.Use(middleware.AuthRequired(true, false))
 			{
 				userWithoutBrand.GET("/me", api.Me)
@@ -180,8 +184,11 @@ func NewRouter() *gin.Engine {
 				userWithoutBrand.GET("/silenced", api.Silenced)
 				userWithoutBrand.GET("/followings", api.UserFollowingList)
 			}
-			user := auth.Group("")
+			user := v1_user.Group("")
+			v2_user_auth_brand := v2_user.Group("")
 			user.Use(middleware.AuthRequired(true, true))
+			v2_user_auth_brand.Use(middleware.AuthRequired(true, true))
+
 			{
 				user.POST("/profile", api.ProfileUpdate)
 				user.POST("/clear_wager", api.ClearWager)
@@ -189,6 +196,10 @@ func NewRouter() *gin.Engine {
 				user.POST("/profile_pic", api.ProfilePicUpload)
 				user.GET("/notifications", api.UserNotificationList)
 				user.PUT("/notification/mark_read", api.UserNotificationMarkRead)
+
+				v2_user_auth_brand.GET("/notification", api.UserNotificationV2)
+				v2_user_auth_brand.GET("/notifications", api.UserNotificationListV2)
+
 				user.GET("/counters", api.UserCounters)
 				user.PUT("/fcm_token", api.FcmTokenUpdate)
 				user.GET("/wallets", api.UserWallets)

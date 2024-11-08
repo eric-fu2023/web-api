@@ -8,10 +8,10 @@ toolchain go1.21.1
 
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
-	blgit.rfdev.tech/taya/common-function v0.0.0-20241025031710-7dcb8e8640fd
+	blgit.rfdev.tech/taya/common-function v0.0.0-20241108012518-b63c261aa084
 	blgit.rfdev.tech/taya/game-service v0.0.0-20241014034805-558320c67af6
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240926111808-9cafcbb67695
-	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20241030025401-8a969b356119
+	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20241108034839-d8a7cb7aa6e2
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240703073351-55719e205f9b
 	firebase.google.com/go/v4 v4.12.1
 	github.com/AgoraIO/Tools/DynamicKey/AgoraDynamicKey/go/src v0.0.0-20240201081805-9ee2926ae20f
@@ -35,6 +35,7 @@ require (
 	github.com/jinzhu/copier v0.4.0
 	github.com/joho/godotenv v1.5.1
 	github.com/leekchan/accounting v1.0.0
+	github.com/lib/pq v1.10.9
 	github.com/mailgun/mailgun-go/v4 v4.12.0
 	github.com/pkg/errors v0.9.1
 	github.com/shopspring/decimal v1.3.1
@@ -127,7 +128,6 @@ require (
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect

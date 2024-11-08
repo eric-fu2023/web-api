@@ -77,20 +77,33 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		if cm.HasCashMethodPromotion() {
 			// for each option, individual query to get respective cashMethodPromotionOfSelection
 			cashMethodDefaultOptions := cm.DefaultOptions
-
-			// var maxPayoutRate float64
-			// var minFloor float64
-
 			selections := make([]serializer.DefaultCashMethodPromotionOption, 0, len(cashMethodDefaultOptions))
-			for _, _selectionAmount := range cashMethodDefaultOptions {
+
+			var claimable int64 // for cashmethodpromotion.MaxPromotionAmount
+			for idx, _selectionAmount := range cashMethodDefaultOptions {
 				sCtx := rfcontext.Nonce(cCtx)
 				selectionAmount := int64(_selectionAmount) // overcast
+
 				cashMethodPromotionOfSelection, sErr := cash_method_promotion.ByCashMethodIdAndVipId(nil, cm.ID, vipRecordVipRuleId, nil, &selectionAmount)
+
 				if sErr != nil {
 					sCtx = rfcontext.AppendParams(sCtx, "cashMethodDefaultOption", map[string]interface{}{
 						"selection_amount": selectionAmount,
 					})
 					sCtx = rfcontext.AppendError(sCtx, sErr, "ByCashMethodIdAndVipId")
+				}
+
+				{
+					if idx == 0 { // assumes for cash method promotions wrt vip level and cash method, there's only 1 daily and 1 weekly max_payout => use any idx
+						// top level claimable should account for user claimed amount
+						_claimable, clErr := cash_method_promotion.FinalPossiblePayout(c, claimedPast7Days.Amount, claimedPast1Day.Amount, cashMethodPromotionOfSelection, nil)
+						if clErr != nil {
+							sCtx = rfcontext.AppendError(sCtx, clErr, "FinalPossiblePayout")
+							log.Println(rfcontext.Fmt(sCtx))
+						} else {
+							claimable = _claimable
+						}
+					}
 				}
 
 				// QQ: extra百分比和“+XX“不會變 因为这个是display给全部人知道这个支付渠道有这个活动的 user达到了上限是那个user的问题 ，所以不会变
@@ -123,7 +136,7 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 
 			cashMethodPromotion = &serializer.CashMethodPromotion{
 				PayoutRate:                        stats.PayoutRate_Max,
-				MaxPromotionAmount:                float64(stats.WeeklyMaxPayout_Max) / 100,
+				MaxPromotionAmount:                float64(claimable) / 100,
 				MinAmountForPayout:                float64(stats.MinPayout_Min) / 100,
 				DefaultCashMethodPromotionOptions: selections,
 			}
