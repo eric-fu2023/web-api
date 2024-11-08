@@ -43,6 +43,7 @@ func MarkNotificationAsRead(ctx context.Context, user model.User, notification U
 	case ploutos.NotificationCategoryTypeSystem:
 		marker = &CategoryTypeSystemMarker{
 			UserId: userId,
+			db:     model.DB,
 		}
 	case
 		ploutos.NotificationCategoryTypePromotion,
@@ -50,7 +51,7 @@ func MarkNotificationAsRead(ctx context.Context, user model.User, notification U
 		ploutos.NotificationCategoryTypeSportsBet,
 		ploutos.NotificationCategoryTypeGame,
 		ploutos.NotificationCategoryTypeStream:
-
+		fallthrough
 	default:
 		return nil, errors.New("MarkNotificationsAsRead: unknown or invalid notification category")
 	}
@@ -90,6 +91,9 @@ func (n *CategoryTypeSystemMarker) markUserNotification(ctx context.Context, tx 
 
 func (n *CategoryTypeSystemMarker) Mark(ctx context.Context) (int64, error) {
 	ctx = rfcontext.AppendCallDesc(ctx, " (n *CategoryTypeSystemMarker) Mark")
+	if n.db == nil {
+		return 0, errors.New("Mark called before db initialized")
+	}
 
 	var userNotificationId int64
 	err := n.db.Transaction(func(tx *gorm.DB) error {
