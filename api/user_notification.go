@@ -39,7 +39,7 @@ func UserNotificationMarkRead(c *gin.Context) {
 }
 
 func UserNotificationListV2(c *gin.Context) {
-	var service service.UserNotificationListService
+	var service service.UserNotificationListServiceV2
 	if err := c.ShouldBind(&service); err == nil {
 		res, _ := service.List(c)
 		c.JSON(200, res)
