@@ -120,16 +120,18 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 	return
 }
 
-type UserNotificationMarkReadRequestV2 = notificationservice.UserNotificationMarkReadForm
+type UserNotificationMarkReadRequestV2 struct {
+	Notifications notificationservice.UserNotificationMarkReadForm `form:"notifications"`
+}
 
 func MarkReadV2(c *gin.Context, req UserNotificationMarkReadRequestV2) (serializer.Response, error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
 	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "MarkReadV2")
-	notif, err := notificationservice.MarkNotificationAsRead(ctx, user, req)
+	notif, err := notificationservice.MarkNotificationAsRead(ctx, user, req.Notifications)
 	if err != nil {
-		log.Println(rfcontext.AppendError(ctx, err, "notificationservice.FindGeneralOne"))
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "notificationservice.MarkReadV2")))
 		return serializer.Response{}, err
 	}
 
@@ -154,7 +156,7 @@ func GetGeneralNotificationV2(c *gin.Context, req GetGeneralNotificationRequestV
 	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "GetGeneralNotificationV2")
 	notif, err := notificationservice.FindGeneralOne(ctx, user, ploutos.NotificationCategoryType(req.CategoryType), req.NotificationId, req.UserNotificationId)
 	if err != nil {
-		log.Println(rfcontext.AppendError(ctx, err, "notificationservice.FindGeneralOne"))
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "GetGeneralNotificationV2")))
 		return serializer.Response{}, err
 	}
 
