@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"blgit.rfdev.tech/taya/common-function/rfcontext"
-
 	"web-api/conf/consts"
 	"web-api/model"
 	"web-api/serializer"
@@ -18,7 +16,7 @@ import (
 	notificationservice "web-api/service/notification"
 	"web-api/util/i18n"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/gin-gonic/gin"
@@ -84,14 +82,14 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 			}
 			if cms_notification.Category == consts.NotificationCategoryPromotion {
 				promotionImages := serializer.IncomingPromotionImages{}
-				var promotion models.Promotion
+				var promotion ploutos.Promotion
 				err = model.DB.Table("promotions").Where("id = ?", cms_notification.CategoryContentID).Scan(&promotion).Error
 				if err != nil {
 					r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 					return
 				}
 				// Unmarshal the JSONB data into the `PromotionImageUrl` struct
-				err = json.Unmarshal([]byte(promotion.Image), &promotionImages)
+				err = json.Unmarshal(promotion.Image, &promotionImages)
 				if err != nil {
 					r = serializer.DBErr(c, service, i18n.T("general_error"), err)
 					return
@@ -159,11 +157,11 @@ type GetUserNotificationRequestV2 struct {
 	CategoryType       int64 `form:"category_type" json:"category_type"`
 }
 
-func GetUserNotificationV2(c *gin.Context, req GetUserNotificationRequest) (serializer.Response, error) {
+func GetUserNotificationV2(c *gin.Context, req GetUserNotificationRequestV2) (serializer.Response, error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "GetUserNotification")
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "GetUserNotificationV2")
 	notif, err := notificationservice.FindOne(ctx, user, ploutos.NotificationCategoryType(req.CategoryType), req.NotificationId, req.UserNotificationId)
 	if err != nil {
 		return serializer.Response{}, err
