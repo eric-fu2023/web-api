@@ -24,7 +24,6 @@ func BuildUserNotification(c *gin.Context, a ploutos.UserNotification) (b UserNo
 	return
 }
 
-
 type NotificationIdsWithReadStatus struct {
 	ID     int64
 	IsRead bool
@@ -37,7 +36,7 @@ type UserNotificationV2 struct {
 	Category          int    `json:"category"`
 	CategoryContentId int    `json:"category_content_id"`
 	Ts                int64  `json:"ts"`
-	ExpiredAt          int64  `json:"expire_at"`
+	ExpiredAt         int64  `json:"expire_at"`
 	IsRead            bool   `json:"is_read"`
 }
 
@@ -49,7 +48,7 @@ func BuildUserNotificationV2(c *gin.Context, a ploutos.UserNotification) (b User
 		ShortContent:      a.Text,
 		Category:          999,
 		CategoryContentId: 0,
-		ExpiredAt:          1920336779,
+		ExpiredAt:         1920336779,
 		IsRead:            a.IsRead,
 	}
 	if !a.CreatedAt.IsZero() {
@@ -57,10 +56,11 @@ func BuildUserNotificationV2(c *gin.Context, a ploutos.UserNotification) (b User
 	}
 	return
 }
+
 func BuildCMSNotificationV2(c *gin.Context, a ploutos.Notification, notifications_ids_with_read_status []NotificationIdsWithReadStatus, image_url string) (b UserNotificationV2) {
 	isRead := false
-	for _, notification_ids_with_read_status := range notifications_ids_with_read_status{
-		if a.ID == notification_ids_with_read_status.ID{
+	for _, notification_ids_with_read_status := range notifications_ids_with_read_status {
+		if a.ID == notification_ids_with_read_status.ID {
 			isRead = notification_ids_with_read_status.IsRead
 		}
 	}
@@ -69,8 +69,8 @@ func BuildCMSNotificationV2(c *gin.Context, a ploutos.Notification, notification
 		Title:             a.Title,
 		ImageUrl:          Url(image_url),
 		ShortContent:      a.ShortContent,
-		Category:          a.Category,
-		CategoryContentId: a.CategoryContentID,
+		Category:          int(a.Category),
+		CategoryContentId: int(a.CategoryContentID),
 		IsRead:            isRead,
 	}
 	if !a.CreatedAt.IsZero() {
