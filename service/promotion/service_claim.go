@@ -1,22 +1,23 @@
 package promotion
 
 import (
-	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"web-api/cache"
 	"web-api/model"
 	"web-api/serializer"
 
-	models "blgit.rfdev.tech/taya/ploutos-object"
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/go-redsync/redsync/v4"
 )
 
-func Claim(ctx context.Context, now time.Time, promotion models.Promotion, session models.PromotionSession, userID int64, user *model.User) (voucher models.Voucher, err error) {
+func Claim(ctx context.Context, now time.Time, promotion ploutos.Promotion, session ploutos.PromotionSession, userID int64, user *model.User) (voucher ploutos.Voucher, err error) {
 	mutex := cache.RedisLockClient.NewMutex(fmt.Sprintf(userPromotionSessionClaimKey, userID, session.ID), redsync.WithExpiry(5*time.Second))
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -24,12 +25,25 @@ func Claim(ctx context.Context, now time.Time, promotion models.Promotion, sessi
 		progress        int64
 		reward          int64
 		claimStatus     serializer.ClaimStatus
-		voucherTemplate models.VoucherTemplate
+		voucherTemplate ploutos.VoucherTemplate
 	)
-	ctx = rfcontext.AppendCallDesc(ctx, "Claim")
+
+	ctx = rfcontext.AppendParams(rfcontext.AppendCallDesc(ctx, "Claim"), "Claim", map[string]interface{}{
+		"promotion.Id":        promotion.ID,
+		"promotion.Name":      promotion.Name,
+		"promotion.Type.Name": ploutos.DefaultPromotionTypeNames[promotion.Type],
+		"userID":              userID,
+		"user":                user,
+		"session.ID":          session.ID,
+		"session.ClaimStart":  session.ClaimStart,
+		"session.ClaimEnd":    session.ClaimEnd,
+	})
+
 	claimStatus = GetPromotionSessionClaimStatus(ctx, promotion, session, userID, now)
 	if claimStatus.HasClaimed {
 		err = errors.New("double_claim")
+		ctx = rfcontext.AppendError(ctx, err, "GetPromotionSessionClaimStatus")
+		log.Println(rfcontext.Fmt(ctx))
 		// r = serializer.Err(c, p, serializer.CodeGeneralError, "Already Claimed", err)
 		return
 	}

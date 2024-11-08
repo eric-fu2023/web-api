@@ -1,14 +1,14 @@
 package cash_method_promotion
 
 import (
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"errors"
+	"log"
 	"time"
 
-	"web-api/model"
-	"web-api/util"
-
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"web-api/model"
 
 	"gorm.io/gorm"
 )
@@ -30,7 +30,7 @@ func ByCashMethodIdAndVipId(tx *gorm.DB, cashMethodId, vipId int64, promotionAt 
 
 	// temporary guard for dev work, once stable can pass arg by value.
 	if cashInAmount != nil {
-		tx = tx.Where("? > min_payout", cashInAmount).Order("min_payout desc")
+		tx = tx.Where("? >= min_payout", cashInAmount).Order("min_payout desc")
 	} else {
 		return cashMethodPromotion, errors.New("cashInAmount required")
 	}
@@ -39,36 +39,16 @@ func ByCashMethodIdAndVipId(tx *gorm.DB, cashMethodId, vipId int64, promotionAt 
 	return
 }
 
-func SelectMaxPayoutRate(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *time.Time) (ploutos.Fractional, error) {
-	if cashMethodId == nil || vipId == nil {
-		return 0, errors.New("cashMethodId and vipId required to cal max payout rate")
-	}
-	if tx == nil {
-		tx = model.DB
-	}
-
-	if promotionAt == nil {
-		now := time.Now().UTC()
-		promotionAt = &now
-	}
-
-	var rate ploutos.Fractional
-	tx = tx.Debug().Table(ploutos.CashMethodPromotion{}.TableName()).Select("max(payout_rate) payout_rate").
-		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
-		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).
-		Where("status = ?", 1).
-		Find(&rate)
-	err := tx.Error
-	if err != nil {
-		return 0, err
-	}
-	return rate, nil
+type ConfigStat struct {
+	PayoutRate_Max      ploutos.Fractional `json:"payout_rate_max"`
+	DailyMaxPayout_Max  int64              `json:"daily_max_payout_max"`
+	WeeklyMaxPayout_Max int64              `json:"weekly_max_payout_max"`
+	MinPayout_Min       int64              `json:"min_payout_min"`
 }
 
-// SelectFloorForPromotio TODO check which column for min. calc.
-func SelectFloorForPromotion(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *time.Time) (ploutos.Fractional, error) {
+func ConfigStats(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *time.Time) (ConfigStat, error) {
 	if cashMethodId == nil || vipId == nil {
-		return 0, errors.New("cashMethodId and vipId required to cal max payout rate")
+		return ConfigStat{}, errors.New("cashMethodId and vipId required to cal max payout rate")
 	}
 	if tx == nil {
 		tx = model.DB
@@ -79,38 +59,40 @@ func SelectFloorForPromotion(tx *gorm.DB, cashMethodId *int64, vipId *int64, pro
 		promotionAt = &now
 	}
 
-	var rate ploutos.Fractional
-	tx = tx.Debug().Table(ploutos.CashMethodPromotion{}.TableName()).Select("min(min_payout) min_payout").
+	var _stats ConfigStat
+	tx = tx.Debug().Table(ploutos.CashMethodPromotion{}.TableName()).
+		Select("max(payout_rate) payout_rate_max, max(daily_max_payout) daily_max_payout_max, max(weekly_max_payout) weekly_max_payout_max, min(min_payout) min_payout_min").
 		Where("cash_method_id", cashMethodId).Where("vip_id", vipId).
 		Where("start_at < ? and end_at > ?", promotionAt, promotionAt).
 		Where("status = ?", 1).
-		Find(&rate)
+		Find(&_stats)
 	err := tx.Error
 	if err != nil {
-		return 0, err
+		return ConfigStat{}, err
 	}
-	return rate, nil
+	return _stats, nil
 }
 
 // FinalPossiblePayout
-// dryRun == calculate ceiling for the payout
-func FinalPossiblePayout(c context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount int64, dryRun bool) (amount int64, err error) {
+// cashAmount == nil => calculate ceiling for the payout
+func FinalPossiblePayout(ctx context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount *int64) (payout int64, err error) {
+	ctx = rfcontext.AppendCallDesc(ctx, "FinalPossiblePayout")
 	if claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout {
-		util.GetLoggerEntry(c).Info("FinalPossiblePayout claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout", claimedPast7Days, cashMethodPromotion.WeeklyMaxPayout)
+		log.Println(rfcontext.AppendDescription(ctx, "weekly payout reached"))
 		return
 	}
 	if claimedPast1Day >= cashMethodPromotion.DailyMaxPayout {
-		util.GetLoggerEntry(c).Info("FinalPossiblePayout claimedPast1Day >= cashMethodPromotion.DailyMaxPayout", claimedPast1Day, cashMethodPromotion.DailyMaxPayout)
+		log.Println(rfcontext.AppendDescription(ctx, "daily payout reached"))
 		return
 	}
 
 	dailyClaimableCeiling := float64(cashMethodPromotion.DailyMaxPayout - claimedPast1Day)
 	weeklyClaimableCeiling := float64(cashMethodPromotion.WeeklyMaxPayout - claimedPast7Days)
 
-	if dryRun {
+	if cashAmount == nil {
 		return int64(min(dailyClaimableCeiling, weeklyClaimableCeiling)), nil
 	} else {
-		ratedPayout := cashMethodPromotion.PayoutRate * float64(cashAmount)
+		ratedPayout := cashMethodPromotion.PayoutRate * float64(*cashAmount)
 		return int64(min(ratedPayout, dailyClaimableCeiling, weeklyClaimableCeiling)), nil
 	}
 }

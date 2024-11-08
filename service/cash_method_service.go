@@ -77,16 +77,15 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 		if cm.HasCashMethodPromotion() {
 			// for each option, individual query to get respective cashMethodPromotionOfSelection
 			cashMethodDefaultOptions := cm.DefaultOptions
-			var _maxClaimable float64
-
-			// var maxPayoutRate float64
-			// var minFloor float64
-
 			selections := make([]serializer.DefaultCashMethodPromotionOption, 0, len(cashMethodDefaultOptions))
-			for _, _selectionAmount := range cashMethodDefaultOptions {
+
+			var claimable int64 // for cashmethodpromotion.MaxPromotionAmount
+			for idx, _selectionAmount := range cashMethodDefaultOptions {
 				sCtx := rfcontext.Nonce(cCtx)
 				selectionAmount := int64(_selectionAmount) // overcast
+
 				cashMethodPromotionOfSelection, sErr := cash_method_promotion.ByCashMethodIdAndVipId(nil, cm.ID, vipRecordVipRuleId, nil, &selectionAmount)
+
 				if sErr != nil {
 					sCtx = rfcontext.AppendParams(sCtx, "cashMethodDefaultOption", map[string]interface{}{
 						"selection_amount": selectionAmount,
@@ -94,16 +93,29 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 					sCtx = rfcontext.AppendError(sCtx, sErr, "ByCashMethodIdAndVipId")
 				}
 
+				{
+					if idx == 0 { // assumes for cash method promotions wrt vip level and cash method, there's only 1 daily and 1 weekly max_payout => use any idx
+						// top level claimable should account for user claimed amount
+						_claimable, clErr := cash_method_promotion.FinalPossiblePayout(c, claimedPast7Days.Amount, claimedPast1Day.Amount, cashMethodPromotionOfSelection, nil)
+						if clErr != nil {
+							sCtx = rfcontext.AppendError(sCtx, clErr, "FinalPossiblePayout")
+							log.Println(rfcontext.Fmt(sCtx))
+						} else {
+							claimable = _claimable
+						}
+					}
+				}
+
 				// QQ: extra百分比和“+XX“不會變 因为这个是display给全部人知道这个支付渠道有这个活动的 user达到了上限是那个user的问题 ，所以不会变
-				_claimable, clErr := cash_method_promotion.FinalPossiblePayout(c, 0, 0, cashMethodPromotionOfSelection, selectionAmount, true)
+				_claimable, clErr := cash_method_promotion.FinalPossiblePayout(c, 0, 0, cashMethodPromotionOfSelection, nil)
 				if clErr != nil {
 					sCtx = rfcontext.AppendError(sCtx, clErr, "FinalPossiblePayout")
 					log.Println(rfcontext.Fmt(sCtx))
 				}
 
-				label := fmt.Sprintf("%#v", float64(selectionAmount)/100)
-				_maxClaimable = max(_maxClaimable, float64(_claimable))
+				label := fmt.Sprintf("%f", float64(selectionAmount)/100)
 
+				//_maxClaimable = max(_maxClaimable, float64(_claimable))
 				//maxPayoutRate = max(maxPayoutRate, cashMethodPromotionOfSelection.PayoutRate)
 
 				selections = append(selections, serializer.DefaultCashMethodPromotionOption{
@@ -116,20 +128,16 @@ func (s CasheMethodListService) List(c *gin.Context) (serializer.Response, error
 				})
 			}
 
-			_maxPayoutRate, rrerr := cash_method_promotion.SelectMaxPayoutRate(nil, &cashMethodId, &vipRecordVipRuleId, nil)
+			stats, rrerr := cash_method_promotion.ConfigStats(nil, &cashMethodId, &vipRecordVipRuleId, nil)
 			if rrerr != nil {
-				rfcontext.AppendError(cCtx, rrerr, "SelectMaxPayoutRate")
+				rfcontext.AppendErrorAsWarn(cCtx, rrerr, "ConfigStats")
 				log.Println(rfcontext.Fmt(cCtx))
 			}
-			_minFloor, rmerr := cash_method_promotion.SelectFloorForPromotion(nil, &cashMethodId, &vipRecordVipRuleId, nil)
-			if rrerr != nil {
-				rfcontext.AppendError(cCtx, rmerr, "SelectFloorForPromotion")
-				log.Println(rfcontext.Fmt(cCtx))
-			}
+
 			cashMethodPromotion = &serializer.CashMethodPromotion{
-				PayoutRate:                        _maxPayoutRate,
-				MaxPromotionAmount:                float64(_maxClaimable) / 100,
-				MinAmountForPayout:                _minFloor / 100, // fixme get the floor of the leftmost cash method promotion applicable range
+				PayoutRate:                        stats.PayoutRate_Max,
+				MaxPromotionAmount:                float64(claimable) / 100,
+				MinAmountForPayout:                float64(stats.MinPayout_Min) / 100,
 				DefaultCashMethodPromotionOptions: selections,
 			}
 		}
