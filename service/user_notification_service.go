@@ -81,10 +81,11 @@ type GetUserNotificationRequest struct {
 }
 
 type UserNotification struct {
-	ID     int64  `gorm:"primarykey" json:"id"` // 主键ID
-	UserId int64  `json:"user_id" form:"user_id" gorm:"column:user_id"`
-	Text   string `json:"text" form:"text" gorm:"column:text"`
-	IsRead bool   `json:"is_read" form:"is_read" gorm:"column:is_read"`
+	ID             int64  `gorm:"primarykey" json:"id"` // 主键ID
+	UserId         int64  `json:"user_id" form:"user_id" gorm:"column:user_id"`
+	Text           string `json:"text" form:"text" gorm:"column:text"`
+	NotificationId int64  `json:"notification_id" form:"notification_id" gorm:"column:notification_id"`
+	IsRead         bool   `json:"is_read" form:"is_read" gorm:"column:is_read"`
 }
 
 func (UserNotification) TableName() string {
