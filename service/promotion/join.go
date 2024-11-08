@@ -87,7 +87,7 @@ func (p PromotionJoin) Handle(c *gin.Context) (r serializer.Response, err error)
 				index, _ := strconv.Atoi(requestInput[field.InputId])
 				index--
 
-				if index >= len(field.Options)-1 {
+				if index > len(field.Options)-1 {
 					continue
 				}
 				option := field.Options[index]
