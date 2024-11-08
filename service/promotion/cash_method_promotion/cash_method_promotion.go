@@ -78,11 +78,11 @@ func ConfigStats(tx *gorm.DB, cashMethodId *int64, vipId *int64, promotionAt *ti
 func FinalPossiblePayout(ctx context.Context, claimedPast7Days int64, claimedPast1Day int64, cashMethodPromotion ploutos.CashMethodPromotion, cashAmount *int64) (payout int64, err error) {
 	ctx = rfcontext.AppendCallDesc(ctx, "FinalPossiblePayout")
 	if claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout {
-		log.Println(rfcontext.AppendDescription(ctx, "weekly payout reached"))
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendDescription(ctx, "weekly payout reached")))
 		return
 	}
 	if claimedPast1Day >= cashMethodPromotion.DailyMaxPayout {
-		log.Println(rfcontext.AppendDescription(ctx, "daily payout reached"))
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendDescription(ctx, "daily payout reached")))
 		return
 	}
 
