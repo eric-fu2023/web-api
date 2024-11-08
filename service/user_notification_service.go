@@ -9,6 +9,7 @@ import (
 	"web-api/serializer"
 	"web-api/service/backend_for_frontend/game_history_pane"
 	"web-api/service/common"
+	notificationservice "web-api/service/notification"
 	"web-api/util/i18n"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -77,25 +78,11 @@ func _MarkReadByUserAndSelectedNotifications(userId int64, userNotificationIds [
 type GetUserNotificationRequest struct {
 	UserNotificationId int64 `form:"user_notification_id" json:"user_notification_id"`
 	NotificationId     int64 `form:"notification_id" json:"notification_id"`
-	Type               int64 `form:"type" json:"type"`
-}
-
-type UserNotification struct {
-	ID             int64  `gorm:"primarykey" json:"id"` // 主键ID
-	UserId         int64  `json:"user_id" form:"user_id" gorm:"column:user_id"`
-	Text           string `json:"text" form:"text" gorm:"column:text"`
-	NotificationId int64  `json:"notification_id" form:"notification_id" gorm:"column:notification_id"`
-	IsRead         bool   `json:"is_read" form:"is_read" gorm:"column:is_read"`
-}
-
-func (UserNotification) TableName() string {
-	return "user_notifications"
+	Category           int64 `form:"category" json:"category"`
 }
 
 func GetUserNotification(req GetUserNotificationRequest) (serializer.Response, error) {
-	var notif ploutos.UserNotification
-	err := model.DB.Model(UserNotification{}).Scopes(model.ByIds([]int64{req.UserNotificationId})).Find(&notif).Error
-
+	notif, err := notificationservice.Find(req.Category, req.NotificationId, req.UserNotificationId)
 	if err != nil {
 		return serializer.Response{}, err
 	}
