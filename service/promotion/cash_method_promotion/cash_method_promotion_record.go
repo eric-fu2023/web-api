@@ -43,7 +43,7 @@ func totalClaimedByUserInPeriod(cashMethodId *int64, userId int64, startAt, endA
 		tx = model.DB
 	}
 
-	tx = tx.
+	tx = tx.Debug().
 		Select("SUM(amount) as amount, cash_method_id, user_id").
 		Group("cash_method_id").
 		Group("user_id")
