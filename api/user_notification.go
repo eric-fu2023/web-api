@@ -37,11 +37,10 @@ func UserNotificationListV2(c *gin.Context) {
 	}
 }
 
-func UserNotificationV2(c *gin.Context) {
-	var req service.GetUserNotificationRequestV2
-
+func GeneralNotificationV2(c *gin.Context) {
+	var req service.GetGeneralNotificationRequestV2
 	if err := c.ShouldBind(&req); err == nil {
-		res, _ := service.GetUserNotificationV2(c, req)
+		res, _ := service.GetGeneralNotificationV2(c, req)
 		c.JSON(200, res)
 	} else {
 		c.JSON(400, ErrorResponse(c, req, err))
