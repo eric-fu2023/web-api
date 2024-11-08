@@ -58,7 +58,7 @@ func (UserNotificationWithNotification) TableName() string {
 func FindOne(ctx context.Context, user model.User, categoryType ploutos.NotificationCategoryType, notificationId int64, userNotificationId int64) (UserNotificationWithNotification, error) {
 	var notif UserNotificationWithNotification
 	switch categoryType {
-	case ploutos.NotificationCategoryTypeSystem:
+	case ploutos.NotificationCategoryTypeSystem, 0:
 		err := model.DB.Debug().Model(UserNotificationWithNotification{}).Where("user_id = ?", user.ID).Scopes(model.ByIds([]int64{userNotificationId})).Find(&notif).Error
 		if err != nil {
 			return UserNotificationWithNotification{}, err
