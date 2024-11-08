@@ -21,7 +21,7 @@ func UserNotification(c *gin.Context) {
 	var req service.GetUserNotificationRequest
 
 	if err := c.ShouldBind(&req); err == nil {
-		res, _ := service.GetUserNotification(req)
+		res, _ := service.GetUserNotification(c, req)
 		c.JSON(200, res)
 	} else {
 		c.JSON(400, ErrorResponse(c, req, err))
