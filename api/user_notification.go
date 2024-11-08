@@ -17,6 +17,17 @@ func UserNotificationList(c *gin.Context) {
 	}
 }
 
+func UserNotification(c *gin.Context) {
+	var req service.GetUserNotificationRequest
+
+	if err := c.ShouldBind(&req); err == nil {
+		res, _ := service.GetUserNotification(req)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, req, err))
+	}
+}
+
 func UserNotificationMarkRead(c *gin.Context) {
 	var service service.UserNotificationMarkReadService
 	if err := c.ShouldBindWith(&service, binding.FormMultipart); err == nil {
