@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -146,6 +147,12 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 			return serializer.ParamErr(c, service, i18n.T("empty_currency_id"), nil)
 		}
 		return serializer.DBErr(c, service, i18n.T("User_add_fail"), err)
+	}
+
+	// if register success, need to send to pixel
+	if c.MustGet("_agent") == "pixel_app_001"{
+		log.Printf("should log pixel event register for channel pixel_app_001")
+		PixelRegisterEvent(user.ID, c.ClientIP())
 	}
 
 	tokenString, err := ProcessUserLogin(c, user, consts.AuthEventLoginMethod["username"], "", service.CountryCode, service.Mobile)
