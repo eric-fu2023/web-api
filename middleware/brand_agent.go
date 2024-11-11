@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
 	"strconv"
 	"web-api/serializer"
+
+	"github.com/gin-gonic/gin"
 )
 
 func BrandAgent() gin.HandlerFunc {
@@ -28,18 +29,23 @@ func BrandAgent() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		//agent, err := strconv.Atoi(c.GetHeader("Agent"))
-		//if err != nil {
-		//	c.JSON(400, serializer.Response{
-		//		Code:  serializer.CodeParamErr,
-		//		Msg:   "Invalid headers",
-		//		Error: err.Error(),
-		//	})
-		//	c.Abort()
-		//	return
-		//}
+		
+		// should use agent id, but now we need to send data to pixel......
+		agent, err := strconv.Atoi(c.GetHeader("Agent"))
+		if err != nil {
+			c.JSON(400, serializer.Response{
+				Code:  serializer.CodeParamErr,
+				Msg:   "Invalid headers",
+				Error: err.Error(),
+			})
+			c.Abort()
+			return
+		}
+		c.Set("_agent", agent)
+
+
+
 		c.Set("_brand", brand)
-		//c.Set("_agent", agent)
 		c.Next()
 	}
 }
