@@ -46,3 +46,13 @@ func GeneralNotificationV2(c *gin.Context) {
 		c.JSON(400, ErrorResponse(c, req, err))
 	}
 }
+
+func UserNotificationsMarkReadV2(c *gin.Context) {
+	var req service.UserNotificationMarkReadRequestV2
+	if err := c.ShouldBindWith(&req, binding.FormMultipart); err == nil {
+		res, _ := service.MarkNotificationsAsReadV2(c, req)
+		c.JSON(200, res)
+	} else {
+		c.JSON(400, ErrorResponse(c, req, err))
+	}
+}
