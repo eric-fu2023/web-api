@@ -176,7 +176,7 @@ func closeOrder(c *gin.Context, ctx context.Context, newCashOrderState model.Cas
 		if is_FTD {
 			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "FTD_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
 			// if register success, need to send to pixel
-			if c.MustGet("_agent") == "pixel_app_001"{
+			if c.GetHeader("Agent") == "pixel_app_001"{
 				log.Printf("should log pixel event register for channel pixel_app_001")
 				service.PixelFTDEvent(newCashOrderState.UserId, c.ClientIP(), newCashOrderState.AppliedCashInAmount)
 			}

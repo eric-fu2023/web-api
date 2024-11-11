@@ -150,7 +150,7 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 	}
 
 	// if register success, need to send to pixel
-	if c.MustGet("_agent") == "pixel_app_001"{
+	if c.GetHeader("Agent") == "pixel_app_001"{
 		log.Printf("should log pixel event register for channel pixel_app_001")
 		PixelRegisterEvent(user.ID, c.ClientIP())
 	}
