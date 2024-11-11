@@ -35,7 +35,7 @@ func MarkNotificationsAsRead(ctx context.Context, user model.User, notifications
 }
 
 // MarkNotificationAsRead
-func MarkNotificationAsRead(ctx context.Context, user model.User, notification UserNotificationMarkReadForm) (any, error) {
+func MarkNotificationAsRead(ctx context.Context, user model.User, notification UserNotificationMarkReadForm) (int64, error) {
 	userId := user.ID
 
 	var marker ReadMarker
@@ -63,10 +63,10 @@ func MarkNotificationAsRead(ctx context.Context, user model.User, notification U
 
 	if err != nil {
 		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "db.Transaction")))
-		return 0, err
+		return userNotificationId, err
 	}
 
-	return 0, nil
+	return userNotificationId, nil
 }
 
 // ReadMarker uses 2-step approach to mark user's notification as read [i.e Mark].
@@ -105,12 +105,15 @@ func TypeHasNotification(categoryType ploutos.NotificationCategoryType) (bool, e
 }
 
 func (n *UserNotificationMarker) getOrCreateUserNotification(ctx context.Context, tx *gorm.DB) (ploutos.UserNotification, error) {
-	var v ploutos.UserNotification
-	err := tx.Debug().Model(ploutos.UserNotification{}).Where("id = ?", n.UserNotificationId).First(&v).Error
-	switch err {
-	case nil:
-		return v, nil
-	case gorm.ErrRecordNotFound:
+	ctx = rfcontext.AppendCallDesc(ctx, "getOrCreateUserNotification")
+
+	var userNotif ploutos.UserNotification
+	err := tx.Debug().Model(ploutos.UserNotification{}).Where("id = ?", n.UserNotificationId).First(&userNotif).Error
+	switch {
+	case err == nil:
+		return userNotif, nil
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		ctx = rfcontext.AppendCallDesc(ctx, "errors.Is(err, gorm.ErrRecordNotFound)")
 		hasNotification, err := TypeHasNotification(n.CategoryType)
 		if err != nil {
 			return ploutos.UserNotification{}, err
