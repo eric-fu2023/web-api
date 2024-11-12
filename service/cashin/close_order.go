@@ -58,7 +58,7 @@ func CloseCashInOrder(c *gin.Context, ctx context.Context, orderNumber string, a
 		newCashOrderState.Notes = ploutos.EncryptedStr(notes)
 		newCashOrderState.WagerChange += additionalWagerChange
 		newCashOrderState.Status = ploutos.CashOrderStatusSuccess
-		updatedCashOrder, err = closeOrder(c, ctx, newCashOrderState, tx, transactionType)
+		updatedCashOrder, err = closeOrder(ctx, newCashOrderState, tx, transactionType)
 		if err != nil {
 			return
 		}
@@ -119,7 +119,7 @@ func CloseCashInOrder(c *gin.Context, ctx context.Context, orderNumber string, a
 	return /* err */
 }
 
-func closeOrder(c *gin.Context, ctx context.Context, newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
+func closeOrder(ctx context.Context, newCashOrderState model.CashOrder, txDB *gorm.DB, transactionType int64) (updatedCashOrder model.CashOrder, err error) {
 	// update cash order
 	err = txDB.Omit(clause.Associations).Updates(newCashOrderState).Error
 	// modify user sum
@@ -175,10 +175,15 @@ func closeOrder(c *gin.Context, ctx context.Context, newCashOrderState model.Cas
 	if newCashOrderState.OperationType == ploutos.CashOrderOperationTypeMakeUpOrder || newCashOrderState.OperationType == 0 {
 		if is_FTD {
 			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "FTD_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
-			// if register success, need to send to pixel
-			if c.GetHeader("channel") == "pixel_app_001"{
+			// if FTD success, need to send to pixel
+			var user model.User
+			err = txDB.Where("id", userSum.UserId).Scan(&user).Error	
+			if err != nil {
+				log.Printf("pixel app send data log error when finding user channel code")
+			}
+			if user.Channel == "pixel_app_001"{
 				log.Printf("should log pixel event register for channel pixel_app_001")
-				service.PixelFTDEvent(newCashOrderState.UserId, c.ClientIP(), newCashOrderState.AppliedCashInAmount)
+				service.PixelFTDEvent(newCashOrderState.UserId, "0.0.0.0", newCashOrderState.AppliedCashInAmount)
 			}
 		} else {
 			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "deposit_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
