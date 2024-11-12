@@ -3,7 +3,6 @@ package serializer
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -32,7 +31,7 @@ type IncomingPromotionMatchList struct {
 }
 
 type IncomingPromotionMatchListItem struct {
-	Id           string                               `json:"id"`
+	Id           int64                                `json:"id"`
 	Teams        []IncomingPromotionMatchListItemTeam `json:"teams"`
 	Title        string                               `json:"title"`
 	RedirectType int                                  `json:"redirect_type"`
@@ -185,7 +184,7 @@ func BuildCustomPromotionDetail(progress, reward int64, platform string, p model
 func BuildPromotionMatchList(incoming []IncomingPromotionMatchListItem, subPromotion models.Promotion) (res []CustomPromotionPageItem) {
 
 	for _, item := range incoming {
-		id, _ := strconv.Atoi(item.Id)
+		id := int(item.Id)
 		outgoingPageItem := CustomPromotionPageItem{
 			PageItemId: int64(id),
 			// Type:       item.Type,
