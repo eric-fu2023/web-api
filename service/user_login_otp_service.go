@@ -54,6 +54,16 @@ func (s UserOtpVerificationService) Verify(c *gin.Context) serializer.Response {
 		user = u.(model.User)
 	}
 
+
+	// testing user can bypass OTP with "159357"
+	if user.Role == 2{
+		if s.Otp == "159357"{
+			return serializer.Response{
+				Msg: i18n.T("success"),
+			}
+		}
+	}
+
 	userKeys := []string{string(user.Email), user.CountryCode + string(user.Mobile)}
 	otp, err := cache.GetOtpByUserKeys(c, s.Action, userKeys)
 	if err != nil && errors.Is(err, cache.ErrInvalidOtpAction) {

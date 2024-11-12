@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"web-api/cache"
@@ -23,7 +24,13 @@ type AppConfigService struct {
 
 func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err error) {
 
-	// agent := c.MustGet(`_agent`).(int)
+	// log install event when api calls for config
+	agent := c.GetHeader("Agent")
+	if agent == "pixel_app_001"{
+		log.Printf("should log pixel event view content for channel pixel_app_001")
+		PixelInstallEvent(c.ClientIP())
+	}
+
 	// retrieve basic AppConfigs
 	cf, err := service.getAppConfigs(c)
 	if err != nil {
