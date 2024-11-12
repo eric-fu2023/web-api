@@ -182,7 +182,7 @@ func closeOrder(ctx context.Context, newCashOrderState model.CashOrder, txDB *go
 				log.Printf("pixel app send data log error when finding user channel code")
 			}
 			if user.Channel == "pixel_app_001"{
-				log.Printf("should log pixel event register for channel pixel_app_001")
+				log.Printf("should log pixel event deposit for channel pixel_app_001")
 				service.PixelFTDEvent(newCashOrderState.UserId, "0.0.0.0", newCashOrderState.AppliedCashInAmount)
 			}
 		} else {
