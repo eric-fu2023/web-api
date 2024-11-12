@@ -21,8 +21,6 @@ type PixelRequestBodyData struct {
 	ActionSource string     `form:"action_source" json:"action_source"`
 }
 type UserData struct {
-	Email           []string `json:"em"`
-	Phone           []string `json:"ph"`
 	ClientIpAddress string   `json:"client_ip_address"`
 	ExternalId      int64      `json:"external_id"`
 }
@@ -71,7 +69,6 @@ func PixelRegisterEvent(user_id int64, client_ip string) {
 		EventName:    "CompleteRegistration",
 		EventTime:    time.Now().Unix(),
 		UserData:     UserData{
-			Phone:           []string{"hashed_phone_number"},
 			ClientIpAddress: client_ip,
 			ExternalId:      user_id,
 		},
@@ -103,7 +100,6 @@ func PixelFTDEvent(user_id int64, client_ip string, deposit_amount int64) {
 		EventName:    "Purchase",
 		EventTime:    time.Now().Unix(),
 		UserData:     UserData{
-			Phone:           []string{"hashed_phone_number"},
 			ClientIpAddress: client_ip,
 			ExternalId:      user_id,
 		},
