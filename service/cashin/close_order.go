@@ -177,7 +177,7 @@ func closeOrder(ctx context.Context, newCashOrderState model.CashOrder, txDB *go
 			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "FTD_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
 			// if FTD success, need to send to pixel
 			var user model.User
-			err = txDB.Where("id", userSum.UserId).Scan(&user).Error	
+			err = txDB.Where("id = ?", userSum.UserId).Scan(&user).Error
 			if err != nil {
 				log.Printf("pixel app send data log error when finding user channel code")
 			}
