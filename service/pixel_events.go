@@ -57,7 +57,8 @@ func PixelInstallEvent(client_ip string) {
 	}}
 
 	cl := resty.New()
-	_, err := cl.R().SetBody(pixelRequestBody).Post(os.Getenv("PIXEL_END_POINT"))
+	resp, err := cl.R().SetBody(pixelRequestBody).Post(os.Getenv("PIXEL_END_POINT"))
+	log.Printf("pixel resp: %v", resp.String())
 	if err != nil {
 		log.Printf("Pixel Install Api Call error for user %v", err.Error())
 	}
@@ -88,7 +89,8 @@ func PixelRegisterEvent(user_id int64, client_ip string) {
 	}}
 
 	cl := resty.New()
-	_, err := cl.R().SetBody(pixelRequestBody).Post(os.Getenv("PIXEL_END_POINT"))
+	resp, err := cl.R().SetBody(pixelRequestBody).Post(os.Getenv("PIXEL_END_POINT"))
+	log.Printf("pixel resp: %v", resp.String())
 	if err != nil {
 		log.Printf("Pixel Register Api Call error for user %v, %v", user_id, err.Error())
 	}
@@ -119,7 +121,9 @@ func PixelFTDEvent(user_id int64, client_ip string, deposit_amount int64) {
 	}}
 
 	cl := resty.New()
-	_, err := cl.R().SetBody(pixelRequestBody).Post(os.Getenv("PIXEL_END_POINT"))
+	resp, err := cl.R().SetBody(pixelRequestBody).Post(os.Getenv("PIXEL_END_POINT"))
+	log.Printf("pixel resp: %v", resp.String())
+
 	if err != nil {
 		log.Printf("Pixel FTD Api Call error for user %v for amount %v, %v", user_id, deposit_amount, err.Error())
 	}
