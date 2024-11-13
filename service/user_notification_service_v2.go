@@ -26,13 +26,25 @@ type UserNotificationListServiceV2 struct {
 	common.Page
 	Category int `form:"category" json:"category"`
 }
+type UserNotificationListCategoryServiceV2 struct {
+}
+
+func (service *UserNotificationListCategoryServiceV2) ListCategory(c *gin.Context) (r serializer.Response, err error) {
+	u, _ := c.Get("user")
+	user := u.(model.User)
+    category := CountsUnread(user.ID)
+	r = serializer.Response{
+		Data: category,
+	}
+	return
+}
+
 
 func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
 	u, _ := c.Get("user")
 	user := u.(model.User)
 	var list []serializer.UserNotificationV2
-	var resp serializer.UserNotificationResponseV2
 
 	// system notification
 	var notifications []ploutos.UserNotification
@@ -116,15 +128,11 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 		return list[i].Ts > (list[j].Ts)
 	})
 
-	resp.Notifications = list
-	if service.Category == 0 {
-		resp.Counts = CountsUnread(user.ID)
-	}
 
 	go game_history_pane.AdvanceNotificationLastSeen(user.ID, time.Now())
 
 	r = serializer.Response{
-		Data: resp,
+		Data: list,
 	}
 	return
 }
