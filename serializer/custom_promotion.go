@@ -57,6 +57,7 @@ type IncomingCustomPromotionRequestField struct {
 	Hint         string              `json:"hint"`
 	Type         string              `json:"type"`
 	Title        string              `json:"title"`
+	Text         string              `json:"text"`
 	InputId      string              `json:"input_id"`
 	Switch       int                 `json:"switch"`
 	Options      []map[string]string `json:"option"`
@@ -246,6 +247,7 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 		requestField := CustomPromotionRequestField{
 			Placeholder: incomingField.Hint,
 			Title:       incomingField.Title,
+			Text:        incomingField.Text,
 			Type:        strings.Replace(incomingField.Type, "input_", "", -1),
 			Id:          incomingField.InputId,
 			Weightage:   incomingField.Weightage,
@@ -253,8 +255,6 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 		}
 
 		if requestField.Type == "button" {
-			requestField.Text = requestField.Title
-
 			if incomingField.RedirectType == 0 {
 				isExceeded, err := ParseButtonClickOption(c, incomingField, promotionId, userId)
 				if err != nil {
