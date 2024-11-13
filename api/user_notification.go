@@ -49,7 +49,7 @@ func GeneralNotificationV2(c *gin.Context) {
 
 func AddReadNotificationsV2(c *gin.Context) {
 	var req service.UserNotificationMarkReadRequestV2
-	if err := c.ShouldBindWith(&req, binding.FormMultipart); err == nil {
+	if err := c.ShouldBind(&req); err == nil {
 		res, _ := service.AddReadNotificationsV2(c, req)
 		c.JSON(200, res)
 	} else {
