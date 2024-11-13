@@ -2,11 +2,12 @@ package notification
 
 import (
 	"context"
-	"errors"
+	"log"
 	"time"
 
 	"web-api/model"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"github.com/lib/pq"
@@ -55,17 +56,22 @@ func (GeneralNotification) TableName() string {
 // categoryType references [ploutos.Notification.Category]
 // notificationId references [ploutos.Notification]
 // userNotificationId references [ploutos.UserNotification]
-func FindGeneralOne(ctx context.Context, user model.User, categoryType ploutos.NotificationCategoryType, notificationId int64, userNotificationId int64) (GeneralNotification, error) {
+func FindGeneralOne(ctx context.Context, user model.User, userNotificationId int64) (GeneralNotification, error) {
 	var notif GeneralNotification
-	switch categoryType {
-	case ploutos.NotificationCategoryTypeNotification:
-		err := model.DB.Debug().Model(GeneralNotification{}).Where("user_id = ?", user.ID).Scopes(model.ByIds([]int64{userNotificationId})).Find(&notif).Error
-		if err != nil {
-			return GeneralNotification{}, err
-		}
-	default:
-		return GeneralNotification{}, errors.New("unknown or invalid notification category")
+	err := model.DB.Debug().Model(GeneralNotification{}).Where("user_id = ?", user.ID).Scopes(model.ByIds([]int64{userNotificationId})).Find(&notif).Error
+	if err != nil {
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "find(&GeneralNotification{})")))
+		return GeneralNotification{}, err
 	}
+	//switch categoryType {
+	//case ploutos.NotificationCategoryTypeNotification:
+	//	err := model.DB.Debug().Model(GeneralNotification{}).Where("user_id = ?", user.ID).Scopes(model.ByIds([]int64{userNotificationId})).Find(&notif).Error
+	//	if err != nil {
+	//		return GeneralNotification{}, err
+	//	}
+	//default:
+	//	return GeneralNotification{}, errors.New("unknown or invalid notification category")
+	//}
 
 	return notif, nil
 }

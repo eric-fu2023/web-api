@@ -2,18 +2,22 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
+	"strings"
 	"time"
 
 	"web-api/conf"
 	"web-api/model"
+	"web-api/serializer"
 	notificationservice "web-api/service/notification"
 
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 func main() {
-	NotificationModule()
+	//NotificationModule()
+	//Shape_UserNotificationV2()
 }
 
 // basic create, del and mark as read
@@ -125,21 +129,23 @@ func NotificationModule() {
 			panic(e1)
 		}
 
-		getnotif, err := notificationservice.FindGeneralOne(context.TODO(), baseUser, ploutos.NotificationCategoryTypeNotification, newNotif_general.ID, newUserNotif_general.ID)
+		getnotif, err := notificationservice.FindGeneralOne(context.TODO(), baseUser, newUserNotif_general.ID)
 		if err != nil {
 			panic(err)
 		}
 		log.Printf("getnotif %#v\n", getnotif)
 
-		_, err = notificationservice.MarkNotificationAsRead(context.TODO(), baseUser, notificationservice.UserNotificationMarkReadForm{
-			UserNotificationId: newUserNotif_general.ID,
-			NotificationId:     newNotif_general.ID,
-			CategoryType:       ploutos.NotificationCategoryTypeNotification,
+		cid := serializer.BuildNotificationCompositeIds(newNotif_general.ID, newUserNotif_general.ID)
+
+		_, err = notificationservice.MarkNotificationAsRead(context.TODO(), baseUser, notificationservice.ReadNotificationForm{
+
+			Id:           cid,
+			CategoryType: ploutos.NotificationCategoryTypeNotification,
 		})
 		if err != nil {
 			panic(err)
 		}
-		getnotifaftermark, err := notificationservice.FindGeneralOne(context.TODO(), baseUser, ploutos.NotificationCategoryTypeNotification, newNotif_general.ID, newUserNotif_general.ID)
+		getnotifaftermark, err := notificationservice.FindGeneralOne(context.TODO(), baseUser, newUserNotif_general.ID)
 		if err != nil {
 			panic(err)
 		}
@@ -176,9 +182,9 @@ func NotificationModule() {
 		}
 
 		baseUser2 := model.User{User: ploutos.User{BASE: ploutos.BASE{ID: 02345672222}}}
-		newUserNotif_Promo2Id, err := notificationservice.MarkNotificationAsRead(context.TODO(), baseUser2, notificationservice.UserNotificationMarkReadForm{
-			NotificationId: newNotif_Promo2.ID,
-			CategoryType:   ploutos.NotificationCategoryTypeNotification,
+		newUserNotif_Promo2Id, err := notificationservice.MarkNotificationAsRead(context.TODO(), baseUser2, notificationservice.ReadNotificationForm{
+			Id:           serializer.BuildNotificationCompositeIds(newNotif_Promo2.ID, 0),
+			CategoryType: ploutos.NotificationCategoryTypeNotification,
 		})
 
 		if err != nil {
@@ -187,4 +193,37 @@ func NotificationModule() {
 
 		log.Printf("T_000006 %d \n", newUserNotif_Promo2Id)
 	}
+}
+
+func Shape_UserNotificationV2() {
+	list := []serializer.UserNotificationV2{
+		{
+			ID:                "1_0",
+			Title:             "title1_0",
+			ImageUrl:          "imgUrl1_0",
+			ShortContent:      "sh.content1_0",
+			Category:          1,
+			CategoryContentId: 2,
+			Ts:                12312451245125,
+			ExpiredAt:         123124124125125,
+			IsRead:            false,
+		},
+
+		{
+			ID:                "999_2",
+			Title:             "title999_2",
+			ImageUrl:          "imgUrl999_2",
+			ShortContent:      "sh.content999_2",
+			Category:          1,
+			CategoryContentId: 2,
+			Ts:                12312451245125,
+			ExpiredAt:         123124124125125,
+			IsRead:            true,
+		},
+	}
+
+	bb, _ := json.Marshal(list)
+	bbb := strings.ReplaceAll(string(bb), "\\", "")
+
+	log.Printf(bbb)
 }
