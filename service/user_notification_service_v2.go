@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"sort"
 	"time"
@@ -115,9 +116,8 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 		return list[i].Ts > (list[j].Ts)
 	})
 
-
 	resp.Notifications = list
-	if service.Category == 0{
+	if service.Category == 0 {
 		resp.Counts = CountsUnread(user.ID)
 	}
 
@@ -153,7 +153,7 @@ func AddReadNotificationsV2(c *gin.Context, req UserNotificationMarkReadRequestV
 }
 
 type GetGeneralNotificationRequestV2 struct {
-	Id serializer.NotificationCompositeId `form:"id" json:"id"`
+	Id serializer.NotificationReferenceId `form:"reference_id" json:"reference_id"`
 	//UserNotificationId int64 `form:"user_notification_id" json:"user_notification_id"`
 	//NotificationId     int64 `form:"notification_id" json:"notification_id"`
 	//CategoryType int64 `form:"category_type" json:"category_type"`
@@ -164,10 +164,12 @@ func GetGeneralNotificationV2(c *gin.Context, req GetGeneralNotificationRequestV
 	user := u.(model.User)
 
 	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "GetGeneralNotificationV2")
-
-	_, uNotifId, err := req.Id.Dissect()
+	isUNotif, uNotifId, err := req.Id.IsUserNotificationId()
 	if err != nil {
 		return serializer.Response{}, err
+	}
+	if !isUNotif {
+		return serializer.Response{}, fmt.Errorf("reference id type is not user's notification")
 	}
 
 	notif, err := notificationservice.FindGeneralOne(ctx, user, uNotifId)
@@ -185,9 +187,9 @@ func GetGeneralNotificationV2(c *gin.Context, req GetGeneralNotificationRequestV
 }
 
 func CountsUnread(userID int64) []serializer.UserNotificationUnreadCountsV2 {
-    var results []serializer.UserNotificationUnreadCountsV2
-    // Define the raw SQL query with UNION ALL
-    query := `
+	var results []serializer.UserNotificationUnreadCountsV2
+	// Define the raw SQL query with UNION ALL
+	query := `
         -- System notifications
         SELECT 
             999 AS id,
@@ -230,14 +232,14 @@ func CountsUnread(userID int64) []serializer.UserNotificationUnreadCountsV2 {
         GROUP BY n.category;
     `
 
-    // Execute the raw SQL query with userID as a parameter
-    if err := model.DB.Raw(query, userID, userID, userID).Scan(&results).Error; err != nil {
-        log.Fatal("error executing query:", err)
-    }
+	// Execute the raw SQL query with userID as a parameter
+	if err := model.DB.Raw(query, userID, userID, userID).Scan(&results).Error; err != nil {
+		log.Fatal("error executing query:", err)
+	}
 
 	results = append([]serializer.UserNotificationUnreadCountsV2{{
-		ID:0,
-		Label:"All",
+		ID:           0,
+		Label:        "All",
 		UnreadCounts: 0},
 	}, results...)
 	// counts unread system
@@ -260,7 +262,7 @@ func CountsUnread(userID int64) []serializer.UserNotificationUnreadCountsV2 {
 			label = "System"
 		}
 		results[index].Label = label
-		results[0].UnreadCounts = results[0].UnreadCounts+results[index].UnreadCounts
+		results[0].UnreadCounts = results[0].UnreadCounts + results[index].UnreadCounts
 	}
 	return results
 }

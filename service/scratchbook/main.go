@@ -135,8 +135,7 @@ func NotificationModule() {
 		}
 		log.Printf("getnotif %#v\n", getnotif)
 
-		cid := serializer.BuildNotificationCompositeIds(newNotif_general.ID, newUserNotif_general.ID)
-
+		cid := serializer.BuildNotificationReferenceId("user_notification", newUserNotif_general.ID)
 		_, err = notificationservice.MarkNotificationAsRead(context.TODO(), baseUser, notificationservice.ReadNotificationForm{
 
 			Id:           cid,
@@ -183,7 +182,7 @@ func NotificationModule() {
 
 		baseUser2 := model.User{User: ploutos.User{BASE: ploutos.BASE{ID: 02345672222}}}
 		newUserNotif_Promo2Id, err := notificationservice.MarkNotificationAsRead(context.TODO(), baseUser2, notificationservice.ReadNotificationForm{
-			Id:           serializer.BuildNotificationCompositeIds(newNotif_Promo2.ID, 0),
+			Id:           serializer.BuildNotificationReferenceId("notification", newNotif_Promo2.ID),
 			CategoryType: ploutos.NotificationCategoryTypeNotification,
 		})
 

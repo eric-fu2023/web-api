@@ -21,7 +21,7 @@ func MarkReadByUserAndSelectedNotifications(userId int64, userNotificationIds []
 }
 
 type ReadNotificationForm struct {
-	Id           serializer.NotificationCompositeId `form:"id" json:"id"`
+	Id           serializer.NotificationReferenceId `form:"reference_id" json:"reference_id"`
 	CategoryType ploutos.NotificationCategoryType   `form:"category_type" json:"category_type"`
 }
 
@@ -41,11 +41,17 @@ func MarkNotificationsAsRead(ctx context.Context, user model.User, notifications
 func MarkNotificationAsRead(ctx context.Context, user model.User, notification ReadNotificationForm) (int64, error) {
 	userId := user.ID
 
-	uNotifId, notifId, err := notification.Id.Dissect()
+	_, notifId, err := notification.Id.IsNotificationId()
 	if err != nil {
-		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, fmt.Sprintf("notification.Id.Dissect"))))
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, fmt.Sprintf("notification.Id.IsNotificationId"))))
 		return 0, err
 	}
+	_, uNotifId, err := notification.Id.IsUserNotificationId()
+	if err != nil {
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, fmt.Sprintf("notification.Id.IsUserNotificationId"))))
+		return 0, err
+	}
+
 	var marker ReadMarker
 	marker = &UserNotificationMarker{
 		UserId:             userId,
