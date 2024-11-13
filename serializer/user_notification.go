@@ -44,6 +44,7 @@ type UserNotificationUnreadCountsV2 struct {
 	Label        string `json:"label"`
 	UnreadCounts int    `json:"unread_counts"`
 }
+
 type UserNotificationV2 struct {
 	ID                int64  `json:"id"`
 	ReferenceId       string `json:"reference_id"`
@@ -75,34 +76,45 @@ func BuildUserNotificationV2(c *gin.Context, a ploutos.UserNotification) (b User
 	return
 }
 
-type NotificationCompositeId string
+type NotificationReferenceId string
 
-// BuildNotificationCompositeIds
+// BuildNotificationReferenceId
 // inverse [DissectCompositeIds]
-func BuildNotificationCompositeIds(notificationdId int64, userNotificationId int64) NotificationCompositeId {
-	return NotificationCompositeId(fmt.Sprintf("%d_%d", notificationdId, userNotificationId))
+func BuildNotificationReferenceId(notificationdIdType string, userNotificationId int64) NotificationReferenceId {
+	return NotificationReferenceId(fmt.Sprintf("%s_%d", notificationdIdType, userNotificationId))
 }
 
-// DissectCompositeIds
-// inverse [BuildNotificationCompositeIds]
-func (compositeId NotificationCompositeId) Dissect() ( /*_notifId*/ int64 /*_uNotifId*/, int64, error) {
-	idsS := strings.Split(string(compositeId), "_")
-	if len(idsS) != 2 {
-		return 0, 0, fmt.Errorf("invalid composite ids length (!= 2)")
+func (refId NotificationReferenceId) IsUserNotificationId() (bool, int64, error) {
+	vals := strings.Split(string(refId), "-")
+	if len(vals) != 2 {
+		return false, 0, fmt.Errorf("invalid reference ids length (!= 2)")
 	}
 
-	_notifId, err := strconv.Atoi(idsS[0])
+	if vals[0] != "user_notification" {
+		return false, 0, nil
+	}
+
+	id, err := strconv.Atoi(vals[1])
 	if err != nil {
-		return 0, 0, err
+		return false, 0, err
+	}
+	return true, int64(id), nil
+}
+
+func (refId NotificationReferenceId) IsNotificationId() (bool, int64, error) {
+	vals := strings.Split(string(refId), "-")
+	if len(vals) != 2 {
+		return false, 0, fmt.Errorf("invalid reference ids length (!= 2)")
 	}
 
-	_userNotifId, err := strconv.Atoi(idsS[1])
-
+	if vals[0] != "notification" {
+		return false, 0, nil
+	}
+	id, err := strconv.Atoi(vals[1])
 	if err != nil {
-		return 0, 0, err
+		return false, 0, err
 	}
-
-	return int64(_notifId), int64(_userNotifId), nil
+	return true, int64(id), nil
 }
 
 func BuildCMSNotificationV2(_ *gin.Context, a ploutos.Notification, notifications_ids_with_read_status []NotificationIdsWithReadStatus, image_url string) (b UserNotificationV2) {
