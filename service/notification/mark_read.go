@@ -22,7 +22,7 @@ func MarkReadByUserAndSelectedNotifications(userId int64, userNotificationIds []
 
 type ReadNotificationForm struct {
 	Id           serializer.NotificationReferenceId `form:"reference_id" json:"reference_id"`
-	CategoryType ploutos.NotificationCategoryType   `form:"category_type" json:"category_type"`
+	CategoryType ploutos.NotificationCategoryType   `form:"category" json:"category"`
 }
 
 // MarkNotificationsAsRead
