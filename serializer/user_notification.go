@@ -33,10 +33,12 @@ type NotificationIdsWithReadStatus struct {
 	ID     int64
 	IsRead bool
 }
+
 type UserNotificationResponseV2 struct {
 	Notifications []UserNotificationV2             `json:"notifications"`
 	Counts        []UserNotificationUnreadCountsV2 `json:"counts"`
 }
+
 type UserNotificationUnreadCountsV2 struct {
 	ID           int    `json:"id"`
 	Label        string `json:"label"`

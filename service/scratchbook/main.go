@@ -17,7 +17,7 @@ import (
 
 func main() {
 	//NotificationModule()
-	//Shape_UserNotificationV2()
+	Shape_UserNotificationResponseV2()
 }
 
 // basic create, del and mark as read
@@ -195,10 +195,11 @@ func NotificationModule() {
 	}
 }
 
-func Shape_UserNotificationV2() {
+func Shape_UserNotificationResponseV2() {
+	var resp serializer.UserNotificationResponseV2
 	list := []serializer.UserNotificationV2{
 		{
-			ID:                "1_0",
+			ID:                100000,
 			Title:             "title1_0",
 			ImageUrl:          "imgUrl1_0",
 			ShortContent:      "sh.content1_0",
@@ -210,7 +211,7 @@ func Shape_UserNotificationV2() {
 		},
 
 		{
-			ID:                "999_2",
+			ID:                99999,
 			Title:             "title999_2",
 			ImageUrl:          "imgUrl999_2",
 			ShortContent:      "sh.content999_2",
@@ -222,7 +223,13 @@ func Shape_UserNotificationV2() {
 		},
 	}
 
-	bb, _ := json.Marshal(list)
+	resp.Notifications = list
+	resp.Counts = []serializer.UserNotificationUnreadCountsV2{
+		{ID: 0,
+			Label:        "",
+			UnreadCounts: 123123},
+	}
+	bb, _ := json.Marshal(resp)
 	bbb := strings.ReplaceAll(string(bb), "\\", "")
 
 	log.Printf(bbb)
