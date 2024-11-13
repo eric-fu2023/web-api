@@ -3,9 +3,11 @@ package notification
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"web-api/model"
+	"web-api/serializer"
 
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
@@ -18,36 +20,42 @@ func MarkReadByUserAndSelectedNotifications(userId int64, userNotificationIds []
 	return err
 }
 
-type UserNotificationMarkReadForm struct {
-	UserNotificationId int64                            `form:"user_notification_id" json:"user_notification_id"`
-	NotificationId     int64                            `form:"notification_id" json:"notification_id"`
-	CategoryType       ploutos.NotificationCategoryType `form:"category_type" json:"category_type"`
+type ReadNotificationForm struct {
+	Id           serializer.NotificationCompositeId `form:"id" json:"id"`
+	CategoryType ploutos.NotificationCategoryType   `form:"category_type" json:"category_type"`
 }
 
 // MarkNotificationsAsRead
-func MarkNotificationsAsRead(ctx context.Context, user model.User, notifications []UserNotificationMarkReadForm) error {
+func MarkNotificationsAsRead(ctx context.Context, user model.User, notifications []ReadNotificationForm) error {
+	ctx = rfcontext.AppendCallDesc(ctx, "MarkNotificationsAsRead")
 	var err error
 	for _, notification := range notifications {
 		_, _err := MarkNotificationAsRead(ctx, user, notification)
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, fmt.Sprintf("MarkNotificationAsRead: id %d", notification.Id))))
 		err = errors.Join(err, _err)
 	}
 	return err
 }
 
 // MarkNotificationAsRead
-func MarkNotificationAsRead(ctx context.Context, user model.User, notification UserNotificationMarkReadForm) (int64, error) {
+func MarkNotificationAsRead(ctx context.Context, user model.User, notification ReadNotificationForm) (int64, error) {
 	userId := user.ID
 
+	uNotifId, notifId, err := notification.Id.Dissect()
+	if err != nil {
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, fmt.Sprintf("notification.Id.Dissect"))))
+		return 0, err
+	}
 	var marker ReadMarker
 	marker = &UserNotificationMarker{
 		UserId:             userId,
-		UserNotificationId: notification.UserNotificationId,
-		NotificationId:     notification.NotificationId,
-		CategoryType:       notification.CategoryType,
+		UserNotificationId: uNotifId,
+		NotificationId:     notifId,
+		//CategoryType:       notification.CategoryType,
 	}
 
 	var userNotificationId int64
-	err := model.DB.Transaction(func(tx *gorm.DB) error {
+	err = model.DB.Transaction(func(tx *gorm.DB) error {
 		userNotif, err := marker.getOrCreateUserNotification(ctx, tx)
 		if err != nil {
 			return err
@@ -65,7 +73,6 @@ func MarkNotificationAsRead(ctx context.Context, user model.User, notification U
 		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "db.Transaction")))
 		return userNotificationId, err
 	}
-
 	return userNotificationId, nil
 }
 
@@ -80,10 +87,10 @@ type ReadMarker interface {
 var _ ReadMarker = &UserNotificationMarker{}
 
 type UserNotificationMarker struct {
-	UserId             int64
-	CategoryType       ploutos.NotificationCategoryType
-	UserNotificationId int64
+	UserId int64
+	//CategoryType       ploutos.NotificationCategoryType
 	NotificationId     int64
+	UserNotificationId int64
 }
 
 // TypeHasNotification
@@ -113,15 +120,20 @@ func (n *UserNotificationMarker) getOrCreateUserNotification(ctx context.Context
 	case err == nil:
 		return userNotif, nil
 	case errors.Is(err, gorm.ErrRecordNotFound):
-		ctx = rfcontext.AppendCallDesc(ctx, "errors.Is(err, gorm.ErrRecordNotFound)")
-		hasNotification, err := TypeHasNotification(n.CategoryType)
-		if err != nil {
-			return ploutos.UserNotification{}, err
+		ctx = rfcontext.AppendCallDesc(ctx, "handling errors.Is(err, gorm.ErrRecordNotFound)")
+		//hasNotification, err := TypeHasNotification(n.CategoryType)
+		//if err != nil {
+		//	return ploutos.UserNotification{}, err
+		//}
+		//
+		//if !hasNotification {
+		//	return ploutos.UserNotification{}, errors.New("MarkNotificationsAsRead: notification not found in database")
+		//}
+
+		if n.NotificationId == 0 {
+			return ploutos.UserNotification{}, errors.New("MarkNotificationsAsRead: notification not found in database. cannot create for user")
 		}
 
-		if !hasNotification {
-			return ploutos.UserNotification{}, errors.New("MarkNotificationsAsRead: notification not found in database")
-		}
 		var notif ploutos.Notification
 		err = tx.Debug().Model(ploutos.Notification{}).Where("id = ?", n.NotificationId).First(&notif).Error
 		if err != nil {

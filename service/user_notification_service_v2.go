@@ -121,17 +121,17 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 }
 
 type UserNotificationMarkReadRequestV2 struct {
-	Notifications []notificationservice.UserNotificationMarkReadForm `form:"notifications"`
+	Notifications []notificationservice.ReadNotificationForm `form:"notifications"`
 }
 
-func MarkNotificationsAsReadV2(c *gin.Context, req UserNotificationMarkReadRequestV2) (serializer.Response, error) {
+func AddReadNotificationsV2(c *gin.Context, req UserNotificationMarkReadRequestV2) (serializer.Response, error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "MarkNotificationsAsReadV2")
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "AddReadNotificationsV2")
 	err := notificationservice.MarkNotificationsAsRead(ctx, user, req.Notifications)
 	if err != nil {
-		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "notificationservice.MarkNotificationsAsReadV2")))
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "MarkNotificationsAsRead")))
 		return serializer.Response{}, err
 	}
 
@@ -144,9 +144,10 @@ func MarkNotificationsAsReadV2(c *gin.Context, req UserNotificationMarkReadReque
 }
 
 type GetGeneralNotificationRequestV2 struct {
-	UserNotificationId int64 `form:"user_notification_id" json:"user_notification_id"`
-	NotificationId     int64 `form:"notification_id" json:"notification_id"`
-	CategoryType       int64 `form:"category_type" json:"category_type"`
+	Id serializer.NotificationCompositeId `form:"id" json:"id"`
+	//UserNotificationId int64 `form:"user_notification_id" json:"user_notification_id"`
+	//NotificationId     int64 `form:"notification_id" json:"notification_id"`
+	//CategoryType int64 `form:"category_type" json:"category_type"`
 }
 
 func GetGeneralNotificationV2(c *gin.Context, req GetGeneralNotificationRequestV2) (serializer.Response, error) {
@@ -154,7 +155,13 @@ func GetGeneralNotificationV2(c *gin.Context, req GetGeneralNotificationRequestV
 	user := u.(model.User)
 
 	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "GetGeneralNotificationV2")
-	notif, err := notificationservice.FindGeneralOne(ctx, user, ploutos.NotificationCategoryType(req.CategoryType), req.NotificationId, req.UserNotificationId)
+
+	_, uNotifId, err := req.Id.Dissect()
+	if err != nil {
+		return serializer.Response{}, err
+	}
+
+	notif, err := notificationservice.FindGeneralOne(ctx, user, uNotifId)
 	if err != nil {
 		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "GetGeneralNotificationV2")))
 		return serializer.Response{}, err
