@@ -52,32 +52,20 @@ func MarkNotificationAsRead(ctx context.Context, user model.User, notification R
 		return 0, err
 	}
 
-	var marker ReadMarker
-	marker = &UserNotificationMarker{
+	marker := &UserNotificationMarker{
 		UserId:             userId,
 		UserNotificationId: uNotifId,
 		NotificationId:     notifId,
-		//CategoryType:       notification.CategoryType,
 	}
 
-	var userNotificationId int64
-	err = model.DB.Transaction(func(tx *gorm.DB) error {
-		userNotif, err := marker.getOrCreateUserNotification(ctx, tx)
-		if err != nil {
-			return err
-		}
-		userNotificationId = userNotif.ID
-		err = marker.markUserNotification(ctx, tx, userNotificationId)
-		return err
-	})
-
+	userNotificationId, err := Mark(ctx, marker)
 	ctx = rfcontext.AppendParams(ctx, "", map[string]interface{}{
 		"user_id": userNotificationId,
 	})
 
 	if err != nil {
-		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "db.Transaction")))
-		return userNotificationId, err
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "Mark")))
+		return 0, err
 	}
 	return userNotificationId, nil
 }
@@ -169,4 +157,69 @@ func (n *UserNotificationMarker) markUserNotification(ctx context.Context, tx *g
 			"is_read": true,
 		}).Error
 	return err
+}
+
+// MarkNotificationsAsRead
+
+// 2 sets to query and mark notifications of a user:
+// 1. update existing `user_notifications`.read to true
+// 2. do a reverse lookup for notifications not in user_notification, use a [ReadMarker]
+func MarkAllNotificationsAsRead(ctx context.Context, user model.User) error {
+	ctx = rfcontext.AppendCallDesc(ctx, "MarkAllNotificationsAsRead")
+	userId := user.ID
+	err := model.DB.Debug().Model(ploutos.UserNotification{}).Where("user_id = ?", userId).Updates(map[string]any{
+		"is_read": true,
+	}).Error
+
+	if err != nil {
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "\"is_read\": true,")))
+		return err
+	}
+
+	var notificationIdsToAddToUser []int64
+	err = model.DB.Debug().Raw("SELECT id FROM notifications WHERE NOT EXISTS (SELECT id FROM user_notifications WHERE user_notifications.user_id = ? AND user_notifications.notification_id = notifications.id);", user.ID).Scan(&notificationIdsToAddToUser).Error
+	if err != nil {
+		return err
+	}
+
+	ctx = rfcontext.AppendParams(ctx, "", map[string]interface{}{
+		"notificationIdsToAddToUser": notificationIdsToAddToUser,
+	})
+	log.Println(rfcontext.FmtJSON(ctx))
+
+	for _, notifId := range notificationIdsToAddToUser {
+		marker := &UserNotificationMarker{
+			UserId:             userId,
+			NotificationId:     notifId,
+			UserNotificationId: 0,
+		}
+
+		userNotificationId, err := Mark(ctx, marker)
+		if err != nil {
+			mCtx := rfcontext.AppendParams(ctx, "", map[string]interface{}{
+				"user_id":  userNotificationId,
+				"notif_id": notifId,
+			})
+			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(mCtx, err, "Mark")))
+		}
+	}
+	return nil
+}
+
+func Mark(ctx context.Context, marker ReadMarker) (int64, error) {
+	var userNotificationId int64
+
+	err := model.DB.Transaction(func(tx *gorm.DB) error {
+		userNotif, err := marker.getOrCreateUserNotification(ctx, tx)
+		if err != nil {
+			return err
+		}
+		userNotificationId = userNotif.ID
+		err = marker.markUserNotification(ctx, tx, userNotificationId)
+		return err
+	})
+	if err != nil {
+		return 0, err
+	}
+	return userNotificationId, nil
 }

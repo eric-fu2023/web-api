@@ -81,13 +81,13 @@ type NotificationReferenceId string
 // BuildNotificationReferenceId
 // inverse [DissectCompositeIds]
 func BuildNotificationReferenceId(notificationdIdType string, userNotificationId int64) NotificationReferenceId {
-	return NotificationReferenceId(fmt.Sprintf("%s_%d", notificationdIdType, userNotificationId))
+	return NotificationReferenceId(fmt.Sprintf("%s-%d", notificationdIdType, userNotificationId))
 }
 
 func (refId NotificationReferenceId) IsUserNotificationId() (bool, int64, error) {
 	vals := strings.Split(string(refId), "-")
 	if len(vals) != 2 {
-		return false, 0, fmt.Errorf("invalid reference ids length (!= 2)")
+		return false, 0, fmt.Errorf("invalid reference id length (!= 2)")
 	}
 
 	if vals[0] != "user_notification" {
@@ -104,7 +104,7 @@ func (refId NotificationReferenceId) IsUserNotificationId() (bool, int64, error)
 func (refId NotificationReferenceId) IsNotificationId() (bool, int64, error) {
 	vals := strings.Split(string(refId), "-")
 	if len(vals) != 2 {
-		return false, 0, fmt.Errorf("invalid reference ids length (!= 2)")
+		return false, 0, fmt.Errorf("invalid reference id length (!= 2)")
 	}
 
 	if vals[0] != "notification" {
