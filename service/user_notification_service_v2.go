@@ -135,20 +135,13 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 	return
 }
 
-type UserNotificationMarkReadRequestV2 struct {
-	Notifications []notificationservice.ReadNotificationForm `form:"notifications"`
-}
-
-func AddReadNotificationsV2(c *gin.Context, req UserNotificationMarkReadRequestV2) (serializer.Response, error) {
+func AddReadNotificationsV2(c *gin.Context, req notificationservice.UserNotificationMarkReadRequestV2) (serializer.Response, error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
 
-	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "AddReadNotificationsV2")
-	err := notificationservice.MarkNotificationsAsRead(ctx, user, req.Notifications)
-	if err != nil {
-		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "MarkNotificationsAsRead")))
-		return serializer.Response{}, err
-	}
+	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "service.AddReadNotificationsV2")
+
+	err := notificationservice.AddReadNotificationsV2(ctx, user, req)
 
 	return serializer.Response{
 		Code:  0,

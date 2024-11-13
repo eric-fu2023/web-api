@@ -25,6 +25,15 @@ type ReadNotificationForm struct {
 	CategoryType ploutos.NotificationCategoryType   `form:"category" json:"category"`
 }
 
+type UserNotificationMarkReadRequestV2_Options struct {
+	All bool `form:"all" json:"all"`
+}
+
+type UserNotificationMarkReadRequestV2 struct {
+	Notifications []ReadNotificationForm                    `form:"notifications"`
+	Options       UserNotificationMarkReadRequestV2_Options `form:"options"`
+}
+
 // MarkNotificationsAsRead
 func MarkNotificationsAsRead(ctx context.Context, user model.User, notifications []ReadNotificationForm) error {
 	ctx = rfcontext.AppendCallDesc(ctx, "MarkNotificationsAsRead")
@@ -222,4 +231,29 @@ func Mark(ctx context.Context, marker ReadMarker) (int64, error) {
 		return 0, err
 	}
 	return userNotificationId, nil
+}
+
+func AddReadNotificationsV2(ctx context.Context, user model.User, req UserNotificationMarkReadRequestV2) error {
+	ctx = rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "domain.AddReadNotificationsV2")
+	if len(req.Notifications) > 0 && req.Options.All {
+		err := fmt.Errorf("either select some or all")
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "domain.MarkNotificationsAsRead")))
+		return err
+	}
+
+	switch {
+	case req.Options.All:
+		err := MarkAllNotificationsAsRead(ctx, user)
+		if err != nil {
+			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "domain.MarkAllNotificationsAsRead")))
+			return err
+		}
+	default:
+		err := MarkNotificationsAsRead(ctx, user, req.Notifications)
+		if err != nil {
+			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "domain.MarkNotificationsAsRead")))
+			return err
+		}
+	}
+	return nil
 }

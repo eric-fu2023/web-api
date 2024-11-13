@@ -2,6 +2,7 @@ package api
 
 import (
 	"web-api/service"
+	notificationservice "web-api/service/notification"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -58,7 +59,7 @@ func GeneralNotificationV2(c *gin.Context) {
 }
 
 func AddReadNotificationsV2(c *gin.Context) {
-	var req service.UserNotificationMarkReadRequestV2
+	var req notificationservice.UserNotificationMarkReadRequestV2
 	if err := c.ShouldBind(&req); err == nil {
 		res, _ := service.AddReadNotificationsV2(c, req)
 		c.JSON(200, res)
