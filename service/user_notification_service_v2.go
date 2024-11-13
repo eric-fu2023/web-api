@@ -31,6 +31,7 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 	u, _ := c.Get("user")
 	user := u.(model.User)
 	var list []serializer.UserNotificationV2
+	var resp serializer.UserNotificationResponseV2
 
 	// system notification
 	var notifications []ploutos.UserNotification
@@ -45,6 +46,7 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 			list = append(list, serializer.BuildUserNotificationV2(c, notification))
 		}
 	}
+
 	// category 999 is system msg, so we dun need to query cms notification
 	if service.Category != consts.NotificationCategorySystem {
 		// cms notifications,
@@ -112,10 +114,17 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].Ts > (list[j].Ts)
 	})
+
+
+	resp.Notifications = list
+	if service.Category == 0{
+		resp.Counts = CountsUnread(user.ID)
+	}
+
 	go game_history_pane.AdvanceNotificationLastSeen(user.ID, time.Now())
 
 	r = serializer.Response{
-		Data: list,
+		Data: resp,
 	}
 	return
 }
@@ -173,4 +182,85 @@ func GetGeneralNotificationV2(c *gin.Context, req GetGeneralNotificationRequestV
 		Msg:   "",
 		Error: "",
 	}, err
+}
+
+func CountsUnread(userID int64) []serializer.UserNotificationUnreadCountsV2 {
+    var results []serializer.UserNotificationUnreadCountsV2
+    // Define the raw SQL query with UNION ALL
+    query := `
+        -- System notifications
+        SELECT 
+            999 AS id,
+            COUNT(*) AS unread_counts
+        FROM user_notifications
+        WHERE notification_id IS NULL 
+          AND is_read = FALSE 
+          AND deleted_at IS NULL 
+          AND user_id = ?
+
+        UNION ALL
+
+        -- All notifications
+        SELECT 
+            n.category AS id,
+            COUNT(*) AS unread_counts
+        FROM notifications n
+        LEFT JOIN user_notifications un ON un.notification_id = n.id AND un.user_id = ?
+        WHERE un.id IS NULL
+          AND (n.expired_at > CURRENT_TIMESTAMP OR n.expired_at IS NULL)
+          AND n.send_at < CURRENT_TIMESTAMP
+          AND n.target = 0
+          AND n.deleted_at IS NULL 
+        GROUP BY n.category
+
+        UNION ALL
+
+        -- Special notifications
+        SELECT 
+            n.category AS id,
+            COUNT(*) AS unread_counts
+        FROM user_notifications un
+        JOIN notifications n ON un.notification_id = n.id
+        WHERE un.notification_id IS NOT NULL
+          AND un.is_read = FALSE 
+          AND un.deleted_at IS NULL 
+          AND n.deleted_at IS NULL 
+          AND n.target = 1 
+          AND un.user_id = ?
+        GROUP BY n.category;
+    `
+
+    // Execute the raw SQL query with userID as a parameter
+    if err := model.DB.Raw(query, userID, userID, userID).Scan(&results).Error; err != nil {
+        log.Fatal("error executing query:", err)
+    }
+
+	results = append([]serializer.UserNotificationUnreadCountsV2{{
+		ID:0,
+		Label:"All",
+		UnreadCounts: 0},
+	}, results...)
+	// counts unread system
+	for index, item := range results {
+		var label = ""
+		switch item.ID {
+		case 0:
+			label = "All"
+		case 1:
+			label = "Promotion"
+		case 2:
+			label = "General"
+		case 3:
+			label = "Bet"
+		case 4:
+			label = "Game"
+		case 5:
+			label = "Live Stream"
+		case 999:
+			label = "System"
+		}
+		results[index].Label = label
+		results[0].UnreadCounts = results[0].UnreadCounts+results[index].UnreadCounts
+	}
+	return results
 }
