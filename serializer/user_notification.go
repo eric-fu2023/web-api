@@ -33,22 +33,32 @@ type NotificationIdsWithReadStatus struct {
 	ID     int64
 	IsRead bool
 }
-
+type UserNotificationResponseV2 struct {
+	Notifications []UserNotificationV2             `json:"notifications"`
+	Counts        []UserNotificationUnreadCountsV2 `json:"counts"`
+}
+type UserNotificationUnreadCountsV2 struct {
+	ID           int    `json:"id"`
+	Label        string `json:"label"`
+	UnreadCounts int    `json:"unread_counts"`
+}
 type UserNotificationV2 struct {
-	ID                NotificationCompositeId `json:"id"`
-	Title             string                  `json:"text"`
-	ImageUrl          string                  `json:"image_url"`
-	ShortContent      string                  `json:"short_content"`
-	Category          int                     `json:"category"`
-	CategoryContentId int                     `json:"category_content_id"`
-	Ts                int64                   `json:"ts"`
-	ExpiredAt         int64                   `json:"expire_at"`
-	IsRead            bool                    `json:"is_read"`
+	ID                int64  `json:"id"`
+	ReferenceId       string `json:"reference_id"`
+	Title             string `json:"text"`
+	ImageUrl          string `json:"image_url"`
+	ShortContent      string `json:"short_content"`
+	Category          int    `json:"category"`
+	CategoryContentId int    `json:"category_content_id"`
+	Ts                int64  `json:"ts"`
+	ExpiredAt         int64  `json:"expire_at"`
+	IsRead            bool   `json:"is_read"`
 }
 
 func BuildUserNotificationV2(c *gin.Context, a ploutos.UserNotification) (b UserNotificationV2) {
 	b = UserNotificationV2{
-		ID:                BuildNotificationCompositeIds(0, a.ID),
+		ID:                a.ID,
+		ReferenceId:       fmt.Sprintf("user_notification-%v", a.ID),
 		Title:             "System Message",
 		ImageUrl:          "",
 		ShortContent:      a.Text,
@@ -102,7 +112,8 @@ func BuildCMSNotificationV2(_ *gin.Context, a ploutos.Notification, notification
 	}
 
 	b = UserNotificationV2{
-		ID:                BuildNotificationCompositeIds(a.ID, 0),
+		ID:                a.ID,
+		ReferenceId:       fmt.Sprintf("notification-%v", a.ID),
 		Title:             a.Title,
 		ImageUrl:          Url(image_url),
 		ShortContent:      a.ShortContent,
