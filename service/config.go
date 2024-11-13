@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"web-api/cache"
@@ -25,11 +24,11 @@ type AppConfigService struct {
 func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err error) {
 
 	// log install event when api calls for config
-	agent := c.GetHeader("channel")
-	if agent == "pixel_app_001"{
-		log.Printf("should log pixel event view content for channel pixel_app_001")
-		PixelInstallEvent(c.ClientIP())
-	}
+	// agent := c.GetHeader("channel")
+	// if agent == "pixel_app_001"{
+	// 	log.Printf("should log pixel event view content for channel pixel_app_001")
+	// 	PixelInstallEvent(c.ClientIP())
+	// }
 
 	// retrieve basic AppConfigs
 	cf, err := service.getAppConfigs(c)
@@ -52,6 +51,17 @@ func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err
 	if isA && socketChatUrl != "" {
 		cf["socket"]["chat_url"] = socketChatUrl
 	}
+
+	// special isA and ProductCode = redballlive
+	if c.GetHeader("isA") == "true" && c.GetHeader("ProductCode")=="redballlive"{
+		share_url_app := os.Getenv("SHARE_URL_APP")
+		cf["share_url"]["app"] = share_url_app
+	
+		app_url_tnc := os.Getenv("APP_URL_TNC")
+		cf["app_url"]["t&c"] = app_url_tnc
+	}
+
+
 	cf["ab"] = map[string]string{
 		"is_a": strconv.FormatBool(isA),
 	}

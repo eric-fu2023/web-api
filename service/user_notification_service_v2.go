@@ -196,6 +196,37 @@ func GetGeneralNotificationV2(c *gin.Context, req GetGeneralNotificationRequestV
 
 func CountsUnread(userID int64) []serializer.UserNotificationUnreadCountsV2 {
 	var results []serializer.UserNotificationUnreadCountsV2
+	response := []serializer.UserNotificationUnreadCountsV2{{
+		ID:0,
+		Label: "All",
+		UnreadCounts: 0,
+	},{
+		ID:1,
+		Label: "Promotion",
+		UnreadCounts: 0,
+	},{
+		ID:2,
+		Label: "General",
+		UnreadCounts: 0,
+	},{
+		ID:3,
+		Label: "Bet",
+		UnreadCounts: 0,
+	},{
+		ID:4,
+		Label: "Game",
+		UnreadCounts: 0,
+	},{
+		ID:5,
+		Label: "Live Stream",
+		UnreadCounts: 0,
+	},{
+		ID:999,
+		Label: "System",
+		UnreadCounts: 0,
+	},
+
+	}
 	// Define the raw SQL query with UNION ALL
 	query := `
         -- System notifications
@@ -245,32 +276,14 @@ func CountsUnread(userID int64) []serializer.UserNotificationUnreadCountsV2 {
 		log.Fatal("error executing query:", err)
 	}
 
-	results = append([]serializer.UserNotificationUnreadCountsV2{{
-		ID:           0,
-		Label:        "All",
-		UnreadCounts: 0},
-	}, results...)
 	// counts unread system
-	for index, item := range results {
-		var label = ""
-		switch item.ID {
-		case 0:
-			label = "All"
-		case 1:
-			label = "Promotion"
-		case 2:
-			label = "General"
-		case 3:
-			label = "Bet"
-		case 4:
-			label = "Game"
-		case 5:
-			label = "Live Stream"
-		case 999:
-			label = "System"
+	for _, item := range results {
+		for response_index, response_item :=range response {
+			if item.ID == response_item.ID{
+				response[response_index].UnreadCounts = item.UnreadCounts
+				response[0].UnreadCounts = response[0].UnreadCounts+item.UnreadCounts
+			}
 		}
-		results[index].Label = label
-		results[0].UnreadCounts = results[0].UnreadCounts + results[index].UnreadCounts
 	}
-	return results
+	return response
 }
