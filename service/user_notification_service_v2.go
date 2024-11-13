@@ -32,13 +32,12 @@ type UserNotificationListCategoryServiceV2 struct {
 func (service *UserNotificationListCategoryServiceV2) ListCategory(c *gin.Context) (r serializer.Response, err error) {
 	u, _ := c.Get("user")
 	user := u.(model.User)
-    category := CountsUnread(user.ID)
+	category := CountsUnread(user.ID)
 	r = serializer.Response{
 		Data: category,
 	}
 	return
 }
-
 
 func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer.Response, err error) {
 	i18n := c.MustGet("i18n").(i18n.I18n)
@@ -128,7 +127,6 @@ func (service *UserNotificationListServiceV2) List(c *gin.Context) (r serializer
 		return list[i].Ts > (list[j].Ts)
 	})
 
-
 	go game_history_pane.AdvanceNotificationLastSeen(user.ID, time.Now())
 
 	r = serializer.Response{
@@ -197,35 +195,34 @@ func GetGeneralNotificationV2(c *gin.Context, req GetGeneralNotificationRequestV
 func CountsUnread(userID int64) []serializer.UserNotificationUnreadCountsV2 {
 	var results []serializer.UserNotificationUnreadCountsV2
 	response := []serializer.UserNotificationUnreadCountsV2{{
-		ID:0,
-		Label: "All",
+		ID:           0,
+		Label:        "All",
 		UnreadCounts: 0,
-	},{
-		ID:1,
-		Label: "Promotion",
+	}, {
+		ID:           1,
+		Label:        "Promotion",
 		UnreadCounts: 0,
-	},{
-		ID:2,
-		Label: "General",
+	}, {
+		ID:           2,
+		Label:        "General",
 		UnreadCounts: 0,
-	},{
-		ID:3,
-		Label: "Bet",
+	}, {
+		ID:           3,
+		Label:        "Bet",
 		UnreadCounts: 0,
-	},{
-		ID:4,
-		Label: "Game",
+	}, {
+		ID:           4,
+		Label:        "Game",
 		UnreadCounts: 0,
-	},{
-		ID:5,
-		Label: "Live Stream",
+	}, {
+		ID:           5,
+		Label:        "Live Stream",
 		UnreadCounts: 0,
-	},{
-		ID:999,
-		Label: "System",
+	}, {
+		ID:           999,
+		Label:        "System",
 		UnreadCounts: 0,
 	},
-
 	}
 	// Define the raw SQL query with UNION ALL
 	query := `
@@ -278,10 +275,10 @@ func CountsUnread(userID int64) []serializer.UserNotificationUnreadCountsV2 {
 
 	// counts unread system
 	for _, item := range results {
-		for response_index, response_item :=range response {
-			if item.ID == response_item.ID{
+		for response_index, response_item := range response {
+			if item.ID == response_item.ID {
 				response[response_index].UnreadCounts = item.UnreadCounts
-				response[0].UnreadCounts = response[0].UnreadCounts+item.UnreadCounts
+				response[0].UnreadCounts = response[0].UnreadCounts + item.UnreadCounts
 			}
 		}
 	}

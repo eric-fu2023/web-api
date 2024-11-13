@@ -12,12 +12,13 @@ import (
 	"web-api/serializer"
 	notificationservice "web-api/service/notification"
 
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 )
 
 func main() {
-	//NotificationModule()
-	Shape_UserNotificationResponseV2()
+	NotificationModule()
+	//Shape_UserNotificationResponseV2()
 }
 
 // basic create, del and mark as read
@@ -118,6 +119,7 @@ func NotificationModule() {
 		log.Printf("notif.ID %d err %#v\n", newNotif_general.ID, e1)
 
 		newUserNotif_general := ploutos.UserNotification{
+			BASE:           ploutos.BASE{},
 			UserId:         baseUser.ID,
 			Text:           "general content?",
 			NotificationId: newNotif_general.ID,
@@ -191,6 +193,16 @@ func NotificationModule() {
 		}
 
 		log.Printf("T_000006 %d \n", newUserNotif_Promo2Id)
+	}
+
+	{
+		ctx := rfcontext.AppendCallDesc(context.Background(), "T_000007")
+		baseUser3 := model.User{User: ploutos.User{BASE: ploutos.BASE{ID: 7000007}}}
+
+		err := notificationservice.MarkAllNotificationsAsRead(ctx, baseUser3)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
