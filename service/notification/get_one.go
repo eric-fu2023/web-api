@@ -2,6 +2,7 @@ package notification
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -49,7 +50,7 @@ type GeneralNotification struct {
 }
 
 func (GeneralNotification) TableName() string {
-	return "user_notifications"
+	return ploutos.TableUserNotification
 }
 
 // FindGeneralOne
@@ -58,20 +59,10 @@ func (GeneralNotification) TableName() string {
 // userNotificationId references [ploutos.UserNotification]
 func FindGeneralOne(ctx context.Context, user model.User, userNotificationId int64) (GeneralNotification, error) {
 	var notif GeneralNotification
-	err := model.DB.Debug().Model(GeneralNotification{}).Where("user_id = ?", user.ID).Scopes(model.ByIds([]int64{userNotificationId})).Find(&notif).Error
+	err := model.DB.Debug().Model(GeneralNotification{}).Joins("Notification").Where("user_id = ?", user.ID).Where(fmt.Sprintf("%s.id = ?", ploutos.TableUserNotification), userNotificationId).Find(&notif).Error
 	if err != nil {
 		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "find(&GeneralNotification{})")))
 		return GeneralNotification{}, err
 	}
-	//switch categoryType {
-	//case ploutos.NotificationCategoryTypeNotification:
-	//	err := model.DB.Debug().Model(GeneralNotification{}).Where("user_id = ?", user.ID).Scopes(model.ByIds([]int64{userNotificationId})).Find(&notif).Error
-	//	if err != nil {
-	//		return GeneralNotification{}, err
-	//	}
-	//default:
-	//	return GeneralNotification{}, errors.New("unknown or invalid notification category")
-	//}
-
 	return notif, nil
 }
