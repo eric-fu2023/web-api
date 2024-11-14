@@ -3,7 +3,6 @@ package serializer
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -32,10 +31,10 @@ type IncomingPromotionMatchList struct {
 }
 
 type IncomingPromotionMatchListItem struct {
-	Id           string                               `json:"id"`
+	Id           int64                                `json:"id"`
 	Teams        []IncomingPromotionMatchListItemTeam `json:"teams"`
 	Title        string                               `json:"title"`
-	RedirectType string                               `json:"redirect_type"`
+	RedirectType int                                  `json:"redirect_type"`
 	Img          string                               `json:"img"`
 	Name         string                               `json:"name"`
 	Time         time.Time                            `json:"open_time"`
@@ -58,15 +57,16 @@ type IncomingCustomPromotionRequestField struct {
 	Hint         string              `json:"hint"`
 	Type         string              `json:"type"`
 	Title        string              `json:"title"`
+	Text         string              `json:"text"`
 	InputId      string              `json:"input_id"`
 	Switch       int                 `json:"switch"`
 	Options      []map[string]string `json:"option"`
-	X            string              `json:"x"`
+	X            int                 `json:"x"`
 	Weightage    int                 `json:"weightage"`
 	ErrorHint    string              `json:"error_hint,omitempty"`
 	OrderType    []interface{}       `json:"order_type"`
 	ContentType  int                 `json:"content_type"`
-	OrderStatus  string              `json:"order_status"`
+	OrderStatus  int                 `json:"order_status"`
 	MaxClick     int                 `json:"max_click"`
 	RedirectType int                 `json:"redirect_type"`
 }
@@ -185,13 +185,14 @@ func BuildCustomPromotionDetail(progress, reward int64, platform string, p model
 func BuildPromotionMatchList(incoming []IncomingPromotionMatchListItem, subPromotion models.Promotion) (res []CustomPromotionPageItem) {
 
 	for _, item := range incoming {
-		id, _ := strconv.Atoi(item.Id)
+		id := int(item.Id)
 		outgoingPageItem := CustomPromotionPageItem{
 			PageItemId: int64(id),
 			// Type:       item.Type,
 			Title:         subPromotion.Name,
 			Text:          "立即前往",
 			StartDateTime: item.Time,
+			RedirectType:  item.RedirectType,
 		}
 
 		if item.Title != "" {
@@ -246,6 +247,7 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 		requestField := CustomPromotionRequestField{
 			Placeholder: incomingField.Hint,
 			Title:       incomingField.Title,
+			Text:        incomingField.Text,
 			Type:        strings.Replace(incomingField.Type, "input_", "", -1),
 			Id:          incomingField.InputId,
 			Weightage:   incomingField.Weightage,
@@ -253,8 +255,6 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 		}
 
 		if requestField.Type == "button" {
-			requestField.Text = requestField.Title
-
 			if incomingField.RedirectType == 0 {
 				isExceeded, err := ParseButtonClickOption(c, incomingField, promotionId, userId)
 				if err != nil {
@@ -303,14 +303,9 @@ func BuildPromotionAction(c *gin.Context, incoming IncomingPromotionRequestActio
 
 func ParseButtonClickOption(c *gin.Context, incoming IncomingCustomPromotionRequestField, promotionId, userId int64) (isExceeded bool, err error) {
 
-	buttonClickOption := incoming.MaxClick
-	entryLimitType := int64(buttonClickOption)
-	if incoming.X == "" {
-		incoming.X = "0"
-	}
-	buttonClickTimes, _ := strconv.Atoi(incoming.X)
+	entryLimitType := int64(incoming.MaxClick)
 
-	isExceeded, err = model.CheckIfCustomPromotionEntryExceededLimit(c, entryLimitType, promotionId, userId, buttonClickTimes)
+	isExceeded, err = model.CheckIfCustomPromotionEntryExceededLimit(c, entryLimitType, promotionId, userId, incoming.X)
 	if err != nil {
 		fmt.Println(err)
 	}

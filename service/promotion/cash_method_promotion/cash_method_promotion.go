@@ -1,14 +1,16 @@
 package cash_method_promotion
 
 import (
-	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"context"
 	"errors"
 	"log"
 	"time"
 
-	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+	"blgit.rfdev.tech/taya/common-function/rfcontext"
+
 	"web-api/model"
+
+	ploutos "blgit.rfdev.tech/taya/ploutos-object"
 
 	"gorm.io/gorm"
 )
@@ -30,6 +32,7 @@ func ByCashMethodIdAndVipId(tx *gorm.DB, cashMethodId, vipId int64, promotionAt 
 
 	// temporary guard for dev work, once stable can pass arg by value.
 	if cashInAmount != nil {
+		tx = tx.Where("? >= min_payout", cashInAmount).Order("min_payout desc")
 		tx = tx.Where("? >= min_payout", cashInAmount).Order("min_payout desc")
 	} else {
 		return cashMethodPromotion, errors.New("cashInAmount required")
@@ -79,10 +82,12 @@ func FinalPossiblePayout(ctx context.Context, claimedPast7Days int64, claimedPas
 	ctx = rfcontext.AppendCallDesc(ctx, "FinalPossiblePayout")
 	if claimedPast7Days >= cashMethodPromotion.WeeklyMaxPayout {
 		log.Println(rfcontext.AppendDescription(ctx, "weekly payout reached"))
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendDescription(ctx, "weekly payout reached")))
 		return
 	}
 	if claimedPast1Day >= cashMethodPromotion.DailyMaxPayout {
 		log.Println(rfcontext.AppendDescription(ctx, "daily payout reached"))
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendDescription(ctx, "daily payout reached")))
 		return
 	}
 
