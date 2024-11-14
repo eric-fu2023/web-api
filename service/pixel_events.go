@@ -47,9 +47,11 @@ func (s PixelInstall)PixelInstallEvent(c *gin.Context)(r serializer.Response, er
 		return
 	}
 	if device_info.Channel == "pixel_app_001"{
+		log.Printf("should log pixel event install for channel pixel_app_001")
 		PixelInstallEvent(c.ClientIP(), os.Getenv("PIXEL_ACCESS_TOKEN"), os.Getenv("PIXEL_END_POINT"))
 	}
 	if device_info.Channel == "pixel_app_002"{
+		log.Printf("should log pixel event install for channel pixel_app_002")
 		PixelInstallEvent(c.ClientIP(), os.Getenv("PIXEL_ACCESS_TOKEN_002"), os.Getenv("PIXEL_END_POINT_002"))
 	}
 	return 
