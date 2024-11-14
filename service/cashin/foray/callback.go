@@ -41,9 +41,10 @@ func (s *ForayPaymentCallback) Handle(c *gin.Context) error {
 	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "(s *ForayPaymentCallback) Handle")
 	txType := ploutos.TransactionTypeCashIn
 	cashOrder, err := cashin.CloseCashInOrder(c, ctx, s.OrderTranoIn, s.OrderAmount, 0, 0, util.JSON(s), model.DB, txType)
-	ctx = rfcontext.AppendError(ctx, err, "CloseCashInOrder")
-	log.Println(rfcontext.Fmt(ctx))
+
 	if err != nil {
+		ctx = rfcontext.AppendError(ctx, err, "CloseCashInOrder")
+		log.Println(rfcontext.Fmt(ctx))
 		return err
 	}
 	// if err == nil {

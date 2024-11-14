@@ -40,9 +40,10 @@ func (s *FinpayPaymentCallback) Handle(c *gin.Context) error {
 
 	ctx := rfcontext.AppendCallDesc(rfcontext.Spawn(context.Background()), "(s *FinpayPaymentCallback) Handle")
 	cashOrder, err := cashin.CloseCashInOrder(c, ctx, s.MerchantOrderNo, s.Amount, 0, 0, util.JSON(s), model.DB, ploutos.TransactionTypeCashIn)
-	ctx = rfcontext.AppendError(ctx, err, "CloseCashInOrder")
-	log.Println(rfcontext.Fmt(ctx))
+
 	if err != nil {
+		ctx = rfcontext.AppendError(ctx, err, "CloseCashInOrder")
+		log.Println(rfcontext.Fmt(ctx))
 		return err
 	}
 
