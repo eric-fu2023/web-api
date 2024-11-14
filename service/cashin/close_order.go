@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"web-api/conf/consts"
@@ -181,10 +182,17 @@ func closeOrder(ctx context.Context, newCashOrderState model.CashOrder, txDB *go
 			if err != nil {
 				log.Printf("pixel app send data log error when finding user channel code")
 			}
+
+
 			if user.Channel == "pixel_app_001"{
-				log.Printf("should log pixel event deposit for channel pixel_app_001")
-				service.PixelFTDEvent(newCashOrderState.UserId, "0.0.0.0", newCashOrderState.AppliedCashInAmount)
+				log.Printf("should log pixel event deposit for channel pixel_app_002")
+				service.PixelFTDEvent(newCashOrderState.UserId, "0.0.0.0", newCashOrderState.AppliedCashInAmount, os.Getenv("PIXEL_ACCESS_TOKEN"), os.Getenv("PIXEL_END_POINT"))
 			}
+			if user.Channel == "pixel_app_002"{
+				log.Printf("should log pixel event deposit for channel pixel_app_002")
+				service.PixelFTDEvent(newCashOrderState.UserId, "0.0.0.0", newCashOrderState.AppliedCashInAmount, os.Getenv("PIXEL_ACCESS_TOKEN_002"), os.Getenv("PIXEL_END_POINT_002"))
+			}
+			
 		} else {
 			common.SendUserSumSocketMsg(newCashOrderState.UserId, userSum.UserSum, "deposit_success", float64(updatedCashOrder.AppliedCashInAmount)/100)
 		}

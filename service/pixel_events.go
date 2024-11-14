@@ -47,14 +47,17 @@ func (s PixelInstall)PixelInstallEvent(c *gin.Context)(r serializer.Response, er
 		return
 	}
 	if device_info.Channel == "pixel_app_001"{
-		PixelInstallEvent(c.ClientIP())
+		PixelInstallEvent(c.ClientIP(), os.Getenv("PIXEL_ACCESS_TOKEN"), os.Getenv("PIXEL_END_POINT"))
+	}
+	if device_info.Channel == "pixel_app_002"{
+		PixelInstallEvent(c.ClientIP(), os.Getenv("PIXEL_ACCESS_TOKEN_002"), os.Getenv("PIXEL_END_POINT_002"))
 	}
 	return 
 }
 
-func PixelInstallEvent(client_ip string) {
+func PixelInstallEvent(client_ip string, token string, url string) {
 	var pixelRequestBody PixelRequestBody
-	pixelRequestBody.AccessToken = os.Getenv("PIXEL_ACCESS_TOKEN")
+	pixelRequestBody.AccessToken = token
 	pixelRequestBody.Data = []PixelRequestBodyData{{
 		EventName:    "ViewContent",
 		EventTime:    time.Now().Unix(),
@@ -70,16 +73,16 @@ func PixelInstallEvent(client_ip string) {
 	}}
 
 	cl := resty.New()
-	resp, err := cl.R().SetBody(pixelRequestBody).Post(os.Getenv("PIXEL_END_POINT"))
+	resp, err := cl.R().SetBody(pixelRequestBody).Post(url)
 	log.Printf("pixel resp: %v", resp.String())
 	if err != nil {
 		log.Printf("Pixel Install Api Call error for user %v", err.Error())
 	}
 }
 
-func PixelRegisterEvent(user_id int64, client_ip string) {
+func PixelRegisterEvent(user_id int64, client_ip string, token string, url string) {
 	var pixelRequestBody PixelRequestBody
-	pixelRequestBody.AccessToken = os.Getenv("PIXEL_ACCESS_TOKEN")
+	pixelRequestBody.AccessToken = token
 	pixelRequestBody.Data = []PixelRequestBodyData{{
 		EventName:    "CompleteRegistration",
 		EventTime:    time.Now().Unix(),
@@ -101,16 +104,16 @@ func PixelRegisterEvent(user_id int64, client_ip string) {
 	}}
 
 	cl := resty.New()
-	resp, err := cl.R().SetBody(pixelRequestBody).Post(os.Getenv("PIXEL_END_POINT"))
+	resp, err := cl.R().SetBody(pixelRequestBody).Post(url)
 	log.Printf("pixel resp: %v", resp.String())
 	if err != nil {
 		log.Printf("Pixel Register Api Call error for user %v, %v", user_id, err.Error())
 	}
 }
 
-func PixelFTDEvent(user_id int64, client_ip string, deposit_amount int64) {
+func PixelFTDEvent(user_id int64, client_ip string, deposit_amount int64, token string, url string) {
 	var pixelRequestBody PixelRequestBody
-	pixelRequestBody.AccessToken = os.Getenv("PIXEL_ACCESS_TOKEN")
+	pixelRequestBody.AccessToken = token
 	pixelRequestBody.Data = []PixelRequestBodyData{{
 		EventName:    "Purchase",
 		EventTime:    time.Now().Unix(),
@@ -132,7 +135,7 @@ func PixelFTDEvent(user_id int64, client_ip string, deposit_amount int64) {
 	}}
 
 	cl := resty.New()
-	resp, err := cl.R().SetBody(pixelRequestBody).Post(os.Getenv("PIXEL_END_POINT"))
+	resp, err := cl.R().SetBody(pixelRequestBody).Post(url)
 	log.Printf("pixel resp: %v", resp.String())
 
 	if err != nil {
