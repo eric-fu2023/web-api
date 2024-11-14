@@ -29,6 +29,7 @@ func (service *AppConfigService) Get(c *gin.Context) (r serializer.Response, err
 	// 	log.Printf("should log pixel event view content for channel pixel_app_001")
 	// 	PixelInstallEvent(c.ClientIP())
 	// }
+	//
 
 	// retrieve basic AppConfigs
 	cf, err := service.getAppConfigs(c)
