@@ -4,10 +4,14 @@ import (
 	"log"
 	"os"
 	"time"
+	"web-api/serializer"
+	"web-api/util"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
 )
-
+type PixelInstall struct {
+}
 type PixelRequestBody struct {
 	Data        []PixelRequestBodyData `form:"data" json:"data"`
 	AccessToken string                 `form:"access_token" json:"access_token"`
@@ -35,7 +39,18 @@ type CustomData struct {
 	Value    int64    `json:"value"`
 }
 
-const PixelURl = "https://graph.facebook.com/v21.0/839510968259106/events"
+func (s PixelInstall)PixelInstallEvent(c *gin.Context)(r serializer.Response, err error){
+	device_info,err:= util.GetDeviceInfo(c)
+	if err != nil {
+		util.GetLoggerEntry(c).Errorf("sending pixel app data for install event, get device info err: %s", err.Error())
+		r = serializer.GeneralErr(c, err)
+		return
+	}
+	if device_info.Channel == "pixel_app_001"{
+		PixelInstallEvent(c.ClientIP())
+	}
+	return 
+}
 
 func PixelInstallEvent(client_ip string) {
 	var pixelRequestBody PixelRequestBody
