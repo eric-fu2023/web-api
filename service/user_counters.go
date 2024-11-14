@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -60,7 +59,7 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 	user := u.(model.User)
 
 	rfCtx := rfcontext.Spawn(context.Background())
-	rfCtx = rfcontext.AppendCallDesc(rfCtx, "CounterService) Get")
+	rfCtx = rfcontext.AppendCallDesc(rfCtx, "CounterService.Get")
 	var counter UserCounter
 	err := model.DB.Model(UserCounter{}).Scopes(model.ByUserId(user.ID)).Find(&counter).Error
 	if err != nil {
@@ -88,7 +87,7 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 
 	rfCtx = rfcontext.AppendCallDesc(rfCtx, fmt.Sprintf("IsSettledFlagToPloutosIncludeStatuses = %v", statuses))
 	rfCtx = rfcontext.AppendCallDesc(rfCtx, fmt.Sprintf("game_history_pane.GamePaneHistoryTypes()  = %v", game_history_pane.GamePaneHistoryTypes()))
-	log.Printf(rfcontext.Fmt(rfCtx))
+	//log.Printf(rfcontext.Fmt(rfCtx))
 
 	// gameHistoryPaneCounts
 	// for type 0 (all), add all counts from others
@@ -151,10 +150,10 @@ func (service *CounterService) Get(c *gin.Context) serializer.Response {
 		Data: data,
 	}
 	{ // debug
-		rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("response body Struct: %#v", responseBody))
-		jj, _ := json.Marshal(responseBody)
-		rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("response body JSON: %s", string(jj)))
-		log.Println(rfcontext.Fmt(rfCtx))
+		//rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("response body Struct: %#v", responseBody))
+		//jj, _ := json.Marshal(responseBody)
+		//rfCtx = rfcontext.AppendDescription(rfCtx, fmt.Sprintf("response body JSON: %s", string(jj)))
+		//log.Println(rfcontext.Fmt(rfCtx))
 	}
 	return responseBody
 }
