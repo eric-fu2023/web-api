@@ -96,6 +96,7 @@ func NewRouter() *gin.Engine {
 		v1.GET("/referral", middleware.Cache(10*time.Second, false), api.VerifyReferralCode)
 
 		v1.GET("/config", api.Config)
+		v1.POST("/pixel", api.Pixel)
 		v1.GET("/app_update", middleware.Channel(), middleware.Cache(1*time.Minute, false), api.AppUpdate)
 		v1.GET("/announcements", middleware.CheckAuth(), middleware.CacheForGuest(1*time.Minute), api.Announcements)
 		v1.GET("/categories", middleware.Cache(1*time.Minute, false), api.CategoryList)
