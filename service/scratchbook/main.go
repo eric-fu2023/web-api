@@ -135,7 +135,7 @@ func NotificationModule() {
 		if err != nil {
 			panic(err)
 		}
-		log.Printf("getnotif %#v\n", getnotif)
+		log.Printf("getgeneralnotif . = %#v\n .Notification = %#v", getnotif, getnotif.Notification)
 
 		cid := serializer.BuildNotificationReferenceId("user_notification", newUserNotif_general.ID)
 		_, err = notificationservice.MarkNotificationAsRead(context.TODO(), baseUser, notificationservice.ReadNotificationForm{
