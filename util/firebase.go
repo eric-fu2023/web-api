@@ -5,6 +5,7 @@ package util
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
@@ -35,6 +36,7 @@ type client struct {
 }
 
 // SendMessageToAll Deprecated
+
 func (c *client) SendMessageToAll(ctx context.Context, data map[string]string, notification messaging.Notification, fcmTokens []string) error {
 	msgClient, err := c.app.Messaging(ctx)
 	if err != nil {
@@ -54,6 +56,7 @@ func (c *client) SendMessageToAll(ctx context.Context, data map[string]string, n
 	}
 
 	var failures int
+	errStrMap := map[string]struct{}{}
 	for _, tokens := range grps {
 		message := &messaging.MulticastMessage{
 			Tokens:       tokens,
@@ -63,22 +66,35 @@ func (c *client) SendMessageToAll(ctx context.Context, data map[string]string, n
 
 		var resp *messaging.BatchResponse
 
+		var cast func(ctx context.Context, message *messaging.MulticastMessage) (*messaging.BatchResponse, error)
+
 		if c.dryRun {
-			resp, err = msgClient.SendEachForMulticastDryRun(ctx, message)
+			cast = msgClient.SendEachForMulticastDryRun
 		} else {
-			resp, err = msgClient.SendEachForMulticast(ctx, message)
+			cast = msgClient.SendEachForMulticast
 		}
 
+		resp, err = cast(ctx, message)
 		if err != nil {
 			return err
 		}
 		if resp.FailureCount > 0 {
 			failures += resp.FailureCount
+			for _, respresp := range resp.Responses {
+				if err := respresp.Error; err != nil {
+					errStrMap[respresp.Error.Error()] = struct{}{}
+				}
+			}
 		}
 	}
 
 	if failures > 0 {
-		return fmt.Errorf("failed sending %d messages", failures)
+		errrrrr := &strings.Builder{}
+		for errStr := range errStrMap {
+			errrrrr.WriteString(errStr)
+			errrrrr.WriteString("\\")
+		}
+		return fmt.Errorf("failed sending %d messages. errors %s", failures, errrrrr.String())
 	}
 
 	return nil
