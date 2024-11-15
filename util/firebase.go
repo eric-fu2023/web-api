@@ -1,26 +1,28 @@
+// Package util
+// [FCM] deprecated. see common-functions
 package util
 
 import (
 	"context"
 	"fmt"
-	"os"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
-	"github.com/pkg/errors"
 	"google.golang.org/api/option"
 )
 
-var FCMFactory client
+var FCMFactory func(bool) client
 
-func InitFCMFactory() {
-	opt := option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_FIREBASE"))
+func InitFCMFactory(opt option.ClientOption) {
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		panic(err)
 	}
-	FCMFactory = client{
-		app: app,
+	FCMFactory = func(dryRun bool) client {
+		return client{
+			app:    app,
+			dryRun: dryRun,
+		}
 	}
 }
 
@@ -29,18 +31,9 @@ type client struct {
 	dryRun bool
 }
 
-func (c *client) NewClient(dryRun bool) client {
-	return client{
-		app:    c.app,
-		dryRun: dryRun,
-	}
-}
-
-func (c *client) SendMessageToAll(data map[string]string, notification messaging.Notification, fcmTokens []string) error {
-	ctx := context.TODO()
+func (c *client) SendMessageToAll(ctx context.Context, data map[string]string, notification messaging.Notification, fcmTokens []string) error {
 	msgClient, err := c.app.Messaging(ctx)
 	if err != nil {
-		fmt.Println("init firebase messaging client error:", err.Error())
 		return err
 	}
 
@@ -81,7 +74,7 @@ func (c *client) SendMessageToAll(data map[string]string, notification messaging
 	}
 
 	if failures > 0 {
-		return errors.Errorf("failed sending %d messages\n", failures)
+		return fmt.Errorf("failed sending %d messages", failures)
 	}
 
 	return nil

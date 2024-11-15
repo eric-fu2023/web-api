@@ -293,7 +293,6 @@ func SendNotification(userId int64, notificationType string, title string, text 
 	} else {
 		PushNotification(userId, notificationType, title, text)
 	}
-
 }
 
 func PushNotification(userId int64, notificationType string, title string, text string, v ...serializer.Response) {
@@ -320,8 +319,8 @@ func PushNotification(userId int64, notificationType string, title string, text 
 			util.Log().Error("fcm token generation error: ", err.Error())
 			return
 		}
-		client := util.FCMFactory.NewClient(false)
-		err = client.SendMessageToAll(msgData, notification, tokens)
+		client := util.FCMFactory(false)
+		err = client.SendMessageToAll(context.TODO(), msgData, notification, tokens)
 		if err != nil {
 			util.Log().Error("fcm sending error: ", err.Error())
 			return
@@ -355,8 +354,8 @@ func PushNotificationAll(notificationType string, title string, text string, v .
 			util.Log().Error("fcm token generation error: ", err.Error())
 			return
 		}
-		client := util.FCMFactory.NewClient(false)
-		err = client.SendMessageToAll(msgData, notification, tokens)
+		client := util.FCMFactory(false)
+		err = client.SendMessageToAll(context.TODO(), msgData, notification, tokens)
 		if err != nil {
 			util.Log().Error("fcm sending error: ", err.Error())
 			return
@@ -412,13 +411,13 @@ func SendUserSumSocketMsg(userId int64, userSum ploutos.UserSum, cause string, a
 					return
 				default:
 					cause_type := cause
-					if cause_type == "FTD_success"{
+					if cause_type == "FTD_success" {
 						cause_type = "deposit_success"
 					}
 					msg := websocket.BalanceUpdateMessage{
-						Room:            serializer.UserSignature(userId),
-						Event:           "balance_change",
-						Cause:           cause_type,
+						Room:  serializer.UserSignature(userId),
+						Event: "balance_change",
+						Cause: cause_type,
 						// Cause:           "deposit_success", // this is requested by FE
 						Amount:          amount,
 						Balance:         float64(userSum.Balance) / 100,
@@ -495,6 +494,7 @@ func SendTeamupGamePopupNotificationSocketMsg(userId int64, teamupId, endTime, a
 		})
 	}()
 }
+
 func TESTSENDCHAT(userId int64) {
 	go func() {
 		conn := websocket.Connection{}
