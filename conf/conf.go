@@ -2,6 +2,7 @@ package conf
 
 import (
 	"os"
+
 	"web-api/cache"
 	"web-api/model"
 	"web-api/service/aj_captcha"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
+	"google.golang.org/api/option"
 )
 
 func Init() {
@@ -47,7 +49,10 @@ func Init() {
 	util.InitEvoFactory()
 	util.InitNineWicketsFactory()
 	util.InitMumbaiFactory()
-	util.InitFCMFactory()
+
+	opt := option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_FIREBASE"))
+	util.InitFCMFactory(opt)
+
 	util.InitMancalaFactory()
 	util.InitCrownValexyFactory()
 
