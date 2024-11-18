@@ -99,7 +99,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("/pixel", api.Pixel)
 		v1.GET("/app_update", middleware.Channel(), middleware.Cache(1*time.Minute, false), api.AppUpdate)
 		v1.GET("/announcements", middleware.CheckAuth(), middleware.CacheForGuest(1*time.Minute), api.Announcements)
-		v1.GET("/categories", middleware.Cache(1*time.Minute, false), api.CategoryList)
+		v1.GET("/categories", api.CategoryList)
 		v1.GET("/vendors", middleware.Cache(1*time.Minute, false), api.VendorList)
 		v1.GET("/streams", middleware.Cache(1*time.Minute, true), api.StreamList)
 		// this one can not have cache, because notification will need instant refresh
