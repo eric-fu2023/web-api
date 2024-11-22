@@ -39,8 +39,6 @@ type DomainConfigRes struct {
 	Mode bool `json:"m"`
 	// mode from Taiwan Team
 	TaiwanMode TaiwanModeResponse `json:"t_m"`
-
-	ResIp string `json:"res_ip"`
 }
 
 type CallbackSecretData struct {
@@ -129,7 +127,6 @@ func (service *DomainConfigService) InitApp(c *gin.Context) (code int, res seria
 			// Mode = false = Is Not A Screen
 			Mode:       isA,
 			TaiwanMode: twResp,
-			ResIp:      c.ClientIP(),
 		},
 	}
 
