@@ -81,6 +81,10 @@ func (service *DomainConfigService) InitApp(c *gin.Context) (code int, res seria
 		}
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Secret-Data", "true")
+		req.Header.Set("X-Forwarded-For", c.ClientIP())
+
+		util.Log().Info("HEADERR")
+		fmt.Println("X-Forwarded-For : ", c.ClientIP())
 
 		client := &http.Client{}
 		resp, respErr := client.Do(req)

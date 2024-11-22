@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -98,4 +99,26 @@ func main() {
 	}
 
 	defer model.IPDB.Close()
+}
+
+func getIP(r *http.Request) string {
+	// Check the X-Forwarded-For header for the client's IP
+	// This is typically added by proxies/load balancers
+	xff := r.Header.Get("X-Forwarded-For")
+	if xff != "" {
+		return xff
+	}
+
+	// Check the X-Real-IP header
+	xRealIP := r.Header.Get("X-Real-IP")
+	if xRealIP != "" {
+		return xRealIP
+	}
+
+	// Get the IP from the remote address
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return ""
+	}
+	return host
 }
