@@ -11,6 +11,7 @@ import (
 	"web-api/service/mancala"
 	"web-api/service/mumbai"
 	"web-api/service/ninewicket"
+	"web-api/service/png"
 	"web-api/service/ugs"
 	"web-api/util"
 
@@ -30,6 +31,7 @@ var GameIntegration = map[int64]GameIntegrationInterface{
 	},
 	util.IntegrationIdCrownValexy: &crown_valexy.CrownValexy{},
 	util.IntegrationIdMancala:     &mancala.Mancala{},
+	util.IntegrationIPNG:          &png.PNG{},
 }
 
 // GameIntegrationInterface

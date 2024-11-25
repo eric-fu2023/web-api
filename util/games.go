@@ -16,6 +16,7 @@ import (
 	"blgit.rfdev.tech/taya/game-service/mancala"
 	"blgit.rfdev.tech/taya/game-service/mumbai"
 	"blgit.rfdev.tech/taya/game-service/ninewickets"
+	"blgit.rfdev.tech/taya/game-service/png"
 	"blgit.rfdev.tech/taya/game-service/saba"
 	"blgit.rfdev.tech/taya/game-service/ugs"
 
@@ -30,6 +31,7 @@ const (
 	IntegrationIdMumbai      = ploutosmodel.GAME_INTEGRATION_MUMBAI
 	IntegrationIdCrownValexy = ploutosmodel.GAME_INTEGRATION_CROWN_VALEXY
 	IntegrationIdMancala     = ploutosmodel.GAME_INTEGRATION_MANCALA
+	IntegrationIPNG          = ploutosmodel.GAME_INTEGRATION_PNG
 )
 
 var (
@@ -40,6 +42,7 @@ var (
 	IMFactory   imsb.IM
 	UgsFactory  ugs.UGS
 	EvoFactory  evo.EVO
+	PNGFactory  png.PNG
 
 	NineWicketFactory func() (ninewickets.ClientOperations, error)
 	ImOneFactory      func() imone.GeneralApi
