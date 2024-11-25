@@ -2,7 +2,7 @@ package server
 
 import (
 	"web-api/api"
-	internal_api "web-api/api/internal_api"
+	"web-api/api/internal_api"
 	"web-api/middleware"
 
 	"github.com/gin-gonic/gin"
