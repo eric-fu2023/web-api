@@ -152,11 +152,11 @@ func (service *UserRegisterService) Register(c *gin.Context, bypassSetMobileOtpV
 	// if register success, need to send to pixel
 	if user.Channel == "pixel_app_001"{
 		log.Printf("should log pixel event register for channel pixel_app_001")
-		PixelRegisterEvent(user.ID, c.ClientIP(), os.Getenv("PIXEL_ACCESS_TOKEN"), os.Getenv("PIXEL_END_POINT"))
+		PixelRegisterEvent(user.ID, c.ClientIP(), os.Getenv("PIXEL_ACCESS_TOKEN"), os.Getenv("PIXEL_END_POINT"), os.Getenv("PIXEL_ID"))
 	}
 	if user.Channel == "pixel_app_002"{
 		log.Printf("should log pixel event register for channel pixel_app_002")
-		PixelRegisterEvent(user.ID, c.ClientIP(), os.Getenv("PIXEL_ACCESS_TOKEN_002"), os.Getenv("PIXEL_END_POINT_002"))
+		PixelRegisterEvent(user.ID, c.ClientIP(), os.Getenv("PIXEL_ACCESS_TOKEN_002"), os.Getenv("PIXEL_END_POINT_002"), os.Getenv("PIXEL_ID_002"))
 	}
 
 	tokenString, err := ProcessUserLogin(c, user, consts.AuthEventLoginMethod["username"], "", service.CountryCode, service.Mobile)

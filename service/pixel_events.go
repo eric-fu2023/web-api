@@ -1,8 +1,12 @@
 package service
 
 import (
+	"fmt"
 	"log"
+	"math/rand"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 	"web-api/serializer"
 	"web-api/util"
@@ -82,7 +86,7 @@ func PixelInstallEvent(client_ip string, token string, url string) {
 	}
 }
 
-func PixelRegisterEvent(user_id int64, client_ip string, token string, url string) {
+func PixelRegisterEvent(user_id int64, client_ip string, token string, post_url string, pixel_id string) {
 	var pixelRequestBody PixelRequestBody
 	pixelRequestBody.AccessToken = token
 	pixelRequestBody.Data = []PixelRequestBodyData{{
@@ -106,10 +110,61 @@ func PixelRegisterEvent(user_id int64, client_ip string, token string, url strin
 	}}
 
 	cl := resty.New()
-	resp, err := cl.R().SetBody(pixelRequestBody).Post(url)
+	resp, err := cl.R().SetBody(pixelRequestBody).Get(post_url)
 	log.Printf("pixel resp: %v", resp.String())
 	if err != nil {
 		log.Printf("Pixel Register Api Call error for user %v, %v", user_id, err.Error())
+	}
+
+
+	// Seed the random number generator
+	rand.Seed(time.Now().UnixNano())
+
+	// Define the number of digits
+	digitCount := 17
+
+	// Generate a random 17-digit string
+	var sb strings.Builder
+	for i := 0; i < digitCount; i++ {
+		if i == 0 {
+			// Ensure the first digit is not zero
+			sb.WriteByte(byte(rand.Intn(9) + 1 + '0'))
+		} else {
+			// Subsequent digits can include zero
+			sb.WriteByte(byte(rand.Intn(10) + '0'))
+		}
+	}
+	randomString := sb.String()
+
+	// Encode query parameters
+	query := url.Values{}
+	query.Add("id", pixel_id)
+	query.Add("ev", "CompleteRegistration")
+	query.Add("dl", "https://googleplay.batacezoom.com/")
+	query.Add("if", "false")
+	query.Add("ec", "0")
+	query.Add("ts", time.Now().Format("20060102150405")) // Example timestamp
+	query.Add("sw", "375")
+	query.Add("sh", "667")
+	query.Add("v", "2.9.176")
+	query.Add("o", "4126")
+	query.Add("ler", "empty")
+	query.Add("coo", "false")
+	query.Add("cdl", "")
+	query.Add("rl", "")
+	query.Add("fbp", fmt.Sprintf("fb.1.%s.%s", time.Now().Format("20060102150405"), randomString))
+	query.Add("rqm", "GET")
+	get_url := "https://www.facebook.com/privacy_sandbox/pixel/register/trigger/?" + query.Encode()
+
+	// Make the GET request
+	get_cl := resty.New()
+	get_resp, get_err := get_cl.R().Get(get_url)
+
+	log.Printf("pixel get_resp: %v", get_resp.String())
+	if get_err != nil {
+		log.Printf("Pixel Register API Call error for user %v, %v", user_id, err.Error())
+	} else {
+		log.Printf("Pixel response: %v", get_resp.String())
 	}
 }
 
