@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 
@@ -82,11 +81,11 @@ func Consume(ctx context.Context, req Request) error {
 		}
 	}
 
-	{ // MessageTypeCasinoGamesSessionOpen
-		reports, oErr := OnMessageCasinoGamesSessionOpen(ctx, messages_SessionOpen)
+	{ // on receive MessageTypeCasinoGamesSessionOpen
+		reports, oErr := AsBetReports(ctx, messages_SessionOpen)
 		if oErr != nil {
 			scopeErr = errors.Join(scopeErr, oErr)
-			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, oErr, "OnMessageCasinoGamesSessionOpen()")))
+			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, oErr, "AsBetReports()")))
 		}
 		err := InsertReports(reports)
 		if err != nil {
@@ -136,7 +135,6 @@ func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetRe
 
 	rawLog, err := json.Marshal(message)
 	if err != nil {
-		fmt.Println("error raw encoding betLog:", err)
 		return ploutos.PNGBetReport{}, err
 	}
 
@@ -167,8 +165,9 @@ func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetRe
 		WagerSettled: false,
 	}, nil
 }
-func OnMessageCasinoGamesSessionOpen(ctx context.Context, messages []callback.Message_CasinoGamesSessionOpen) ([]ploutos.PNGBetReport, error) {
-	ctx = rfcontext.AppendCallDesc(ctx, "OnMessageCasinoGamesSessionOpen")
+
+func AsBetReports(ctx context.Context, messages []callback.Message_CasinoGamesSessionOpen) ([]ploutos.PNGBetReport, error) {
+	ctx = rfcontext.AppendCallDesc(ctx, "AsBetReports")
 
 	reports := []ploutos.PNGBetReport{}
 	for _, m := range messages {
@@ -176,7 +175,6 @@ func OnMessageCasinoGamesSessionOpen(ctx context.Context, messages []callback.Me
 		if err != nil {
 			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "ToReport()")))
 		}
-
 		reports = append(reports, report)
 	}
 
