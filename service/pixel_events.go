@@ -110,10 +110,11 @@ func PixelRegisterEvent(user_id int64, client_ip string, token string, post_url 
 	}}
 
 	cl := resty.New()
-	resp, err := cl.R().SetBody(pixelRequestBody).Get(post_url)
-	log.Printf("pixel resp: %v", resp.String())
+	resp, err := cl.R().SetBody(pixelRequestBody).Post(post_url)
 	if err != nil {
 		log.Printf("Pixel Register Api Call error for user %v, %v", user_id, err.Error())
+	} else {
+		log.Printf("pixel resp: %v", resp.String())
 	}
 
 
@@ -160,11 +161,10 @@ func PixelRegisterEvent(user_id int64, client_ip string, token string, post_url 
 	get_cl := resty.New()
 	get_resp, get_err := get_cl.R().Get(get_url)
 
-	log.Printf("pixel get_resp: %v", get_resp.String())
 	if get_err != nil {
 		log.Printf("Pixel Register API Call error for user %v, %v", user_id, err.Error())
 	} else {
-		log.Printf("Pixel response: %v", get_resp.String())
+		log.Printf("Pixel get_resp: %v", get_resp.String())
 	}
 }
 
