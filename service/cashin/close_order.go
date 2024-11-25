@@ -186,11 +186,11 @@ func closeOrder(ctx context.Context, newCashOrderState model.CashOrder, txDB *go
 
 			if user.Channel == "pixel_app_001"{
 				log.Printf("should log pixel event deposit for channel pixel_app_002")
-				service.PixelFTDEvent(newCashOrderState.UserId, "0.0.0.0", newCashOrderState.AppliedCashInAmount, os.Getenv("PIXEL_ACCESS_TOKEN"), os.Getenv("PIXEL_END_POINT"))
+				service.PixelFTDEvent(newCashOrderState.UserId, "0.0.0.0", newCashOrderState.AppliedCashInAmount, os.Getenv("PIXEL_ACCESS_TOKEN"), os.Getenv("PIXEL_END_POINT"), os.Getenv("PIXEL_ID"))
 			}
 			if user.Channel == "pixel_app_002"{
 				log.Printf("should log pixel event deposit for channel pixel_app_002")
-				service.PixelFTDEvent(newCashOrderState.UserId, "0.0.0.0", newCashOrderState.AppliedCashInAmount, os.Getenv("PIXEL_ACCESS_TOKEN_002"), os.Getenv("PIXEL_END_POINT_002"))
+				service.PixelFTDEvent(newCashOrderState.UserId, "0.0.0.0", newCashOrderState.AppliedCashInAmount, os.Getenv("PIXEL_ACCESS_TOKEN_002"), os.Getenv("PIXEL_END_POINT_002"), os.Getenv("PIXEL_ID_002"))
 			}
 			
 		} else {
