@@ -6,14 +6,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	game_service_png "blgit.rfdev.tech/taya/game-service/png"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/go-redis/redis/v8"
 
-	"web-api/cache"
 	"web-api/model"
 	"web-api/util"
 
@@ -65,40 +62,26 @@ func (p PNG) GetGameUrl(ctx context.Context, user model.User, currency, gameCode
 	origin:="batce999.com"
 
 	log.Printf("Get PNG Game Url")
-	// get ticket
-	log.Printf("before get caching GAME_PNG_HOST: %s", os.Getenv("GAME_PNG_HOST"))
-	res := cache.RedisSessionClient.Get(context.Background(), fmt.Sprintf("%s/%s",CLIENT_SESSION_REDIS_KEY,strconv.FormatInt(user.ID, 10)))
-	log.Printf("after get caching GAME_PNG_HOST: %s", os.Getenv("GAME_PNG_HOST"))
-	log.Printf("refis fetch result: %v", res)
-	if res.Err() == nil{
-		ticket = res.Val()
-	} else if res.Err() == redis.Nil {
-		// get ticket
-		log.Printf("GAME_PNG_HOST: %s", os.Getenv("GAME_PNG_HOST"))
-		ticket, get_ticket_err :=png_service.GetTicket(os.Getenv("GAME_PNG_HOST"),"GetTicket", user.ID)
-		if get_ticket_err.Error() == "UnknownUser" {
-			png_service.Register(os.Getenv("GAME_PNG_HOST"), "RegisterUser",user.ID,user.Username,user.Nickname,user.CreatedAt.Format("2006-01-02"))
-			ticket, get_ticket_err = png_service.GetTicket(os.Getenv("GAME_PNG_HOST"),"GetTicket", user.ID)
-			if get_ticket_err!=nil{
-				log.Printf("Error Register PNG user, err: %v", err)
-				return "", get_ticket_err
-			}
-		}else if get_ticket_err!=nil{
-			log.Printf("Error Getting PNG user ticket, err: %v", err)
+
+	log.Printf("GAME_PNG_HOST: %s", os.Getenv("GAME_PNG_HOST"))
+	ticket, get_ticket_err :=png_service.GetTicket(os.Getenv("GAME_PNG_HOST"),"GetTicket", user.ID)
+
+	if get_ticket_err.Error() == "UnknownUser" {
+		png_service.Register(os.Getenv("GAME_PNG_HOST"), "RegisterUser",user.ID,user.Username,user.Nickname,user.CreatedAt.Format("2006-01-02"))
+
+		ticket, get_ticket_err = png_service.GetTicket(os.Getenv("GAME_PNG_HOST"),"GetTicket", user.ID)
+		if get_ticket_err!=nil{
+			log.Printf("Error Register PNG user, err: %v", err)
 			return "", get_ticket_err
 		}
-
-		// if get ticket api success, set token in redis.   here we do not really care if the set failed or not
-		cache.RedisSessionClient.Set(context.Background(), fmt.Sprintf("%s/%s",CLIENT_SESSION_REDIS_KEY,strconv.FormatInt(user.ID, 10)), ticket, 1*time.Hour)
-		
-		// if set_res.Err() != nil && res.Err() != redis.Nil {
-		// 	return "", set_res.Err()
-		// }
-	}else{
-		log.Printf("png get game url redis err: %v", res.Err())
-
+	} else if get_ticket_err!=nil{
+		log.Printf("Error Getting PNG user ticket, err: %v", err)
+		return "", get_ticket_err
 	}
 	// get game name
+	if ticket == ""{
+		return "", errors.New("ticket is empty")
+	}
 	return png_service.GetGameUrl(game_name, channel, lang, practice, ticket, origin), nil
 }
 
