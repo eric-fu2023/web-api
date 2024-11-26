@@ -97,7 +97,7 @@ func (p PNG) GetGameBalance(ctx context.Context, user model.User, currency strin
 
 func (p PNG) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, _ string, _ string, gameVendorId int64, extra model.Extra) (err error) {
 	png_service := game_service_png.PNG{}
-	userBalance, err := png_service.GetBalance(os.Getenv(os.Getenv("GAME_PNG_HOST")),"Balance",user.ID)
+	userBalance, err := png_service.GetBalance(os.Getenv("GAME_PNG_HOST"),"Balance",user.ID)
 	if err != nil {
 		log.Printf("Error getting PNG user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
