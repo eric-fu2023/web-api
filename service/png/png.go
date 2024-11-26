@@ -73,9 +73,11 @@ func (p PNG) GetGameUrl(ctx context.Context, user model.User, currency, gameCode
 			png_service.Register(os.Getenv("GAME_PNG_HOST"), "RegisterUser",user.ID,user.Username,user.Nickname,user.CreatedAt.Format("2006-01-02"))
 			ticket, get_ticket_err = png_service.GetTicket(os.Getenv("GAME_PNG_HOST"),"GetTicket", user.ID)
 			if get_ticket_err!=nil{
+				log.Printf("Error Register PNG user, err: %v", err)
 				return "", get_ticket_err
 			}
 		}else if get_ticket_err!=nil{
+			log.Printf("Error Getting PNG user ticket, err: %v", err)
 			return "", get_ticket_err
 		}
 
