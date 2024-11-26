@@ -11,7 +11,7 @@ import (
 
 	game_service_png "blgit.rfdev.tech/taya/game-service/png"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 
 	"web-api/cache"
 	"web-api/model"
