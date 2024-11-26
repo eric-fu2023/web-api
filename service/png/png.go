@@ -164,7 +164,7 @@ func (p PNG) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum p
 	case sum.Balance == 0:
 		return 0, nil
 	case sum.Balance < 0:
-		return 0, errors.New("Evo::TransferTo not allowed to transfer negative sum")
+		return 0, errors.New("PNG::TransferTo not allowed to transfer negative sum")
 	}
 	png_service := game_service_png.PNG{}
 	_, tx_id, err := png_service.TransferIn(os.Getenv("GAME_PNG_HOST"),"CreditAccount",user.ID, util.MoneyFloat(sum.Balance),fmt.Sprintf("PNG%d",time.Now().Unix()))
@@ -190,11 +190,13 @@ func (p PNG) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum p
 	err = db_tx.Create(&transaction).Error
 	if err != nil {
 		db_tx.Rollback()
+		log.Printf("create transaction err: %v", err)
 		return 0, err
 	}
 	err = db_tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`balance`, 0).Error
 	if err != nil {
 		db_tx.Rollback()
+		log.Printf("update user's balance err: %v", err)
 		return 0, err
 	}
 	db_tx.Commit()
