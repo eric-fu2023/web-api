@@ -144,23 +144,17 @@ func updateUserBalance(tx *gorm.DB, user model.User, TBalance float64, transID s
 		ExternalTransactionId: transID,
 		GameVendorId:          gameVendorId,
 	}
-	db_tx:=tx.Begin()
-
-	defer db_tx.Rollback()
 	err = tx.Create(&transaction).Error
 	if err != nil {
-		defer db_tx.Rollback()
 		log.Printf("Error creating transaction, err: %v", err)
 		return err
 	}
 
 	err = tx.Model(ploutos.UserSum{}).Where("user_id = ?", user.ID).Update("balance", gorm.Expr("balance + ?", amount)).Error
 	if err != nil {
-		defer db_tx.Rollback()
 		log.Printf("Error updating user balance, err: %v", err)
 		return err
 	}
-	db_tx.Commit()
 
 	return nil
 }
