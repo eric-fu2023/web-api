@@ -216,6 +216,8 @@ func Feed(c *gin.Context) {
 			c.JSON(500, api.ErrorResponse(c, req, err))
 		}
 	} else {
+
+		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, bErr, "binding")))
 		c.JSON(400, api.ErrorResponse(c, req, bErr))
 	}
 
