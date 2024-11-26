@@ -68,7 +68,7 @@ func (p PNG) GetGameUrl(ctx context.Context, user model.User, currency, gameCode
 	res := cache.RedisSessionClient.Get(context.Background(), fmt.Sprintf("%s/%s",CLIENT_SESSION_REDIS_KEY,strconv.FormatInt(user.ID, 10)))
 	if res.Err() == redis.Nil {
 		// get ticket
-		log.Printf("GAME_PNG_HOST: ", os.Getenv("GAME_PNG_HOST"))
+		log.Printf("GAME_PNG_HOST: %s", os.Getenv("GAME_PNG_HOST"))
 		ticket, get_ticket_err :=png_service.GetTicket(os.Getenv("GAME_PNG_HOST"),"GetTicket", user.ID)
 		if get_ticket_err.Error() == "UnknownUser" {
 			png_service.Register(os.Getenv("GAME_PNG_HOST"), "RegisterUser",user.ID,user.Username,user.Nickname,user.CreatedAt.Format("2006-01-02"))
