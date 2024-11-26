@@ -72,8 +72,8 @@ func Consume(ctx context.Context, req Request) error {
 	messages_SessionOpen := []callback.Message_CasinoGamesSessionOpen{}
 	for _, message := range messages {
 		switch message.MessageType {
-		case callback.MessageTypeCasinoGamesSessionOpen:
-			ctx = rfcontext.AppendStats(ctx, "messages.to_process.open_session", int64(len(messages)))
+		case callback.MessageTypeCasinoTransactionReleaseOpen:
+			ctx = rfcontext.AppendStats(ctx, "messages.to_process.open_transaction", int64(len(messages)))
 
 			mT, errT := CasinoGamesSessionOpen(ctx, message)
 			if errT != nil {
@@ -86,14 +86,14 @@ func Consume(ctx context.Context, req Request) error {
 
 	{ // on receive MessageTypeCasinoGamesSessionOpen
 		reports, oErr := AsBetReports(ctx, messages_SessionOpen)
-		ctx = rfcontext.AppendStats(ctx, "reports.to_create.open_session", int64(len(reports)))
+		ctx = rfcontext.AppendStats(ctx, "reports.to_create.open_transaction", int64(len(reports)))
 
 		if oErr != nil {
 			scopeErr = errors.Join(scopeErr, oErr)
 			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, oErr, "AsBetReports()")))
 		}
 		err := InsertReports(reports)
-		ctx = rfcontext.AppendStats(ctx, "reports.created.open_session", int64(len(reports)))
+		ctx = rfcontext.AppendStats(ctx, "reports.created.open_transaction", int64(len(reports)))
 		if err != nil {
 			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "InsertReports()")))
 			scopeErr = errors.Join(scopeErr, err)
