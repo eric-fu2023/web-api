@@ -87,7 +87,7 @@ func (p PNG) GetGameUrl(ctx context.Context, user model.User, currency, gameCode
 
 func (p PNG) GetGameBalance(ctx context.Context, user model.User, currency string, gameCode string, extra model.Extra) (balance int64, err error) {
 	png_service := game_service_png.PNG{}
-	userBalance, err := png_service.GetBalance(os.Getenv(os.Getenv("GAME_PNG_HOST")),"Balance",user.ID)
+	userBalance, err := png_service.GetBalance(os.Getenv("GAME_PNG_HOST"),"Balance",user.ID)
 	if err != nil {
 		log.Printf("Error getting PNG user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return 0, err
