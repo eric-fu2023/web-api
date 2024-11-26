@@ -9,7 +9,7 @@ toolchain go1.21.1
 require (
 	blgit.rfdev.tech/taya/captcha-go v0.0.0-20231006043116-9167aad773c5
 	blgit.rfdev.tech/taya/common-function v0.0.0-20241115070610-a1ef89d3691e
-	blgit.rfdev.tech/taya/game-service v0.0.0-20241122040040-c9f667c325f9
+	blgit.rfdev.tech/taya/game-service v0.0.0-20241125084646-848a6a48957c
 	blgit.rfdev.tech/taya/payment-service v0.0.0-20240926111808-9cafcbb67695
 	blgit.rfdev.tech/taya/ploutos-object v0.0.13-0.20241120060728-3daabae52522
 	blgit.rfdev.tech/zhibo/utilities v0.0.0-20240703073351-55719e205f9b
@@ -26,6 +26,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-gorm/caches/v3 v3.0.0
 	github.com/go-playground/validator/v10 v10.14.0
+	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redsync/redsync/v4 v4.9.4
 	github.com/go-resty/resty/v2 v2.9.1
