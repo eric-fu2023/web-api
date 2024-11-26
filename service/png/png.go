@@ -184,22 +184,17 @@ func (p PNG) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum p
 		ExternalTransactionId: tx_id,
 		GameVendorId:          gameVendorId,
 	}
-	db_tx:=tx.Begin()
 
-	defer db_tx.Rollback()
-	err = db_tx.Create(&transaction).Error
+	err = tx.Create(&transaction).Error
 	if err != nil {
-		db_tx.Rollback()
 		log.Printf("create transaction err: %v", err)
 		return 0, err
 	}
-	err = db_tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`balance`, 0).Error
+	err = tx.Model(ploutos.UserSum{}).Where(`user_id`, user.ID).Update(`balance`, 0).Error
 	if err != nil {
-		db_tx.Rollback()
 		log.Printf("update user's balance err: %v", err)
 		return 0, err
 	}
-	db_tx.Commit()
 
 	return sum.Balance, nil
 }
