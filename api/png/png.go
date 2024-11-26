@@ -49,7 +49,7 @@ type MessageT struct {
 	TotalLoss             float64                    `json:"TotalLoss"`
 	TotalGain             float64                    `json:"TotalGain"`
 	ExternalFreeGameId    interface{}                `json:"ExternalFreegameId"`
-	Channel               callback.Channel           `json:"Channel"`
+	Channel               callback.ChannelMode       `json:"Channel"`
 	MessageId             *string                    `json:"MessageId"`
 	MessageType           callback.MessageType       `json:"MessageType"`
 	MessageTimestamp      string                     `json:"MessageTimestamp"`
