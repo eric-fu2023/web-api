@@ -64,8 +64,12 @@ func (p PNG) GetGameUrl(ctx context.Context, user model.User, currency, gameCode
 	ticket:=""
 	origin:="batce999.com"
 
+	log.Printf("Get PNG Game Url")
 	// get ticket
+	log.Printf("before get caching GAME_PNG_HOST: %s", os.Getenv("GAME_PNG_HOST"))
 	res := cache.RedisSessionClient.Get(context.Background(), fmt.Sprintf("%s/%s",CLIENT_SESSION_REDIS_KEY,strconv.FormatInt(user.ID, 10)))
+	log.Printf("after get caching GAME_PNG_HOST: %s", os.Getenv("GAME_PNG_HOST"))
+	log.Printf("refis fetch result: %v", res)
 	if res.Err() == redis.Nil {
 		// get ticket
 		log.Printf("GAME_PNG_HOST: %s", os.Getenv("GAME_PNG_HOST"))
