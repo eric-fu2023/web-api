@@ -86,12 +86,14 @@ func Consume(ctx context.Context, req Request) error {
 
 	{ // on receive MessageTypeCasinoGamesSessionOpen
 		reports, oErr := AsBetReports(ctx, messages_SessionOpen)
+		ctx = rfcontext.AppendStats(ctx, "reports.to_create.open_session", int64(len(reports)))
+
 		if oErr != nil {
 			scopeErr = errors.Join(scopeErr, oErr)
 			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, oErr, "AsBetReports()")))
 		}
 		err := InsertReports(reports)
-		ctx = rfcontext.AppendStats(ctx, "messages.processed.open_session", int64(len(messages)))
+		ctx = rfcontext.AppendStats(ctx, "reports.created.open_session", int64(len(reports)))
 		if err != nil {
 			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "InsertReports()")))
 			scopeErr = errors.Join(scopeErr, err)
@@ -194,7 +196,7 @@ func InsertReports(_reportsToCreate []ploutos.PNGBetReport) error {
 	if len(_reportsToCreate) == 0 {
 		return nil
 	}
-	err := model.DB.Session(&gorm.Session{CreateBatchSize: 200}).Clauses(
+	err := model.DB.Debug().Session(&gorm.Session{CreateBatchSize: 200}).Clauses(
 		clause.OnConflict{
 			Columns:   BetReportUniqueColumns,
 			UpdateAll: true,
