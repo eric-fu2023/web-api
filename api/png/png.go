@@ -203,13 +203,15 @@ func InsertReports(_reportsToCreate []ploutos.PNGBetReport) error {
 // Feed
 // single controller endpoint for all push messages
 func Feed(c *gin.Context) {
+	ctx := rfcontext.AppendCallDesc(context.Background(), "png.Feed")
 	var req Request
 	if bErr := c.ShouldBind(&req); bErr == nil {
-		ctx := rfcontext.AppendCallDesc(context.Background(), "png.Feed")
 		if err := Consume(ctx, req); err != nil {
 			c.JSON(500, api.ErrorResponse(c, req, err))
 		}
 	} else {
 		c.JSON(400, api.ErrorResponse(c, req, bErr))
 	}
+
+	log.Println(rfcontext.FmtJSON(ctx))
 }
