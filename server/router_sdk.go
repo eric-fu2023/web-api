@@ -10,6 +10,7 @@ import (
 	api_finpay "web-api/api/finpay"
 	api_foray "web-api/api/foray"
 	imsb_api "web-api/api/imsb"
+	png_api "web-api/api/png"
 	saba_api "web-api/api/saba"
 	stream_game_api "web-api/api/stream_game"
 	taya_api "web-api/api/taya"
@@ -57,6 +58,13 @@ func InitSdkApi(r *gin.Engine) {
 			sabaCallback.POST("/resettle", saba_api.CallbackResettle)
 			sabaCallback.POST("/placebetparlay", saba_api.CallbackPlaceBetParlay)
 			sabaCallback.POST("/confirmbetparlay", saba_api.CallbackConfirmBetParlay)
+		}
+	}
+
+	if os.Getenv("GAME_PNG_CALLBACKS") == "TRUE" {
+		png := r.Group("/png")
+		{
+			png.POST("/callback", png_api.Feed)
 		}
 	}
 
