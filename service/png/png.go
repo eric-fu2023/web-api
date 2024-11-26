@@ -108,9 +108,11 @@ func (p PNG) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, _ s
 		return
 	}
 
+
+	log.Printf("transfer out png user balance: %v ",userBalance)
 	balance, tx_id, err := png_service.TransferOut(os.Getenv("GAME_PNG_HOST"),"DebitAccount",user.ID, userBalance, "")
 
-	util.Log().Info("PNG GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIdEvo, user.ID, balance, tx_id)
+	util.Log().Info("PNG GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIPNG, user.ID, balance, tx_id)
 	if err != nil {
 		log.Printf("Error transfer png user balance from error,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
