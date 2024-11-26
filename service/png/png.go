@@ -97,7 +97,7 @@ func (p PNG) GetGameBalance(ctx context.Context, user model.User, currency strin
 
 func (p PNG) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, _ string, _ string, gameVendorId int64, extra model.Extra) (err error) {
 	png_service := game_service_png.PNG{}
-	userBalance, err := png_service.GetBalance(os.Getenv("GAME_PNG_HOST"),"Balance",user.ID)
+	userBalance, err := png_service.GetBalance("https://agastage3.playngonetwork.com:42007/CasinoGameService","Balance",user.ID)
 	if err != nil {
 		log.Printf("Error getting PNG user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
@@ -110,15 +110,15 @@ func (p PNG) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, _ s
 
 
 	log.Printf("transfer out png user balance: %v ",userBalance)
-	balance, tx_id, err := png_service.TransferOut(os.Getenv("GAME_PNG_HOST"),"DebitAccount",user.ID, userBalance, "")
+	_, tx_id, err := png_service.TransferOut("https://agastage3.playngonetwork.com:42007/CasinoGameService","DebitAccount",user.ID, userBalance, fmt.Sprintf("PNG%d_%d",time.Now().Unix(), user.ID))
 
-	util.Log().Info("PNG GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIPNG, user.ID, balance, tx_id)
+	util.Log().Info("PNG GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIPNG, user.ID, userBalance, tx_id)
 	if err != nil {
 		log.Printf("Error transfer png user balance from error,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
 	}
 
-	err = updateUserBalance(tx, user, balance, tx_id, gameVendorId)
+	err = updateUserBalance(tx, user, userBalance, tx_id, gameVendorId)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func (p PNG) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum p
 		return 0, errors.New("PNG::TransferTo not allowed to transfer negative sum")
 	}
 	png_service := game_service_png.PNG{}
-	_, tx_id, err := png_service.TransferIn(os.Getenv("GAME_PNG_HOST"),"CreditAccount",user.ID, util.MoneyFloat(sum.Balance),fmt.Sprintf("PNG%d",time.Now().Unix()))
+	_, tx_id, err := png_service.TransferIn(os.Getenv("GAME_PNG_HOST"),"CreditAccount",user.ID, util.MoneyFloat(sum.Balance),fmt.Sprintf("PNG%d_%d",time.Now().Unix(), user.ID))
 	if err !=nil{
 		return 0, err
 	}
