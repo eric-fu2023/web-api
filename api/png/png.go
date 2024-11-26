@@ -65,6 +65,7 @@ func Consume(ctx context.Context, req Request) error {
 	ctx = rfcontext.AppendCallDesc(ctx, "Consume")
 	messages := req.Messages
 
+	ctx = rfcontext.AppendStats(ctx, "messages.to_process.all", int64(len(messages)))
 	// any err => return non-nil
 	var scopeErr error
 
@@ -72,6 +73,8 @@ func Consume(ctx context.Context, req Request) error {
 	for _, message := range messages {
 		switch message.MessageType {
 		case callback.MessageTypeCasinoGamesSessionOpen:
+			ctx = rfcontext.AppendStats(ctx, "messages.to_process.open_session", int64(len(messages)))
+
 			mT, errT := CasinoGamesSessionOpen(ctx, message)
 			if errT != nil {
 				scopeErr = errors.Join(scopeErr, errT)
@@ -88,11 +91,14 @@ func Consume(ctx context.Context, req Request) error {
 			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, oErr, "AsBetReports()")))
 		}
 		err := InsertReports(reports)
+		ctx = rfcontext.AppendStats(ctx, "messages.processed.open_session", int64(len(messages)))
 		if err != nil {
 			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "InsertReports()")))
 			scopeErr = errors.Join(scopeErr, err)
 		}
 	}
+
+	log.Println(rfcontext.FmtJSON(ctx))
 	return scopeErr
 }
 
