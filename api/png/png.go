@@ -156,7 +156,7 @@ func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetRe
 		OrderId:      "PNG" + roundId,
 		BusinessId:   roundId,
 		UserId:       int64(userId),
-		GameType:     message.GameId,
+		GameType:     103,
 		Bet:          totalLoss,
 		Wager:        turnover,
 		Win:          totalGain, // payout
