@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -13,6 +14,10 @@ import (
 	"blgit.rfdev.tech/taya/common-function/rfcontext"
 	"blgit.rfdev.tech/taya/game-service/png/callback"
 	ploutos "blgit.rfdev.tech/taya/ploutos-object"
+
+	memcache "blgit.rfdev.tech/taya/common-function/domain/games/infrastructure/memcache"
+	repository "blgit.rfdev.tech/taya/common-function/domain/games/infrastructure/repository"
+	datamodel "blgit.rfdev.tech/taya/game-service/png/data_model"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -118,6 +123,31 @@ func IntegrationStatusToReportStatus(status callback.IntegrationStatus) (ploutos
 }
 
 func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetReport, error) {
+
+	repo, err := repository.New(func() (*gorm.DB, error) {
+		if model.DB == nil {
+			return nil, errors.New("DB Not Initialized")
+		}
+		return model.DB, nil
+	})
+
+	if err != nil {
+		return ploutos.PNGBetReport{}, err
+	}
+	refGetter, err := memcache.NewMemCache(repo)
+	if err != nil {
+		return ploutos.PNGBetReport{}, err
+	}
+
+	gameCode, exist := datamodel.GameCodes[message.GameId]
+	if !exist {
+		return ploutos.PNGBetReport{}, fmt.Errorf("game code mapping not found for game id %d", message.GameId)
+	}
+	gameIdRef, err := refGetter.GetGameReference(gameCode, "png")
+	if err != nil {
+		return ploutos.PNGBetReport{}, err
+	}
+
 	roundId := strconv.FormatInt(message.RoundId, 10)
 
 	userId, err := strconv.Atoi(message.ExternalUserId)
@@ -148,6 +178,11 @@ func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetRe
 		return ploutos.PNGBetReport{}, err
 	}
 
+	if gameIdRef.GameIntegrationId == nil || gameIdRef.GameVendorId == nil {
+		gameIdRef = memcache.GetDefault()
+	}
+
+	gameIntegrationId, gameVendorId := *gameIdRef.GameIntegrationId, *gameIdRef.GameVendorId
 	newUUID := uuid.NewString()
 	return ploutos.PNGBetReport{
 		BASE_UUID: ploutos.BASE_UUID{
@@ -156,7 +191,7 @@ func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetRe
 		OrderId:      "PNG" + roundId,
 		BusinessId:   roundId,
 		UserId:       int64(userId),
-		GameType:     103,
+		GameType:     gameVendorId,
 		Bet:          totalLoss,
 		Wager:        turnover,
 		Win:          totalGain, // payout
@@ -169,7 +204,7 @@ func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetRe
 		BetType:      "",
 		MatchCount:   message.NumRounds,
 		MaxWinAmount: "",
-		GameId:       ploutos.GAME_INTEGRATION_PNG,
+		GameId:       gameIntegrationId,
 		Provider:     "",
 		RefId:        0,
 		WagerSettled: false,

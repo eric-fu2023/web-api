@@ -1,8 +1,7 @@
 package consts
 
 import (
-	"web-api/util/datastructures"
-
+	"blgit.rfdev.tech/taya/common-function/libutils/datastructures"
 	models "blgit.rfdev.tech/taya/ploutos-object"
 )
 
@@ -23,13 +22,14 @@ const (
 	GinErrorKey        = "gin_error"
 )
 const (
-	NotificationCategorySystem = 999
+	NotificationCategorySystem    = 999
 	NotificationCategoryPromotion = 1
-	NotificationCategoryGeneral = 2
-	NotificationCategoryBet = 3
-	NotificationCategoryGame = 4
-	NotificationCategoryStream = 5
+	NotificationCategoryGeneral   = 2
+	NotificationCategoryBet       = 3
+	NotificationCategoryGame      = 4
+	NotificationCategoryStream    = 5
 )
+
 var (
 	SpinResultType = map[int64]string{
 		1: SpinVoucher,
