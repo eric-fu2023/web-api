@@ -61,15 +61,11 @@ func (p PNG) GetGameUrl(ctx context.Context, user model.User, currency, gameCode
 	ticket:=""
 	origin:="batce999.com"
 
-	log.Printf("Get PNG Game Url")
-
-	log.Printf("GAME_PNG_HOST: %s", os.Getenv("GAME_PNG_HOST"))
-	ticket, get_ticket_err :=png_service.GetTicket(os.Getenv("GAME_PNG_HOST"),"GetTicket", user.ID)
-
+	ticket, get_ticket_err :=png_service.GetTicket(os.Getenv("GAME_PNG_HOST"), user.ID, os.Getenv("GAME_PNG_API_USER"), os.Getenv("GAME_PNG_API_PASS"))
 	if get_ticket_err!=nil && get_ticket_err.Error() == "UnknownUser" {
-		png_service.Register(os.Getenv("GAME_PNG_HOST"), "RegisterUser",user.ID,user.Username,user.Nickname,user.CreatedAt.Format("2006-01-02"))
+		png_service.Register(os.Getenv("GAME_PNG_HOST"), user.ID,user.Username,user.Nickname,user.CreatedAt.Format("2006-01-02"), os.Getenv("GAME_PNG_API_USER"), os.Getenv("GAME_PNG_API_PASS"))
 
-		ticket, get_ticket_err = png_service.GetTicket(os.Getenv("GAME_PNG_HOST"),"GetTicket", user.ID)
+		ticket, get_ticket_err = png_service.GetTicket(os.Getenv("GAME_PNG_HOST"),user.ID, os.Getenv("GAME_PNG_API_USER"), os.Getenv("GAME_PNG_API_PASS"))
 		if get_ticket_err!=nil{
 			log.Printf("Error Register PNG user, err: %v", err)
 			return "", get_ticket_err
@@ -87,7 +83,7 @@ func (p PNG) GetGameUrl(ctx context.Context, user model.User, currency, gameCode
 
 func (p PNG) GetGameBalance(ctx context.Context, user model.User, currency string, gameCode string, extra model.Extra) (balance int64, err error) {
 	png_service := game_service_png.PNG{}
-	userBalance, err := png_service.GetBalance(os.Getenv("GAME_PNG_HOST"),"Balance",user.ID)
+	userBalance, err := png_service.GetBalance(os.Getenv("GAME_PNG_HOST"),user.ID, os.Getenv("GAME_PNG_API_USER"), os.Getenv("GAME_PNG_API_PASS") )
 	if err != nil {
 		log.Printf("Error getting PNG user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return 0, err
@@ -97,7 +93,7 @@ func (p PNG) GetGameBalance(ctx context.Context, user model.User, currency strin
 
 func (p PNG) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, _ string, _ string, gameVendorId int64, extra model.Extra) (err error) {
 	png_service := game_service_png.PNG{}
-	userBalance, err := png_service.GetBalance("https://agastage3.playngonetwork.com:42007/CasinoGameService","Balance",user.ID)
+	userBalance, err := png_service.GetBalance(os.Getenv("GAME_PNG_HOST"),user.ID, os.Getenv("GAME_PNG_API_USER"), os.Getenv("GAME_PNG_API_PASS"))
 	if err != nil {
 		log.Printf("Error getting PNG user balance,userID: %v ,err: %v ", user.IdAsString(), err.Error())
 		return
@@ -108,9 +104,7 @@ func (p PNG) TransferFrom(ctx context.Context, tx *gorm.DB, user model.User, _ s
 		return
 	}
 
-
-	log.Printf("transfer out png user balance: %v ",userBalance)
-	_, tx_id, err := png_service.TransferOut("https://agastage3.playngonetwork.com:42007/CasinoGameService","DebitAccount",user.ID, userBalance, fmt.Sprintf("PNG%d_%d",time.Now().Unix(), user.ID))
+	_, tx_id, err := png_service.TransferOut("https://agastage3.playngonetwork.com:42007/CasinoGameService",user.ID, userBalance, fmt.Sprintf("PNG%d_%d",time.Now().Unix(), user.ID), os.Getenv("GAME_PNG_API_USER"), os.Getenv("GAME_PNG_API_PASS"))
 
 	util.Log().Info("PNG GAME INTEGRATION TRANSFER OUT game_integration_id: %d, user_id: %d, balance: %.4f, tx_id: %s", util.IntegrationIPNG, user.ID, userBalance, tx_id)
 	if err != nil {
@@ -169,7 +163,7 @@ func (p PNG) TransferTo(ctx context.Context, tx *gorm.DB, user model.User, sum p
 		return 0, errors.New("PNG::TransferTo not allowed to transfer negative sum")
 	}
 	png_service := game_service_png.PNG{}
-	_, tx_id, err := png_service.TransferIn(os.Getenv("GAME_PNG_HOST"),"CreditAccount",user.ID, util.MoneyFloat(sum.Balance),fmt.Sprintf("PNG%d_%d",time.Now().Unix(), user.ID))
+	_, tx_id, err := png_service.TransferIn(os.Getenv("GAME_PNG_HOST"),user.ID, util.MoneyFloat(sum.Balance),fmt.Sprintf("PNG%d_%d",time.Now().Unix(), user.ID), os.Getenv("GAME_PNG_API_USER"), os.Getenv("GAME_PNG_API_PASS"))
 	if err !=nil{
 		return 0, err
 	}
