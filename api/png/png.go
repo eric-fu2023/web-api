@@ -66,7 +66,7 @@ type Request struct {
 
 // Consume
 // TODO recommended to use queue instead.
-func Consume(ctx context.Context, req Request) error {
+func (c *Consumer) Consume(ctx context.Context, req Request) error {
 	ctx = rfcontext.AppendCallDesc(ctx, "Consume")
 	messages := req.Messages
 
@@ -90,7 +90,7 @@ func Consume(ctx context.Context, req Request) error {
 	}
 
 	{ // on receive MessageTypeCasinoGamesSessionOpen
-		reports, oErr := AsBetReports(ctx, messages_SessionOpen)
+		reports, oErr := AsBetReports(ctx, messages_SessionOpen, c.repo)
 		ctx = rfcontext.AppendStats(ctx, "reports.to_create.open_transaction", int64(len(reports)))
 
 		if oErr != nil {
@@ -122,23 +122,7 @@ func IntegrationStatusToReportStatus(status callback.IntegrationStatus) (ploutos
 	return 0, errors.New("unknown mapping for IntegrationStatusToReportStatus")
 }
 
-func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetReport, error) {
-
-	repo, err := repository.New(func() (*gorm.DB, error) {
-		if model.DB == nil {
-			return nil, errors.New("DB Not Initialized")
-		}
-		return model.DB, nil
-	})
-
-	if err != nil {
-		return ploutos.PNGBetReport{}, err
-	}
-	refGetter, err := memcache.NewMemCache(repo)
-	if err != nil {
-		return ploutos.PNGBetReport{}, err
-	}
-
+func ToReport(message callback.Message_CasinoGamesSessionOpen, refGetter GameReferGetter) (ploutos.PNGBetReport, error) {
 	gameCode, exist := datamodel.GameCodes[message.GameId]
 	if !exist {
 		return ploutos.PNGBetReport{}, fmt.Errorf("game code mapping not found for game id %d", message.GameId)
@@ -212,12 +196,12 @@ func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetRe
 	}, nil
 }
 
-func AsBetReports(ctx context.Context, messages []callback.Message_CasinoGamesSessionOpen) ([]ploutos.PNGBetReport, error) {
+func AsBetReports(ctx context.Context, messages []callback.Message_CasinoGamesSessionOpen, repo GameReferGetter) ([]ploutos.PNGBetReport, error) {
 	ctx = rfcontext.AppendCallDesc(ctx, "AsBetReports")
 
 	reports := []ploutos.PNGBetReport{}
 	for _, m := range messages {
-		report, err := ToReport(m)
+		report, err := ToReport(m, repo)
 		if err != nil {
 			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, err, "ToReport()")))
 		}
@@ -246,20 +230,53 @@ func InsertReports(_reportsToCreate []ploutos.PNGBetReport) error {
 	return err
 }
 
-// Feed
-// single controller endpoint for all push messages
-func Feed(c *gin.Context) {
-	ctx := rfcontext.AppendCallDesc(context.Background(), "png.Feed")
-	var req Request
-	if bErr := c.ShouldBind(&req); bErr == nil {
-		if err := Consume(ctx, req); err != nil {
-			c.JSON(500, api.ErrorResponse(c, req, err))
-		}
-	} else {
+type Consumer struct {
+	repo GameReferGetter
+}
 
-		log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, bErr, "binding")))
-		c.JSON(400, api.ErrorResponse(c, req, bErr))
+type GameReferGetter interface {
+	// retrieve table row ids
+	GetGameReference(subGameCode string, gameVendorCode string) (memcache.GameIdRef, error)
+}
+
+func NewConsumer() (*Consumer, error) {
+	repo, err := repository.New(func() (*gorm.DB, error) {
+		if model.DB == nil {
+			return nil, errors.New("DB Not Initialized")
+		}
+		return model.DB, nil
+	})
+
+	refGetter, err := memcache.NewMemCache(repo)
+	if err != nil {
+		return nil, err
 	}
 
-	log.Println(rfcontext.FmtJSON(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	return &Consumer{
+		repo: refGetter,
+	}, err
+}
+
+// Feed
+// single controller endpoint for all push messages
+func Feed(consumer *Consumer) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		ctx := rfcontext.AppendCallDesc(context.Background(), "png.Feed")
+		var req Request
+		if consumer == nil {
+			c.JSON(400, api.ErrorResponse(c, req, fmt.Errorf("nil consumer")))
+		} else if bErr := c.ShouldBind(&req); bErr == nil {
+			if err := consumer.Consume(ctx, req); err != nil {
+				c.JSON(500, api.ErrorResponse(c, req, err))
+			}
+		} else {
+			log.Println(rfcontext.FmtJSON(rfcontext.AppendError(ctx, bErr, "binding")))
+			c.JSON(400, api.ErrorResponse(c, req, bErr))
+		}
+		log.Println(rfcontext.FmtJSON(ctx))
+	}
 }

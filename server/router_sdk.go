@@ -64,7 +64,8 @@ func InitSdkApi(r *gin.Engine) {
 	if os.Getenv("GAME_PNG_CALLBACKS") == "TRUE" {
 		png := r.Group("/png")
 		{
-			png.POST("/callback", png_api.Feed)
+			consumer, _ := png_api.NewConsumer() // error handling is deferred to child stack
+			png.POST("/callback", png_api.Feed(consumer))
 		}
 	}
 
