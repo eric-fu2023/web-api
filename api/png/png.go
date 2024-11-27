@@ -154,14 +154,15 @@ func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetRe
 	if err != nil {
 		return ploutos.PNGBetReport{}, err
 	}
-	_totalLoss := message.TotalLoss
-	_totalGain := message.TotalGain
-	_userpl := _totalGain - _totalLoss
+	_loss := message.RoundLoss
+	_gain := float64(0) // FIXME
+	//_gain := message.TotalGain
+	_userpl := _gain - _loss
 	_operatorpl := -_userpl
-	totalLoss := int64(_totalLoss * 100)
-	turnover := int64(_totalLoss * 100)
+	loss := int64(_loss * 100)
+	turnover := int64(_loss * 100)
 	operatorpl := int64(_operatorpl * 100)
-	totalGain := int64(_totalGain * 100)
+	payout := int64(_gain * 100)
 
 	status, sErr := IntegrationStatusToReportStatus(message.Status)
 	if sErr != nil {
@@ -192,9 +193,9 @@ func ToReport(message callback.Message_CasinoGamesSessionOpen) (ploutos.PNGBetRe
 		BusinessId:   roundId,
 		UserId:       int64(userId),
 		GameType:     gameVendorId,
-		Bet:          totalLoss,
+		Bet:          loss,
 		Wager:        turnover,
-		Win:          totalGain, // payout
+		Win:          payout, // payout
 		ProfitLoss:   operatorpl,
 		Status:       status,
 		BetTime:      &betTime,
