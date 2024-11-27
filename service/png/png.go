@@ -20,9 +20,6 @@ import (
 
 type PNG struct {}
 
-const (
-	CLIENT_SESSION_REDIS_KEY = "png_tickets"
-)
 func (p PNG) CreateWallet(ctx context.Context, user model.User, currency string) (err error) {
 	err = model.DB.Transaction(func(tx *gorm.DB) (err error) {
 		var gameVendors []ploutos.GameVendor
